@@ -149,6 +149,14 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 - **Read `result.warnings` on every model call** and log them. Settings are dropped silently.
 - **Model ids take no date suffix**: `claude-opus-5`, never `claude-opus-5-2026xxxx`.
 
+## Memory Hygiene
+
+- Never store issue/PR status in memory — derive from `git log` and `gh issue list` (or the repo
+  status, once it has a remote).
+- Never store file paths, code patterns, or architecture derivable from the codebase.
+- Store only: decisions with rationale, feedback with "why", references to external systems.
+- Before acting on a memory that names a file, function, or flag: verify it still exists.
+
 ## Working agreements
 
 - **Hooks enforce what this file only explains.** A `PostToolUse` hook lints every file you edit
