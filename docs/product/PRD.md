@@ -237,7 +237,8 @@ Invisible to both users. Its correctness is what makes F06 and F10 feel instant 
 - Colours follow EventStorming convention: orange events, small yellow actors, pink systems, red hot spots. Kinds are also labelled in plain language.
 - Archived elements are hidden by default and can be revealed.
 - The board updates immediately on every applied operation, whatever its source.
-- No canvas, no coordinate dragging, no zoom. Position is sequence and relation, not pixels.
+- **Position is derived, never authored.** A node's place on screen is computed from its relations. There is no coordinate a person can set, no node they can drag to a place of their own choosing, and the model stores no pixel value.
+- Panning and zooming the *view* is navigation, not positioning, and is expected — a board of any size outgrows a single screen. It changes nothing in the model.
 
 **Experience**
 A resumed session opens on its existing model. A new one opens with the facilitator's scope question and an otherwise empty board. Accepted elements arrive in the backlog; as they are placed they move to the timeline. Both surfaces stay visible so the person can always see what is unplaced.
@@ -514,7 +515,7 @@ Not yet designed.
 ## 7. Out of scope
 
 **Not this product**
-- Freeform canvas positioning, coordinate dragging, pan, zoom, connectors, drawing.
+- Freeform canvas positioning: dragging a node to a coordinate of its own, storing pixel positions, freehand drawing, or hand-drawn connectors. Position is computed from relations or it is not position. *(Panning and zooming the view is navigation and is in scope — it changes nothing in the model.)*
 - Promotion of any artifact from `draft` to `confirmed`. That is a decision made with people, and it belongs to whoever owns the domain documentation.
 - **Transcription by any third party**, hosted or browser-built-in. The browser's own speech recognition is excluded on exactly these grounds: in every shipping implementation it uploads audio to the browser vendor. Transcription in this product is on-device or it does not happen.
 - Speaker diarisation, multi-microphone capture, recording playback.
@@ -631,6 +632,7 @@ graph TD
 - Elements are not grouped by kind; placed events render in `follows` order along the timeline.
 - An actor or system renders beneath the event it caused, and never occupies a timeline position of its own.
 - An event with two successors renders both branches, and neither is hidden.
+- No user action causes a coordinate to be stored; the model contains no pixel value anywhere.
 - An unplaced element appears in the backlog and not on the timeline; placing it moves it, and unplacing returns it.
 - A hot spot annotating nothing is visible somewhere, not silently absent.
 - Archived elements are hidden by default and can be revealed.
