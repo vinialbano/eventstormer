@@ -89,6 +89,24 @@ file mounts them all. There is no filesystem routing anywhere in this project.
   them, at these verified pins, so knip stays a true signal rather than a wall of false positives:
   `ai@7.0.77`, `@ai-sdk/anthropic@4.0.41`, `zod@4.4.3`, `nanoid@6.0.1`, `vue-router@5.2.0`,
   `@hono/node-server@2.1.1`, `@vue-flow/core@1.48.2`, `@dagrejs/dagre@3.1.1`.
+- **`src/app/shims-vue.d.ts` looks deletable and is not.** `vue-tsc` resolves `.vue` imports for
+  real and ignores it, but `typescript-eslint` does not run the Vue language plugin — without the
+  shim, `import App from './App.vue'` becomes an error type and `no-unsafe-argument` fires.
+  Verified both directions. It does not mask real prop types.
+- **The `/api` dev-server regex needs `(?:\/|$)`.** `@hono/vite-dev-server` documents only an
+  additive denylist; the inverted lookahead is our extension. Without the `$` alternative, bare
+  `/api` escapes it and Vite answers with the SPA instead of Hono answering 404.
+- **The published `@hono/vite-dev-server` README is stale for 0.26.1.** Read
+  `node_modules/@hono/vite-dev-server/dist/dev-server.mjs` for the real defaults — the documented
+  `exclude` list, `ignoreWatching`, and `base` all differ.
+- **Do not enable `coverage.thresholds.autoUpdate` yet.** It rewrites `vite.config.ts` in place
+  on any full coverage run, and with no real tests `branches` measures 0/0 → reported as 100% →
+  written as a permanent 100% floor. Enable it once real tests exist.
+- **Tailwind v4 in an SFC `<style>` block needs `@reference "../style.css";`** at the top before
+  `@apply` or `@variant` will work — each `<style>` block is compiled in isolation. Utility
+  classes in the template need nothing.
+- **`jiti` is an explicit devDependency on purpose.** ESLint declares it only as an *optional
+  peer*, but `eslint.config.ts` cannot load without it. Do not remove it as "unused".
 - **Hono routes must be chained** — `new Hono().get(...).post(...)`. Breaking the chain silently
   breaks RPC and `testClient` type inference.
 - **`vue-router` is v5**, not v4.

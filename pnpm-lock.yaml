@@ -48,13 +48,16 @@ devDependencies:
     version: 18.2.0
   eslint:
     specifier: 10.9.0
-    version: 10.9.0
+    version: 10.9.0(jiti@2.7.0)
   eslint-plugin-vue:
     specifier: 10.10.0
     version: 10.10.0(@typescript-eslint/parser@8.67.0)(eslint@10.9.0)(vue-eslint-parser@10.4.1)
   globals:
     specifier: ^17.11.0
     version: 17.11.0
+  jiti:
+    specifier: ^2.7.0
+    version: 2.7.0
   jsdom:
     specifier: ^30.0.1
     version: 30.0.1
@@ -75,7 +78,7 @@ devDependencies:
     version: 8.67.0(eslint@10.9.0)(typescript@6.0.3)
   vite:
     specifier: 8.2.2
-    version: 8.2.2(@types/node@24.13.3)
+    version: 8.2.2(@types/node@24.13.3)(jiti@2.7.0)
   vitest:
     specifier: 4.1.11
     version: 4.1.11(@types/node@24.13.3)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1)(vite@8.2.2)
@@ -420,7 +423,7 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       eslint-visitor-keys: 3.4.3
     dev: true
 
@@ -463,7 +466,7 @@ packages:
       eslint:
         optional: true
     dependencies:
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
     dev: true
 
   /@eslint/object-schema@3.0.5:
@@ -1232,7 +1235,7 @@ packages:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 8.2.2(@types/node@24.13.3)
+      vite: 8.2.2(@types/node@24.13.3)(jiti@2.7.0)
     dev: true
 
   /@tybys/wasm-util@0.10.3:
@@ -1286,7 +1289,7 @@ packages:
       '@typescript-eslint/type-utils': 8.67.0(eslint@10.9.0)(typescript@6.0.3)
       '@typescript-eslint/utils': 8.67.0(eslint@10.9.0)(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.67.0
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       ignore: 7.0.6
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@6.0.3)
@@ -1307,7 +1310,7 @@ packages:
       '@typescript-eslint/typescript-estree': 8.67.0(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.67.0
       debug: 4.4.3
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -1355,7 +1358,7 @@ packages:
       '@typescript-eslint/typescript-estree': 8.67.0(typescript@6.0.3)
       '@typescript-eslint/utils': 8.67.0(eslint@10.9.0)(typescript@6.0.3)
       debug: 4.4.3
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
@@ -1398,7 +1401,7 @@ packages:
       '@typescript-eslint/scope-manager': 8.67.0
       '@typescript-eslint/types': 8.67.0
       '@typescript-eslint/typescript-estree': 8.67.0(typescript@6.0.3)
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -1420,7 +1423,7 @@ packages:
       vue: ^3.2.25
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.2.2(@types/node@24.13.3)
+      vite: 8.2.2(@types/node@24.13.3)(jiti@2.7.0)
       vue: 3.5.41(typescript@6.0.3)
     dev: true
 
@@ -1471,7 +1474,7 @@ packages:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
-      vite: 8.2.2(@types/node@24.13.3)
+      vite: 8.2.2(@types/node@24.13.3)(jiti@2.7.0)
     dev: true
 
   /@vitest/pretty-format@4.1.11:
@@ -2006,7 +2009,7 @@ packages:
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@10.9.0)
       '@typescript-eslint/parser': 8.67.0(eslint@10.9.0)(typescript@6.0.3)
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       natural-compare: 1.4.0
       nth-check: 2.1.1
       postcss-selector-parser: 7.1.5
@@ -2035,7 +2038,7 @@ packages:
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     dev: true
 
-  /eslint@10.9.0:
+  /eslint@10.9.0(jiti@2.7.0):
     resolution: {integrity: sha512-5KeEOJZBfEVA47boFiBsf+6MmmJpffM7qEBg4pLla2e4nlKgdKlqCW0oSLOGsT8Wl5uCGJptLV1bkaiShj90Gw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     hasBin: true
@@ -2071,6 +2074,7 @@ packages:
       ignore: 5.3.2
       imurmurhash: 0.1.4
       is-glob: 4.0.3
+      jiti: 2.7.0
       json-stable-stringify-without-jsonify: 1.0.1
       minimatch: 10.2.6
       natural-compare: 1.4.0
@@ -3407,7 +3411,7 @@ packages:
       '@typescript-eslint/parser': 8.67.0(eslint@10.9.0)(typescript@6.0.3)
       '@typescript-eslint/typescript-estree': 8.67.0(typescript@6.0.3)
       '@typescript-eslint/utils': 8.67.0(eslint@10.9.0)(typescript@6.0.3)
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -3442,7 +3446,7 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
 
-  /vite@8.2.2(@types/node@24.13.3):
+  /vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0):
     resolution: {integrity: sha512-cFKLV/PRgAUlIRm5WjMjJ86jrftzpqcgH+Us+DS8mI3CDNiH30Whrz8uHL3+MOLPAgqbMBAqWdAHAphOAM+z/Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
@@ -3486,6 +3490,7 @@ packages:
         optional: true
     dependencies:
       '@types/node': 24.13.3
+      jiti: 2.7.0
       lightningcss: 1.33.0
       picomatch: 4.0.5
       postcss: 8.5.26
@@ -3557,7 +3562,7 @@ packages:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 8.2.2(@types/node@24.13.3)
+      vite: 8.2.2(@types/node@24.13.3)(jiti@2.7.0)
       why-is-node-running: 2.3.0
     transitivePeerDependencies:
       - msw
@@ -3574,7 +3579,7 @@ packages:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
     dependencies:
       debug: 4.4.3
-      eslint: 10.9.0
+      eslint: 10.9.0(jiti@2.7.0)
       eslint-scope: 9.1.2
       eslint-visitor-keys: 5.0.1
       espree: 11.2.0
