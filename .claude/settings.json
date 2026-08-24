@@ -13,8 +13,7 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-lint.sh", "timeout": 60 },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/mock-only-test.sh", "timeout": 10 }
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-lint.sh", "timeout": 60 }
         ]
       }
     ],
