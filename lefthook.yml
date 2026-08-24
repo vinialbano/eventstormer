@@ -1,0 +1,38 @@
+# Fast checks pre-commit, slow ones pre-push. A 40-second pre-commit gets
+# bypassed with --no-verify — including by agents — and then the gate exists
+# only on paper.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: block-main
+      run: |
+        branch="$(git rev-parse --abbrev-ref HEAD)"
+        if [ "$branch" = "main" ]; then
+          echo "Refusing to commit directly to main. Branch first." >&2
+          exit 1
+        fi
+    - name: lint
+      glob: "*.{ts,vue,js}"
+      run: pnpm exec eslint --fix --no-warn-ignored {staged_files}
+      # stage_fixed re-adds only files matching this job's glob. The older
+      # `&& git add {staged_files}` re-added every staged file, so a
+      # partially-staged non-JS file was silently staged in full.
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: typecheck
+      run: pnpm typecheck
+    - name: test
+      run: pnpm test
+    - name: depcruise
+      run: pnpm depcruise
+    - name: knip
+      run: pnpm knip

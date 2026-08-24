@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Tightest default; each job widens only what it needs.
+permissions:
+  contents: read
+
+jobs:
+  # PR title, not commits — a squash-merge turns the title into the commit
+  # message, and commitlint already covers individual commits locally.
+  pr-title:
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # One job, one Node version, fail fast. Typecheck is cheapest and catches
+  # most, so it runs first. This mirrors `pnpm check` exactly — CI and the
+  # pre-push hook must never be able to disagree about what "green" means.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # No `version:` — pnpm/action-setup reads `packageManager` from
+      # package.json via Corepack, so the pin has exactly one home. Pinning
+      # it again here is the drift eventos has (11 literal copies of a
+      # version that isn't cross-checked against the manifest anywhere).
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.16.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: pnpm typecheck
+
+      - name: lint
+        run: pnpm lint
+
+      - name: test
+        run: pnpm test
+
+      - name: architecture
+        run: pnpm depcruise
+
+      - name: dead code
+        run: pnpm knip
+
+      # Not part of `pnpm check` / the Stop hook — that gate stays fast for
+      # per-edit and per-stop use. CI is the one place a broken production
+      # build (a Rolldown-specific import failure, a plugin misconfiguration)
+      # gets caught before it reaches a reviewer.
+      - name: build
+        run: pnpm build

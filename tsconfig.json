@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    // Node 24 and every current browser handle ES2023. The cheat sheet says
+    // es2022 as a safe floor; there is no reason to aim lower here.
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node", "vite/client"],
+
+    // "preserve" is the setting for a bundler-transpiled project: it implies
+    // moduleResolution "bundler" and esModuleInterop, and it stops tsc from
+    // rewriting import syntax Vite is about to handle itself.
+    "module": "preserve",
+    // Every file is a module, even one with no import or export. Without this,
+    // two such files share a global scope and a top-level `const` in one
+    // collides with the same name in the other (TS2451) — a confusing error
+    // about a file you never edited. Verified by A/B.
+    "moduleDetection": "force",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    // Beyond the cheat sheet, and deliberate: the model distinguishes "absent"
+    // from "present but undefined" all over the op log, and this is what makes
+    // `{ label?: string }` refuse an explicit `undefined`.
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    // Also beyond the sheet. ESLint reports these too, but typecheck is the
+    // first and fastest gate, so an agent hears about it a step earlier.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "*.config.ts", "vite.config.ts"],
+  "exclude": ["node_modules", "dist", "coverage"]
+}
