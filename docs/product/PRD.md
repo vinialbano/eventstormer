@@ -8,7 +8,7 @@ EventStormer removes the second translator entirely and replaces the first with 
 
 That is what makes the second half work. Engineering does not receive an export that immediately begins to age; it consumes a projection of a living model. When someone renames an event, adds detail, or corrects how a step really works, every derived artifact follows in the same instant, because there is no second artifact to update. Documentation stops rotting because there was never supposed to be a separate document.
 
-v1 runs one Big Picture session end to end and produces a model plus a readable account of it. The deeper formats — Process Modelling and Design-Level, where engineering does most of its work and where the rot problem bites hardest — are the product's direction, and the model is deliberately shaped to receive them.
+v1 runs one Big Picture session end to end, with the expert typing rather than speaking, and produces a model plus a readable account of it. Voice arrives as on-device transcription — the audio never leaving the machine is the point, since the input is someone describing their company's operations. The deeper formats — Process Modelling and Design-Level, where engineering does most of its work and where the rot problem bites hardest — are the product's direction, and the model is deliberately shaped to receive them.
 
 ## 2. Problem and opportunity
 
@@ -111,10 +111,10 @@ Both work from the same model and never from copies of it. Neither is expected t
 - As a domain expert, I want to see who or what caused an event shown beneath it so that the timeline stays about time
 - As a domain expert, I want to see where the flow splits so that two possible outcomes both appear
 
-### F03. Voice and text capture
-- As a domain expert, I want to describe my business out loud so that I can explain it the way I would to a colleague
-- As a domain expert, I want to see my words appear as I speak so that I know I am being heard
-- As a domain expert, I want to type instead when I cannot talk so that a noisy room does not end the session
+### F03. Text capture
+- As a domain expert, I want to describe my business in my own words a piece at a time so that I am not composing one long document
+- As a domain expert, I want each thing I submit to be treated as one contribution so that the facilitator responds to what I just said
+- As the system, I want every segment to record its source and speaker so that adding a voice path later changes nothing downstream
 
 ### F04. AI facilitator
 - As a domain expert, I want to be asked what business we are mapping so that the session starts the way a facilitated one would
@@ -178,6 +178,11 @@ Both work from the same model and never from copies of it. Neither is expected t
 ### F16. Engineer working surface
 - As an engineer, I want to work on the model directly so that corrections do not require going back to the expert for every change
 
+### F17. On-device voice transcription
+- As a domain expert, I want to describe my business out loud so that I can explain it the way I would to a colleague
+- As a domain expert, I want my audio never to leave my machine so that I can talk freely about how my company actually works
+- As a domain expert, I want to see my words appear as I speak so that I know I am being heard
+
 ## 6. Functionalities
 
 ### F01. Domain model, operation log and persistence
@@ -237,27 +242,27 @@ Invisible to both users. Its correctness is what makes F06 and F10 feel instant 
 **Experience**
 A resumed session opens on its existing model. A new one opens with the facilitator's scope question and an otherwise empty board. Accepted elements arrive in the backlog; as they are placed they move to the timeline. Both surfaces stay visible so the person can always see what is unplaced.
 
-### F03. Voice and text capture
+### F03. Text capture
 
 **Consumes**
 - Session identity — session id (from F01)
 
 **Provides**
-- Transcript segment — text, timestamp, whether it was spoken or typed, and the speaker (used by F04)
+- Transcript segment — text, timestamp, source (typed or spoken), and the speaker (used by F04)
 
 **Capabilities**
-- Speech is captured in the browser and transcribed live, with partial results shown as the person speaks.
-- A text input is always available as an equal path, not a failure fallback.
-- Segments carry the speaker, so provenance survives into F14's multi-participant case unchanged.
-- Support is limited to browsers with native speech recognition. A stated limitation, not a supported matrix.
+- The person writes what they want to say and submits it; each submission becomes one transcript segment.
+- Every segment carries its speaker and a source marker. **The marker exists in v1 even though every segment is typed**, so that adding a voice path changes nothing downstream — the facilitator, the log and the artifacts are all indifferent to how a segment was produced.
+- Segments are timestamped, so an element can be traced back to what produced it.
+- Submitting is deliberately per-contribution rather than per-document: the person says one thing, the facilitator responds, and the loop is short.
+- **v1 has no audio path at all.** Voice is on-device transcription and arrives with that feature.
 
 **Experience**
-A microphone control starts and stops listening; the interim transcript is visible and updating while it does. Typing and submitting produces an identical segment.
+A text field sits below the board with a submit control. Submitting clears it and sends the segment. Nothing about the surface implies a second, better input method is missing.
 
 **Error handling**
-- Microphone permission denied → the text path is offered immediately with a plain explanation, and the session continues.
-- Speech recognition unavailable → the microphone control is not shown and the text path is presented as the normal way in, with no error language.
-- Empty or unintelligible audio → nothing is sent to the facilitator and the person is told nothing was heard.
+- Empty or whitespace-only submission → no segment is produced and nothing reaches the facilitator.
+- Submission while a previous segment is still being processed → queued rather than dropped, so a person typing quickly does not lose a contribution.
 
 ### F04. AI facilitator
 
@@ -299,7 +304,7 @@ The user meets this feature entirely through F05 — they answer the opening que
 - Accepting emits the operation with the accepting human as author, alongside the facilitator as proposer. Both are retained.
 - Rejecting emits nothing and leaves nothing behind.
 - **Proposals are batched and capped per segment**, so a long monologue produces a reviewable set rather than a queue that can only be clicked through.
-- Facilitator questions and out-of-format notices appear here as messages with no accept control, because there is nothing to accept. A question is answered by speaking or typing like any other contribution, and the answer reaches the facilitator as an ordinary transcript segment.
+- Facilitator questions and out-of-format notices appear here as messages with no accept control, because there is nothing to accept. A question is answered through the normal capture channel like any other contribution, and the answer reaches the facilitator as an ordinary transcript segment.
 - An unanswered question stays visible for the rest of the session rather than scrolling out of view.
 
 **Experience**
@@ -491,12 +496,28 @@ Not yet designed.
 **Experience**
 Not yet designed.
 
+### F17. On-device voice transcription
+
+**Consumes**
+- Session identity — session id (from F01)
+
+**Capabilities**
+- Speech is captured and transcribed **entirely on the person's machine**. The audio does not leave the device, and no third party processes it.
+- This rules out the browser's built-in speech recognition, which in every shipping implementation streams audio to the browser vendor's servers. A product whose input is a description of how a company operates cannot use it.
+- Produces transcript segments identical in shape to typed ones, so nothing downstream distinguishes them beyond the source marker.
+- The person owns the audio buffer rather than a recogniser's session lifecycle, so a long narration with thinking pauses is captured whole.
+- Costs a one-time model download on first use, which the person is told about before it happens.
+
+**Experience**
+Not yet designed.
+
 ## 7. Out of scope
 
 **Not this product**
 - Freeform canvas positioning, coordinate dragging, pan, zoom, connectors, drawing.
 - Promotion of any artifact from `draft` to `confirmed`. That is a decision made with people, and it belongs to whoever owns the domain documentation.
-- Server-side or hosted transcription; speaker diarisation, multi-microphone capture, recording playback.
+- **Transcription by any third party**, hosted or browser-built-in. The browser's own speech recognition is excluded on exactly these grounds: in every shipping implementation it uploads audio to the browser vendor. Transcription in this product is on-device or it does not happen.
+- Speaker diarisation, multi-microphone capture, recording playback.
 - Compatibility with any external documentation toolchain's file layout or lineage conventions.
 - Accounts, authentication, authorization.
 - Deployment, uptime, monitoring, hardening.
@@ -506,6 +527,7 @@ Not yet designed.
 - Real-time collaboration.
 - The ubiquitous language glossary.
 - An engineer-facing working surface — in v1 the engineer consumes the export and does not edit.
+- On-device voice transcription. v1 is text entry only; the segment shape already carries a source marker so the voice path adds an input method rather than changing the model.
 
 **Big Picture moves not built in v1**
 - Swimlanes and frame maps. Pivotal events are the only structuring move.
@@ -536,6 +558,7 @@ Not yet designed.
 | F14 | Real-time collaboration | 3 | F01 |
 | F15 | Ubiquitous language | 3 | F10 |
 | F16 | Engineer working surface | 3 | F02, F10 |
+| F17 | On-device voice transcription | 3 | F01, F03 |
 
 ### Foundation features
 These features set up shared project infrastructure. In a greenfield project they must be implemented sequentially, before or alongside anything that depends on them:
@@ -548,7 +571,7 @@ Foundation features cannot run in parallel in a greenfield project even when the
 
 - **Wave 1**: F01
 - **Wave 2**: F02, F03, F10, F14
-- **Wave 3**: F04, F06, F15, F16
+- **Wave 3**: F04, F06, F15, F16, F17
 - **Wave 4**: F05, F07, F08, F11, F12
 - **Wave 5**: F09, F13
 
@@ -583,6 +606,8 @@ graph TD
   F10 --> F15[F15 Ubiquitous language]
   F02 --> F16[F16 Engineer surface]
   F10 --> F16
+  F01 --> F17[F17 On-device voice]
+  F03 --> F17
 ```
 
 ## 9. Acceptance criteria
@@ -610,13 +635,12 @@ graph TD
 - A hot spot annotating nothing is visible somewhere, not silently absent.
 - Archived elements are hidden by default and can be revealed.
 
-### F03. Voice and text capture
-- A captured segment carries the session id, the speaker, a timestamp, and whether it was spoken or typed.
-- With microphone permission denied, the text path is offered and the session continues; no error state blocks it.
-- In a browser without speech recognition, no microphone control is rendered and the text path is presented as the normal way in, with no error language.
-- Empty or unintelligible audio produces no segment and no proposal, and the person is told nothing was heard.
-- A typed submission and a spoken utterance produce segments of identical shape, distinguishable only by their spoken-or-typed marker.
-- No criterion asserts transcription accuracy or latency. Both are properties of a browser API this product does not control and cannot repair, so asserting them would measure someone else's component.
+### F03. Text capture
+- A captured segment carries the session id, the speaker, a timestamp, and a source marker.
+- Every segment produced in v1 carries source `typed`; no code path produces any other value.
+- An empty or whitespace-only submission produces no segment and reaches the facilitator not at all.
+- A segment submitted while another is in flight is processed rather than dropped.
+- The segment shape contains no field that only a voice path could populate, so adding one requires no change to the segment contract.
 
 ### F04. AI facilitator
 - Every operation returned satisfies the operation schema for its target's kind.
@@ -706,6 +730,9 @@ Acceptance criteria not yet elicited — F15 is not ready to spec. It was identi
 ### F16. Engineer working surface
 Acceptance criteria not yet elicited — F16 is not ready to spec. v1 deliberately makes the engineer a consumer rather than a user.
 
+### F17. On-device voice transcription
+Acceptance criteria not yet elicited — F17 is not ready to spec. The confidentiality constraint is decided (audio does not leave the device, which excludes browser-built-in recognition); no bar for accuracy, latency, model download size, or hardware floor was decided.
+
 ### Cross-feature integration
 - **F02 ← F01 (node record):** a node created by an operation appears on the surface matching its placement state, with label, kind and markers matching the record.
 - **F02 ← F01 (relations):** a `follows` edge renders as a timeline connection between exactly those two events; a `causedBy` edge renders its source beneath exactly that event.
@@ -728,5 +755,6 @@ Acceptance criteria not yet elicited — F16 is not ready to spec. v1 deliberate
 - **F14 ← F01 (operation log):** integration criteria not yet elicited; the log's author field exists to serve this and no behaviour has been decided.
 - **F15 ← F10 (derived artifact set):** integration criteria not yet elicited.
 - **F16 ← F02, F10:** integration criteria not yet elicited.
+- **F17 ← F01 (session identity):** integration criteria not yet elicited; the segment contract F03 already defines is what this feature must satisfy.
 
-> Criteria absent for F12–F16 because those features are in the product view but were not designed in this session. Each carries an id, stories, a dependency row and enough capability description to be built against later; none is ready to hand to Specify.
+> Criteria absent for F12–F17 because those features are in the product view but were not designed in this session. Each carries an id, stories, a dependency row and enough capability description to be built against later; none is ready to hand to Specify.
