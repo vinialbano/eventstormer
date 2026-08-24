@@ -157,6 +157,19 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 - Store only: decisions with rationale, feedback with "why", references to external systems.
 - Before acting on a memory that names a file, function, or flag: verify it still exists.
 
+## Verifying UI changes
+
+Use `playwright-cli` (installed globally, skill at `.claude/skills/playwright-cli/`) to drive the
+running app and read its console — not `curl`, not a screenshot-only tool. `playwright-cli open
+<url>` reports console errors/warnings inline; treat a nonzero count as a real finding, not noise
+(it caught a missing favicon on the first run of this app).
+
+**E2E test framework — decided, not yet built.** `@playwright/test` when there is a real UI
+feature to test end to end. Not added as a dependency yet: the only UI today is the health-check
+stub, and an e2e suite with nothing meaningful to assert would be dead weight knip can't even
+flag (test files are exempt from unused-export checks). Add it in the same sitting as the first
+real user-facing flow, not before.
+
 ## Working agreements
 
 - **Hooks enforce what this file only explains.** A `PostToolUse` hook lints every file you edit
