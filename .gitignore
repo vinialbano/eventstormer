@@ -1,0 +1,27 @@
+node_modules/
+dist/
+coverage/
+*.local
+
+# Secrets. .env.example is committed; .env never is.
+.env
+.env.*
+!.env.example
+
+# Local working notes and generated artifacts
+DECISIONS-PENDING.md
+dependency-graph.svg
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+data/
+
+# Model-call logs — real sessions become eval fixtures, but they contain
+# whatever business a person narrated. They stay local.
+logs/
+
+.DS_Store
+*.log
+.vite/
+.eslintcache
