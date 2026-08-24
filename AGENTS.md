@@ -113,6 +113,11 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 - **Do not exclude `*.config.ts` from type-aware linting.** It is in tsconfig's `include`, so
   excluding it silently disables `no-floating-promises` and `no-deprecated` on `vite.config.ts`
   and `eslint.config.ts`. Only `.js`/`.cjs`/`.mjs` sit outside the graph.
+- **`engine-strict=true` is in `.npmrc` and `engines.node` is in `package.json`.** A
+  contributor below Node 22.5 gets a clear install-time refusal instead of a confusing
+  `node:sqlite` runtime failure. Don't remove either half.
+- **CI has no `version:` on `pnpm/action-setup`, deliberately.** It reads `packageManager`
+  from `package.json` via Corepack, so the pnpm pin has exactly one home. Do not add one back.
 - **`.vue` needs `extraFileExtensions: ['.vue']` and `parserOptions.parser`,** but *not* an
   explicit `parser` line — `eslint-plugin-vue`'s `flat/base` already assigns
   `vue-eslint-parser`. The plugin's own docs omit `extraFileExtensions`; without it every SFC
