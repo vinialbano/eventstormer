@@ -33,6 +33,7 @@ building end to end in about a week, in a way that could be explained and defend
 - Vite + Vue 3 SPA + Hono + `node:sqlite`
 - Nuxt (full-stack meta-framework)
 - NestJS + Prisma
+- React (not comparatively evaluated — see below)
 
 ## Decision Outcome
 
@@ -75,6 +76,30 @@ verified by execution on the pinned runtime (Node 24.16.0) rather than by readin
 Stability 1.2 — Release Candidate, confirmed current against the primary Node.js documentation.
 TypeScript throughout, Pinia, the Vercel AI SDK with `@ai-sdk/anthropic`, and Zod fill out the
 rest of the stack around the same constraint.
+
+### Vue vs React
+
+Vue was never comparatively evaluated against React on technical merit. Every comparison above is
+between backends and meta-frameworks that already assume Vue — Nuxt is a Vue meta-framework,
+NestJS is frontend-agnostic. Vue entered this project as a stated preference for familiarity and
+execution speed in a solo, timeboxed build, not as the winner of a Vue-vs-React comparison that
+was actually run.
+
+One attempt was made to give that preference a technical backing: that Vue's Proxy-based mutable
+reactivity suits Domain-Driven Design better than React's immutable model, because DDD favors rich
+domain entities with imperative mutating methods. It does not survive scrutiny against the
+project's own referenced methodology. `domain-modeling` explicitly treats a rich mutable root and
+a pure, immutable decide-function as equally valid tactical DDD — *"the rules must travel with it,
+not the specific shape"* — and its own prescribed pattern for an event-sourced aggregate, the
+Decider (`decide`/`evolve`), is a pure functional pattern that an immutable-state paradigm fits at
+least as naturally as a mutable one. This project's own domain layer is exactly that shape: an
+append-only operation log replayed through a pure reducer, never a mutated entity. Checked against
+`code-architecture`, `software-design`, and `distributed-systems` too: none of the four take any
+position on frontend framework choice at all.
+
+The honest reason Vue was chosen is familiarity and speed of execution, not architectural
+necessity — and that is a legitimate, sufficient reason given this project's constraints. It is
+recorded as such here rather than left implied or backed by a technical claim that does not hold.
 
 ### Positive Consequences
 
