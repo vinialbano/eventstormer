@@ -75,6 +75,11 @@ file mounts them all. There is no filesystem routing anywhere in this project.
   rule — the exact sensors this repo depends on. Under pnpm's strict peers it hard-fails.
   Do not "upgrade" TypeScript.
 - **`baseUrl` is deprecated in TS 6** and errors out. Paths use `./src/*` directly.
+- **`module` is `"preserve"`, and there is no `moduleResolution` line** — `preserve` implies
+  `bundler` resolution and `esModuleInterop`. Do not "fix" this by adding them back.
+- **`moduleDetection: "force"` is load-bearing.** Without it, two files that import nothing share
+  a global scope and identical top-level `const` names collide with TS2451, pointing at a file
+  nobody touched.
 - **dependency-cruiser rules must match `(?:^|/)node_modules/<pkg>/`, never `^node_modules/`.**
   pnpm resolves to `node_modules/.pnpm/hono@4.13.4/node_modules/hono/…`, so a `^` anchor matches
   nothing and the rule silently passes forever. This bug was live in this repo and found only by
