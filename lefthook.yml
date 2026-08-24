@@ -14,7 +14,11 @@ pre-commit:
         fi
     - name: lint
       glob: "*.{ts,vue,js}"
-      run: pnpm exec eslint --fix --no-warn-ignored {staged_files} && git add {staged_files}
+      run: pnpm exec eslint --fix --no-warn-ignored {staged_files}
+      # stage_fixed re-adds only files matching this job's glob. The older
+      # `&& git add {staged_files}` re-added every staged file, so a
+      # partially-staged non-JS file was silently staged in full.
+      stage_fixed: true
 
 commit-msg:
   jobs:

@@ -107,6 +107,21 @@ file mounts them all. There is no filesystem routing anywhere in this project.
   classes in the template need nothing.
 - **`jiti` is an explicit devDependency on purpose.** ESLint declares it only as an *optional
   peer*, but `eslint.config.ts` cannot load without it. Do not remove it as "unused".
+- **Use `defineConfig` from `eslint/config`, never `tseslint.config()`** — the latter is
+  deprecated. Inside `extends`, preset arrays go in **un-spread**; the top level of
+  `defineConfig([...])` still takes a plain array.
+- **Do not exclude `*.config.ts` from type-aware linting.** It is in tsconfig's `include`, so
+  excluding it silently disables `no-floating-promises` and `no-deprecated` on `vite.config.ts`
+  and `eslint.config.ts`. Only `.js`/`.cjs`/`.mjs` sit outside the graph.
+- **`.vue` needs `extraFileExtensions: ['.vue']` and `parserOptions.parser`,** but *not* an
+  explicit `parser` line — `eslint-plugin-vue`'s `flat/base` already assigns
+  `vue-eslint-parser`. The plugin's own docs omit `extraFileExtensions`; without it every SFC
+  fails to parse.
+- **`@stylistic/eslint-plugin` is an optional peer of eslint-plugin-vue and is not installed.**
+  Its 25 lazily-resolved rules are all disabled under `flat/recommended`. Do not add it.
+- **Do not narrow `enhancedResolveOptions.extensions` in dependency-cruiser.** The default list
+  covers `.d.ts`/`.tsx`/`.mts`/`.json`; narrowing it makes those imports unresolvable and
+  therefore invisible to the architecture rules.
 - **Hono routes must be chained** — `new Hono().get(...).post(...)`. Breaking the chain silently
   breaks RPC and `testClient` type inference.
 - **`vue-router` is v5**, not v4.

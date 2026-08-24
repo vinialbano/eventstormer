@@ -111,9 +111,14 @@ module.exports = {
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {
+      // All three are load-bearing: dropping exportsFields leaves vue, hono,
+      // hono/testing and vitest unresolvable, and dropping the block entirely
+      // leaves two. Deliberately NOT narrowing `extensions` — the default list
+      // covers .d.ts/.tsx/.mts/.json, and an unresolvable import is invisible to
+      // the architecture rules, which is the same silent-pass class of bug the
+      // pnpm path anchor already caused once.
       exportsFields: ['exports'],
       conditionNames: ['import', 'require', 'node', 'default', 'types'],
-      extensions: ['.js', '.ts', '.vue'],
       mainFields: ['module', 'main', 'types', 'typings'],
     },
     reporterOptions: {

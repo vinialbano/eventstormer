@@ -1,20 +1,23 @@
 import js from '@eslint/js'
+import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
-import vueParser from 'vue-eslint-parser'
 import globals from 'globals'
 
-export default tseslint.config(
-  {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', '*.svg'],
-  },
-
-  js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-  ...pluginVue.configs['flat/recommended'],
+// `tseslint.config()` is deprecated in favour of ESLint core's `defineConfig()`.
+// Inside `extends`, preset arrays go in UN-SPREAD — `extends` absorbs arrays,
+// while the top level of defineConfig([...]) does not.
+export default defineConfig([
+  // node_modules and .git are already in ESLint's defaults.
+  globalIgnores(['dist/**', 'coverage/**', '*.svg']),
 
   {
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+      pluginVue.configs['flat/recommended'],
+    ],
     languageOptions: {
       globals: { ...globals.node },
       parserOptions: {
@@ -30,15 +33,16 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser } },
   },
 
-  // Vue SFCs: vue-eslint-parser must own the file, delegating <script> to the TS parser.
+  // eslint-plugin-vue's flat/base already assigns vue-eslint-parser, so there is
+  // no explicit `parser` line here. Two things it does NOT do: delegate <script>
+  // to the TS parser (it defaults to espree), and tell the project service that
+  // .vue is a real extension. Drop `extraFileExtensions` and every SFC fails
+  // with "not found by the project service because the extension is non-standard".
   {
     files: ['**/*.vue'],
     languageOptions: {
-      parser: vueParser,
       parserOptions: {
         parser: tseslint.parser,
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
         extraFileExtensions: ['.vue'],
       },
     },
@@ -49,6 +53,7 @@ export default tseslint.config(
       // Formatting is not this tool's job and the noise trains agents to ignore it.
       'vue/singleline-html-element-content-newline': 'off',
       'vue/max-attributes-per-line': 'off',
+
       // The mechanism behind "illegal states unrepresentable": Zod defines each
       // discriminated union once, this catches every branch forgotten when a
       // variant is added. Neither half works alone.
@@ -66,14 +71,20 @@ export default tseslint.config(
     },
   },
 
-  // Config files are not part of the app's type-aware graph.
+  // Only plain-JS tooling sits outside the type-aware graph. *.config.ts IS in
+  // tsconfig's include, so it stays fully type-checked — excluding it silently
+  // disabled no-floating-promises and no-deprecated on vite.config.ts.
   {
-    files: ['**/*.config.ts', '**/*.config.js', '**/*.cjs'],
-    ...tseslint.configs.disableTypeChecked,
+    files: ['**/*.{js,cjs,mjs}'],
+    extends: [tseslint.configs.disableTypeChecked],
     languageOptions: {
       globals: { ...globals.node },
-      sourceType: 'commonjs',
       parserOptions: { projectService: false, project: false },
     },
   },
-)
+  // commitlint.config.js is ESM in a "type": "module" package; only .cjs is not.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs' },
+  },
+])
