@@ -34,7 +34,7 @@ derived_from:
 ## Boundary rationale
 
 - **Language boundary:** "Proposal" and "Contribution" (Facilitation's own pre-acceptance
-  artifacts — not yet an Event/Actor/System/Hot Spot, per the board); asymmetric leniency as a
+  artifacts — not yet a Domain Event/Actor/System/Hot Spot, per the board); asymmetric leniency as a
   named behavior, not an implementation detail.
 - **Capability boundary:** conduct-conversation-and-propose (noun–verb: session facilitation).
   Passes the single-name test — one capability, no "and" hiding a second context.

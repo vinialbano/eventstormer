@@ -34,8 +34,8 @@ recorded as the honest state, not filled in.
    unplace, mark pivotal, withdraw, reinstate, set scope, set stakeholder answer, set chosen
    problem`, matching F06's "Withdraw a building block, and reinstate a withdrawn one" exactly.
 
-3. **Reinstatement conflict rule undefined.** The participant decided that withdrawing an
-   Event/Actor/System/Hot Spot severs its connections, and that reinstating requires re-validating
+3. **Reinstatement conflict rule undefined.** The participant decided that withdrawing a
+   Domain Event/Actor/System/Hot Spot severs its connections, and that reinstating requires re-validating
    the old relations against the board's current state (a stale position, or a `follows` chain that
    would now cycle, are both possible). The PRD defines no resolution rule for what happens when
    that re-validation fails. Named as belonging to a deeper session on F06 (Process Modelling or

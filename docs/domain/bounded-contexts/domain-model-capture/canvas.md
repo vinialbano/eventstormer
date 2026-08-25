@@ -20,7 +20,7 @@ derived_from:
 
 **Status:** draft • **Provenance:** `[confirmed]` (boundary) / `UNCONFIRMED` (event-stormed model)
 
-- **Purpose:** Own the accepted domain model — a typed graph of Event/Actor/System/Hot Spot
+- **Purpose:** Own the accepted domain model — a typed graph of Domain Event/Actor/System/Hot Spot
   Building Blocks and their relations, with stable identities, and the shared lifecycle every
   Building Block kind goes through (Reworded / Withdrawn / Reinstated).
 - **Subdomain type:** Core
@@ -30,7 +30,7 @@ derived_from:
 
 ## Boundary rationale
 
-- **Language boundary:** Event / Actor / System / Hot Spot — not "Element" or "Node" (implementation
+- **Language boundary:** Domain Event / Actor / System / Hot Spot — not "Element" or "Node" (implementation
   vocabulary, not EventStorming's language). "Reworded" — not "Rename" — because the underlying
   identity (the id) never changes; only the articulation of an already-recognized fact does. Both
   `[confirmed]`.
@@ -67,7 +67,7 @@ derived_from:
 
 | Event | Consumed by | Meaning | Produced by |
 |---|---|---|---|
-| Kind-specific Reworded (e.g. Event Reworded) | Derived Artifact Generation | A Building Block's articulation changed; its identity did not | UNCONFIRMED command |
+| Kind-specific Reworded (e.g. Domain Event Reworded) | Derived Artifact Generation | A Building Block's articulation changed; its identity did not | UNCONFIRMED command |
 | Kind-specific Withdrawn (e.g. Actor Withdrawn) | Derived Artifact Generation | A Building Block's connections were severed | UNCONFIRMED command |
 | Kind-specific Reinstated (e.g. System Reinstated) | Derived Artifact Generation | A withdrawn Building Block returned, relations re-validated | UNCONFIRMED command |
 

@@ -26,7 +26,7 @@ request, rather than eliciting the full event vocabulary from a blank page. Ever
 from it was tagged `[glossary]` and put to the participant for an explicit yes/edit/reject before
 counting as confirmed — none passed silently. Specific citations used through the session:
 
-- F01 (`docs/product/PRD.md:188-222`) — node kinds, operation log, the `restore` omission.
+- F01 (`docs/product/PRD.md:188-222`) — Building Block kinds, operation log, the `restore` omission.
 - F02 (`:224-244`) — backlog/timeline, derived (not authored) position.
 - F03 (`:246-266`) — transcript segments, the smell that renamed "Submitted."
 - F04 (`:268-295`) — the asymmetric quality bar, the deeper-format deferral, error handling.
@@ -51,10 +51,10 @@ The participant's own first pass, verbatim order, before any quality review:
 | Expert stated the domain problem | `[storm]` | Kept — Domain Problem Stated; disambiguated (opening scope answer, not the closing chosen problem) |
 | Facilitator prompt question | `[storm]` | Reworded past-tense, later generalized to Question Asked |
 | Expert answered question | `[storm]` | Merged into Domain Problem Stated |
-| Domain Event added to backlog | `[storm]` | Merged into Event Captured (creation) + Event Sequenced (positioning), once those were separated out |
+| Domain Event added to backlog | `[storm]` | Merged into Domain Event Captured (creation) + Domain Event Sequenced (positioning), once those were separated out |
 | Expert proposed another domain event | `[storm]` | Disambiguated — proposer is the facilitator, not the expert (F04); dropped as its own event |
 | Expert rephrased the sticky note | `[storm]` | Merged into Proposal Edited |
-| Domain Event added to timeline | `[storm]` | Became Event Sequenced |
+| Domain Event added to timeline | `[storm]` | Became Domain Event Sequenced |
 | Artifacts exported | `[storm]` | Dropped — query-like, no operation logged for it (same test as Session Resumed) |
 
 ## Official narrative vs. observed reality
@@ -84,19 +84,19 @@ the "Dropped during the quality gate" table there. Summary of the smells actuall
 | Question Answered (plain) | No distinct downstream consequence found | Dropped — collapses into Contribution Made referencing the question |
 | Proposal Edited Then Accepted (compound) | Granularity mismatch — two sequential, independently-meaningful facts merged | Split into Proposal Edited (repeatable) + Proposal Accepted (terminal, same regardless of prior edits) |
 | Chosen Problem Selected (or Skipped, with reason) | Same granularity mismatch | Split into Chosen Problem Named / Chosen Problem Skipped |
-| Sticky Placed On Timeline / Returned To Backlog | Position is derived from relations (PRD F02), not an authored fact; also conflated two different relation kinds (`follows` vs `causedBy`) | Split into Event Sequenced/Unsequenced and Actor/System Linked/Unlinked |
+| Sticky Placed On Timeline / Returned To Backlog | Position is derived from relations (PRD F02), not an authored fact; also conflated two different relation kinds (`follows` vs `causedBy`) | Split into Domain Event Sequenced/Unsequenced and Actor/System Linked/Unlinked |
 
 ## Resolved hot spots
 
 | Issue | Resolution | Agreed by |
 |---|---|---|
 | Is "Domain Problem Stated" the opening scope answer or the closing chosen problem? | The opening scope answer; kept distinct from the closing Chosen Problem Named/Skipped | participant |
-| Does the expert or the facilitator propose elements? | The facilitator only — F06 never describes a direct-creation path, only editing of existing elements | participant |
+| Does the expert or the facilitator propose Building Blocks? | The facilitator only — F06 never describes a direct-creation path, only editing of existing Building Blocks | participant |
 | Is "Session Resumed" a real event? | No — query-like, dropped | participant |
 | Is "Facilitator Deferred To Deeper Session" a real event or just facilitator behavior? | Real event, kept — restructured to remove the actor-naming smell and the undefined "deeper" jargon | participant |
 | Should "Workshop Format Selected" stay despite not being in v1? | Yes, kept as forward-looking, flagged | participant |
 | Is "Session Resumed" part of this board's story? | Dropped entirely (see above) | participant |
-| Element vs. Sticky vs. kind-specific naming | Kind-specific (Event/Actor/System/Hot Spot) throughout; neither generic term used | participant, reversed once mid-session after further thought |
+| Element vs. Sticky vs. kind-specific naming | Kind-specific (Domain Event/Actor/System/Hot Spot) throughout; neither generic term used | participant, reversed once mid-session after further thought |
 | Is "Derived Artifacts Exported" a real event? | No — same query test as Session Resumed | participant |
 | How does a generic facilitator question get marked answered? | Explicit operation approach (Option B); only consequential resolutions get their own name (Domain Problem Stated, Knowledge Gap Revealed, Absent Stakeholder Named, Complete Perspective Confirmed); a plain answer is not its own event | participant |
 | Does a Knowledge Gap Revealed leave the question open? | No — it is itself a resolution; leaving it open would double-count the resulting hot spot at Session Closed | participant |
@@ -109,8 +109,8 @@ the "Dropped during the quality gate" table there. Summary of the smells actuall
 |---|---|---|---|
 | "Position is never authored, only derived" | Supported | PRD F02, verbatim | None needed |
 | "There is no re-type operation" | Supported | PRD F01, verbatim | None needed |
-| Withdrawing an Actor/System cascades to unlink it everywhere | Hypothesis, not supported by PRD text | PRD only states the no-silent-rejoin rule for Events; Actor/System behavior is undefined | Recorded as the participant's decision, not as a PRD fact — see open-questions.md #3 |
-| The three "hot spot flavor" events were structurally distinct | Contradicted, revised in session | Only one Hot Spot node kind exists (F01); the three collapsed into one creation event plus three real antecedent events | Board reflects the corrected model |
+| Withdrawing an Actor/System cascades to unlink it everywhere | Hypothesis, not supported by PRD text | PRD only states the no-silent-rejoin rule for Domain Events; Actor/System behavior is undefined | Recorded as the participant's decision, not as a PRD fact — see open-questions.md #3 |
+| The three "hot spot flavor" events were structurally distinct | Contradicted, revised in session | Only one Hot Spot Building Block kind exists (F01); the three collapsed into one creation event plus three real antecedent events | Board reflects the corrected model |
 
 ## Post-workshop artifact plan
 
@@ -125,7 +125,7 @@ the "Dropped during the quality gate" table there. Summary of the smells actuall
 
 ## Provenance summary
 
-| Marker | Events | Actors/Systems |
+| Marker | Domain Events | Actors/Systems |
 |---|---|---|
 | `[storm]` | 4 (Workshop Format Selected, Domain Problem Stated, Contribution/withdraw semantics decisions, AI Model Provider naming) | 1 (AI Model Provider, named directly by participant) |
 | `[glossary]` — PRD-derived, explicitly confirmed | 28 | 5 |
@@ -187,7 +187,7 @@ undifferentiated to milestone-relative, is that a genuine one-time phase boundar
 
 A dedicated subagent vetted this against the same criterion and against standard event-smell
 tests. **Rejected**: it is a count-based artifact (a UI-threshold consequence of the already-
-existing, already-repeating Event Marked Pivotal), not a new business fact — the domain expert is
+existing, already-repeating Domain Event Marked Pivotal), not a new business fact — the domain expert is
 doing the same act (deciding where something goes) before and after, just with a better hint from
 the interface. The underlying activity does not change kind, which is what the pivotal test
 actually requires. The middle of the capture loop is genuinely homogeneous; F07's own "4 to 5"

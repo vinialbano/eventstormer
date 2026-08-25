@@ -18,8 +18,8 @@ derived_from:
 
 | Term | Meaning in this context | Code name(s) / source (`file:line`) | Flags |
 |---|---|---|---|
-| Building Block | The umbrella term for "one of the four kinds, regardless of which" — Event, Actor, System, or Hot Spot. Alberto Brandolini's own chapter title for this exact vocabulary, at both the Big Picture ("Building Blocks – 20%") and Process Modeling ("Process Modeling Building Blocks – 90%") zoom levels, *Introducing EventStorming* | UNCONFIRMED | `[glossary]`, `[confirmed]` |
-| Event | One of four Building Block kinds on the board; a past-tense domain fact | UNCONFIRMED | `[confirmed]` |
+| Building Block | The umbrella term for "one of the four kinds, regardless of which" — Domain Event, Actor, System, or Hot Spot. Alberto Brandolini's own chapter title for this exact vocabulary, at both the Big Picture ("Building Blocks – 20%") and Process Modeling ("Process Modeling Building Blocks – 90%") zoom levels, *Introducing EventStorming* | UNCONFIRMED | `[glossary]`, `[confirmed]` |
+| Domain Event | One of four Building Block kinds on the board; a past-tense domain fact | UNCONFIRMED | `[confirmed]` |
 | Actor | One of four Building Block kinds; a person or role | UNCONFIRMED | `[confirmed]` |
 | System | One of four Building Block kinds; an external or supporting system | UNCONFIRMED | `[confirmed]` |
 | Hot Spot | One of four Building Block kinds; a flagged gap or disagreement — see Question & Hot Spot Resolution's own language for the policies that create one | UNCONFIRMED | `[confirmed]` |
@@ -39,7 +39,7 @@ derived_from:
 
 | Word | Conflicting meanings / synonyms | Resolution |
 |---|---|---|
-| Element/Node vs. Building Block (umbrella) / Event/Actor/System/Hot Spot (kind-specific) | Generic implementation vocabulary vs. this context's confirmed business language | "Building Block" (Brandolini's own term) is the confirmed umbrella; "Element"/"Node" is implementation jargon, kept out |
+| Element/Node vs. Building Block (umbrella) / Domain Event/Actor/System/Hot Spot (kind-specific) | Generic implementation vocabulary vs. this context's confirmed business language | "Building Block" (Brandolini's own term) is the confirmed umbrella; "Element"/"Node" is implementation jargon, kept out |
 | Rename vs. Reworded | Implementation-flavored wording vs. this context's business language | "Reworded" confirmed — renaming implies the identity changes, when only the articulation does |
 
 <!-- BEGIN lineage:index -->
