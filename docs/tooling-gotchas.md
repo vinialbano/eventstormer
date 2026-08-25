@@ -22,8 +22,8 @@ docs for the installed version.
 
 - **Rules must match `(?:^|/)node_modules/<pkg>/`, never `^node_modules/`.** pnpm resolves to
   `node_modules/.pnpm/hono@4.13.4/node_modules/hono/…`, so a `^` anchor matches nothing and the
-  rule silently passes forever. This bug was live in this repo and found only by planting a
-  violation. **After editing an architecture rule, plant a violation and confirm it fails.**
+  rule silently passes forever. **After editing an architecture rule, plant a violation and
+  confirm it fails.**
 - **Do not narrow `enhancedResolveOptions.extensions`.** The default list covers
   `.d.ts`/`.tsx`/`.mts`/`.json`; narrowing it makes those imports unresolvable and therefore
   invisible to the architecture rules — the same silent-pass failure as the regex bug above.

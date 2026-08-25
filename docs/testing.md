@@ -11,8 +11,8 @@
 
 Use `playwright-cli` (installed globally, skill at `.claude/skills/playwright-cli/`) to drive the
 running app and read its console — not `curl`, not a screenshot-only tool. `playwright-cli open
-<url>` reports console errors/warnings inline; treat a nonzero count as a real finding, not noise
-(it caught a missing favicon on the first run of this app).
+<url>` reports console errors/warnings inline; treat a nonzero count as a real finding, not
+noise — a console warning is signal here even when the page still renders.
 
 ## E2E — decided, not yet built
 
