@@ -3,7 +3,7 @@ workshop: big-picture
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
-digest: 49ad71b79610
+digest: 8a880b8aed25
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: 7388877c76ab
@@ -49,6 +49,14 @@ recorded as the honest state, not filled in.
    *this* board itself (the participant is the sole domain expert for EventStormer's own business
    line) — but the gap is recorded rather than silently accepted, consistent with the method's own
    prescription for an absent perspective.
+
+6. **No as-is/to-be distinction.** Per the avanscoperta Big Picture Facilitator's Handbook (starter
+   kit, read 2026-08-25): *"Big Picture works very well in as-is and to-be scenarios. The workshop
+   dynamics are very different."* Neither this board nor the PRD's opening scope question (F04:
+   "what business are we mapping") distinguishes whether a session describes how the business
+   works **today** or how the participant **wants** it to work. That's a real, consequential fork
+   the method itself treats as changing workshop dynamics, and EventStormer's current design is
+   silent on it. Unowned, undated.
 
 ## Candidate seams (derived in close-out — `[inferred]`, mirrored from `context-map.md`)
 
