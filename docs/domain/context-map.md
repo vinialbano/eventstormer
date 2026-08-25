@@ -37,8 +37,8 @@ flowchart LR
   HotSpot["Question & Hot Spot Resolution (Supporting)"]
   Artifact["Derived Artifact Generation (Supporting)"]
 
-  Capture -->|"OHS + Published Language\n(element-lifecycle contract)"| Facil
-  Capture -->|"OHS + Published Language\n(element-lifecycle contract)\nConformist"| HotSpot
+  Capture -->|"OHS + Published Language\n(Building Block lifecycle contract)"| Facil
+  Capture -->|"OHS + Published Language\n(Building Block lifecycle contract)\nConformist"| HotSpot
   Capture -->|"OHS + Published Language\n(read model)\nConformist"| Artifact
   Facil -->|"OHS + Published Language\n(session domain events)\nConformist"| HotSpot
 
@@ -52,14 +52,14 @@ flowchart LR
 
 | Upstream (U) | Downstream (D) | Relationship | Pattern | Mechanism | Evidence / topic | Notes |
 |---|---|---|---|---|---|---|
-| Domain Model Capture | Session Facilitation | Upstream-Downstream | OHS + Published Language, accommodated as Customer/Supplier | in-process command/query (v1: single deployable) | element-lifecycle contract (create/rework/withdraw/reinstate) | Both Core & volatile. Capture is self-contained and generic; Facilitation cannot ship without it (U/D tell). Facilitation is the primary consumer shaping the contract — its needs are formally accommodated, not merely conformed to. `[confirmed]` |
-| Domain Model Capture | Question & Hot Spot Resolution | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process command | same element-lifecycle contract, "Raise Hot Spot" as another element-creation call | Hot Spot Resolution has no leverage to shape Capture's contract; accepts it as-is, additive only. `[confirmed]` |
+| Domain Model Capture | Session Facilitation | Upstream-Downstream | OHS + Published Language, accommodated as Customer/Supplier | in-process command/query (v1: single deployable) | Building Block lifecycle contract (create/rework/withdraw/reinstate) | Both Core & volatile. Capture is self-contained and generic; Facilitation cannot ship without it (U/D tell). Facilitation is the primary consumer shaping the contract — its needs are formally accommodated, not merely conformed to. `[confirmed]` |
+| Domain Model Capture | Question & Hot Spot Resolution | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process command | same Building Block lifecycle contract, "Raise Hot Spot" as another Building Block-creation call | Hot Spot Resolution has no leverage to shape Capture's contract; accepts it as-is, additive only. `[confirmed]` |
 | Domain Model Capture | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model | the read-only model projection (PRD F10) | Thin, stateless projection; no accommodation needed. `[confirmed]` |
 | Session Facilitation | Question & Hot Spot Resolution | Upstream-Downstream | OHS + Published Language (curated event set), Conformist downstream | in-process domain events | Absent Stakeholder Named, Knowledge Gap Revealed, Session Closed (with unresolved Question Asked) | Hot Spot Resolution depends entirely on these facts and has no leverage back; a deliberately curated set of named events, not Facilitation's whole internal model. `[confirmed]` |
 
 ## Why Capture is the hub, not each pair modelled separately
 
-Confirmed this session: Domain Model Capture's element-lifecycle contract is genuinely one Open-Host
+Confirmed this session: Domain Model Capture's Building Block lifecycle contract is genuinely one Open-Host
 Service serving three different downstream consumers (Facilitation, Hot Spot Resolution, Artifact
 Generation) rather than three ad hoc integrations — this is the technical expression of the
 product's own pitch, "one model, many derived views." A Core context exposing a deliberate, stable

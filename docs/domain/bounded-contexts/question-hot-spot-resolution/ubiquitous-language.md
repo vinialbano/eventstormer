@@ -18,7 +18,7 @@ derived_from:
 
 | Term | Meaning in this context | Code name(s) / source (`file:line`) | Flags |
 |---|---|---|---|
-| Hot Spot Raised | The single creation event for a Hot Spot element, however it was triggered | `open-questions.md` #4 (`[storm]`) | — |
+| Hot Spot Raised | The single creation event for a Hot Spot Building Block, however it was triggered | `open-questions.md` #4 (`[storm]`) | — |
 | Absent Stakeholder Named | Trigger: a stakeholder who should be present is identified as missing | `[storm]` | policy trigger |
 | Knowledge Gap Revealed | Trigger: the participant admits a gap in their own knowledge | `[storm]` | policy trigger |
 | Question Asked | (Owned by Session Facilitation's language) — this context tracks whether one resolves before Session Closed | `[storm]`, cross-reference | — |

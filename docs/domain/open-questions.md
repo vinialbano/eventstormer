@@ -92,8 +92,8 @@ here.
    Needs a worked example with the participant. See
    `bounded-contexts/session-facilitation/ubiquitous-language.md`.
 
-8. **Domain Model Capture's aggregate boundary is unconfirmed.** Candidate: one element, or the
-   whole board — this decides how the reinstatement re-validation rule (item 3 above) actually
+8. **Domain Model Capture's aggregate boundary is unconfirmed.** Candidate: one Building Block, or
+   the whole board — this decides how the reinstatement re-validation rule (item 3 above) actually
    gets enforced. Needs a Design-Level pass. See `bounded-contexts/domain-model-capture/canvas.md`.
 
 9. **Derived Artifact Generation: on-demand vs. materialized export.** Whether F10's export is
@@ -111,6 +111,18 @@ here.
     Process Modelling or Design-Level EventStorming is the natural next step. Question & Hot Spot
     Resolution is the most fully-specified candidate to storm first (its three policies are
     already named precisely).
+
+12. **Umbrella term for "any of the four kinds" settled: Building Block.** Resolved live in this
+    session, worth recording because of how it went: this session's own first drafts used
+    "element" as the generic umbrella — an accidental reintroduction of the PRD term the storm had
+    already rejected. The participant caught it, proposed alternatives ("Sticky Note," "Building
+    Block," "Notation," "Concept," "Grammar"), and "Building Block" was confirmed after checking
+    Alberto Brandolini's own *Introducing EventStorming* (ch. 19, "Building Blocks – 20%"; ch. 14,
+    "Process Modeling Building Blocks – 90%"), which uses it for exactly this. "Sticky Note" was
+    considered and not used — it's the same umbrella the board had already rejected
+    (`boards/eventstormer-big-picture.md:166`) as misleading for typed artifacts with different
+    responsibilities; that earlier call stands, unreversed. See
+    `bounded-contexts/domain-model-capture/ubiquitous-language.md` for the confirmed term.
 
 ## Deliberate deviations, recorded rather than silent
 

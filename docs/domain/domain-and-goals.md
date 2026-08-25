@@ -71,8 +71,8 @@ deeper EventStorming formats (Process Modelling, Design-Level).
 - **Who** — Domain expert / author (`+`)
   - **How** — narrates their business, in their own words, without needing to learn the method's
     vocabulary or notation
-    - **What** — conversational elicitation: the facilitator proposes typed elements, the expert
-      accepts, edits, or rejects each one
+    - **What** — conversational elicitation: the facilitator proposes typed Building Blocks, the
+      expert accepts, edits, or rejects each one
 - **Who** — Facilitator, played by an AI (`+`) — already named as an actor on the board `[storm]`,
   not a new one; the initiative reframes it as the actor whose capability is the product
   - **How** — performs the asymmetric facilitation the method requires: lenient on the human's

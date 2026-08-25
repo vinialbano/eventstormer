@@ -21,7 +21,7 @@ derived_from:
 | Term | Meaning in this context | Code name(s) / source (`file:line`) | Flags |
 |---|---|---|---|
 | Facilitator | The AI actor that initiates Question Asked and Proposal Made, running on the AI Model Provider | UNCONFIRMED | role |
-| Proposal | The facilitator's suggestion of an element of some kind (Event/Actor/System/Hot Spot), not yet accepted — its own artifact until accepted | UNCONFIRMED | — |
+| Proposal | The facilitator's suggestion of a Building Block of some kind (Event/Actor/System/Hot Spot), not yet accepted — its own artifact until accepted | UNCONFIRMED | — |
 | Contribution | UNCONFIRMED precise distinction from Proposal — the board treats both as pre-acceptance artifacts; needs a scenario to separate them if they are in fact distinct | UNCONFIRMED | homonym? |
 | Question Asked | A generic event covering every facilitator question, regardless of what it's asking about | UNCONFIRMED | — |
 

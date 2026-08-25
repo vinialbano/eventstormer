@@ -18,14 +18,15 @@ derived_from:
 
 | Term | Meaning in this context | Code name(s) / source (`file:line`) | Flags |
 |---|---|---|---|
-| Event | One of four element kinds on the board; a past-tense domain fact | UNCONFIRMED | `[confirmed]` this session as the correct term (not "Element"/"Node") |
-| Actor | One of four element kinds; a person or role | UNCONFIRMED | `[confirmed]` |
-| System | One of four element kinds; an external or supporting system | UNCONFIRMED | `[confirmed]` |
-| Hot Spot | One of four element kinds; a flagged gap or disagreement — see Question & Hot Spot Resolution's own language for the policies that create one | UNCONFIRMED | `[confirmed]` |
-| Reworded | The post-creation correction of an element's label; the element's identity (its id) does not change | UNCONFIRMED | `[confirmed]` — supersedes "Rename" (PRD's own term, rejected as not describing the dynamic) |
-| Withdrawn | An element's connections are severed | board `[storm]` | — |
-| Reinstated | A withdrawn element returns; its prior relations are re-validated against the board's current state | board `[storm]` | consistency-boundary candidate — see canvas.md |
-| Element / Node | PRD implementation vocabulary — **not** this context's language; superseded by the kind-specific names above | PRD F01 (implementation term) | `leaked` |
+| Building Block | The umbrella term for "one of the four kinds, regardless of which" — Event, Actor, System, or Hot Spot. Not this session's invention: Alberto Brandolini's own chapter title for this exact vocabulary, at both the Big Picture ("Building Blocks – 20%") and Process Modeling ("Process Modeling Building Blocks – 90%") zoom levels, *Introducing EventStorming* | UNCONFIRMED | `[glossary]`, `[confirmed]` — revision 2026-08-25: was "element" (this session's own draft usage, itself an accidental reintroduction of the rejected PRD term) → "Building Block" |
+| Event | One of four Building Block kinds on the board; a past-tense domain fact | UNCONFIRMED | `[confirmed]` this session as the correct term (not "Element"/"Node") |
+| Actor | One of four Building Block kinds; a person or role | UNCONFIRMED | `[confirmed]` |
+| System | One of four Building Block kinds; an external or supporting system | UNCONFIRMED | `[confirmed]` |
+| Hot Spot | One of four Building Block kinds; a flagged gap or disagreement — see Question & Hot Spot Resolution's own language for the policies that create one | UNCONFIRMED | `[confirmed]` |
+| Reworded | The post-creation correction of a Building Block's label; its identity (its id) does not change | UNCONFIRMED | `[confirmed]` — supersedes "Rename" (PRD's own term, rejected as not describing the dynamic) |
+| Withdrawn | A Building Block's connections are severed | board `[storm]` | — |
+| Reinstated | A withdrawn Building Block returns; its prior relations are re-validated against the board's current state | board `[storm]` | consistency-boundary candidate — see canvas.md |
+| Element / Node | PRD implementation vocabulary — **not** this context's language; superseded by "Building Block" (umbrella) and the kind-specific names above | PRD F01 (implementation term) | `leaked` |
 | Rename | PRD's operation-log term — **not** this context's language; superseded by "Reworded" | PRD F01 (`rename` operation kind) | `leaked` |
 
 ## Behaviour (scenarios)
@@ -38,7 +39,7 @@ derived_from:
 
 | Word | Conflicting meanings / synonyms | Resolution |
 |---|---|---|
-| Element/Node vs. Event/Actor/System/Hot Spot | PRD's generic implementation term vs. this context's kind-specific business language | Kind-specific names are this context's confirmed language; "Element"/"Node" is implementation jargon, kept out |
+| Element/Node vs. Building Block (umbrella) / Event/Actor/System/Hot Spot (kind-specific) | PRD's generic implementation term vs. this context's confirmed business language | "Building Block" (Brandolini's own term) is the confirmed umbrella; "Element"/"Node" is implementation jargon, kept out |
 | Rename vs. Reworded | PRD's operation-log term vs. this context's business language | "Reworded" confirmed — the PRD's own word doesn't describe the dynamic (identity persists) even though it's the PRD's own term |
 
 <!-- BEGIN lineage:index -->

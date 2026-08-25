@@ -15,9 +15,16 @@ behind a port in a capability slice.
 
 ## Domain invariants — code must preserve these
 
-- **Node kinds are a discriminated union, not a generic sticky.** Domain event, actor, system,
-  hot spot. Each kind permits different relations and markers. A pivotal hot spot, or an actor
-  with a predecessor, must be *unrepresentable* — not merely rejected at runtime.
+> Vocabulary note: the confirmed domain language (`docs/domain/`) calls these **Building Blocks**
+> — Brandolini's own term (*Introducing EventStorming*, ch. 19) for "one of the four kinds,
+> regardless of which." Not "Node," not "Element," not "sticky" — those are rejected, either as
+> PRD implementation jargon or as a misleading physical-note metaphor for typed artifacts with
+> different responsibilities. See `docs/domain/bounded-contexts/domain-model-capture/` for the
+> full rationale; this file restates only what code must preserve.
+
+- **Building Block kinds are a discriminated union.** Domain event, actor, system, hot spot. Each
+  kind permits different relations and markers. A pivotal hot spot, or an actor with a
+  predecessor, must be *unrepresentable* — not merely rejected at runtime.
 - **Two relations, told apart by their source kind:**
   `follows` (event → event, cycle-checked) and `causedBy` (actor|system → event).
   Actors and systems are roots; they never occupy a timeline position.
@@ -25,13 +32,14 @@ behind a port in a capability slice.
   proposer and the human who accepted.
 - **The log is append-only.** Operations are never edited in place. Every operation carries a
   schema version from the first commit — a v1 operation must stay replayable forever.
-- **Duplicates and contradictions are preserved.** Never merge two nodes, never dedupe by label.
-  They are discovery data.
+- **Duplicates and contradictions are preserved.** Never merge two Building Blocks, never dedupe by
+  label. They are discovery data.
 - **No language model in any projection path.** Derived artifacts are rendered from templates over
   the model. Determinism is the product's central claim; a model call here breaks it.
-- **Rendered references vs quoted evidence.** A rendered reference resolves a node id and always
-  shows the current label. Quoted evidence is frozen verbatim and must *not* follow a rename.
-  A label typed into free text is quoted evidence and diverges by design.
+- **Rendered references vs quoted evidence.** A rendered reference resolves a Building Block's id
+  and always shows the current label. Quoted evidence is frozen verbatim and must *not* follow a
+  **Reworded** (the confirmed term — not "rename"; the id never changes, only the articulation
+  does). A label typed into free text is quoted evidence and diverges by design.
 - **Position is derived, never authored.** No coordinate is ever stored. If you are writing a
   pixel value into the model, stop.
 
