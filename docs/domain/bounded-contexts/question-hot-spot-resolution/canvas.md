@@ -32,15 +32,15 @@ derived_from:
 - **Language boundary:** the three named triggers — Absent Stakeholder Named, Knowledge Gap
   Revealed, Session Closed-with-unresolved-Question — and "resolved" / "unresolved" as this
   context's own vocabulary for a question's fate. Distinct from Domain Model Capture's generic
-  element-lifecycle vocabulary (a Hot Spot element, once raised, follows Capture's lifecycle, not
-  this context's).
+  Building Block lifecycle vocabulary (a Hot Spot Building Block, once raised, follows Capture's
+  lifecycle, not this context's).
 - **Capability boundary:** detect-and-track-gaps (noun–verb). Confirmed this session as its own
   context rather than folded into Facilitation or Capture: no standalone product value, but a
   genuinely distinct job (noticing what's *missing*, not eliciting or storing what's present) with
   its own pace — a question can stay open across many proposal/accept cycles.
 - **Consistency boundary:** UNCONFIRMED — likely candidate: a question's resolved/unresolved state
   at the moment of Session Closed. Needs a Process Modelling pass.
-- **Does not own:** the Hot Spot element's own storage/lifecycle once raised (Domain Model
+- **Does not own:** the Hot Spot Building Block's own storage/lifecycle once raised (Domain Model
   Capture — this context only issues the "raise" command); the conversation that produces the
   triggering facts (Session Facilitation).
 
@@ -53,7 +53,7 @@ derived_from:
 
 | Command | Actor / source | Handled by | Produces event(s) | Notes |
 |---|---|---|---|---|
-| Raise Hot Spot | This context (policy-triggered) | Domain Model Capture | Element created (Hot Spot kind) | UNCONFIRMED exact command name/shape |
+| Raise Hot Spot | This context (policy-triggered) | Domain Model Capture | Building Block created (Hot Spot kind) | UNCONFIRMED exact command name/shape |
 
 ### Events in
 
@@ -108,7 +108,7 @@ flowchart LR
 ```
 
 - **Upstream (this context depends on):** Domain Model Capture (Conformist — accepts the generic
-  element contract as-is to issue Raise Hot Spot) and Session Facilitation (Conformist — accepts
+  Building Block contract as-is to issue Raise Hot Spot) and Session Facilitation (Conformist — accepts
   the curated event set as-is; no leverage to shape Facilitation's design).
 - **Downstream (consumers of this context):** none identified this session.
 - **Published language / contracts:** none of its own yet identified — it is a pure consumer plus

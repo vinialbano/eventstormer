@@ -22,10 +22,10 @@ that was *not* confirmed, or that turned out to conflict with the discovered mod
 separately below and in `open-questions.md`).
 
 **Deliberate granularity note.** Big Picture is normally coarse — breadth over depth. This board is
-finer than that default: every element kind (Event / Actor / System / Hot Spot) got its own name
+finer than that default: every Building Block kind (Domain Event / Actor / System / Hot Spot) got its own name
 for every lifecycle stage, rather than collapsing them under a generic term. This was a deliberate
 choice by the participant, made explicitly when asked, not a drift into Process-Modelling depth —
-no Command, Policy, Read Model or Aggregate was added structurally; only Event/Actor/System/Hot
+no Command, Policy, Read Model or Aggregate was added structurally; only Domain Event/Actor/System/Hot
 Spot are used, per this format's own legend.
 
 ---
@@ -47,18 +47,18 @@ Spot are used, per this format's own legend.
 
 5. **Contribution Made** `[glossary]` — was "Transcript Segment Submitted"; renamed off a named
    smell in this skill's own catalog ("Data-availability pseudo-events... `Form Submitted`").
-6. **Proposal Made** `[glossary]` — the facilitator proposes an element of some kind. Not yet an
-   Event/Actor/System/Hot Spot; a proposal is its own artifact (PRD F04) until accepted.
+6. **Proposal Made** `[glossary]` — the facilitator proposes a Building Block of some kind. Not yet a
+   Domain Event/Actor/System/Hot Spot; a proposal is its own artifact (PRD F04) until accepted.
 7. **Contribution Attributed To Another Format** `[glossary]` — was "Facilitator Deferred To
    Deeper Session." Sibling outcome to Proposal Made, not a state of a question: the content
    described a Command, Policy, Read Model or Aggregate, which belongs to Process Modelling or
    Design-Level rather than this format's grammar.
 8. **Proposal Edited** `[glossary]` — repeatable, zero or more times, before disposition. Distinct
-   from Element Reworded below: this changes a *pending proposal* (including its proposed kind);
-   Reworded changes an *existing* element's label only, kind fixed.
+   from Building Block Reworded below: this changes a *pending proposal* (including its proposed kind);
+   Reworded changes an *existing* Building Block's label only, kind fixed.
 9. **Proposal Accepted** `[glossary]`
 10. **Proposal Rejected** `[glossary]`
-11. **Event Captured** `[glossary]` — consequence of Proposal Accepted, when the accepted kind is
+11. **Domain Event Captured** `[glossary]` — consequence of Proposal Accepted, when the accepted kind is
     a Domain Event.
 12. **Actor Identified** `[glossary]` — same, for Actor.
 13. **System Identified** `[glossary]` — same, for System.
@@ -70,19 +70,19 @@ Spot are used, per this format's own legend.
 
 | Kind | Forward | Reverse |
 |---|---|---|
-| Event | **Event Sequenced** `[glossary]` — a `follows` edge to another event | **Event Unsequenced** `[glossary]` |
-| Actor | **Actor Linked To The Event It Caused** `[glossary]` — a `causedBy` edge | **Actor Unlinked** `[glossary]` |
-| System | **System Linked To The Event It Caused** `[glossary]` | **System Unlinked** `[glossary]` |
+| Domain Event | **Domain Event Sequenced** `[glossary]` — a `follows` edge to another event | **Domain Event Unsequenced** `[glossary]` |
+| Actor | **Actor Linked To The Domain Event It Caused** `[glossary]` — a `causedBy` edge | **Actor Unlinked** `[glossary]` |
+| System | **System Linked To The Domain Event It Caused** `[glossary]` | **System Unlinked** `[glossary]` |
 
-Position itself is never authored, only derived from these relations (PRD F02: "A node's place on
-screen is computed from its relations"). Hot Spots are never placed — no positioning pair exists
+Position itself is never authored, only derived from these relations (PRD F02: "A building block's
+place on screen is computed from its relations"). Hot Spots are never placed — no positioning pair exists
 for that kind.
 
-### Editing existing elements
+### Editing existing Building Blocks
 
 | Kind | Reworded | Withdrawn | Reinstated |
 |---|---|---|---|
-| Event | Event Reworded | Event Withdrawn | Event Reinstated |
+| Domain Event | Domain Event Reworded | Domain Event Withdrawn | Domain Event Reinstated |
 | Actor | Actor Reworded | Actor Withdrawn | Actor Reinstated |
 | System | System Reworded | System Withdrawn | System Reinstated |
 | Hot Spot | Hot Spot Reworded | Hot Spot Withdrawn | Hot Spot Reinstated |
@@ -90,15 +90,15 @@ for that kind.
 All twelve `[glossary]`. Deliberately kind-specific rather than a generic "Element ___" — see
 "Language" below for why.
 
-**Withdrawn, precisely** `[storm]`: withdrawing an Event/Actor/System/Hot Spot severs its
+**Withdrawn, precisely** `[storm]`: withdrawing a Domain Event/Actor/System/Hot Spot severs its
 connections — it is no longer part of the board. History is kept so it can be reinstated later,
 but reinstating does not blindly restore the old position: the board may have moved on while the
-element was gone (reordering, new elements, a `follows` chain that would now cycle), so
+Building Block was gone (reordering, new Building Blocks, a `follows` chain that would now cycle), so
 reinstatement needs to re-validate the old relations against the board's current state before
 reapplying them. **The PRD defines no resolution rule for this conflict case** — see
 `open-questions.md`.
 
-- **Event Marked Pivotal** `[glossary]` / **Event Unmarked Pivotal** `[glossary]` — Event-only;
+- **Domain Event Marked Pivotal** `[glossary]` / **Domain Event Unmarked Pivotal** `[glossary]` — Domain Event only;
   marks are provisional and removable at any time.
 
 ### Questions and their resolutions
@@ -163,7 +163,7 @@ per this skill's own rule that a session record must show verified claims, not j
 | Stakeholder Check Answered | Not its own wrapper event — its two real outcomes (Complete Perspective Confirmed / Absent Stakeholder Named) already exist and carry the actual consequences. |
 | Question Answered (plain) | No distinct downstream consequence found; collapses into Contribution Made referencing the question it resolved. |
 | Element Proposed By Facilitator / Element Reworded / etc. (the original "Element" umbrella) | "Element" is not EventStorming vocabulary — it's this PRD's own implementation term. Replaced by kind-specific names throughout (see Language). |
-| "Sticky" as the umbrella term | Considered and reversed by the participant: these are typed artifacts with different responsibilities (Event, Actor, System, Hot Spot, and later Command/Aggregate); a physical-note metaphor for the whole set is misleading for this particular business line. |
+| "Sticky" as the umbrella term | Considered and reversed by the participant: these are typed artifacts with different responsibilities (Domain Event, Actor, System, Hot Spot, and later Command/Aggregate); a physical-note metaphor for the whole set is misleading for this particular business line. |
 
 ---
 
@@ -197,11 +197,11 @@ Confirmed complete by the participant — no further actor or system named.
 ## Language (divergences, not a glossary — see `open-questions.md` for the full findings)
 
 - **"Element"/"Node" vs. kind-specific naming** — the PRD's implementation vocabulary ("node
-  record," "element") is not EventStorming's vocabulary. This board uses Event/Actor/System/Hot
+  record," "element") is not EventStorming's vocabulary. This board uses Domain Event/Actor/System/Hot
   Spot throughout instead, including for lifecycle stages the PRD itself describes generically.
 - **"Rename" vs. "Reworded"** — the PRD's own operation-log kind is literally `rename`, but this
   board uses "Reworded" for the post-creation label correction, because the underlying identity
-  (the node id) never changes — only the articulation of an already-recognized fact does. The
+  (the id) never changes — only the articulation of an already-recognized fact does. The
   PRD's own word doesn't describe the dynamic even though it's the PRD's own term.
 - **"Recorded" vs. "Raised"/"Named"/"Flagged"** — the PRD's F08 prose uses "records"/"is recorded,"
   which reads as a persistence-mechanics word (a caught smell). This board uses the more active

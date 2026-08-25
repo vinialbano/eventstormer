@@ -22,7 +22,7 @@ derived_from:
 **Status:** draft • **Provenance:** `[confirmed]` (boundary) / `UNCONFIRMED` (event-stormed model)
 
 - **Purpose:** Conduct the AI-facilitated conversation — elicit the expert's narration, propose
-  typed elements from it, and apply the method's required asymmetry (lenient on the human's
+  typed Building Blocks from it, and apply the method's required asymmetry (lenient on the human's
   phrasing, strict on names the machine supplies), across a session's lifecycle (start, scope,
   close).
 - **Subdomain type:** Core
@@ -34,14 +34,14 @@ derived_from:
 ## Boundary rationale
 
 - **Language boundary:** "Proposal" and "Contribution" (Facilitation's own pre-acceptance
-  artifacts — not yet an Event/Actor/System/Hot Spot, per the board); asymmetric leniency as a
+  artifacts — not yet a Domain Event/Actor/System/Hot Spot, per the board); asymmetric leniency as a
   named behavior, not an implementation detail.
 - **Capability boundary:** conduct-conversation-and-propose (noun–verb: session facilitation).
   Passes the single-name test — one capability, no "and" hiding a second context.
 - **Consistency boundary:** UNCONFIRMED — likely candidate: a session's lifecycle state
   (open/scoped/closed) must stay consistent within one session. Needs a Design-Level pass to
   confirm any aggregate boundary.
-- **Does not own:** element storage/lifecycle (Domain Model Capture); deciding when to raise a Hot
+- **Does not own:** Building Block storage/lifecycle (Domain Model Capture); deciding when to raise a Hot
   Spot (Question & Hot Spot Resolution); projecting the model into readable output (Derived
   Artifact Generation).
 

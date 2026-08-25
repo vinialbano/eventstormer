@@ -4,9 +4,9 @@
 
 Between a business expert who knows how the work actually happens and an engineering team that has to build it, there are today two human translators. One runs the workshop, because the expert does not know EventStorming. The other turns the resulting wall of stickies into technical documentation, because a board is not something a developer can build from. Both are scarce, and when either is unavailable the knowledge stays in someone's head.
 
-EventStormer removes the second translator entirely and replaces the first with an AI facilitator. A domain expert describes their business, out loud or by typing; the facilitator proposes properly-formed elements and the expert accepts, edits, or rejects each one. What they build is not a picture of the domain — it is the domain model itself, a typed graph of records with stable identities, and every artifact anyone reads afterwards is derived from it.
+EventStormer removes the second translator entirely and replaces the first with an AI facilitator. A domain expert describes their business, out loud or by typing; the facilitator proposes properly-formed building blocks and the expert accepts, edits, or rejects each one. What they build is not a picture of the domain — it is the domain model itself, a typed graph of building blocks with stable identities, and every artifact anyone reads afterwards is derived from it.
 
-That is what makes the second half work. Engineering does not receive an export that immediately begins to age; it consumes a projection of a living model. When someone renames an event, adds detail, or corrects how a step really works, every derived artifact follows in the same instant, because there is no second artifact to update. Documentation stops rotting because there was never supposed to be a separate document.
+That is what makes the second half work. Engineering does not receive an export that immediately begins to age; it consumes a projection of a living model. When someone rewords an event, adds detail, or corrects how a step really works, every derived artifact follows in the same instant, because there is no second artifact to update. Documentation stops rotting because there was never supposed to be a separate document.
 
 v1 runs one Big Picture session end to end, with the expert typing rather than speaking, and produces a model plus a readable account of it. Voice arrives as on-device transcription — the audio never leaving the machine is the point, since the input is someone describing their company's operations. The deeper formats — Process Modelling and Design-Level, where engineering does most of its work and where the rot problem bites hardest — are the product's direction, and the model is deliberately shaped to receive them.
 
@@ -25,13 +25,13 @@ v1 runs one Big Picture session end to end, with the expert typing rather than s
 - That translation is where the expert's language gets lost, because the translator is rarely the person who heard them say it.
 
 **The moment there are two artifacts, they drift.**
-- The board lives in one tool and the documentation in another. Rename an event and only one of them knows.
+- The board lives in one tool and the documentation in another. Reword an event and only one of them knows.
 - This is true today with a whiteboard and a wiki, with no AI anywhere near it — which is why it is not a prompting problem and cannot be fixed with a better prompt.
 - Confidence in the documentation decays with every change, which is backwards: it should rise as the model matures.
 
 **The decay accelerates exactly where engineering needs the model most.**
 - Big Picture is comparatively stable. Process Modelling and Design-Level are where commands, policies, read models and aggregates appear, and where the model changes constantly as understanding sharpens.
-- Every rename, every added command, every correction to how something happens invalidates documentation that nothing automatically updates.
+- Every rewording, every added command, every correction to how something happens invalidates documentation that nothing automatically updates.
 - The result is a familiar failure: a modelling exercise that produced real insight, and documentation nobody trusts six weeks later.
 
 **Facilitation itself goes wrong in a predictable way.**
@@ -43,8 +43,8 @@ v1 runs one Big Picture session end to end, with the expert typing rather than s
 
 - **Against the missing facilitator:** the AI performs the translation from business language into the method's grammar, so the session can happen with the expert and nobody else.
 - **Against the missing translator:** there is no translation step, because the board and the documentation are the same object viewed two ways. What engineering reads is a projection of the model the expert built.
-- **Against drift:** one model, stable ids, derived artifacts. A rename propagates by construction rather than by discipline, because there is one record and no second copy to forget.
-- **Against decay at depth:** the model is a typed graph from the first session, so the deeper formats extend it rather than replacing it. The elements Process Modelling adds are new node and relation kinds, not a new document.
+- **Against drift:** one model, stable ids, derived artifacts. A rewording propagates by construction rather than by discipline, because there is one record and no second copy to forget.
+- **Against decay at depth:** the model is a typed graph from the first session, so the deeper formats extend it rather than replacing it. The building blocks Process Modelling adds are new building block and relation kinds, not a new document.
 - **Against bad facilitation:** the asymmetry is built into the harness and measured by its eval suite, rather than hoped for in a prompt.
 
 ## 3. Target audience
@@ -86,20 +86,20 @@ Both work from the same model and never from copies of it. Neither is expected t
 
 | Objective | Metric | Nature |
 |---|---|---|
-| Expert produces a model alone | `[ASSUMED]` — a domain expert with no EventStorming training completes a session without asking what an element kind means. No target was elicited. | Observation |
+| Expert produces a model alone | `[ASSUMED]` — a domain expert with no EventStorming training completes a session without asking what a building block kind means. No target was elicited. | Observation |
 | No translation step | No artifact has an editable path; every one is generated from the model. | By construction |
-| Artifacts stay current | After a rename, every **rendered reference** in every artifact carries the new label, and every **quoted passage** is byte-identical to what it was before. | Observation |
+| Artifacts stay current | After a rewording, every **rendered reference** in every artifact carries the new label, and every **quoted passage** is byte-identical to what it was before. | Observation |
 | Human authority | Every operation in the log carries an author, and every facilitator-originated operation records both its proposer and the human who accepted it. A silent auto-apply is distinguishable in the log from an accepted one. | Observation |
-| Format fidelity | No element outside the running format's legend exists in any model. | By construction |
-| Extensibility | Adding a format adds node and relation kinds without altering existing ones. | Observation |
-| Classifier fidelity | The facilitator does not absorb a deeper-format contribution as an in-format element — measured by the eval, not by the type system, because the type system cannot see it. | Observation |
+| Format fidelity | No building block outside the running format's legend exists in any model. | By construction |
+| Extensibility | Adding a format adds building block and relation kinds without altering existing ones. | Observation |
+| Classifier fidelity | The facilitator does not absorb a deeper-format contribution as an in-format building block — measured by the eval, not by the type system, because the type system cannot see it. | Observation |
 | Facilitator quality | A fixture-based eval reports per-assertion results, published in the README. `[ASSUMED]` — no target was elicited. | Observation |
 
 ## 5. User stories
 
 ### F01. Domain model, operation log and persistence
-- As the system, I want every node to have a stable id independent of its label so that renaming it never breaks a reference
-- As the system, I want each node kind to permit only the relations that make sense for it so that a hot spot can never be marked pivotal or given a predecessor
+- As the system, I want every building block to have a stable id independent of its label so that rewording it never breaks a reference
+- As the system, I want each building block kind to permit only the relations that make sense for it so that a hot spot can never be marked pivotal or given a predecessor
 - As the system, I want an event to have several successors so that a business with two possible outcomes can be modelled honestly
 - As the system, I want every operation to carry an author so that the model can show whose words are on the board
 - As the system, I want the session to survive being closed so that a model is something you return to rather than something you finish in one sitting
@@ -118,7 +118,7 @@ Both work from the same model and never from copies of it. Neither is expected t
 
 ### F04. AI facilitator
 - As a domain expert, I want to be asked what business we are mapping so that the session starts the way a facilitated one would
-- As a domain expert, I want what I said turned into properly-formed elements so that I never have to learn the notation
+- As a domain expert, I want what I said turned into properly-formed building blocks so that I never have to learn the notation
 - As a domain expert, I want my own wording kept wherever it is usable so that the model sounds like my business
 - As a domain expert, I want to be told when I have named a whole phase rather than something that happened so that the detail underneath does not go missing
 - As a domain expert, I want to be told when what I described belongs to a deeper kind of session so that I understand why it is not on the board
@@ -126,12 +126,12 @@ Both work from the same model and never from copies of it. Neither is expected t
 
 ### F05. Proposal review
 - As a domain expert, I want to see what the facilitator wants to add before it is added so that the model is never something that happened to me
-- As a domain expert, I want to edit a proposed element's wording before accepting it so that the model uses my words
+- As a domain expert, I want to edit a proposed building block's wording before accepting it so that the model uses my words
 - As a domain expert, I want to reject a proposal in one action so that dismissing a wrong guess is cheaper than arguing with it
 
 ### F06. Direct model editing
-- As a domain expert, I want to rename an element so that I can fix wording the facilitator got almost right
-- As a domain expert, I want to archive an element that was wrong so that the mistake stops appearing without being erased from the record
+- As a domain expert, I want to reword a building block so that I can fix wording the facilitator got almost right
+- As a domain expert, I want to withdraw a building block that was wrong so that the mistake stops appearing without being erased from the record
 - As a domain expert, I want to say what follows what, and who caused what, so that the model matches reality
 - As a domain expert, I want to place and unplace things so that ordering is mine to decide
 
@@ -142,7 +142,7 @@ Both work from the same model and never from copies of it. Neither is expected t
 ### F08. Hot spots
 - As a domain expert, I want to flag something painful, disputed, or unknown so that the model records the problems and not just the process
 - As a domain expert, I want a hot spot attached to the thing it is about so that the context is not lost
-- As a domain expert, I want people who are not here but should be to be recorded so that the model says whose view is missing
+- As a domain expert, I want people who are not here but should be to be named so that the model says whose view is missing
 
 ### F09. Stakeholder check and chosen problem
 - As a domain expert, I want to be asked whether anyone else would tell this differently so that the model knows how complete it is
@@ -188,26 +188,26 @@ Both work from the same model and never from copies of it. Neither is expected t
 ### F01. Domain model, operation log and persistence
 
 **Provides**
-- Node record — id, kind, label, archived flag, and for events the pivotal marker and placement state (used by F02, F06, F08)
+- Building block record — id, kind, label, withdrawn flag, and for events the pivotal marker and placement state (used by F02, F06, F08)
 - Relations — `follows` edges between events, and `causedBy` edges from an actor or system to an event (used by F02, F06)
-- Board snapshot — all node records, all relations, hot spot annotations, the session's business scope, the stakeholder answer, and the chosen problem where one exists (used by F04, F10, F12)
+- Board snapshot — all building block records, all relations, hot spot annotations, the session's business scope, the stakeholder answer, and the chosen problem where one exists (used by F04, F10, F12)
 - Session identity — session id and its resumable session URL (used by F02, F03)
 - Operation log — appended operations, each with author, timestamp, kind and target (used by F10, F14)
 
 **Capabilities**
-- Node kinds for Big Picture are exactly its legend: **domain event, actor, system, hot spot**. There is no representation for a command, policy, read model or aggregate; those arrive with F12 and F13 as new kinds.
+- Building block kinds for Big Picture are exactly its legend: **domain event, actor, system, hot spot**. There is no representation for a command, policy, read model or aggregate; those arrive with F12 and F13 as new kinds.
 - **Kinds are not interchangeable and the model is a discriminated union, not a generic sticky.** An event carries a pivotal marker, a placement state, and relations; an actor and a system carry neither placement nor pivotal marker; a hot spot carries an annotation target and nothing else. A pivotal hot spot or an actor with a predecessor is unrepresentable rather than merely discouraged.
 - **Two relations, distinguished by their source kind, so no discriminator field is needed:**
   - `follows` — event to event. The temporal axis. Cycle-checked.
   - `causedBy` — actor or system to event. The causation axis. Its sources never have incoming edges, so it cannot participate in a cycle.
   - An event with no `causedBy` edge is one the business's own systems produced. Absence is the representation; no special marker exists.
-- A hot spot annotates any node other than another hot spot, or nothing at all. **Annotating nothing is a valid permanent state, not a waiting room.**
+- A hot spot annotates any building block other than another hot spot, or nothing at all. **Annotating nothing is a valid permanent state, not a waiting room.**
 - Placement means different things per kind: an event is placed when it has a position in the sequence; an actor or system is placed when it causes an event; a hot spot is never placed. The backlog holds what is not yet placed and is a permanent surface, not a low-confidence fallback.
-- **There is no re-type operation.** An element filed under the wrong kind was never that kind; it is archived and a new element created. Archiving preserves the id so references resolve and the misreading stays in the record.
-- Every mutation is an operation — create, rename, relate, unrelate, place, unplace, mark pivotal, archive, set scope, set stakeholder answer, set chosen problem — appended to a log and never edited in place.
+- **There is no re-type operation.** A building block filed under the wrong kind was never that kind; it is withdrawn and a new building block created. Withdrawing preserves the id so references resolve and the misreading stays in the record.
+- Every mutation is an operation — create, reword, relate, unrelate, place, unplace, mark pivotal, withdraw, reinstate, set scope, set stakeholder answer, set chosen problem — appended to a log and never edited in place.
 - **Every operation carries an author.** Who proposed it and who accepted it are both recorded.
 - Every operation is validated against the schema for its target's kind before it is applied. A failing operation is rejected and the model is unchanged.
-- Duplicates, contradictions and granularity mismatches are preserved. The system never merges two nodes.
+- Duplicates, contradictions and granularity mismatches are preserved. The system never merges two building blocks.
 - The log is persisted. A session survives the process that created it and is reopened by replaying its log. Sessions are addressable and resumable by URL.
 
 **Experience**
@@ -215,7 +215,7 @@ Invisible to both users. Its correctness is what makes F06 and F10 feel instant 
 
 **Error handling**
 - Operation fails schema validation → rejected, model unchanged, caller told which field failed. Never partially applied.
-- Operation targets a node id that does not exist, or a kind that does not permit it → rejected as a no-op with an explicit message.
+- Operation targets a building block id that does not exist, or a kind that does not permit it → rejected as a no-op with an explicit message.
 - `follows` edge would create a cycle → rejected with the offending path named.
 - Hot spot annotating a hot spot → rejected by the schema; the relation does not exist for that kind.
 - Unknown or corrupt session on resume → the user is offered a new session rather than an error page, and the corrupt log is preserved rather than overwritten.
@@ -224,24 +224,24 @@ Invisible to both users. Its correctness is what makes F06 and F10 feel instant 
 ### F02. Backlog and timeline board
 
 **Consumes**
-- Node record — id, kind, label, archived flag, pivotal marker, placement state (from F01)
+- Building block record — id, kind, label, withdrawn flag, pivotal marker, placement state (from F01)
 - Relations — `follows` edges between events, `causedBy` edges from actors or systems to events (from F01)
 - Session identity — session id and resumable session URL (from F01)
 
 **Capabilities**
-- Two surfaces, both always visible: a **backlog** of unplaced elements and a **timeline** of placed ones.
-- **The timeline is events only, left to right, following `follows` edges.** Elements are not grouped by kind; kind is carried by colour.
+- Two surfaces, both always visible: a **backlog** of unplaced building blocks and a **timeline** of placed ones.
+- **The timeline is events only, left to right, following `follows` edges.** Building blocks are not grouped by kind; kind is carried by colour.
 - **Actors and systems render beneath the event they caused**, on the vertical axis, never as a timeline position of their own.
 - Where an event has several successors the flow visibly splits and both branches are readable.
-- Hot spots render as callouts on the node they annotate, and in a visible list when they annotate nothing.
+- Hot spots render as callouts on the building block they annotate, and in a visible list when they annotate nothing.
 - Colours follow EventStorming convention: orange events, small yellow actors, pink systems, red hot spots. Kinds are also labelled in plain language.
-- Archived elements are hidden by default and can be revealed.
+- Withdrawn building blocks are hidden by default and can be revealed.
 - The board updates immediately on every applied operation, whatever its source.
-- **Position is derived, never authored.** A node's place on screen is computed from its relations. There is no coordinate a person can set, no node they can drag to a place of their own choosing, and the model stores no pixel value.
+- **Position is derived, never authored.** A building block's place on screen is computed from its relations. There is no coordinate a person can set, no building block they can drag to a place of their own choosing, and the model stores no pixel value.
 - Panning and zooming the *view* is navigation, not positioning, and is expected — a board of any size outgrows a single screen. It changes nothing in the model.
 
 **Experience**
-A resumed session opens on its existing model. A new one opens with the facilitator's scope question and an otherwise empty board. Accepted elements arrive in the backlog; as they are placed they move to the timeline. Both surfaces stay visible so the person can always see what is unplaced.
+A resumed session opens on its existing model. A new one opens with the facilitator's scope question and an otherwise empty board. Accepted building blocks arrive in the backlog; as they are placed they move to the timeline. Both surfaces stay visible so the person can always see what is unplaced.
 
 ### F03. Text capture
 
@@ -254,7 +254,7 @@ A resumed session opens on its existing model. A new one opens with the facilita
 **Capabilities**
 - The person writes what they want to say and submits it; each submission becomes one transcript segment.
 - Every segment carries its speaker and a source marker. **The marker exists in v1 even though every segment is typed**, so that adding a voice path changes nothing downstream — the facilitator, the log and the artifacts are all indifferent to how a segment was produced.
-- Segments are timestamped, so an element can be traced back to what produced it.
+- Segments are timestamped, so a building block can be traced back to what produced it.
 - Submitting is deliberately per-contribution rather than per-document: the person says one thing, the facilitator responds, and the loop is short.
 - **v1 has no audio path at all.** Voice is on-device transcription and arrives with that feature.
 
@@ -269,10 +269,10 @@ A text field sits below the board with a submit control. Submitting clears it an
 
 **Consumes**
 - Transcript segment — text, timestamp, spoken-or-typed, speaker (from F03)
-- Board snapshot — all node records, relations, hot spot annotations, business scope, stakeholder answer, chosen problem (from F01)
+- Board snapshot — all building block records, relations, hot spot annotations, business scope, stakeholder answer, chosen problem (from F01)
 
 **Provides**
-- Proposed operation — operation kind, target node id where applicable, proposed label, proposed node kind, proposed relations, and a short rationale (used by F05, F07, F08, F11, F12)
+- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, and a short rationale (used by F05, F07, F08, F11, F12)
 
 **Capabilities**
 - Runs server-side. A transcript segment plus the current snapshot go in; proposed operations come out, constrained to the operation schema.
@@ -281,9 +281,9 @@ A text field sits below the board with a submit control. Submitting clears it an
 - **Each proposal self-reports which side of that bar it was judged on**, so a reader can see whose words these are. The self-report drives the interface only; the eval verifies it independently against the transcript rather than trusting it.
 - The one correction made on the spot regardless of source is an **aggregated phase name**. The facilitator does not accept it as an event; it asks what actually happens inside it, and that question is answerable through the normal capture channel.
 - Where the person describes a command, policy, read model or aggregate, the facilitator says this belongs to a deeper session and names which, rather than absorbing it.
-- Proposes relations as well as elements — what an event follows, and who or what caused it. Where it cannot place confidently it proposes the backlog.
-- **Rename proposals against existing elements are held back during early capture**, because normalising while the person is still talking is the anti-pattern the method names. Renames become available once the model has structure.
-- Never proposes archiving an element a human authored.
+- Proposes relations as well as building blocks — what an event follows, and who or what caused it. Where it cannot place confidently it proposes the backlog.
+- **Reword proposals against existing building blocks are held back during early capture**, because normalising while the person is still talking is the anti-pattern the method names. Rewordings become available once the model has structure.
+- Never proposes withdrawing a building block a human authored.
 - Each proposal carries a short plain-language rationale.
 
 **Experience**
@@ -292,16 +292,16 @@ The user meets this feature entirely through F05 — they answer the opening que
 **Error handling**
 - Output fails schema validation → retried; on repeated failure the segment is dropped with a visible "didn't catch that" rather than a stack trace.
 - Model API unavailable → the person is told, and the model remains fully editable by hand via F06.
-- Proposal targets a node id not in the model, or would create a cycle → discarded before it is shown.
+- Proposal targets a building block id not in the model, or would create a cycle → discarded before it is shown.
 
 ### F05. Proposal review
 
 **Consumes**
-- Proposed operation — operation kind, target node id where applicable, proposed label, proposed node kind, proposed relations, rationale (from F04)
+- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, rationale (from F04)
 
 **Capabilities**
 - Proposals are presented for explicit disposition; nothing is applied without one.
-- Each can be accepted, edited then accepted, or rejected. Editing covers the label and the element kind.
+- Each can be accepted, edited then accepted, or rejected. Editing covers the label and the building block kind.
 - Accepting emits the operation with the accepting human as author, alongside the facilitator as proposer. Both are retained.
 - Rejecting emits nothing and leaves nothing behind.
 - **Proposals are batched and capped per segment**, so a long monologue produces a reviewable set rather than a queue that can only be clicked through.
@@ -313,35 +313,35 @@ Proposals appear in a review area, visually distinct from both surfaces so that 
 
 **Error handling**
 - Accepted operation fails validation at F01 → the proposal returns with the reason rather than vanishing as though accepted.
-- Accepted proposal targets an element archived since it was proposed → withdrawn with an explanation.
+- Accepted proposal targets a building block withdrawn since it was proposed → the proposal is discarded with an explanation.
 
 ### F06. Direct model editing
 
 **Consumes**
-- Node record — id, kind, label, archived flag, pivotal marker, placement state (from F01)
+- Building block record — id, kind, label, withdrawn flag, pivotal marker, placement state (from F01)
 - Relations — `follows` and `causedBy` edges (from F01)
 
 **Capabilities**
-- Rename an element's label in place. **Before the rename is committed the interface shows where that element is referenced** — the relations, annotations and derived artifacts that mention it — and shows the same references after, so propagation is visible rather than assumed.
-- Archive an element, and restore an archived one. There is no re-type and no destructive delete.
+- Reword a building block's label in place. **Before the rewording is committed the interface shows where that building block is referenced** — the relations, annotations and derived artifacts that mention it — and shows the same references after, so propagation is visible rather than assumed.
+- Withdraw a building block, and reinstate a withdrawn one. There is no re-type and no destructive delete.
 - Add or remove a `follows` edge, including creating a branch.
 - Add or remove a `causedBy` edge, attaching an actor or system to the event it caused.
-- Place and unplace elements between backlog and timeline.
+- Place and unplace building blocks between backlog and timeline.
 - Each action emits exactly one operation, authored by whoever performed it. Ids survive all of them.
-- Archiving an event with edges on both sides does not silently rejoin its neighbours.
+- Withdrawing an event with edges on both sides does not silently rejoin its neighbours.
 
 **Experience**
-An element is clicked to edit; the label becomes editable inline. Changes apply on commit, and the board and every derived artifact update immediately with no save action.
+A building block is clicked to edit; the label becomes editable inline. Changes apply on commit, and the board and every derived artifact update immediately with no save action.
 
 **Error handling**
-- Rename to an empty label → rejected inline, previous label retained.
+- Rewording to an empty label → rejected inline, previous label retained.
 - Edge that would create a cycle → rejected inline with the offending path named.
 - Relation not permitted for the two kinds involved → rejected inline, naming why.
 
 ### F07. Pivotal events
 
 **Consumes**
-- Proposed operation — operation kind, target node id, proposed label, proposed node kind, rationale (from F04)
+- Proposed operation — operation kind, target building block id, proposed label, proposed building block kind, rationale (from F04)
 
 **Capabilities**
 - Four to five events are marked pivotal — provisional anchors whose job is to make sorting the rest cheap.
@@ -355,28 +355,28 @@ Once there are enough events, the person is offered a few suggested milestones. 
 ### F08. Hot spots
 
 **Consumes**
-- Proposed operation — operation kind, target node id, proposed label, proposed node kind, rationale (from F04)
-- Node record — id, kind, label, archived flag (from F01)
+- Proposed operation — operation kind, target building block id, proposed label, proposed building block kind, rationale (from F04)
+- Building block record — id, kind, label, withdrawn flag (from F01)
 
 **Provides**
-- Hot spot inventory — hot spot ids, labels, the node ids they annotate, and whether each is open (used by F09)
+- Hot spot inventory — hot spot ids, labels, the building block ids they annotate, and whether each is open (used by F09)
 
 **Capabilities**
 - A hot spot records pain, dispute, risk, or missing information, and is available from the first minute.
 - The facilitator proposes one when the person describes friction, uncertainty or disagreement; the person can also create one directly.
-- **An absent stakeholder is recorded as a hot spot** — the method's own prescription for a perspective that was not in the room — naming who is missing.
-- A hot spot annotates any node except another hot spot, or nothing.
+- **An absent stakeholder raises a hot spot** — the method's own prescription for a perspective that was not in the room — naming who is missing.
+- A hot spot annotates any building block except another hot spot, or nothing.
 - Hot spots are counted and the count is visible.
-- **Every facilitator question still unanswered when the session closes becomes a hot spot**, recording the region that was never opened. A phase name nobody expanded is exactly the hidden detail the board exists to reveal.
+- **Every facilitator question still unanswered when the session closes becomes a hot spot**, flagging the region that was never opened. A phase name nobody expanded is exactly the hidden detail the board exists to reveal.
 - **A model with no hot spots is reported at close as a signal to interpret rather than a pass or a failure**, since what it means depends on F09's stakeholder answer and on how mature the business is.
 
 **Experience**
-Hot spots render as callouts on the node they annotate, with a running count visible during the session.
+Hot spots render as callouts on the building block they annotate, with a running count visible during the session.
 
 ### F09. Stakeholder check and chosen problem
 
 **Consumes**
-- Hot spot inventory — hot spot ids, labels, annotated node ids, open state (from F08)
+- Hot spot inventory — hot spot ids, labels, annotated building block ids, open state (from F08)
 
 **Capabilities**
 - At close the person is asked **whether anyone else would tell this differently.**
@@ -392,7 +392,7 @@ At close the person is asked the stakeholder question, then shown the model's ho
 ### F10. Derived artifacts
 
 **Consumes**
-- Board snapshot — all node records, relations, hot spot annotations, business scope, stakeholder answer, chosen problem (from F01)
+- Board snapshot — all building block records, relations, hot spot annotations, business scope, stakeholder answer, chosen problem (from F01)
 - Operation log — appended operations with author, timestamp, kind and target (from F01)
 
 **Provides**
@@ -400,11 +400,11 @@ At close the person is asked the stakeholder question, then shown the model's ho
 
 **Capabilities**
 - Two artifacts, both derived from the model: a **structured export** for engineering, and a **readable account** for people.
-- **The structured export is JSON**, a direct serialisation of the model including nodes, both relation kinds, annotations, provenance and the operation log. It round-trips: importing it reproduces the model exactly.
+- **The structured export is JSON**, a direct serialisation of the model including building blocks, both relation kinds, annotations, provenance and the operation log. It round-trips: importing it reproduces the model exactly.
 - **The readable account is rendered from a template over the snapshot, never generated by a language model.** Determinism is the product's central claim and a model call in this path would break it.
 - **Every artifact distinguishes two kinds of text, and the distinction is load-bearing:**
-  - A **rendered reference** resolves a node id at render time. It always carries that node's current label, and it cannot go stale — the graph guarantees it.
-  - **Quoted evidence** is frozen free text reproduced verbatim: what someone actually said, and the facilitator's stored rationale for a proposal. It must **not** follow a rename, because paraphrasing it would destroy the only record of what was said.
+  - A **rendered reference** resolves a building block id at render time. It always carries that building block's current label, and it cannot go stale — the graph guarantees it.
+  - **Quoted evidence** is frozen free text reproduced verbatim: what someone actually said, and the facilitator's stored rationale for a proposal. It must **not** follow a rewording, because paraphrasing it would destroy the only record of what was said.
 - It follows that **a label typed into free text is quoted evidence and will diverge from the model by design.** That is a property to state plainly in the artifact, not a defect to repair. The transcript and the stored rationales are the two places this happens.
 - Every artifact states the format that produced it, that it rests on however many narrators actually contributed, and **which steps of the format were not run** — so a reader can distinguish a model that skipped a step from one that ran it and found nothing.
 - The readable account states, per contributor, how many proposals they accepted, edited, and rejected. It reports the counts and does not interpret them.
@@ -418,11 +418,11 @@ A panel beside the board shows the readable account updating live as the model c
 ### F11. Facilitator eval suite
 
 **Consumes**
-- Proposed operation — operation kind, target node id where applicable, proposed label, proposed node kind, rationale (from F04)
+- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, rationale (from F04)
 
 **Capabilities**
 - Fixture transcripts with expected facilitator behaviour, run on demand from the command line against the real model.
-- Assertions cover: correct element kind; past tense on facilitator-supplied event names; a phase name flagged; a near-miss that is a real event **not** flagged as a phase; a deeper-format contribution reported and named; and a human's awkward phrasing kept rather than rewritten.
+- Assertions cover: correct building block kind; past tense on facilitator-supplied event names; a phase name flagged; a near-miss that is a real event **not** flagged as a phase; a deeper-format contribution reported and named; and a human's awkward phrasing kept rather than rewritten.
 - **The kept-phrasing assertion is verified against the transcript, not against the facilitator's self-report** — the proposed label's content words are checked for presence in the segment that produced it. The self-report is compared to that finding, so a facilitator that mislabels its own bar is itself a failure the suite catches.
 - **Every assertion is reported separately.** There is no single aggregate that a regression in one behaviour can hide inside.
 - Each case is run more than once, and the per-assertion result records how many runs passed, so a non-deterministic result is visible as one rather than being resolved by whichever run happened last.
@@ -434,15 +434,15 @@ Developer-facing only.
 ### F12. Process Modelling support
 
 **Consumes**
-- Board snapshot — all node records, relations, hot spot annotations, business scope (from F01)
-- Proposed operation — operation kind, target node id, proposed label, proposed node kind, rationale (from F04)
+- Board snapshot — all building block records, relations, hot spot annotations, business scope (from F01)
+- Proposed operation — operation kind, target building block id, proposed label, proposed building block kind, rationale (from F04)
 - Derived artifact set — the structured export and the readable account (from F10)
 
 **Provides**
-- Process-model elements — commands, policies and read models, and their relations to existing events (used by F13)
+- Process-model building blocks — commands, policies and read models, and their relations to existing events (used by F13)
 
 **Capabilities**
-- Adds the Process Modelling legend as new node kinds — command, policy, read model — and the relations between them, extending the model rather than replacing it.
+- Adds the Process Modelling legend as new building block kinds — command, policy, read model — and the relations between them, extending the model rather than replacing it.
 - A command sits between an actor and the event it produces, so a `causedBy` edge becomes a two-step path without existing edges being rewritten.
 - Scoped to one named process, harvesting the event vocabulary from an existing Big Picture model rather than re-deriving it.
 
@@ -452,7 +452,7 @@ Not yet designed.
 ### F13. Design-Level support
 
 **Consumes**
-- Process-model elements — commands, policies, read models and their relations to events (from F12)
+- Process-model building blocks — commands, policies, read models and their relations to events (from F12)
 
 **Capabilities**
 - Adds aggregates, boundary commands and boundary events, scoped to one bounded context.
@@ -515,7 +515,7 @@ Not yet designed.
 ## 7. Out of scope
 
 **Not this product**
-- Freeform canvas positioning: dragging a node to a coordinate of its own, storing pixel positions, freehand drawing, or hand-drawn connectors. Position is computed from relations or it is not position. *(Panning and zooming the view is navigation and is in scope — it changes nothing in the model.)*
+- Freeform canvas positioning: dragging a building block to a coordinate of its own, storing pixel positions, freehand drawing, or hand-drawn connectors. Position is computed from relations or it is not position. *(Panning and zooming the view is navigation and is in scope — it changes nothing in the model.)*
 - Promotion of any artifact from `draft` to `confirmed`. That is a decision made with people, and it belongs to whoever owns the domain documentation.
 - **Transcription by any third party**, hosted or browser-built-in. The browser's own speech recognition is excluded on exactly these grounds: in every shipping implementation it uploads audio to the browser vendor. Transcription in this product is on-device or it does not happen.
 - Speaker diarisation, multi-microphone capture, recording playback.
@@ -563,7 +563,7 @@ Not yet designed.
 
 ### Foundation features
 These features set up shared project infrastructure. In a greenfield project they must be implemented sequentially, before or alongside anything that depends on them:
-- **F01 Domain model, operation log and persistence** — project bootstrap, the node and operation schemas every other feature validates against, the two relations, the authored append-only log, and the persisted session store that the whole product is a view onto.
+- **F01 Domain model, operation log and persistence** — project bootstrap, the building block and operation schemas every other feature validates against, the two relations, the authored append-only log, and the persisted session store that the whole product is a view onto.
 
 ### Execution waves
 Features within the same wave can be built in parallel. A wave starts only after every feature in earlier waves is complete.
@@ -614,7 +614,7 @@ graph TD
 ## 9. Acceptance criteria
 
 ### F01. Domain model, operation log and persistence
-- A node's id is unchanged after its label is changed.
+- A building block's id is unchanged after its label is changed.
 - An operation that fails schema validation is rejected, and the snapshot before and after is identical.
 - Replaying the operation log from empty reproduces the current snapshot exactly.
 - A session closed and reopened presents the same model it had when closed.
@@ -623,19 +623,19 @@ graph TD
 - An actor or system cannot be given a `follows` edge, a pivotal marker, or a placement position; each is rejected by its kind's schema.
 - A hot spot cannot be marked pivotal, given any relation other than an annotation, or made to annotate another hot spot.
 - A hot spot annotating nothing is valid and is not reported as incomplete.
-- Two nodes with identical labels can both exist; nothing merges or deduplicates them.
-- There is no operation that changes a node's kind.
-- Archiving preserves the node and its id; references to it still resolve.
+- Two building blocks with identical labels can both exist; nothing merges or deduplicates them.
+- There is no operation that changes a building block's kind.
+- Withdrawing preserves the building block and its id; references to it still resolve.
 - Every operation in the log carries an author, and the log records both proposer and accepter for facilitator-originated operations.
 
 ### F02. Backlog and timeline board
-- Elements are not grouped by kind; placed events render in `follows` order along the timeline.
+- Building blocks are not grouped by kind; placed events render in `follows` order along the timeline.
 - An actor or system renders beneath the event it caused, and never occupies a timeline position of its own.
 - An event with two successors renders both branches, and neither is hidden.
 - No user action causes a coordinate to be stored; the model contains no pixel value anywhere.
-- An unplaced element appears in the backlog and not on the timeline; placing it moves it, and unplacing returns it.
+- An unplaced building block appears in the backlog and not on the timeline; placing it moves it, and unplacing returns it.
 - A hot spot annotating nothing is visible somewhere, not silently absent.
-- Archived elements are hidden by default and can be revealed.
+- Withdrawn building blocks are hidden by default and can be revealed.
 
 ### F03. Text capture
 - A captured segment carries the session id, the speaker, a timestamp, and a source marker.
@@ -646,32 +646,32 @@ graph TD
 
 ### F04. AI facilitator
 - Every operation returned satisfies the operation schema for its target's kind.
-- The session's first facilitator output is the scope question, and no element is proposed before the scope is set.
+- The session's first facilitator output is the scope question, and no building block is proposed before the scope is set.
 - A transcript describing a completed business fact yields a proposed domain event in past tense.
 - A transcript naming an aggregated phase is flagged as a phase rather than accepted as an event.
-- A transcript describing a command, policy, read model or aggregate produces a notice naming the deeper format, and no element.
+- A transcript describing a command, policy, read model or aggregate produces a notice naming the deeper format, and no building block.
 - A recognisable but awkwardly-phrased business fact from the human is proposed with the human's wording retained.
 - A flagged phase name produces a question the person can answer through the normal capture channel, and the answer reaches the facilitator as a segment.
 - Every proposal records whether it was judged under the lenient or the strict bar.
-- No proposal archives an element authored by a human.
+- No proposal withdraws a building block authored by a human.
 - When the model API is unavailable, no proposal is produced and the model remains editable by hand.
 
 ### F05. Proposal review
 - No facilitator-originated mutation is applied without an explicit human accept.
 - An applied operation records both the facilitator as proposer and the accepting human as author.
 - Rejecting a proposal leaves the snapshot unchanged and leaves nothing behind.
-- Editing a proposal's label before accepting results in an element carrying the edited label.
+- Editing a proposal's label before accepting results in a building block carrying the edited label.
 - Proposals from one segment are capped; a segment that would exceed the cap produces a reviewable set rather than an unbounded queue.
 - A facilitator question or out-of-format notice is displayed with no accept control.
 - A facilitator question remains visible until it is answered or the session closes.
 
 ### F06. Direct model editing
-- Renaming produces exactly one operation and the element retains its id.
-- The rendered references shown before a rename and after it are the same set, and every one of them carries the new label. Quoted evidence is not counted among them.
-- There is no control anywhere that changes an element's kind.
-- Archiving an element with edges on both sides does not create an edge between its neighbours.
-- An archived element can be restored, with its id and relations intact.
-- Renaming to an empty label is rejected and the previous label is retained.
+- Rewording produces exactly one operation and the building block retains its id.
+- The rendered references shown before a rewording and after it are the same set, and every one of them carries the new label. Quoted evidence is not counted among them.
+- There is no control anywhere that changes a building block's kind.
+- Withdrawing a building block with edges on both sides does not create an edge between its neighbours.
+- A withdrawn building block can be reinstated, with its id and relations intact.
+- Rewording to an empty label is rejected and the previous label is retained.
 - A `causedBy` edge can only be created from an actor or system to an event; any other pairing is rejected.
 - Adding a `follows` edge that would create a cycle is rejected and the graph is unchanged.
 
@@ -681,12 +681,12 @@ graph TD
 - Only events can be marked pivotal.
 
 ### F08. Hot spots
-- A hot spot can annotate any node except another hot spot, and the annotation survives a rename of that node.
+- A hot spot can annotate any building block except another hot spot, and the annotation survives a rewording of that building block.
 - A hot spot can exist annotating nothing, and is not reported as an error or an incomplete state.
-- An absent stakeholder named at close produces a hot spot recording who is missing.
-- The visible hot spot count matches the number of hot spot nodes in the snapshot.
+- An absent stakeholder named at close produces a hot spot naming who is missing.
+- The visible hot spot count matches the number of hot spot building blocks in the snapshot.
 - Every facilitator question unanswered at session close produces exactly one hot spot naming what was not opened.
-- Archiving an annotated node leaves the hot spot resolvable rather than dangling.
+- Withdrawing an annotated building block leaves the hot spot resolvable rather than dangling.
 
 ### F09. Stakeholder check and chosen problem
 - The stakeholder question is asked before the chosen problem is offered.
@@ -698,9 +698,9 @@ graph TD
 ### F10. Derived artifacts
 - Both artifacts are generated from the snapshot alone, with no hand-editable path in either.
 - The readable account is produced without any call to a language model.
-- After a rename, every rendered reference in both artifacts carries the new label.
-- After a rename, every quoted passage in both artifacts is byte-identical to what it was before the rename.
-- Renaming an element whose label is a substring of another element's label leaves that other element's rendered references untouched.
+- After a rewording, every rendered reference in both artifacts carries the new label.
+- After a rewording, every quoted passage in both artifacts is byte-identical to what it was before the rewording.
+- Rewording a building block whose label is a substring of another building block's label leaves that other building block's rendered references untouched.
 - Each artifact marks which of its passages are quoted evidence, so a reader can tell a stale-looking label from a faithful quotation.
 - Both artifacts update within the same interaction as the operation that changed the model.
 - The JSON export round-trips: importing it reproduces an identical snapshot.
@@ -736,20 +736,20 @@ Acceptance criteria not yet elicited — F16 is not ready to spec. v1 deliberate
 Acceptance criteria not yet elicited — F17 is not ready to spec. The confidentiality constraint is decided (audio does not leave the device, which excludes browser-built-in recognition); no bar for accuracy, latency, model download size, or hardware floor was decided.
 
 ### Cross-feature integration
-- **F02 ← F01 (node record):** a node created by an operation appears on the surface matching its placement state, with label, kind and markers matching the record.
+- **F02 ← F01 (building block record):** a building block created by an operation appears on the surface matching its placement state, with label, kind and markers matching the record.
 - **F02 ← F01 (relations):** a `follows` edge renders as a timeline connection between exactly those two events; a `causedBy` edge renders its source beneath exactly that event.
 - **F02 ← F01 (session identity):** opening a session URL renders the model belonging to that session id; an unknown id offers a new session rather than an error.
 - **F03 ← F01 (session identity):** a transcript segment carries the session id of the session it was captured in.
 - **F04 ← F03 (transcript segment):** a segment reaches the facilitator with its text and speaker intact, and the proposals derive from that text.
-- **F04 ← F01 (board snapshot):** given a model containing an existing event, the facilitator can propose a relation or rename targeting that event's actual id.
+- **F04 ← F01 (board snapshot):** given a model containing an existing event, the facilitator can propose a relation or a rewording targeting that event's actual id.
 - **F05 ← F04 (proposed operation):** every proposal returned is presented for disposition, and its label, kind, relations and rationale as displayed match what was returned.
-- **F06 ← F01 (node record):** an edit targets the node by its id, and the resulting operation names that same id.
+- **F06 ← F01 (building block record):** an edit targets the building block by its id, and the resulting operation names that same id.
 - **F06 ← F01 (relations):** removing a rendered connection produces an operation naming exactly that source and target pair and that relation kind.
 - **F07 ← F04 (proposed operation):** a pivotal-mark proposal names an event id in the model, and accepting it marks that event.
-- **F08 ← F04 (proposed operation):** a hot spot proposal names the node it annotates by id, and accepting it produces an annotation of that node.
-- **F08 ← F01 (node record):** a hot spot's annotation resolves to a real node, and archiving that node leaves it resolvable.
+- **F08 ← F04 (proposed operation):** a hot spot proposal names the building block it annotates by id, and accepting it produces an annotation of that building block.
+- **F08 ← F01 (building block record):** a hot spot's annotation resolves to a real building block, and withdrawing that building block leaves it resolvable.
 - **F09 ← F08 (hot spot inventory):** the candidate list matches the hot spot inventory exactly, by id and label.
-- **F10 ← F01 (board snapshot):** the artifacts rendered at any moment correspond to the snapshot at that moment, with no element present in one and absent in the other.
+- **F10 ← F01 (board snapshot):** the artifacts rendered at any moment correspond to the snapshot at that moment, with no building block present in one and absent in the other.
 - **F10 ← F01 (operation log):** the readable account's contributor count and the export's provenance derive from the authors recorded in the log.
 - **F11 ← F04 (proposed operation):** the suite asserts against the operations the facilitator actually returns, not against a recorded fixture of them.
 - **F12 ← F01, F04, F10:** integration criteria not yet elicited, because F12's behaviour has not been designed.

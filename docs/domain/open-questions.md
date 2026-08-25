@@ -25,14 +25,17 @@ recorded as the honest state, not filled in.
    for the whole business line, but v1 hardcodes Big Picture — there is no format-selection step
    in the shipped product today. Unowned, undated.
 
-2. **PRD self-inconsistency on `restore`.** F01's operation-log kind list
-   (`create, rename, relate, unrelate, place, unplace, mark pivotal, archive, set scope, set
-   stakeholder answer, set chosen problem`) omits `restore`, while F06 states outright: "Archive an
-   element, and restore an archived one." The PRD disagrees with itself; not something this session
-   resolves. Unowned, undated.
+2. **PRD self-inconsistency on `restore`.** ~~F01's operation-log kind list (`create, rename,
+   relate, unrelate, place, unplace, mark pivotal, archive, set scope, set stakeholder answer, set
+   chosen problem`) omits `restore`, while F06 states outright: "Archive an element, and restore an
+   archived one." The PRD disagrees with itself; not something this session resolves.~~ **Resolved
+   2026-08-25**, as a side effect of the PRD terminology-alignment pass (Building Block, Reworded,
+   Withdrawn/Reinstated): F01's operation list now reads `create, reword, relate, unrelate, place,
+   unplace, mark pivotal, withdraw, reinstate, set scope, set stakeholder answer, set chosen
+   problem`, matching F06's "Withdraw a building block, and reinstate a withdrawn one" exactly.
 
-3. **Reinstatement conflict rule undefined.** The participant decided that withdrawing an
-   Event/Actor/System/Hot Spot severs its connections, and that reinstating requires re-validating
+3. **Reinstatement conflict rule undefined.** The participant decided that withdrawing a
+   Domain Event/Actor/System/Hot Spot severs its connections, and that reinstating requires re-validating
    the old relations against the board's current state (a stale position, or a `follows` chain that
    would now cycle, are both possible). The PRD defines no resolution rule for what happens when
    that re-validation fails. Named as belonging to a deeper session on F06 (Process Modelling or
@@ -92,8 +95,8 @@ here.
    Needs a worked example with the participant. See
    `bounded-contexts/session-facilitation/ubiquitous-language.md`.
 
-8. **Domain Model Capture's aggregate boundary is unconfirmed.** Candidate: one element, or the
-   whole board — this decides how the reinstatement re-validation rule (item 3 above) actually
+8. **Domain Model Capture's aggregate boundary is unconfirmed.** Candidate: one Building Block, or
+   the whole board — this decides how the reinstatement re-validation rule (item 3 above) actually
    gets enforced. Needs a Design-Level pass. See `bounded-contexts/domain-model-capture/canvas.md`.
 
 9. **Derived Artifact Generation: on-demand vs. materialized export.** Whether F10's export is
@@ -111,6 +114,18 @@ here.
     Process Modelling or Design-Level EventStorming is the natural next step. Question & Hot Spot
     Resolution is the most fully-specified candidate to storm first (its three policies are
     already named precisely).
+
+12. **Umbrella term for "any of the four kinds" settled: Building Block.** Resolved live in this
+    session, worth recording because of how it went: this session's own first drafts used
+    "element" as the generic umbrella — an accidental reintroduction of the PRD term the storm had
+    already rejected. The participant caught it, proposed alternatives ("Sticky Note," "Building
+    Block," "Notation," "Concept," "Grammar"), and "Building Block" was confirmed after checking
+    Alberto Brandolini's own *Introducing EventStorming* (ch. 19, "Building Blocks – 20%"; ch. 14,
+    "Process Modeling Building Blocks – 90%"), which uses it for exactly this. "Sticky Note" was
+    considered and not used — it's the same umbrella the board had already rejected
+    (`boards/eventstormer-big-picture.md:166`) as misleading for typed artifacts with different
+    responsibilities; that earlier call stands, unreversed. See
+    `bounded-contexts/domain-model-capture/ubiquitous-language.md` for the confirmed term.
 
 ## Deliberate deviations, recorded rather than silent
 
