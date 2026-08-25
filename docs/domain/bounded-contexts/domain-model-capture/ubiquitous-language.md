@@ -26,8 +26,8 @@ derived_from:
 | Reworded | The post-creation correction of a Building Block's label; its identity (its id) does not change | UNCONFIRMED | `[confirmed]` — supersedes "Rename" (PRD's own term, rejected as not describing the dynamic) |
 | Withdrawn | A Building Block's connections are severed | board `[storm]` | — |
 | Reinstated | A withdrawn Building Block returns; its prior relations are re-validated against the board's current state | board `[storm]` | consistency-boundary candidate — see canvas.md |
-| Element / Node | PRD implementation vocabulary — **not** this context's language; superseded by "Building Block" (umbrella) and the kind-specific names above | PRD F01 (implementation term) | `leaked` |
-| Rename | PRD's operation-log term — **not** this context's language; superseded by "Reworded" | PRD F01 (`rename` operation kind) | `leaked` |
+| Element / Node | Formerly the PRD's implementation vocabulary — **not** this context's language; superseded by "Building Block" (umbrella) and the kind-specific names above. **PRD aligned 2026-08-25**: `docs/product/PRD.md` no longer uses "element" or "node" anywhere | PRD F01 (was: implementation term) | `leaked`, resolved |
+| Rename | Formerly the PRD's operation-log term — **not** this context's language; superseded by "Reworded". **PRD aligned 2026-08-25**: F01's operation list now reads `reword`, matching this context's confirmed term | PRD F01 (was: `rename` operation kind, now `reword`) | `leaked`, resolved |
 
 ## Behaviour (scenarios)
 

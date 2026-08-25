@@ -25,11 +25,14 @@ recorded as the honest state, not filled in.
    for the whole business line, but v1 hardcodes Big Picture — there is no format-selection step
    in the shipped product today. Unowned, undated.
 
-2. **PRD self-inconsistency on `restore`.** F01's operation-log kind list
-   (`create, rename, relate, unrelate, place, unplace, mark pivotal, archive, set scope, set
-   stakeholder answer, set chosen problem`) omits `restore`, while F06 states outright: "Archive an
-   element, and restore an archived one." The PRD disagrees with itself; not something this session
-   resolves. Unowned, undated.
+2. **PRD self-inconsistency on `restore`.** ~~F01's operation-log kind list (`create, rename,
+   relate, unrelate, place, unplace, mark pivotal, archive, set scope, set stakeholder answer, set
+   chosen problem`) omits `restore`, while F06 states outright: "Archive an element, and restore an
+   archived one." The PRD disagrees with itself; not something this session resolves.~~ **Resolved
+   2026-08-25**, as a side effect of the PRD terminology-alignment pass (Building Block, Reworded,
+   Withdrawn/Reinstated): F01's operation list now reads `create, reword, relate, unrelate, place,
+   unplace, mark pivotal, withdraw, reinstate, set scope, set stakeholder answer, set chosen
+   problem`, matching F06's "Withdraw a building block, and reinstate a withdrawn one" exactly.
 
 3. **Reinstatement conflict rule undefined.** The participant decided that withdrawing an
    Event/Actor/System/Hot Spot severs its connections, and that reinstating requires re-validating

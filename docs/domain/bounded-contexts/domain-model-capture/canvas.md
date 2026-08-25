@@ -30,11 +30,11 @@ derived_from:
 
 ## Boundary rationale
 
-- **Language boundary:** Event / Actor / System / Hot Spot — not "Element" or "Node" (the PRD's
-  own implementation vocabulary, rejected as not EventStorming's language). "Reworded" — not
-  "Rename" (the PRD's operation-log term) — because the underlying identity (the id) never
-  changes; only the articulation of an already-recognized fact does. Both `[confirmed]` this
-  session.
+- **Language boundary:** Event / Actor / System / Hot Spot — not "Element" or "Node" (formerly the
+  PRD's own implementation vocabulary, rejected as not EventStorming's language). "Reworded" — not
+  "Rename" (formerly the PRD's operation-log term) — because the underlying identity (the id)
+  never changes; only the articulation of an already-recognized fact does. Both `[confirmed]` this
+  session, and the PRD itself was subsequently aligned to this language (2026-08-25).
 - **Capability boundary:** own-the-model (Building Block/relation storage and lifecycle, with the
   invariants that keep it consistent).
 - **Consistency boundary:** UNCONFIRMED — strong candidate named in `open-questions.md` #3:
@@ -124,7 +124,7 @@ flowchart LR
 | Topic | Type | What's unresolved | Next question / expert |
 |---|---|---|---|
 | Reinstatement conflict rule | white-spot | No resolution rule when re-validating a reinstated Building Block's relations fails | `../../open-questions.md` #3 — named for Process Modelling or Design-Level |
-| PRD self-inconsistency on `restore` | hot-spot | F01's operation-log kinds omit `restore`; F06 states it exists | `../../open-questions.md` #2 |
+| ~~PRD self-inconsistency on `restore`~~ | resolved | F01's operation-log kinds omitted `restore`; F06 required it. Fixed 2026-08-25 as a side effect of the terminology-alignment pass — F01 now lists `withdraw, reinstate` | `../../open-questions.md` #2 |
 
 ## Code evidence (as-is)
 
