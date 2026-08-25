@@ -1,97 +1,90 @@
 ---
-workshop: big-picture
+workshop: ddd-strategic-design
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
-digest: cbd6e95ca6c5
 derived_from:
-  - path: boards/eventstormer-big-picture.md
-    digest: 7388877c76ab
+  - path: subdomain-catalog.md
+    at: 2026-08-25
+  - path: bounded-contexts/session-facilitation/canvas.md
+    at: 2026-08-25
+  - path: bounded-contexts/domain-model-capture/canvas.md
+    at: 2026-08-25
+  - path: bounded-contexts/question-hot-spot-resolution/canvas.md
+    at: 2026-08-25
+  - path: bounded-contexts/derived-artifact-generation/canvas.md
     at: 2026-08-25
 ---
-# Context map — EventStormer (discovered form)
 
-**Candidates only.** No relationship, direction, pattern, or subdomain classification appears
-below — that is the decided form, and it belongs to `ddd-strategic-design`. Every
-seam here is `[inferred]`: derived in close-out, after the exit gate, from the board alone —
-nobody in the room said "these are two contexts." Every piece of evidence under a seam is
-`[storm]`: something the participant actually said or a fact the board actually shows.
+# Context Map
 
-## How these were derived, and their limits
+> Phase 06. Every integrating pair of bounded contexts, with the team relationship, the
+> integration pattern, the direction of influence (upstream → downstream), and the mechanism.
+> This supersedes the discovered-form `context-map.md` written by the Big Picture workshop
+> (renamed in spirit, not deleted — see `Superseded draft` below); the storm's candidate seams
+> were the input to this session's phase 05–06 work, not a competing artifact.
 
-Four of the book's six heuristics are available to this skill; two are not, and both concern
-*unspoken* disagreement, which biases every candidate below toward seams somebody said out loud:
+**This is the decided form.** Every relationship below was reasoned through the U/D
+succeeds-independently test and the Core-protection rules, in session with the participant — not
+carried over from the storm's `[inferred]` candidates untouched.
 
-- **Available and run:** business phases/pivotal events, swimlanes, people on the paper roll, the
-  actual language.
-- **Not available:** where people physically stand in the room; body language. Both require a
-  room and a body this session never had.
+## Diagram
 
-**These four were run sequentially by one agent, not independently by separate ones** — this
-surface had no subagent fan-out available. That is a weaker tournament than four blind proposals
-compared afterward, and it's stated here rather than left to be assumed: a single agent that wrote
-all four has seen all four before writing any of them.
+```mermaid
+flowchart LR
+  Capture["Domain Model Capture (Core)"]
+  Facil["Session Facilitation (Core)"]
+  HotSpot["Question & Hot Spot Resolution (Supporting)"]
+  Artifact["Derived Artifact Generation (Supporting)"]
 
-## Candidate seams
+  Capture -->|"OHS + Published Language\n(element-lifecycle contract)"| Facil
+  Capture -->|"OHS + Published Language\n(element-lifecycle contract)\nConformist"| HotSpot
+  Capture -->|"OHS + Published Language\n(read model)\nConformist"| Artifact
+  Facil -->|"OHS + Published Language\n(session domain events)\nConformist"| HotSpot
 
-### Candidate 1 — Session Lifecycle vs. Modeling Capture
+  classDef core fill:#ffe0e6,stroke:#c1123e,color:#000
+  classDef sup fill:#e0ecff,stroke:#1f5fbf,color:#000
+  class Capture core
+  class Facil core
+  class HotSpot sup
+  class Artifact sup
+```
 
-**Heuristic:** business phases / pivotal events.
+| Upstream (U) | Downstream (D) | Relationship | Pattern | Mechanism | Evidence / topic | Notes |
+|---|---|---|---|---|---|---|
+| Domain Model Capture | Session Facilitation | Upstream-Downstream | OHS + Published Language, accommodated as Customer/Supplier | in-process command/query (v1: single deployable) | element-lifecycle contract (create/rework/withdraw/reinstate) | Both Core & volatile. Capture is self-contained and generic; Facilitation cannot ship without it (U/D tell). Facilitation is the primary consumer shaping the contract — its needs are formally accommodated, not merely conformed to. `[confirmed]` |
+| Domain Model Capture | Question & Hot Spot Resolution | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process command | same element-lifecycle contract, "Raise Hot Spot" as another element-creation call | Hot Spot Resolution has no leverage to shape Capture's contract; accepts it as-is, additive only. `[confirmed]` |
+| Domain Model Capture | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model | the read-only model projection (PRD F10) | Thin, stateless projection; no accommodation needed. `[confirmed]` |
+| Session Facilitation | Question & Hot Spot Resolution | Upstream-Downstream | OHS + Published Language (curated event set), Conformist downstream | in-process domain events | Absent Stakeholder Named, Knowledge Gap Revealed, Session Closed (with unresolved Question Asked) | Hot Spot Resolution depends entirely on these facts and has no leverage back; a deliberately curated set of named events, not Facilitation's whole internal model. `[confirmed]` |
 
-**Evidence** `[storm]`: the four pivotal events (Session Started, Domain Problem Stated, Session
-Closed, Chosen Problem Named/Skipped) all cluster at the open and close of a session, while the
-entire fine-grained event catalog — Contribution Made through Element Reinstated, roughly two
-dozen events — sits inside the loop between them. The tools needed to open, scope, and close a
-session (asking what business is in scope, checking whether the perspective is complete, choosing
-what matters most) read differently from the tools needed to classify and structure an ongoing
-contribution (proposal disposition, positioning, rewording, withdrawal). Follows the book's own
-test: do the tools and mental model change across the line? Here, plausibly yes.
+## Why Capture is the hub, not each pair modelled separately
 
-**Open disagreement:** none surfaced — this seam was never put to the participant (per this
-workshop's own rule, seams are derived in close-out, not asked about in session).
+Confirmed this session: Domain Model Capture's element-lifecycle contract is genuinely one Open-Host
+Service serving three different downstream consumers (Facilitation, Hot Spot Resolution, Artifact
+Generation) rather than three ad hoc integrations — this is the technical expression of the
+product's own pitch, "one model, many derived views." A Core context exposing a deliberate, stable
+public contract (rather than leaking internals) is the point, not a violation of Core-protection.
 
-### Candidate 2 — Facilitation vs. Artifact Consumption
+## Deployment note
 
-**Heuristic:** people on the paper roll.
+All four contexts currently ship as one deployable (v1 is a single process; see AGENTS.md's layer
+rules for the code-level enforcement of these boundaries). The patterns above describe the
+**logical** boundary and influence direction; per `modules-first-deployment-last`, splitting any of
+these into separate services is a later, evidence-driven call — not implied by this map.
 
-**Evidence** `[storm]`: the Engineer never appears in the live session flow at all in v1 — F16 (the
-engineer-facing working surface) is explicitly out of scope, and the participant confirmed no
-additional actor was missing from the live-flow list. The Engineer converges with everyone else
-only through the derived artifacts, read asynchronously, on no fixed schedule relative to the
-session itself. This matches the book's "independent upstream, convergent downstream" shape
-almost exactly, except the convergence point here (a downloaded artifact) is looser than the
-book's shared schedule.
+## Superseded draft
 
-**Open disagreement:** none surfaced.
+The Big Picture workshop's own context map (candidate seams, `[inferred]`, derived from four of
+six heuristics in close-out) was the input to this session's phase 05–06 reasoning, not retained
+as a parallel source of truth at this path — its full writeup is preserved at
+[`sessions/big-picture-context-map.md`](sessions/big-picture-context-map.md). Its three candidates
+mapped closely to this decided form:
 
-### Candidate 3 — Question & Hot Spot Resolution
+| Storm candidate | Outcome here |
+|---|---|
+| Session Lifecycle vs. Modeling Capture | Became **Session Facilitation** vs. **Domain Model Capture** — confirmed as two Core contexts, Capture upstream |
+| Facilitation vs. Artifact Consumption | Became **Session Facilitation/Domain Model Capture** vs. **Derived Artifact Generation** — confirmed, Capture (not Facilitation directly) is Artifact Generation's upstream |
+| Question & Hot Spot Resolution | Confirmed as its own context, exactly as named, with the "runs on its own clock" evidence carrying through to its Conformist/downstream position on two upstreams |
 
-**Heuristic:** swimlanes (independence, not appearance).
-
-**Evidence** `[storm]`: Question Asked → resolution is a thread that does not block or
-synchronize with the proposal-accept loop's own pace. A question can stay open across many
-Contribution Made / Proposal Made / Proposal Accepted cycles before finally resolving (or never
-resolving, surfacing at Session Closed instead). That's the book's discriminator exactly — *runs
-on its own clock* — rather than merely being drawn in a separate lane for tidiness. The three
-policy relationships this session found (Absent Stakeholder Named, Knowledge Gap Revealed, Session
-Closed-with-unresolved-question, each → Hot Spot Raised) all live inside this candidate thread.
-
-**Open disagreement:** none surfaced.
-
-### Language heuristic — no candidate produced
-
-Several language divergences were found this session (Element/Node vs. kind-specific naming,
-Rename vs. Reworded, Recorded vs. Raised), but none of them line up with a pivotal event the way
-the book's strongest signal requires (*"a conflicting wording at a pivotal event is the strongest
-single signal available"*). These read as one team's implementation vocabulary diverging from the
-workshop's discovered vocabulary — a real finding, recorded under Language in the board — but not
-boundary evidence on their own. Stating this explicitly rather than forcing a fourth seam to match
-a fourth heuristic.
-
-## What crosses each candidate boundary — observed, not classified
-
-| Between | What crosses it | Observed by |
-|---|---|---|
-| Session Lifecycle and Modeling Capture | Domain Problem Stated sets the scope the capture loop operates within; Chosen Problem Named/Skipped consumes the accumulated Hot Spot Raised events | `[inferred]` — no relationship named, only what the events reference |
-| Facilitation and Artifact Consumption | The derived artifact set (structured export, readable account) — the only thing that crosses | `[glossary]`, PRD F10 |
-| Question & Hot Spot Resolution and the rest | Hot Spot Raised feeds into Chosen Problem Named/Skipped's input (hot spots are what get chosen from) | `[inferred]` |
+<!-- BEGIN lineage:index -->
+<!-- END lineage:index -->

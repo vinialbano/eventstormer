@@ -85,6 +85,33 @@ available heuristics (people-in-the-room and body language were unavailable). Fu
 modeling in general."* Recorded as the participant's own words; not elaborated into goals/impacts
 here.
 
+## Raised in the ddd-strategic-design session (2026-08-25) — additive, phases 01–07
+
+7. **Proposal vs. Contribution, in Session Facilitation.** The board uses both terms for what
+   looks like the same pre-acceptance artifact, without a scenario that clearly separates them.
+   Needs a worked example with the participant. See
+   `bounded-contexts/session-facilitation/ubiquitous-language.md`.
+
+8. **Domain Model Capture's aggregate boundary is unconfirmed.** Candidate: one element, or the
+   whole board — this decides how the reinstatement re-validation rule (item 3 above) actually
+   gets enforced. Needs a Design-Level pass. See `bounded-contexts/domain-model-capture/canvas.md`.
+
+9. **Derived Artifact Generation: on-demand vs. materialized export.** Whether F10's export is
+   computed on request or kept live as a materialized view is undecided, and changes this
+   context's event-stormed model shape (whether it has any Events in at all). See
+   `bounded-contexts/derived-artifact-generation/canvas.md`.
+
+10. **Multiplayer / Real-time Collaboration's classification is provisional.** Catalogued as one
+    Core row for now; likely splits into a Generic real-time-sync-infra part (buy) and a Core
+    graph-conflict-resolution-semantics part once it's actually scoped for design. See
+    `subdomain-catalog.md`.
+
+11. **All four v1 contexts' event-stormed models (Commands/Events/Policies/Queries) are
+    deferred.** This session confirmed boundaries, subdomain types, and the context map; per-context
+    Process Modelling or Design-Level EventStorming is the natural next step. Question & Hot Spot
+    Resolution is the most fully-specified candidate to storm first (its three policies are
+    already named precisely).
+
 ## Deliberate deviations, recorded rather than silent
 
 - **Granularity.** Big Picture's default is coarse; this board went fine-grained (every kind gets
