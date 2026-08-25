@@ -10,6 +10,11 @@ derived projection instead of a hand-written copy that drifts.
 append-only. If an instruction here and the PRD disagree, the PRD wins and this file is wrong —
 say so rather than picking one.
 
+**Domain language is confirmed in `docs/domain/`.** Subdomains, bounded contexts, ubiquitous
+language, and the context map are DDD strategic-design output, confirmed with the maintainer —
+not a guess. If code or a comment uses a term the domain docs mark superseded (e.g. "Node" or
+"Element" instead of the confirmed "Building Block"), the domain doc wins; fix the code.
+
 ## Commands
 
 `pnpm check` = typecheck → lint → test → depcruise → knip, in that order, failing fast. CI and
@@ -43,6 +48,9 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 
 ## Read on demand
 
+- `docs/domain/README.md` — the confirmed subdomain catalog, bounded-context canvases, and context
+  map. Read before naming a domain concept, designing a new capability slice, or touching
+  `src/domain/`'s public vocabulary.
 - `docs/tooling-gotchas.md` — TypeScript/ESLint/dependency-cruiser/CI facts. Read before touching
   any of those configs.
 - `docs/framework-gotchas.md` — Hono/Vue/Pinia/dagre/`node:sqlite` version facts. Read before
@@ -72,3 +80,14 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 - If you cannot make something work, say so and say what you tried. Do not weaken a test, widen a
   type to `any`, or add a lint exemption to get to green — every one of those is a silent
   regression in the thing this repo exists to enforce.
+- **Write documentation and comments as if the system were built today**: present tense, current
+  state only. Don't narrate transitions — Git and commit messages already own that history.
+
+  ```
+  Bad:  "Refactored to use X instead of the old Y approach."
+  Good: "Uses X."
+  ```
+
+  Exception: if current behavior is genuinely counter-intuitive and could mislead a reader, say
+  why in one line. If the reasoning is itself a real decision — hard to reverse, surprising, a
+  genuine trade-off — it belongs in an ADR (`docs/adr/`), linked from the comment, not inlined.
