@@ -2,12 +2,12 @@
 workshop: process-modelling
 scope: capture-loop
 status: draft
-last_updated: 2026-08-25
-digest: fdf3ee7790ec
+last_updated: 2026-08-26
+digest: bc6ad40750e0
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: ac38c26c6691
-    at: 2026-08-25
+    digest: 568f97a816f3
+    at: 2026-08-26
 ---
 # Board — EventStormer: the capture loop (Process Modelling)
 
@@ -69,24 +69,25 @@ content judgment with **no** question-resolving judgment, leaving the original q
 ```
 Contribution Interpreted, judgment = proposal-worthy
   --(Propose Building Block, automatic policy)--> Facilitator
-    --> Proposal Made [carried]
+    --> Building Block Proposed [renamed 2026-08-26, was "Proposal Made" [carried] — see
+        "Naming pass: mirroring commands and events"]
       --(Edit Proposal)--> Domain Expert --> Proposal Edited [carried] (loops, 0+ times)
       --(Accept Proposal)--> Domain Expert --> Proposal Accepted [carried]
         --(automatic policy: create the Building Block matching the proposed kind)-->
-          --(Record Domain Event)--> Domain Model Capture --> Domain Event Captured [carried]
+          --(Capture Domain Event)--> Domain Model Capture --> Domain Event Captured [carried]
           --(Identify Actor)--> Domain Model Capture --> Actor Identified [carried]
           --(Identify System)--> Domain Model Capture --> System Identified [carried]
           --(Raise Hot Spot)--> Domain Model Capture --> Hot Spot Raised [carried]
       --(Reject Proposal)--> Domain Expert --> Proposal Rejected [carried] (terminal, no Building Block)
 
 Contribution Interpreted, judgment = belongs-elsewhere
-  --(Attribute Contribution, automatic policy)--> Facilitator
+  --(Attribute Contribution To Another Format, automatic policy)--> Facilitator
     --> Contribution Attributed To Another Format [carried] (terminal for this process)
 ```
 
 `[storm]` — confirmed this session: **one `Contribution Interpreted` can carry multiple
 proposal-worthy judgments** (same repeatable shape as `Absent Stakeholder Named` naming several
-people from one answer). Each spawns its own independent `Proposal Made`, with its own
+people from one answer). Each spawns its own independent `Building Block Proposed`, with its own
 edit/accept/reject lifecycle, decoupled from every sibling proposal from the same interpretation —
 one being rejected or still pending edit never blocks or invalidates another (Invariant 4).
 
@@ -101,7 +102,7 @@ confirming the earlier "same event regardless of cause" decision holds.
 
 ```
 Contribution Interpreted, judgment = knowledge-gap
-  --(Flag Knowledge Gap, automatic policy)--> Facilitator --> Knowledge Gap Revealed [carried]
+  --(Reveal Knowledge Gap, automatic policy)--> Facilitator --> Knowledge Gap Revealed [carried]
     --(Raise Hot Spot, automatic policy)--> Domain Model Capture --> Hot Spot Raised [carried]
       -- bypasses Proposal/Accept entirely [storm, confirmed this session]
 
@@ -147,16 +148,16 @@ not a time-driven event of its own.
 | Ask Question | Facilitator | AI Model Provider | Question Asked |
 | Make Contribution | Domain Expert | Session Facilitation | Contribution Made |
 | Interpret Contribution | automatic (policy) | Facilitator / AI Model Provider | Contribution Interpreted |
-| Propose Building Block | automatic (policy) | Facilitator | Proposal Made |
-| Attribute Contribution | automatic (policy) | Facilitator | Contribution Attributed To Another Format |
-| Flag Knowledge Gap | automatic (policy) | Facilitator | Knowledge Gap Revealed |
+| Propose Building Block | automatic (policy) | Facilitator | Building Block Proposed |
+| Attribute Contribution To Another Format | automatic (policy) | Facilitator | Contribution Attributed To Another Format |
+| Reveal Knowledge Gap | automatic (policy) | Facilitator | Knowledge Gap Revealed |
 | Name Absent Stakeholder | automatic (policy) | Facilitator | Absent Stakeholder Named |
 | Confirm Complete Perspective | automatic (policy) | Facilitator | Complete Perspective Confirmed |
 | Answer Question | automatic (policy) | UNCONFIRMED — see hot spot | Question Answered |
 | Edit Proposal | Domain Expert | Domain Model Capture | Proposal Edited |
 | Accept Proposal | Domain Expert | Domain Model Capture | Proposal Accepted |
 | Reject Proposal | Domain Expert | Domain Model Capture | Proposal Rejected |
-| Record Domain Event | automatic (policy, on Proposal Accepted) | Domain Model Capture | Domain Event Captured |
+| Capture Domain Event | automatic (policy, on Proposal Accepted) | Domain Model Capture | Domain Event Captured |
 | Identify Actor | automatic (policy, on Proposal Accepted) | Domain Model Capture | Actor Identified |
 | Identify System | automatic (policy, on Proposal Accepted) | Domain Model Capture | System Identified |
 | Raise Hot Spot | automatic (policy: Proposal Accepted kind=Hot Spot, **or** Knowledge Gap Revealed, **or** Absent Stakeholder Named, **or** Session Closed sweep) | Domain Model Capture | Hot Spot Raised |
@@ -167,12 +168,12 @@ not a time-driven event of its own.
 |---|---|---|
 | Contribution Made | Interpret Contribution | The Facilitator judges every contribution; not modelled as a policy before this session |
 | Contribution Interpreted, judgment=proposal-worthy | Propose Building Block | one per proposal-worthy judgment, independently multipliable |
-| Contribution Interpreted, judgment=belongs-elsewhere | Attribute Contribution | |
-| Contribution Interpreted, judgment=knowledge-gap | Flag Knowledge Gap | |
+| Contribution Interpreted, judgment=belongs-elsewhere | Attribute Contribution To Another Format | |
+| Contribution Interpreted, judgment=knowledge-gap | Reveal Knowledge Gap | |
 | Contribution Interpreted, judgment=absent-stakeholder | Name Absent Stakeholder | once per named person |
 | Contribution Interpreted, judgment=complete-perspective | Confirm Complete Perspective | |
 | Contribution Interpreted, judgment=on-topic/plain | Answer Question | the new, previously-unnamed case |
-| Proposal Accepted | Record Domain Event / Identify Actor / Identify System / Raise Hot Spot | kind-specific; **confirmed:** policy-triggered and proposal-accepted Hot Spots converge on the identical event |
+| Proposal Accepted | Capture Domain Event / Identify Actor / Identify System / Raise Hot Spot | kind-specific; **confirmed:** policy-triggered and proposal-accepted Hot Spots converge on the identical event |
 | Knowledge Gap Revealed | Raise Hot Spot | bypasses Proposal/Accept — confirmed auto-raise, no confirmation step |
 | Absent Stakeholder Named | Raise Hot Spot | once per named person; bypasses Proposal/Accept |
 | Session Closed | Raise Hot Spot, once per Question Asked with no resolving event | confirmed: independent per question, not one aggregate hot spot |
@@ -214,6 +215,35 @@ each content judgment, each question-track judgment — can succeed, fail, or re
 rather than requiring one command to do everything atomically. Symmetric with why `Proposal
 Accepted` stays a separate event from the kind-specific creation event: a decision and its
 consequences are different facts even when one always follows the other.
+
+---
+
+## Naming pass: mirroring commands and events (2026-08-26)
+
+`[storm]` — a day after the session, the participant reviewed the command/event pairs above for
+whether a command's imperative mirrors its event's past-participle, the way `Ask Question` mirrors
+`Question Asked`. Three pairs did not, all commands invented during this session (never `[carried]`
+vocabulary), so the commands were the ones corrected, not the events:
+
+| Was | Now | Why the command moved, not the event |
+|---|---|---|
+| `Flag Knowledge Gap` → `Knowledge Gap Revealed` | `Reveal Knowledge Gap` → `Knowledge Gap Revealed` | `Knowledge Gap Revealed` is `[carried]` from the Big Picture board; the invented command didn't mirror it |
+| `Record Domain Event` → `Domain Event Captured` | `Capture Domain Event` → `Domain Event Captured` | same — `Domain Event Captured` is `[carried]` |
+| `Attribute Contribution` → `Contribution Attributed To Another Format` | `Attribute Contribution To Another Format` → `Contribution Attributed To Another Format` | full-string mirror preferred over a root-only match, participant's explicit choice |
+
+One pair went the other way: `Propose Building Block` → `Proposal Made` did not mirror, but here
+the **event** was the one that needed to move. The participant's own reasoning: within this
+process a proposal is always a proposal *of a building block* — the PRD (`F04`) explicitly defers
+proposing a reword of an *existing* building block to later, once the model has structure — so
+`Proposal Made` was under-naming what it always meant. Renamed to **`Building Block Proposed`**,
+which now mirrors `Propose Building Block` directly. `Proposal Edited`/`Accepted`/`Rejected` are
+left unchanged — by the time those fire, "the proposal" is an established, unambiguous referent,
+and re-qualifying every downstream event would add length without adding information.
+
+Because `Proposal Made` was itself `[carried]` from `boards/eventstormer-big-picture.md` (tagged
+`[glossary]` there), that board was updated too, following the precedent set by the earlier
+"Element → Building Block" terminology pass (commit `6156357`), which treated the Big Picture
+board as a live document rather than a frozen record.
 
 ---
 

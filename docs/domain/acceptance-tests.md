@@ -2,12 +2,12 @@
 workshop: process-modelling
 scope: capture-loop
 status: draft
-last_updated: 2026-08-25
-digest: d19b7780816c
+last_updated: 2026-08-26
+digest: 882d44957659
 derived_from:
   - path: boards/capture-loop.md
-    digest: fdf3ee7790ec
-    at: 2026-08-25
+    digest: bc6ad40750e0
+    at: 2026-08-26
 ---
 # Acceptance tests
 
@@ -29,7 +29,7 @@ stabilized. Given/When/Then, asserting expected state — not merely that an eve
    policy — same event, same downstream handling, regardless of route.
 
 5. **Given** the expert's contribution to a `Question Asked` is off-topic — it produces a
-   `Proposal Made` but no question-resolving event (`Question Answered` /
+   `Building Block Proposed` but no question-resolving event (`Question Answered` /
    `Knowledge Gap Revealed` / `Absent Stakeholder Named` / `Complete Perspective Confirmed`) —
    **when** the session closes, **then** a `Hot Spot Raised` exists for that question, identical
    in kind to one from a question that got no reply at all.

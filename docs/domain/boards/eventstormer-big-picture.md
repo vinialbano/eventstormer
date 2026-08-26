@@ -2,8 +2,8 @@
 workshop: big-picture
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
-digest: 7388877c76ab
+last_updated: 2026-08-26
+digest: 568f97a816f3
 ---
 # Board — EventStormer: running a facilitated session (Big Picture)
 
@@ -47,10 +47,13 @@ Spot are used, per this format's own legend.
 
 5. **Contribution Made** `[glossary]` — was "Transcript Segment Submitted"; renamed off a named
    smell in this skill's own catalog ("Data-availability pseudo-events... `Form Submitted`").
-6. **Proposal Made** `[glossary]` — the facilitator proposes a Building Block of some kind. Not yet a
+6. **Building Block Proposed** `[glossary]` — was "Proposal Made"; renamed 2026-08-26 during the
+   capture-loop Process Modelling session, once it confirmed a proposal in this process is always
+   of a building block (a reword proposal against an *existing* one is explicitly deferred past
+   v1 — see PRD F04). The facilitator proposes a Building Block of some kind; not yet a
    Domain Event/Actor/System/Hot Spot; a proposal is its own artifact (PRD F04) until accepted.
 7. **Contribution Attributed To Another Format** `[glossary]` — was "Facilitator Deferred To
-   Deeper Session." Sibling outcome to Proposal Made, not a state of a question: the content
+   Deeper Session." Sibling outcome to Building Block Proposed, not a state of a question: the content
    described a Command, Policy, Read Model or Aggregate, which belongs to Process Modelling or
    Design-Level rather than this format's grammar.
 8. **Proposal Edited** `[glossary]` — repeatable, zero or more times, before disposition. Distinct
@@ -171,7 +174,7 @@ per this skill's own rule that a session record must show verified claims, not j
 
 - **Domain Expert** `[glossary]` — the author; solo in v1 (multi-participant collaboration is a
   later feature, out of scope for this session's flow).
-- **Facilitator** `[glossary]` — the initiating actor for Question Asked and Proposal Made; runs on
+- **Facilitator** `[glossary]` — the initiating actor for Question Asked and Building Block Proposed; runs on
   the AI Model Provider system.
 - **Absent Stakeholder(s)** `[glossary]` — named via Absent Stakeholder Named; a person whose
   perspective would tell the story differently and wasn't heard.

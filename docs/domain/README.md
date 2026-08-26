@@ -107,13 +107,13 @@ than guessed.
 
 | Artifact | Workshop | Scope | Status | Updated |
 |---|---|---|---|---|
-| [acceptance-tests.md](acceptance-tests.md) | process-modelling | capture-loop | draft | 2026-08-25 |
-| [boards/capture-loop.md](boards/capture-loop.md) | process-modelling | capture-loop | draft | 2026-08-25 |
-| [boards/eventstormer-big-picture.md](boards/eventstormer-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
+| [acceptance-tests.md](acceptance-tests.md) | process-modelling | capture-loop | draft | 2026-08-26 |
+| [boards/capture-loop.md](boards/capture-loop.md) | process-modelling | capture-loop | draft | 2026-08-26 |
+| [boards/eventstormer-big-picture.md](boards/eventstormer-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
 | [bounded-contexts/derived-artifact-generation/ubiquitous-language.md](bounded-contexts/derived-artifact-generation/ubiquitous-language.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-25 |
 | [open-questions.md](open-questions.md) | big-picture + ddd-strategic-design + process-modelling | eventstormer-session | draft | 2026-08-25 |
 | [sessions/2026-08-25-big-picture.md](sessions/2026-08-25-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
-| [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-25 |
+| [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-26 |
 | [sessions/big-picture-context-map.md](sessions/big-picture-context-map.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 
 ```mermaid

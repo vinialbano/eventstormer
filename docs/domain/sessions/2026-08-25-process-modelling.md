@@ -2,12 +2,12 @@
 workshop: process-modelling
 scope: capture-loop
 status: draft
-last_updated: 2026-08-25
-digest: c527aa540f53
+last_updated: 2026-08-26
+digest: 312d44d23a8a
 derived_from:
   - path: boards/capture-loop.md
-    digest: fdf3ee7790ec
-    at: 2026-08-25
+    digest: bc6ad40750e0
+    at: 2026-08-26
 ---
 # Session record — Process Modelling: the capture loop (2026-08-25)
 
@@ -115,6 +115,24 @@ contradicts either without being called out as a correction (the Invariant 2 cor
 canvas gap are both named explicitly, not silently reconciled). Every event not carried unchanged
 from the Big Picture board is tagged `[storm]` with the reasoning that produced it; nothing here
 carries a `[code]` or `[inferred]` tag needing further human confirmation before use.
+
+## Addendum (2026-08-26): command/event naming pass
+
+A day later, the participant reviewed this session's command/event pairs for whether each command
+mirrors its event (imperative → past-participle), the way `Ask Question` mirrors `Question Asked`.
+Three commands invented in this session didn't mirror their `[carried]` events and were renamed:
+`Flag Knowledge Gap` → `Reveal Knowledge Gap`, `Record Domain Event` → `Capture Domain Event`,
+`Attribute Contribution` → `Attribute Contribution To Another Format` (the last a full-string
+mirror, the participant's explicit preference over a root-only match).
+
+One pair went the other way: `Propose Building Block` never mirrored `Proposal Made`, and this
+time the **event** moved. The participant's reasoning: within this process a proposal is always of
+a building block — the PRD (`F04`) explicitly defers proposing a reword of an *existing* building
+block to later — so `Proposal Made` was under-naming what it always meant. Renamed to
+**`Building Block Proposed`**. Because that event was `[carried]` from
+`boards/eventstormer-big-picture.md` (tagged `[glossary]` there), that board was updated too,
+following the "Element → Building Block" precedent (commit `6156357`) of treating the Big Picture
+board as a live document. Full detail in `boards/capture-loop.md`'s own "Naming pass" section.
 
 ## Recommended next workshop
 

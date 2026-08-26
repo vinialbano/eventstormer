@@ -6,8 +6,8 @@ last_updated: 2026-08-25
 digest: dcead030f60c
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: ac38c26c6691
-    at: 2026-08-25
+    digest: 568f97a816f3
+    at: 2026-08-26
   - path: context-map.md
     digest: 71e703c4a12c
     at: 2026-08-25
