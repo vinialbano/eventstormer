@@ -4,10 +4,10 @@ scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
 derived_from:
-  - path: ../../boards/eventstormer-big-picture.md
-    at: 2026-08-25
+  - path: boards/eventstormer-big-picture.md
+    digest: 568f97a816f3
+    at: 2026-08-26
 ---
-
 # Ubiquitous Language: Session Facilitation
 
 > Phase 04. The language of this context only. Thin this session — most of Facilitation's own
@@ -20,7 +20,7 @@ derived_from:
 
 | Term | Meaning in this context | Code name(s) / source (`file:line`) | Flags |
 |---|---|---|---|
-| Facilitator | The AI actor that initiates Question Asked and Proposal Made, running on the AI Model Provider | UNCONFIRMED | role |
+| Facilitator | The AI actor that initiates Question Asked and Building Block Proposed, running on the AI Model Provider | UNCONFIRMED | role |
 | Proposal | The facilitator's suggestion of a Building Block of some kind (Domain Event/Actor/System/Hot Spot), not yet accepted — its own artifact until accepted | UNCONFIRMED | — |
 | Contribution | UNCONFIRMED precise distinction from Proposal — the board treats both as pre-acceptance artifacts; needs a scenario to separate them if they are in fact distinct | UNCONFIRMED | homonym? |
 | Question Asked | A generic event covering every facilitator question, regardless of what it's asking about | UNCONFIRMED | — |

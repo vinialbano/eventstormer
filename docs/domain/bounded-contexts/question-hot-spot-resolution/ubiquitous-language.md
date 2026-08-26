@@ -4,10 +4,10 @@ scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
 derived_from:
-  - path: ../../open-questions.md
-    at: 2026-08-25
+  - path: open-questions.md
+    digest: a12a3912e161
+    at: 2026-08-26
 ---
-
 # Ubiquitous Language: Question & Hot Spot Resolution
 
 > Phase 04.
