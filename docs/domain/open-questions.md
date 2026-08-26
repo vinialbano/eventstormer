@@ -1,15 +1,15 @@
 ---
-workshop: big-picture
+workshop: big-picture + ddd-strategic-design + process-modelling
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
-digest: 8a880b8aed25
+digest: dcead030f60c
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: 7388877c76ab
+    digest: ac38c26c6691
     at: 2026-08-25
   - path: context-map.md
-    digest: cbd6e95ca6c5
+    digest: 71e703c4a12c
     at: 2026-08-25
 ---
 # Open questions — EventStormer Big Picture
@@ -41,11 +41,15 @@ recorded as the honest state, not filled in.
    that re-validation fails. Named as belonging to a deeper session on F06 (Process Modelling or
    Design-Level). Unowned, undated.
 
-4. **Three policy relationships found, not modelled here** (Policy is out of play in Big Picture;
+4. ~~**Three policy relationships found, not modelled here** (Policy is out of play in Big Picture;
    named precisely enough for Process Modelling on "the capture loop" to formalize):
    - When Absent Stakeholder Named → Hot Spot Raised
    - When Knowledge Gap Revealed → Hot Spot Raised
-   - When Session Closed and a Question Asked has no resolving event → Hot Spot Raised
+   - When Session Closed and a Question Asked has no resolving event → Hot Spot Raised~~
+   **Resolved 2026-08-25** by Process Modelling on "the capture loop." All three formalized as
+   automatic policies, plus two more the session discovered along the way (`Interpret
+   Contribution`, `Answer Question`). Full model in `boards/capture-loop.md`; session record in
+   `sessions/2026-08-25-process-modelling.md`.
 
 5. **This session's own hard limit.** Per this skill's own stance: a solo participant means genuine
    inter-participant disagreement was never available here. No absent stakeholder was named for
@@ -126,6 +130,40 @@ here.
     (`boards/eventstormer-big-picture.md:166`) as misleading for typed artifacts with different
     responsibilities; that earlier call stands, unreversed. See
     `bounded-contexts/domain-model-capture/ubiquitous-language.md` for the confirmed term.
+
+## Raised in the Process Modelling session (2026-08-25) — "the capture loop"
+
+13. **`Hot Spot Raised`'s payload/granularity is undecided, not just deferred to design.** The
+    participant named plausible future features that would need to distinguish *why* a hot spot
+    was raised (e.g., scheduling a session with a named absent stakeholder), but explicitly
+    declined to commit to a shape now, absent knowing what the hot-spot resolution logic will
+    actually need. Attributed to that explicit deferral — not unowned by omission. Revisit at
+    Design-Level on Domain Model Capture, when the resolution logic itself gets designed. See
+    `boards/capture-loop.md`.
+
+14. **`Question & Hot Spot Resolution`'s canvas `Events in` table omits `Question Asked` /
+    `Question Answered`.** Its own purpose statement already says it should "track whether a
+    question resolves before the session closes," but the events table only lists the three
+    hot-spot triggers. Surfaced by this session's introduction of `Question Answered`; not fixed
+    here — canvas ownership is Design-Level's call. See
+    `bounded-contexts/question-hot-spot-resolution/canvas.md`.
+
+15. **Which context/system executes `Answer Question` is UNCONFIRMED.** Session Facilitation
+    (symmetric with the rest of the interpretation policies) and Question & Hot Spot Resolution
+    (matches its stated purpose, see #14) are both plausible owners. Design-Level question. See
+    `boards/capture-loop.md`.
+
+16. **Lineage tool gap: 28 `derived_from` edges predate consistent digest use.** Discovered this
+    session running `domain_lineage.py index` after writing this workshop's artifacts:
+    `README.md`, `context-map.md`, `subdomain-catalog.md`, `domain-and-goals.md`, and every
+    bounded-context `canvas.md`/`ubiquitous-language.md` carry at least one `derived_from` edge
+    with no `digest` field. `stamp`/`link` crash (`KeyError: 'digest'`) on any of these files;
+    `index` silently drops them from the rendered table instead of crashing, which is how 16
+    tracked artifacts became 8 in `README.md`'s lineage index with no content actually missing —
+    only the auto-generated table shrank. Not hand-patched: authoring a digest is exactly what
+    this skill's lineage rule forbids doing by hand. Unowned, undated — needs either a script fix
+    (a repair subcommand, or tolerate missing-digest edges without dropping the artifact) or a
+    one-time manual `link --from` pass per broken edge, run by whoever next touches those files.
 
 ## Deliberate deviations, recorded rather than silent
 
