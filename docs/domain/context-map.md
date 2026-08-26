@@ -1,14 +1,12 @@
 ---
-workshop: ddd-strategic-design
+workshop: ddd-strategic-design + design-level
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
+last_updated: 2026-08-26
+digest: 0429d6d38b35
 derived_from:
-  - path: subdomain-catalog.md
-    digest: 8ba6b998650a
-    at: 2026-08-26
-  - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 9741ca703f15
+  - path: bounded-contexts/derived-artifact-generation/canvas.md
+    digest: b6e96a24ddeb
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: cc155f371bca
@@ -16,8 +14,14 @@ derived_from:
   - path: bounded-contexts/question-hot-spot-resolution/canvas.md
     digest: a3848a5f28a6
     at: 2026-08-26
-  - path: bounded-contexts/derived-artifact-generation/canvas.md
-    digest: b6e96a24ddeb
+  - path: bounded-contexts/session-facilitation/canvas.md
+    digest: 9741ca703f15
+    at: 2026-08-26
+  - path: sessions/2026-08-26-design-level.md
+    digest: a199731d351c
+    at: 2026-08-26
+  - path: subdomain-catalog.md
+    digest: 8ba6b998650a
     at: 2026-08-26
 ---
 # Context Map
@@ -75,6 +79,35 @@ All four contexts currently ship as one deployable (v1 is a single process; see 
 rules for the code-level enforcement of these boundaries). The patterns above describe the
 **logical** boundary and influence direction; per `modules-first-deployment-last`, splitting any of
 these into separate services is a later, evidence-driven call — not implied by this map.
+
+## Candidate revision — Design-Level, 2026-08-26 (`[inferred]`, not adopted)
+
+A Design-Level session on Question & Hot Spot Resolution tested this map's seam against
+consistency and integration evidence (its own required step, not a re-decomposition) and found it
+does not hold as an independent bounded context. Full reasoning and evidence in
+[`sessions/2026-08-26-design-level.md`](sessions/2026-08-26-design-level.md). Summary:
+
+- Detection of the three triggers already executes inside **Session Facilitation**'s own policies
+  (confirmed against `boards/capture-loop.md`), not this context.
+- The resolution capability this session designed (judge whether a contribution resolves an open
+  hot spot/question; requires deliberate human confirmation and a recorded reference) matches
+  Session Facilitation's existing `Interpret Contribution` shape exactly — an extension of an
+  existing capability, not a new one.
+- The one thing that could still have justified separateness — "its own pace, a question can stay
+  open across many cycles" — was tested directly: the participant confirmed Session Facilitation's
+  own model already spans sessions ("the workshop remains valid if someone else resumes it
+  later"), which removes the pace difference.
+- Storage/enforcement of the resolution invariant was already Domain Model Capture's job before
+  this session and is unchanged.
+
+**Candidate outcome:** fold Question & Hot Spot Resolution into Session Facilitation. What
+survives is a capability (resolution judgment) and a read model (open hot spots/questions) inside
+Facilitation, not a fourth context. **This is `[inferred]` — a candidate with evidence, not a
+decision.** Adopting it (retiring the Question & Hot Spot Resolution canvas, merging its content
+into Session Facilitation's, updating the diagram/table above and the subdomain catalog) is
+`anoria-commons:ddd-strategic-design`'s call. Until then this map's diagram and table above stand
+as recorded, unedited, per this skill's own rule against quietly reconciling a later finding into
+an earlier decided artifact.
 
 ## Superseded draft
 

@@ -1,14 +1,18 @@
 ---
-workshop: ddd-strategic-design
+workshop: ddd-strategic-design + design-level
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
+last_updated: 2026-08-26
+digest: f73247969453
 derived_from:
   - path: context-map.md
     digest: 71e703c4a12c
     at: 2026-08-26
   - path: open-questions.md
     digest: a12a3912e161
+    at: 2026-08-26
+  - path: sessions/2026-08-26-design-level.md
+    digest: a199731d351c
     at: 2026-08-26
   - path: subdomain-catalog.md
     digest: 8ba6b998650a
@@ -19,6 +23,12 @@ derived_from:
 > Phase 05–06 canvas. Boundary facts confirmed this session; the event-stormed model is left
 > `UNCONFIRMED` pending a Process Modelling session on "the capture loop" — already named as the
 > natural next storm by the Big Picture workshop's own README.
+
+> **Candidate finding (Design-Level, 2026-08-26):** this context's boundary tested does not hold as
+> independent — evidence points to folding it into Session Facilitation. `[inferred]`, not
+> adopted. See `../../context-map.md`'s "Candidate revision" section and
+> `../../sessions/2026-08-26-design-level.md`. This canvas is left as-is below, unedited, pending
+> `ddd-strategic-design`'s decision on the merge.
 
 **Status:** draft • **Provenance:** `[confirmed]` (boundary) / `UNCONFIRMED` (event-stormed model)
 

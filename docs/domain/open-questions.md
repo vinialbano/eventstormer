@@ -1,9 +1,9 @@
 ---
-workshop: big-picture + ddd-strategic-design + process-modelling
+workshop: big-picture + ddd-strategic-design + process-modelling + design-level
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-26
-digest: a12a3912e161
+digest: 4f660876c5d3
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: 568f97a816f3
@@ -11,6 +11,9 @@ derived_from:
   - path: context-map.md
     digest: 71e703c4a12c
     at: 2026-08-25
+  - path: sessions/2026-08-26-design-level.md
+    digest: a199731d351c
+    at: 2026-08-26
 ---
 # Open questions — EventStormer Big Picture
 
@@ -137,21 +140,22 @@ here.
     participant named plausible future features that would need to distinguish *why* a hot spot
     was raised (e.g., scheduling a session with a named absent stakeholder), but explicitly
     declined to commit to a shape now, absent knowing what the hot-spot resolution logic will
-    actually need. Attributed to that explicit deferral — not unowned by omission. Revisit at
-    Design-Level on Domain Model Capture, when the resolution logic itself gets designed. See
+    actually need. Attributed to that explicit deferral — not unowned by omission. **Partially
+    informed 2026-08-26** by the Design-Level session's #18/#19 findings (the informational/
+    model-affecting split, and the required-reference invariant) — still not fully settled; revisit
+    at Design-Level on Domain Model Capture, when the resolution logic itself gets designed. See
     `boards/capture-loop.md`.
 
-14. **`Question & Hot Spot Resolution`'s canvas `Events in` table omits `Question Asked` /
-    `Question Answered`.** Its own purpose statement already says it should "track whether a
-    question resolves before the session closes," but the events table only lists the three
-    hot-spot triggers. Surfaced by this session's introduction of `Question Answered`; not fixed
-    here — canvas ownership is Design-Level's call. See
-    `bounded-contexts/question-hot-spot-resolution/canvas.md`.
+14. ~~**`Question & Hot Spot Resolution`'s canvas `Events in` table omits `Question Asked` /
+    `Question Answered`.**~~ **Superseded 2026-08-26** — moot if #17's candidate seam-collapse is
+    adopted, since the canvas itself would be retired rather than fixed. Left open pending that
+    decision.
 
-15. **Which context/system executes `Answer Question` is UNCONFIRMED.** Session Facilitation
-    (symmetric with the rest of the interpretation policies) and Question & Hot Spot Resolution
-    (matches its stated purpose, see #14) are both plausible owners. Design-Level question. See
-    `boards/capture-loop.md`.
+15. ~~**Which context/system executes `Answer Question` is UNCONFIRMED.**~~ **Answered, then
+    superseded, 2026-08-26.** The participant's answer (Session Facilitation) was the opening
+    question of the Design-Level session and turned out to unravel the whole boundary, not just
+    this one command — see #17. If #17 is adopted the question dissolves (everything is
+    Facilitation's); if not, the answer stands as Session Facilitation.
 
 16. ~~**Lineage tool gap: 28 `derived_from` edges predate consistent digest use.** Discovered this
     session running `domain_lineage.py index` after writing this workshop's artifacts:
@@ -178,6 +182,49 @@ here.
     and skipping them, the way `check`'s `_edge_problems` already does) is unfixed — it lives in
     the shared `anoria-planning:eventstorming` skill, not this repo, so it wasn't patched here.
     Still worth reporting upstream if it recurs.
+
+## Raised in the Design-Level session (2026-08-26) — Question & Hot Spot Resolution
+
+17. **Candidate seam collapse: Question & Hot Spot Resolution folds into Session Facilitation.**
+    Tested against the evidence this session gathered (detection already executes inside
+    Facilitation's policies; the resolution capability designed this session matches Facilitation's
+    existing `Interpret Contribution` shape; Facilitation's own model already spans sessions,
+    removing the "own pace" rationale that originally justified separateness). `[inferred]`, full
+    evidence in `context-map.md`'s "Candidate revision" section and
+    `sessions/2026-08-26-design-level.md`. Owned by whoever runs the next `ddd-strategic-design`
+    session — that skill decides adoption, not this one. Undated.
+
+18. **Two kinds of hot spot, previously undifferentiated in the PRD.** Informational/pain-point
+    hot spots (e.g. "this event is slow because of an external provider") don't affect the model
+    and need no resolution — already consistent with F08's "annotating nothing is valid" stance.
+    Model-affecting hot spots close an open question or fix something in the workshop design, and
+    do have a genuine "done" state. `[storm]`, confirmed by the participant 2026-08-26. Whether
+    F08 needs updating to name this split explicitly is a product decision, not decided here.
+    Unowned, undated.
+
+19. **Hot spot/question resolution is entirely unspecified in the PRD, and now has a candidate
+    shape.** F08 defines creation, annotation, and counting, but no resolve/close operation — the
+    "resolvable" language at PRD line 693 is never cashed into a command or event, and F01's
+    operation-log kind list has no `resolve` verb. `[code]`, disclosed to the participant before
+    design proceeded. This session elicited a candidate: resolution is a **deliberate, confirmed
+    act** (not automatic, mirroring `Building Block Proposed → Accept Proposal` rather than the
+    auto-raise policies), and it **must carry a recorded reference to what resolved it** — deliberately
+    untyped (a note, a link, a building block, or anything else). `[storm]`. Needs a PRD update
+    (F08, and F01's operation-log kind list) once #17 is decided, since where this lives in the
+    event-stormed model depends on which context ends up owning it. Attributed to this session's
+    finding; unowned as a next action, undated.
+
+20. **This session's edits to `context-map.md` and `open-questions.md` left 10 artifacts stale**
+    (`domain_lineage.py check`, 2026-08-26): `subdomain-catalog.md`, `domain-and-goals.md`, all four
+    `bounded-contexts/*/canvas.md` files, `bounded-contexts/question-hot-spot-resolution/
+    ubiquitous-language.md`, and `context-map.md`/`open-questions.md` themselves (each now stale
+    against the other's latest digest). **Not dismissed with `ack`** — that would assert the
+    changes don't matter, which is false; the candidate seam-collapse (#17) genuinely bears on all
+    of them. Left stale deliberately, to be refreshed together whichever way #17 is decided:
+    adopting it invalidates the subdomain catalog's context count and every canvas's cross-references
+    to Question & Hot Spot Resolution; declining it still means `ddd-strategic-design` should
+    re-affirm them against this session's evidence rather than leave them silently stale. Owned by
+    whoever runs that session; undated.
 
 ## Deliberate deviations, recorded rather than silent
 
