@@ -281,6 +281,7 @@ A text field sits below the board with a submit control. Submitting clears it an
 - **Each proposal self-reports which side of that bar it was judged on**, so a reader can see whose words these are. The self-report drives the interface only; the eval verifies it independently against the transcript rather than trusting it.
 - The one correction made on the spot regardless of source is an **aggregated phase name**. The facilitator does not accept it as an event; it asks what actually happens inside it, and that question is answerable through the normal capture channel.
 - Where the person describes a command, policy, read model or aggregate, the facilitator says this belongs to a deeper session and names which, rather than absorbing it.
+- **Interpreting a contribution judges two independent things, not one:** what it describes (which may propose zero, one, or several building blocks, or point to a deeper format), and separately, whether it resolves whichever facilitator question is still open. A contribution can do the first without the second — describing a real building block while leaving the question that prompted it unanswered — and the facilitator does not treat "something was said" as "the question is answered."
 - Proposes relations as well as building blocks — what an event follows, and who or what caused it. Where it cannot place confidently it proposes the backlog.
 - **Reword proposals against existing building blocks are held back during early capture**, because normalising while the person is still talking is the anti-pattern the method names. Rewordings become available once the model has structure.
 - Never proposes withdrawing a building block a human authored.
@@ -363,11 +364,11 @@ Once there are enough events, the person is offered a few suggested milestones. 
 
 **Capabilities**
 - A hot spot records pain, dispute, risk, or missing information, and is available from the first minute.
-- The facilitator proposes one when the person describes friction, uncertainty or disagreement; the person can also create one directly.
+- **Two distinct routes create a hot spot, and only one goes through review.** When the person describes friction, uncertainty or disagreement as content, the facilitator proposes a hot spot like any other building block, through the normal F05 accept/edit/reject path; the person can also create one directly. By contrast, a hot spot triggered by an absent stakeholder, a revealed knowledge gap, or a question left unresolved at session close (below) is created directly, with no review step — the triggering fact is itself the confirmation, so nothing is left to accept or reject.
 - **An absent stakeholder raises a hot spot** — the method's own prescription for a perspective that was not in the room — naming who is missing.
 - A hot spot annotates any building block except another hot spot, or nothing.
 - Hot spots are counted and the count is visible.
-- **Every facilitator question still unanswered when the session closes becomes a hot spot**, flagging the region that was never opened. A phase name nobody expanded is exactly the hidden detail the board exists to reveal.
+- **Every facilitator question still unanswered when the session closes becomes a hot spot**, flagging the region that was never opened. A question counts as answered only by a direct resolving response — a plain on-topic answer, a revealed knowledge gap, a named absent stakeholder, or the stakeholder-check's complete-perspective confirmation — never merely because the contribution also produced an unrelated building block proposal. A phase name nobody expanded is exactly the hidden detail the board exists to reveal.
 - **A model with no hot spots is reported at close as a signal to interpret rather than a pass or a failure**, since what it means depends on F09's stakeholder answer and on how mature the business is.
 
 **Experience**
@@ -652,6 +653,7 @@ graph TD
 - A transcript describing a command, policy, read model or aggregate produces a notice naming the deeper format, and no building block.
 - A recognisable but awkwardly-phrased business fact from the human is proposed with the human's wording retained.
 - A flagged phase name produces a question the person can answer through the normal capture channel, and the answer reaches the facilitator as a segment.
+- A contribution that produces a building-block proposal without directly answering the question it was given for leaves that question open; the facilitator records no resolution against it from that contribution alone.
 - Every proposal records whether it was judged under the lenient or the strict bar.
 - No proposal withdraws a building block authored by a human.
 - When the model API is unavailable, no proposal is produced and the model remains editable by hand.
@@ -686,6 +688,8 @@ graph TD
 - An absent stakeholder named at close produces a hot spot naming who is missing.
 - The visible hot spot count matches the number of hot spot building blocks in the snapshot.
 - Every facilitator question unanswered at session close produces exactly one hot spot naming what was not opened.
+- A question left open by a building-block proposal that never directly resolved it is still swept into a hot spot at session close, exactly as if it had received no reply at all.
+- A hot spot triggered by an absent stakeholder, a revealed knowledge gap, or an unresolved question at close appears in the model with no facilitator proposal, no accept control, and no rejection path — it is never presented through F05.
 - Withdrawing an annotated building block leaves the hot spot resolvable rather than dangling.
 
 ### F09. Stakeholder check and chosen problem
