@@ -2,13 +2,22 @@
 workshop: ddd-strategic-design
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
+last_updated: 2026-08-26
+digest: d19c35cc15d4
 derived_from:
+  - path: context-map.md
+    digest: 94f3014c1877
+    at: 2026-08-26
   - path: open-questions.md
-    digest: a12a3912e161
+    digest: 401ba0ab793e
     at: 2026-08-26
 ---
-# Ubiquitous Language: Question & Hot Spot Resolution
+# Ubiquitous Language: Question & Hot Spot Resolution — SUPERSEDED
+
+> **Retired 2026-08-26.** This context folded into Session Facilitation — see
+> [`../session-facilitation/canvas.md`](../session-facilitation/canvas.md) and
+> `../../context-map.md`'s "Decision" section. Terms below are preserved for provenance; the
+> surviving ones now belong to Session Facilitation's own language.
 
 > Phase 04.
 

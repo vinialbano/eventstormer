@@ -2,16 +2,20 @@
 workshop: ddd-strategic-design
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
+last_updated: 2026-08-26
+digest: 5949ef8018e9
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: 568f97a816f3
     at: 2026-08-26
+  - path: bounded-contexts/question-hot-spot-resolution/canvas.md
+    digest: 759a1d42a01f
+    at: 2026-08-26
   - path: context-map.md
-    digest: 71e703c4a12c
+    digest: 94f3014c1877
     at: 2026-08-26
   - path: subdomain-catalog.md
-    digest: 8ba6b998650a
+    digest: e266740011c9
     at: 2026-08-26
 ---
 # Bounded Context: Session Facilitation
@@ -20,6 +24,14 @@ derived_from:
 > `UNCONFIRMED` pending a Process Modelling or Design-Level EventStorming pass on this context
 > specifically — Big Picture (already run) stops at the event board and does not produce
 > per-context commands/events/policies.
+
+> **Absorbed 2026-08-26:** the former Question & Hot Spot Resolution context folded into this one
+> — `ddd-strategic-design` adopted a Design-Level finding that its detection and resolution
+> capabilities already live here. See `../../context-map.md`'s "Decision" section,
+> `../../open-questions.md` #17, and the retired
+> [`../question-hot-spot-resolution/canvas.md`](../question-hot-spot-resolution/canvas.md). The
+> sections below fold in that context's surviving content (marked `[from QHSR]`) alongside this
+> session's own `UNCONFIRMED` deferrals — both still await a Design-Level pass on this context.
 
 **Status:** draft • **Provenance:** `[confirmed]` (boundary) / `UNCONFIRMED` (event-stormed model)
 
@@ -37,15 +49,20 @@ derived_from:
 
 - **Language boundary:** "Proposal" and "Contribution" (Facilitation's own pre-acceptance
   artifacts — not yet a Domain Event/Actor/System/Hot Spot, per the board); asymmetric leniency as a
-  named behavior, not an implementation detail.
+  named behavior, not an implementation detail. `[from QHSR]` absorbs the trigger vocabulary —
+  Absent Stakeholder Named, Knowledge Gap Revealed — and "resolved"/"unresolved" as a question's
+  fate at Session Closed, now this context's own terms rather than a downstream's.
 - **Capability boundary:** conduct-conversation-and-propose (noun–verb: session facilitation).
-  Passes the single-name test — one capability, no "and" hiding a second context.
+  Passes the single-name test — one capability, no "and" hiding a second context. `[from QHSR]`
+  detect-and-track-gaps folds in as an extension of this same capability, not a second one: the
+  Design-Level finding was that judging whether a contribution resolves an open gap is the same
+  judgment shape as `Interpret Contribution` already uses.
 - **Consistency boundary:** UNCONFIRMED — likely candidate: a session's lifecycle state
-  (open/scoped/closed) must stay consistent within one session. Needs a Design-Level pass to
-  confirm any aggregate boundary.
-- **Does not own:** Building Block storage/lifecycle (Domain Model Capture); deciding when to raise a Hot
-  Spot (Question & Hot Spot Resolution); projecting the model into readable output (Derived
-  Artifact Generation).
+  (open/scoped/closed) must stay consistent within one session, now including a question's
+  resolved/unresolved state at the moment of Session Closed (`[from QHSR]`). Needs a Design-Level
+  pass to confirm any aggregate boundary.
+- **Does not own:** Building Block storage/lifecycle (Domain Model Capture); projecting the model
+  into readable output (Derived Artifact Generation).
 
 ## Event-stormed model
 
@@ -57,7 +74,7 @@ derived_from:
 
 | Command | Actor / source | Handled by | Produces event(s) | Notes |
 |---|---|---|---|---|
-| UNCONFIRMED | — | — | — | Deferred to Process Modelling / Design-Level |
+| Raise Hot Spot | This context (policy-triggered) `[from QHSR]` | Domain Model Capture | Building Block created (Hot Spot kind) | UNCONFIRMED exact command name/shape — same deferral QHSR left it in |
 
 ### Events in
 
@@ -69,21 +86,22 @@ derived_from:
 
 | Event | Consumed by | Meaning | Produced by |
 |---|---|---|---|
-| Absent Stakeholder Named | Question & Hot Spot Resolution | A named stakeholder is missing from the session | UNCONFIRMED which command/policy produces this — named as a fact this session's board carries, not yet modelled here |
-| Knowledge Gap Revealed | Question & Hot Spot Resolution | The participant admitted a gap in their own knowledge | Same caveat as above |
-| Session Closed | Question & Hot Spot Resolution | The session ended; any Question Asked with no resolving event becomes eligible for a Hot Spot | Same caveat as above |
+| UNCONFIRMED | — | — | Deferred — the three triggers below (Absent Stakeholder Named, Knowledge Gap Revealed, Session Closed) are now internal to this context, not published to a downstream, per the 2026-08-26 merge |
 
 ### Policies
 
 | When this event happens | Then this command/action occurs | Rule / rationale | Status |
 |---|---|---|---|
-| UNCONFIRMED | — | — | Deferred |
+| Absent Stakeholder Named | Raise Hot Spot | A missing perspective is itself a gap worth flagging | `[storm]`, `[from QHSR]`, not yet formalized as a policy card |
+| Knowledge Gap Revealed | Raise Hot Spot | An admitted gap in the participant's own knowledge is a gap worth flagging | `[storm]`, `[from QHSR]` |
+| Session Closed AND a Question Asked has no resolving event | Raise Hot Spot | An unresolved question shouldn't silently disappear at close | `[storm]`, `[from QHSR]` |
+| A Contribution resolves an open hot spot/question | Interpret Contribution (existing capability, extended) | Resolution is a deliberate, confirmed act — mirrors `Building Block Proposed → Accept Proposal`, not an auto-raise policy — and must carry a recorded reference to what resolved it | `[storm]`, `[from QHSR]` design candidate, `open-questions.md` #19 |
 
 ### Queries / views / read models
 
 | Query / view | Used by | Answers | Built from / backed by |
 |---|---|---|---|
-| UNCONFIRMED | — | — | Deferred |
+| Open hot spots / questions at any point in the session | `[from QHSR]`, UNCONFIRMED consumer | "What's still unresolved?" | UNCONFIRMED |
 
 ### Aggregates / consistency boundaries
 
@@ -104,22 +122,21 @@ derived_from:
 
 ```mermaid
 flowchart LR
-  Capture["Domain Model Capture"] -->|"OHS + Published Language\nCustomer/Supplier"| This["Session Facilitation"]
-  This -->|"OHS + Published Language\nConformist"| HotSpot["Question & Hot Spot Resolution"]
+  Capture["Domain Model Capture"] -->|"OHS + Published Language\nCustomer/Supplier"| This["Session Facilitation\n(incl. hot spot / question resolution)"]
 
   classDef core fill:#ffe0e6,stroke:#c1123e,color:#000
-  classDef sup fill:#e0ecff,stroke:#1f5fbf,color:#000
   class This core
   class Capture core
-  class HotSpot sup
 ```
 
 - **Upstream (this context depends on):** Domain Model Capture — OHS + Published Language, this
-  context accommodated as Customer/Supplier (it's the primary consumer shaping the contract).
-- **Downstream (consumers of this context):** Question & Hot Spot Resolution — Conformist,
-  consuming a curated set of this context's domain events as-is.
-- **Published language / contracts:** the curated event set (Absent Stakeholder Named, Knowledge
-  Gap Revealed, Session Closed) — deliberately narrow, not this context's whole internal model.
+  context accommodated as Customer/Supplier (it's the primary consumer shaping the contract),
+  including the `Raise Hot Spot` call absorbed from Question & Hot Spot Resolution.
+- **Downstream (consumers of this context):** none identified — Question & Hot Spot Resolution,
+  formerly the one downstream, folded into this context 2026-08-26 (`context-map.md`'s "Decision"
+  section).
+- **Published language / contracts:** none of its own currently identified downstream of this
+  context.
 - **Anticorruption needs:** none identified this session; Capture is this context's only upstream
   and is clean/self-owned (same team).
 
@@ -130,6 +147,8 @@ flowchart LR
 | Format-selection gap | hot-spot | "Workshop Format Selected" is on the board for the whole business line, but v1 hardcodes Big Picture | See `../../open-questions.md` #1 |
 | Reinstatement conflict rule | white-spot | No resolution rule for a failed re-validation on reinstate | Named as Process Modelling/Design-Level work, `../../open-questions.md` #3 |
 | As-is/to-be distinction | white-spot | Neither this board nor the PRD distinguishes describing the business as it works today vs. as wanted | `../../open-questions.md` #6 |
+| Three policy relationships, found not modelled `[from QHSR]` | hot-spot | Formalizing Absent Stakeholder Named / Knowledge Gap Revealed / Session Closed → Raise Hot Spot as policy cards is Process Modelling/Design-Level work on this context | `../../open-questions.md` #4 |
+| PRD gap: resolve/close mechanic unspecified `[from QHSR]` | white-spot | F08 defines creation/annotation/counting but no resolve operation; F01's operation-log kind list has no `resolve` verb | `../../open-questions.md` #19 |
 
 ## Code evidence (as-is)
 

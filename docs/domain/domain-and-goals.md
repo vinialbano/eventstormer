@@ -5,7 +5,7 @@ status: draft
 last_updated: 2026-08-25
 derived_from:
   - path: open-questions.md
-    digest: a12a3912e161
+    digest: 401ba0ab793e
     at: 2026-08-26
   - path: boards/eventstormer-big-picture.md
     digest: 568f97a816f3

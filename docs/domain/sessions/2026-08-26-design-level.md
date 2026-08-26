@@ -9,13 +9,13 @@ derived_from:
     digest: bc6ad40750e0
     at: 2026-08-26
   - path: bounded-contexts/question-hot-spot-resolution/canvas.md
-    digest: f73247969453
+    digest: 759a1d42a01f
     at: 2026-08-26
   - path: context-map.md
-    digest: 0429d6d38b35
+    digest: 94f3014c1877
     at: 2026-08-26
   - path: open-questions.md
-    digest: 4f660876c5d3
+    digest: 401ba0ab793e
     at: 2026-08-26
 ---
 # Session — Design-Level EventStorming: Question & Hot Spot Resolution

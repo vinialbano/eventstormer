@@ -1,16 +1,16 @@
 ---
-workshop: big-picture + ddd-strategic-design + process-modelling + design-level
+workshop: ddd-strategic-design
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-26
-digest: 4f660876c5d3
+digest: 401ba0ab793e
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: 568f97a816f3
     at: 2026-08-26
   - path: context-map.md
-    digest: 71e703c4a12c
-    at: 2026-08-25
+    digest: 94f3014c1877
+    at: 2026-08-26
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c
     at: 2026-08-26
@@ -147,15 +147,14 @@ here.
     `boards/capture-loop.md`.
 
 14. ~~**`Question & Hot Spot Resolution`'s canvas `Events in` table omits `Question Asked` /
-    `Question Answered`.**~~ **Superseded 2026-08-26** — moot if #17's candidate seam-collapse is
-    adopted, since the canvas itself would be retired rather than fixed. Left open pending that
-    decision.
+    `Question Answered`.**~~ **Moot, 2026-08-26** — #17's seam-collapse was adopted; the canvas
+    itself is retired rather than fixed.
 
 15. ~~**Which context/system executes `Answer Question` is UNCONFIRMED.**~~ **Answered, then
-    superseded, 2026-08-26.** The participant's answer (Session Facilitation) was the opening
+    dissolved, 2026-08-26.** The participant's answer (Session Facilitation) was the opening
     question of the Design-Level session and turned out to unravel the whole boundary, not just
-    this one command — see #17. If #17 is adopted the question dissolves (everything is
-    Facilitation's); if not, the answer stands as Session Facilitation.
+    this one command — see #17. #17 was adopted, so the question dissolves: everything is
+    Facilitation's.
 
 16. ~~**Lineage tool gap: 28 `derived_from` edges predate consistent digest use.** Discovered this
     session running `domain_lineage.py index` after writing this workshop's artifacts:
@@ -185,14 +184,16 @@ here.
 
 ## Raised in the Design-Level session (2026-08-26) — Question & Hot Spot Resolution
 
-17. **Candidate seam collapse: Question & Hot Spot Resolution folds into Session Facilitation.**
-    Tested against the evidence this session gathered (detection already executes inside
-    Facilitation's policies; the resolution capability designed this session matches Facilitation's
-    existing `Interpret Contribution` shape; Facilitation's own model already spans sessions,
-    removing the "own pace" rationale that originally justified separateness). `[inferred]`, full
-    evidence in `context-map.md`'s "Candidate revision" section and
-    `sessions/2026-08-26-design-level.md`. Owned by whoever runs the next `ddd-strategic-design`
-    session — that skill decides adoption, not this one. Undated.
+17. ~~**Candidate seam collapse: Question & Hot Spot Resolution folds into Session Facilitation.**~~
+    **Decided — adopted, 2026-08-26.** Tested against the evidence this session gathered
+    (detection already executes inside Facilitation's policies; the resolution capability designed
+    this session matches Facilitation's existing `Interpret Contribution` shape; Facilitation's own
+    model already spans sessions, removing the "own pace" rationale that originally justified
+    separateness). Full evidence in `sessions/2026-08-26-design-level.md`; the decision record is
+    in `context-map.md`'s "Decision" section. Question & Hot Spot Resolution is retired as a
+    bounded context; its canvas is preserved, marked superseded, at
+    `bounded-contexts/question-hot-spot-resolution/canvas.md`; its surviving content is merged into
+    `bounded-contexts/session-facilitation/canvas.md`. `subdomain-catalog.md` updated to match.
 
 18. **Two kinds of hot spot, previously undifferentiated in the PRD.** Informational/pain-point
     hot spots (e.g. "this event is slow because of an external provider") don't affect the model
@@ -209,22 +210,18 @@ here.
     design proceeded. This session elicited a candidate: resolution is a **deliberate, confirmed
     act** (not automatic, mirroring `Building Block Proposed → Accept Proposal` rather than the
     auto-raise policies), and it **must carry a recorded reference to what resolved it** — deliberately
-    untyped (a note, a link, a building block, or anything else). `[storm]`. Needs a PRD update
-    (F08, and F01's operation-log kind list) once #17 is decided, since where this lives in the
-    event-stormed model depends on which context ends up owning it. Attributed to this session's
-    finding; unowned as a next action, undated.
+    untyped (a note, a link, a building block, or anything else). `[storm]`. **#17 is now decided
+    (adopted)** — this lives in Session Facilitation's event-stormed model (see its canvas'
+    Policies table). Still needs a PRD update (F08, and F01's operation-log kind list); unowned as
+    a next action, undated.
 
-20. **This session's edits to `context-map.md` and `open-questions.md` left 10 artifacts stale**
-    (`domain_lineage.py check`, 2026-08-26): `subdomain-catalog.md`, `domain-and-goals.md`, all four
-    `bounded-contexts/*/canvas.md` files, `bounded-contexts/question-hot-spot-resolution/
-    ubiquitous-language.md`, and `context-map.md`/`open-questions.md` themselves (each now stale
-    against the other's latest digest). **Not dismissed with `ack`** — that would assert the
-    changes don't matter, which is false; the candidate seam-collapse (#17) genuinely bears on all
-    of them. Left stale deliberately, to be refreshed together whichever way #17 is decided:
-    adopting it invalidates the subdomain catalog's context count and every canvas's cross-references
-    to Question & Hot Spot Resolution; declining it still means `ddd-strategic-design` should
-    re-affirm them against this session's evidence rather than leave them silently stale. Owned by
-    whoever runs that session; undated.
+20. ~~**This session's edits to `context-map.md` and `open-questions.md` left 10 artifacts stale**~~
+    **Resolved, 2026-08-26.** #17 was adopted and every affected artifact was refreshed together in
+    the same session that decided it: `subdomain-catalog.md`, both `bounded-contexts/session-
+    facilitation/{canvas,ubiquitous-language}.md`, the retired `bounded-contexts/question-hot-spot-
+    resolution/{canvas,ubiquitous-language}.md`, `context-map.md`, and this file. Re-run
+    `domain_lineage.py stamp`/`link`/`check`/`index` after this edit to confirm no staleness
+    remains.
 
 ## Deliberate deviations, recorded rather than silent
 
