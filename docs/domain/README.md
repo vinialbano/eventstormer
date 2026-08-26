@@ -6,13 +6,19 @@ last_updated: 2026-08-26
 digest: ac57fbbf85ad
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
+    digest: a1fe4f12aaba
     at: 2026-08-26
   - path: context-map.md
     digest: e4393aff3ac9
     at: 2026-08-26
   - path: domain-and-goals.md
     digest: 015ff10858df
+    at: 2026-08-26
+  - path: open-questions.md
+    digest: 20da974d0976
+    at: 2026-08-26
+  - path: sessions/2026-08-26-big-picture.md
+    digest: 308013b9fcc5
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
@@ -76,6 +82,16 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
    `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md` (merged content), and
    the retired `bounded-contexts/question-hot-spot-resolution/{canvas,ubiquitous-language}.md`
    (marked superseded, preserved for provenance). See `open-questions.md` #17.
+6a. **Big Picture EventStorming, resumed (2026-08-26).** Fixed the pivotal-event scoping defect
+   item 6 below's Design-Level session had found but not corrected (`open-questions.md` #23): the
+   original board's `Session Started` conflated two scopes. Split into `Workshop Started` (folds
+   the former "Workshop Format Selected" candidate; once per workshop, fixes the format) and
+   `Session Started` (repeatable; once per session, only after `Domain Problem Stated`, since a
+   workshop determines what it's about before any session runs) — confirmed live by the
+   participant, who also confirmed `Session Started` keeps its pivotal marker despite repeating.
+   Pivotal events go from four to five. `boards/eventstormer-big-picture.md` updated in place (it
+   was `draft`, so this is the ordinary resume case, not the confirmed-artifact one). Full reasoning
+   in `sessions/2026-08-26-big-picture.md`.
 6. **Design-Level EventStorming on Session Facilitation (2026-08-26)** turned this context's
    event-stormed model from `UNCONFIRMED` into `[storm]`-confirmed. Found a structural gap the
    Big Picture never modelled: `Workshop` (persists, one fixed format, spans many sessions and
@@ -171,9 +187,10 @@ than guessed.
 | [bounded-contexts/session-facilitation/ubiquitous-language.md](bounded-contexts/session-facilitation/ubiquitous-language.md) | design-level | session-facilitation | draft | 2026-08-26 |
 | [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-26 |
 | [domain-and-goals.md](domain-and-goals.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-25 |
-| [open-questions.md](open-questions.md) | design-level | session-facilitation | draft | 2026-08-26 |
+| [open-questions.md](open-questions.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
 | [sessions/2026-08-25-big-picture.md](sessions/2026-08-25-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 | [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-26 |
+| [sessions/2026-08-26-big-picture.md](sessions/2026-08-26-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
 | [sessions/2026-08-26-design-level-session-facilitation.md](sessions/2026-08-26-design-level-session-facilitation.md) | design-level | session-facilitation | draft | 2026-08-26 |
 | [sessions/2026-08-26-design-level.md](sessions/2026-08-26-design-level.md) | design-level | question-hot-spot-resolution | draft | 2026-08-26 |
 | [sessions/big-picture-context-map.md](sessions/big-picture-context-map.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
@@ -184,12 +201,15 @@ graph LR
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> README_md["README.md"]
   context_map_md["context-map.md"] --> README_md["README.md"]
   domain_and_goals_md["domain-and-goals.md"] --> README_md["README.md"]
+  open_questions_md["open-questions.md"] --> README_md["README.md"]
+  sessions_2026_08_26_big_picture_md["sessions/2026-08-26-big-picture.md"] --> README_md["README.md"]
   sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"] --> README_md["README.md"]
   sessions_2026_08_26_design_level_md["sessions/2026-08-26-design-level.md"] --> README_md["README.md"]
   subdomain_catalog_md["subdomain-catalog.md"] --> README_md["README.md"]
   boards_capture_loop_md["boards/capture-loop.md"] --> acceptance_tests_md["acceptance-tests.md"]
   bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"] --> acceptance_tests_md["acceptance-tests.md"]
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> boards_capture_loop_md["boards/capture-loop.md"]
+  sessions_2026_08_26_big_picture_md["sessions/2026-08-26-big-picture.md"] --> boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"]
   context_map_md["context-map.md"] --> bounded_contexts_derived_artifact_generation_canvas_md["bounded-contexts/derived-artifact-generation/canvas.md"]
   subdomain_catalog_md["subdomain-catalog.md"] --> bounded_contexts_derived_artifact_generation_canvas_md["bounded-contexts/derived-artifact-generation/canvas.md"]
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> bounded_contexts_domain_model_capture_canvas_md["bounded-contexts/domain-model-capture/canvas.md"]
@@ -224,9 +244,11 @@ graph LR
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> open_questions_md["open-questions.md"]
   bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"] --> open_questions_md["open-questions.md"]
   context_map_md["context-map.md"] --> open_questions_md["open-questions.md"]
+  sessions_2026_08_26_big_picture_md["sessions/2026-08-26-big-picture.md"] --> open_questions_md["open-questions.md"]
   sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"] --> open_questions_md["open-questions.md"]
   sessions_2026_08_26_design_level_md["sessions/2026-08-26-design-level.md"] --> open_questions_md["open-questions.md"]
   boards_capture_loop_md["boards/capture-loop.md"] --> sessions_2026_08_25_process_modelling_md["sessions/2026-08-25-process-modelling.md"]
+  boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> sessions_2026_08_26_big_picture_md["sessions/2026-08-26-big-picture.md"]
   boards_capture_loop_md["boards/capture-loop.md"] --> sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"]
   bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"] --> sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"]
   context_map_md["context-map.md"] --> sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"]

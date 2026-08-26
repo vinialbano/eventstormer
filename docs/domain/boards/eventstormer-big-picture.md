@@ -3,7 +3,11 @@ workshop: big-picture
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-26
-digest: 568f97a816f3
+digest: a1fe4f12aaba
+derived_from:
+  - path: sessions/2026-08-26-big-picture.md
+    digest: 308013b9fcc5
+    at: 2026-08-26
 ---
 # Board — EventStormer: running a facilitated session (Big Picture)
 
@@ -34,17 +38,25 @@ Spot are used, per this format's own legend.
 
 ### Framing
 
-1. **Workshop Format Selected** `[storm]` — forward-looking; v1 hardcodes Big Picture, so this
-   event doesn't happen yet in the shipped product. See `open-questions.md`.
-2. **Session Started** `[glossary]`
-3. **Question Asked** `[glossary]` — generic; every facilitator question uses this same event,
+1. **Workshop Started** `[storm]` *(pivotal)* — begins a new EventStorming workshop; the format is
+   selected and fixed for the workshop's life at this point. Folds the former "Workshop Format
+   Selected" candidate — v1 hardcodes Big Picture today, so format selection is not yet a real
+   choice in the shipped product, but the event itself is Workshop Started, not a separate
+   selection step. See `open-questions.md`.
+2. **Question Asked** `[glossary]` — generic; every facilitator question uses this same event,
    including the scope question below. See "Questions and their resolutions."
-4. **Domain Problem Stated** `[storm]` *(pivotal)* — the participant's own words for the opening
-   scope answer. Sets the whole session's scope (`set scope` operation); kept as its own name
-   rather than a generic "Question Answered" because of that unique downstream weight.
+3. **Domain Problem Stated** `[storm]` *(pivotal)* — the participant's own words for the opening
+   scope answer. Sets the **workshop's** scope (`set scope` operation), once per workshop — not
+   once per session; kept as its own name rather than a generic "Question Answered" because of that
+   unique downstream weight.
 
-### Capture loop (repeats for the length of the session)
+### Capture loop (repeats for the length of a session; a session itself repeats for the life of
+the workshop)
 
+4. **Session Started** `[glossary]` *(pivotal)* — begins one sitting within the workshop. Only
+   happens once `Domain Problem Stated` has set the workshop's scope: a workshop determines what
+   it's about before any session runs. Repeatable — a workshop can have many sessions, each
+   beginning this way.
 5. **Contribution Made** `[glossary]` — was "Transcript Segment Submitted"; renamed off a named
    smell in this skill's own catalog ("Data-availability pseudo-events... `Form Submitted`").
 6. **Building Block Proposed** `[glossary]` — was "Proposal Made"; renamed 2026-08-26 during the
@@ -145,11 +157,18 @@ pass on "the capture loop" to formalize as actual `When [event], then [action]` 
 32. **Chosen Problem Skipped** `[glossary]` *(pivotal)* — with reason recorded (no problem chosen,
     or no real impediments yet).
 
-**Pivotal events (four, provisional):** Session Started, Domain Problem Stated, Session Closed,
-Chosen Problem Named/Skipped. The original five-candidate draft named Stakeholder Check Answered
-and Derived Artifacts Exported as the third and fifth; both were dropped during the quality gate
-(see below), leaving four. The participant was asked whether to nominate a fifth and did not; four
-stands.
+**Pivotal events (five, provisional).** Originally four — Session Started, Domain Problem Stated,
+Session Closed, Chosen Problem Named/Skipped — after the original five-candidate draft's other two
+(Stakeholder Check Answered, Derived Artifacts Exported) were dropped during the quality gate (see
+below) and the participant declined to nominate a fifth.
+
+**Revised in a resume, 2026-08-26**, once the Design-Level session on Session Facilitation found
+the `Workshop`/`Session` distinction this board never modelled (`open-questions.md` #23): the old
+"Session Started" conflated two things at different scopes. Split into **Workshop Started**
+(folds the former "Workshop Format Selected" candidate; once per workshop) and **Session Started**
+(repeatable; once per session, only after `Domain Problem Stated`) — confirmed live by the
+participant. Full pivotal set: Workshop Started, Domain Problem Stated, Session Started, Session
+Closed, Chosen Problem Named/Skipped.
 
 ---
 

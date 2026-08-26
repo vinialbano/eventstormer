@@ -1,18 +1,21 @@
 ---
-workshop: design-level
-scope: session-facilitation
+workshop: big-picture
+scope: eventstormer-session
 status: draft
 last_updated: 2026-08-26
-digest: 0e53d26ce8a6
+digest: 20da974d0976
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
+    digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 59c06f08153f
     at: 2026-08-26
   - path: context-map.md
     digest: e4393aff3ac9
+    at: 2026-08-26
+  - path: sessions/2026-08-26-big-picture.md
+    digest: 308013b9fcc5
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
@@ -202,12 +205,17 @@ here.
     `Building Block Proposed`/`Proposal Made` (one specific outcome). See
     `bounded-contexts/session-facilitation/ubiquitous-language.md`.
 
-23. **Big Picture's pivotal-event scoping is superseded.** This session found `Session Started`
-    (Big Picture, 2026-08-25) should have been `Workshop Started`, and that `Domain Problem Stated`
-    / `Chosen Problem Named/Skipped` are also workshop-scoped, not session-scoped — the `Workshop`
-    concept wasn't available at Big Picture time. `boards/eventstormer-big-picture.md` is left
-    unedited, per this skill's rule against re-scaling an earlier workshop's own artifact; this item
-    records the correction. Not actionable — informational, for whoever next reads that board.
+23. ~~**Big Picture's pivotal-event scoping is superseded.**~~ **Resolved 2026-08-26**, by resuming
+    the Big Picture workshop itself (the board is `draft`, so update-in-place applied, per this
+    skill's own resume rule — this is not the "re-scaling another workshop's board" case, since Big
+    Picture is editing its own artifact). The participant clarified live: `Session Started`
+    conflated two scopes. Split into `Workshop Started` (folds the former "Workshop Format
+    Selected" candidate; once per workshop, fixes the format) and `Session Started` (repeatable;
+    once per session, only after `Domain Problem Stated` has set the workshop's scope — a workshop
+    determines what it's about before any session runs). `Domain Problem Stated` and `Chosen
+    Problem Named/Skipped` remain workshop-scoped as this item originally found; `Session Closed`
+    stays session-scoped, unaffected. Full model in `boards/eventstormer-big-picture.md`; session
+    record in `sessions/2026-08-26-big-picture.md`.
 
 24. **Two new structural concepts, `Workshop` and `Session`, replace the earlier undifferentiated
     "session."** `Workshop` persists, is bound to exactly one format for its life, and can span
@@ -237,6 +245,16 @@ here.
     now also covering the resolved side). This session names both the raising and resolving
     commands/events precisely but does not decide their payload shape — still owned by a future
     Design-Level pass on Domain Model Capture.
+
+31. **This session's edit to `boards/eventstormer-big-picture.md` (the #23 resume) left 8
+    downstream artifacts stale**, per `domain_lineage.py check` run at close: `boards/capture-
+    loop.md`, `bounded-contexts/domain-model-capture/{canvas,ubiquitous-language}.md`,
+    `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md`, `domain-and-goals.md`,
+    and `sessions/big-picture-context-map.md`. Reported, not auto-propagated, per this skill's own
+    rule — none of these are re-derived here; whether the `Workshop Started`/`Session Started`
+    split changes anything in their content is each artifact's own workshop's call (Process
+    Modelling on the capture loop, Design-Level on the two contexts, or `ddd-strategic-design`) to
+    make when it next resumes. Unowned, undated.
 
 30. **This session's edits to `context-map.md` and `open-questions.md` left 9 artifacts stale**,
     per `domain_lineage.py check` run at close: `subdomain-catalog.md`, `domain-and-goals.md`,
