@@ -1,9 +1,9 @@
 ---
-workshop: ddd-strategic-design
-scope: eventstormer-session
+workshop: design-level
+scope: session-facilitation
 status: draft
 last_updated: 2026-08-26
-digest: 94f3014c1877
+digest: e4393aff3ac9
 derived_from:
   - path: bounded-contexts/derived-artifact-generation/canvas.md
     digest: b6e96a24ddeb
@@ -15,7 +15,7 @@ derived_from:
     digest: 759a1d42a01f
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 5949ef8018e9
+    digest: 59c06f08153f
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c
@@ -56,7 +56,7 @@ flowchart LR
 
 | Upstream (U) | Downstream (D) | Relationship | Pattern | Mechanism | Evidence / topic | Notes |
 |---|---|---|---|---|---|---|
-| Domain Model Capture | Session Facilitation | Upstream-Downstream | OHS + Published Language, accommodated as Customer/Supplier | in-process command/query (v1: single deployable) | Building Block lifecycle contract (create/rework/withdraw/reinstate, incl. Hot Spot Building Blocks raised by Facilitation's own resolution judgment) | Both Core & volatile. Capture is self-contained and generic; Facilitation cannot ship without it (U/D tell). Facilitation is the primary consumer shaping the contract — its needs are formally accommodated, not merely conformed to. `[confirmed]` |
+| Domain Model Capture | Session Facilitation | Upstream-Downstream | OHS + Published Language, accommodated as Customer/Supplier | in-process command/query (v1: single deployable) | Building Block lifecycle contract (create/rework/withdraw/reinstate, incl. Hot Spot Building Blocks raised **and resolved** by Facilitation's own resolution judgment — `Raise Hot Spot`/`Resolve Hot Spot`, formalized as commands 2026-08-26) | Both Core & volatile. Capture is self-contained and generic; Facilitation cannot ship without it (U/D tell). Facilitation is the primary consumer shaping the contract — its needs are formally accommodated, not merely conformed to. `[confirmed]` |
 | Domain Model Capture | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model | the read-only model projection (PRD F10) | Thin, stateless projection; no accommodation needed. `[confirmed]` |
 
 ## Why Capture is the hub, not each pair modelled separately
