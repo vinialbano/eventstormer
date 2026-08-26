@@ -8,10 +8,10 @@ derived_from:
     digest: 568f97a816f3
     at: 2026-08-26
   - path: context-map.md
-    digest: 71e703c4a12c
+    digest: 94f3014c1877
     at: 2026-08-26
   - path: subdomain-catalog.md
-    digest: 8ba6b998650a
+    digest: e266740011c9
     at: 2026-08-26
 ---
 # Bounded Context: Domain Model Capture

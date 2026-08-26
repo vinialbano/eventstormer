@@ -5,10 +5,10 @@ status: draft
 last_updated: 2026-08-25
 derived_from:
   - path: context-map.md
-    digest: 71e703c4a12c
+    digest: 94f3014c1877
     at: 2026-08-26
   - path: subdomain-catalog.md
-    digest: 8ba6b998650a
+    digest: e266740011c9
     at: 2026-08-26
 ---
 # Bounded Context: Derived Artifact Generation
