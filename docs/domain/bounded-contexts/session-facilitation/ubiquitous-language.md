@@ -4,10 +4,10 @@ scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
 derived_from:
-  - path: ../../boards/eventstormer-big-picture.md
-    at: 2026-08-25
+  - path: boards/eventstormer-big-picture.md
+    digest: 568f97a816f3
+    at: 2026-08-26
 ---
-
 # Ubiquitous Language: Session Facilitation
 
 > Phase 04. The language of this context only. Thin this session — most of Facilitation's own

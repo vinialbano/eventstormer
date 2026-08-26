@@ -4,14 +4,16 @@ scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
 derived_from:
-  - path: ../../subdomain-catalog.md
-    at: 2026-08-25
-  - path: ../../context-map.md
-    at: 2026-08-25
-  - path: ../../open-questions.md
-    at: 2026-08-25
+  - path: context-map.md
+    digest: 71e703c4a12c
+    at: 2026-08-26
+  - path: open-questions.md
+    digest: a12a3912e161
+    at: 2026-08-26
+  - path: subdomain-catalog.md
+    digest: 8ba6b998650a
+    at: 2026-08-26
 ---
-
 # Bounded Context: Question & Hot Spot Resolution
 
 > Phase 05–06 canvas. Boundary facts confirmed this session; the event-stormed model is left

@@ -5,13 +5,15 @@ status: draft
 last_updated: 2026-08-25
 derived_from:
   - path: domain-and-goals.md
-    at: 2026-08-25
+    digest: 015ff10858df
+    at: 2026-08-26
   - path: context-map.md
-    at: 2026-08-25
+    digest: 71e703c4a12c
+    at: 2026-08-26
   - path: boards/eventstormer-big-picture.md
-    at: 2026-08-25
+    digest: 568f97a816f3
+    at: 2026-08-26
 ---
-
 # Subdomain Catalog
 
 > Phases 02–03. The distilled inventory of subdomains, each classified Core / Supporting / Generic

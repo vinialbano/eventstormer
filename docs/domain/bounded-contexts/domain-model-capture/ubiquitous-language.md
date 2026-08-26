@@ -4,10 +4,10 @@ scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
 derived_from:
-  - path: ../../boards/eventstormer-big-picture.md
-    at: 2026-08-25
+  - path: boards/eventstormer-big-picture.md
+    digest: 568f97a816f3
+    at: 2026-08-26
 ---
-
 # Ubiquitous Language: Domain Model Capture
 
 > Phase 04.

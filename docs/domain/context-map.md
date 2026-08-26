@@ -5,17 +5,21 @@ status: draft
 last_updated: 2026-08-25
 derived_from:
   - path: subdomain-catalog.md
-    at: 2026-08-25
+    digest: 8ba6b998650a
+    at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    at: 2026-08-25
+    digest: 9741ca703f15
+    at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    at: 2026-08-25
+    digest: cc155f371bca
+    at: 2026-08-26
   - path: bounded-contexts/question-hot-spot-resolution/canvas.md
-    at: 2026-08-25
+    digest: a3848a5f28a6
+    at: 2026-08-26
   - path: bounded-contexts/derived-artifact-generation/canvas.md
-    at: 2026-08-25
+    digest: b6e96a24ddeb
+    at: 2026-08-26
 ---
-
 # Context Map
 
 > Phase 06. Every integrating pair of bounded contexts, with the team relationship, the

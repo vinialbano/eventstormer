@@ -5,11 +5,12 @@ status: draft
 last_updated: 2026-08-25
 derived_from:
   - path: open-questions.md
-    at: 2026-08-25
+    digest: a12a3912e161
+    at: 2026-08-26
   - path: boards/eventstormer-big-picture.md
-    at: 2026-08-25
+    digest: 568f97a816f3
+    at: 2026-08-26
 ---
-
 # Business Domain & Goals
 
 > Phase 01. What the business actually does, and the real, impact-traceable goal of this

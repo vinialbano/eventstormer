@@ -2,8 +2,8 @@
 workshop: big-picture + ddd-strategic-design + process-modelling
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
-digest: dcead030f60c
+last_updated: 2026-08-26
+digest: a12a3912e161
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: 568f97a816f3
@@ -153,7 +153,7 @@ here.
     (matches its stated purpose, see #14) are both plausible owners. Design-Level question. See
     `boards/capture-loop.md`.
 
-16. **Lineage tool gap: 28 `derived_from` edges predate consistent digest use.** Discovered this
+16. ~~**Lineage tool gap: 28 `derived_from` edges predate consistent digest use.** Discovered this
     session running `domain_lineage.py index` after writing this workshop's artifacts:
     `README.md`, `context-map.md`, `subdomain-catalog.md`, `domain-and-goals.md`, and every
     bounded-context `canvas.md`/`ubiquitous-language.md` carry at least one `derived_from` edge
@@ -163,7 +163,21 @@ here.
     only the auto-generated table shrank. Not hand-patched: authoring a digest is exactly what
     this skill's lineage rule forbids doing by hand. Unowned, undated — needs either a script fix
     (a repair subcommand, or tolerate missing-digest edges without dropping the artifact) or a
-    one-time manual `link --from` pass per broken edge, run by whoever next touches those files.
+    one-time manual `link --from` pass per broken edge, run by whoever next touches those files.~~
+    **Resolved 2026-08-26.** Root cause turned out to be two-fold: (1) `_render()` serializes
+    every edge in a file at once and crashes on any missing `digest`/`at`, so `link`/`stamp` could
+    never repair one broken edge in a file that had several — the first successful repair still
+    crashed on its still-broken siblings; (2) eight `bounded-contexts/*` files carried
+    file-relative edge paths (`../../subdomain-catalog.md`) instead of the root-relative form
+    `link` always writes, because those edges were hand-authored during the `ddd-strategic-design`
+    session rather than run through this tool. Fixed with a one-time script that computed each
+    missing digest via the tool's own `body_digest()` against content already on disk (not
+    invented) and normalized every file-relative path to root-relative, then wrote each file once.
+    `check` now reports 0 stale, 0 dangling, 0 unparseable across all 19 tracked artifacts.
+    The underlying script bug (`_render` crashing on unrelated broken edges instead of reporting
+    and skipping them, the way `check`'s `_edge_problems` already does) is unfixed — it lives in
+    the shared `anoria-planning:eventstorming` skill, not this repo, so it wasn't patched here.
+    Still worth reporting upstream if it recurs.
 
 ## Deliberate deviations, recorded rather than silent
 

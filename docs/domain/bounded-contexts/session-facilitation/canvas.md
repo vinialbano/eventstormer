@@ -4,14 +4,16 @@ scope: eventstormer-session
 status: draft
 last_updated: 2026-08-25
 derived_from:
-  - path: ../../subdomain-catalog.md
-    at: 2026-08-25
-  - path: ../../context-map.md
-    at: 2026-08-25
-  - path: ../../boards/eventstormer-big-picture.md
-    at: 2026-08-25
+  - path: boards/eventstormer-big-picture.md
+    digest: 568f97a816f3
+    at: 2026-08-26
+  - path: context-map.md
+    digest: 71e703c4a12c
+    at: 2026-08-26
+  - path: subdomain-catalog.md
+    digest: 8ba6b998650a
+    at: 2026-08-26
 ---
-
 # Bounded Context: Session Facilitation
 
 > Phase 05–06 canvas. Boundary facts confirmed this session; the event-stormed model is left
