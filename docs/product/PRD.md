@@ -143,6 +143,7 @@ Both work from the same model and never from copies of it. Neither is expected t
 - As a domain expert, I want to flag something painful, disputed, or unknown so that the model records the problems and not just the process
 - As a domain expert, I want a hot spot attached to the thing it is about so that the context is not lost
 - As a domain expert, I want people who are not here but should be to be named so that the model says whose view is missing
+- As a domain expert, I want to close a hot spot once it no longer applies, recording what resolved it, so that the model stays a true account of what's still open
 
 ### F09. Stakeholder check and chosen problem
 - As a domain expert, I want to be asked whether anyone else would tell this differently so that the model knows how complete it is
@@ -190,7 +191,7 @@ Both work from the same model and never from copies of it. Neither is expected t
 **Provides**
 - Building block record — id, kind, label, withdrawn flag, and for events the pivotal marker and placement state (used by F02, F06, F08)
 - Relations — `follows` edges between events, and `causedBy` edges from an actor or system to an event (used by F02, F06)
-- Board snapshot — all building block records, all relations, hot spot annotations, the session's business scope, the stakeholder answer, and the chosen problem where one exists (used by F04, F10, F12)
+- Board snapshot — all building block records, all relations, hot spot annotations (including a hot spot's open/resolved state and, once resolved, the recorded reference), the session's business scope, the stakeholder answer, and the chosen problem where one exists (used by F04, F10, F12)
 - Session identity — session id and its resumable session URL (used by F02, F03)
 - Operation log — appended operations, each with author, timestamp, kind and target (used by F10, F14)
 
@@ -204,7 +205,8 @@ Both work from the same model and never from copies of it. Neither is expected t
 - A hot spot annotates any building block other than another hot spot, or nothing at all. **Annotating nothing is a valid permanent state, not a waiting room.**
 - Placement means different things per kind: an event is placed when it has a position in the sequence; an actor or system is placed when it causes an event; a hot spot is never placed. The backlog holds what is not yet placed and is a permanent surface, not a low-confidence fallback.
 - **There is no re-type operation.** A building block filed under the wrong kind was never that kind; it is withdrawn and a new building block created. Withdrawing preserves the id so references resolve and the misreading stays in the record.
-- Every mutation is an operation — create, reword, relate, unrelate, place, unplace, mark pivotal, withdraw, reinstate, set scope, set stakeholder answer, set chosen problem — appended to a log and never edited in place.
+- Every mutation is an operation — create, reword, relate, unrelate, place, unplace, mark pivotal, withdraw, reinstate, resolve, set scope, set stakeholder answer, set chosen problem — appended to a log and never edited in place.
+- **`resolve` targets a hot spot only, and always carries a reference** — deliberately untyped: a note, a link, another building block's id, or free text. The schema requires the field to be present; it does not constrain its shape. A hot spot with no reference cannot be resolved.
 - **Every operation carries an author.** Who proposed it and who accepted it are both recorded.
 - Every operation is validated against the schema for its target's kind before it is applied. A failing operation is rejected and the model is unchanged.
 - Duplicates, contradictions and granularity mismatches are preserved. The system never merges two building blocks.
@@ -272,7 +274,7 @@ A text field sits below the board with a submit control. Submitting clears it an
 - Board snapshot — all building block records, relations, hot spot annotations, business scope, stakeholder answer, chosen problem (from F01)
 
 **Provides**
-- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, and a short rationale (used by F05, F07, F08, F11, F12)
+- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, proposed reference (for a `resolve` proposal), and a short rationale (used by F05, F07, F08, F11, F12)
 
 **Capabilities**
 - Runs server-side. A transcript segment plus the current snapshot go in; proposed operations come out, constrained to the operation schema.
@@ -281,7 +283,7 @@ A text field sits below the board with a submit control. Submitting clears it an
 - **Each proposal self-reports which side of that bar it was judged on**, so a reader can see whose words these are. The self-report drives the interface only; the eval verifies it independently against the transcript rather than trusting it.
 - The one correction made on the spot regardless of source is an **aggregated phase name**. The facilitator does not accept it as an event; it asks what actually happens inside it, and that question is answerable through the normal capture channel.
 - Where the person describes a command, policy, read model or aggregate, the facilitator says this belongs to a deeper session and names which, rather than absorbing it.
-- **Interpreting a contribution judges two independent things, not one:** what it describes (which may propose zero, one, or several building blocks, or point to a deeper format), and separately, whether it resolves whichever facilitator question is still open. A contribution can do the first without the second — describing a real building block while leaving the question that prompted it unanswered — and the facilitator does not treat "something was said" as "the question is answered."
+- **Interpreting a contribution judges two independent things, not one:** what it describes (which may propose zero, one, or several building blocks, point to a deeper format, or propose resolving an open hot spot — independently and in any combination), and separately, whether it resolves whichever facilitator question is still open. A contribution can do the first without the second — describing a real building block while leaving the question that prompted it unanswered — and the facilitator does not treat "something was said" as "the question is answered."
 - Proposes relations as well as building blocks — what an event follows, and who or what caused it. Where it cannot place confidently it proposes the backlog.
 - **Reword proposals against existing building blocks are held back during early capture**, because normalising while the person is still talking is the anti-pattern the method names. Rewordings become available once the model has structure.
 - Never proposes withdrawing a building block a human authored.
@@ -298,7 +300,7 @@ The user meets this feature entirely through F05 — they answer the opening que
 ### F05. Proposal review
 
 **Consumes**
-- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, rationale (from F04)
+- Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, proposed reference (for a `resolve` proposal), rationale (from F04)
 
 **Capabilities**
 - Proposals are presented for explicit disposition; nothing is applied without one.
@@ -356,11 +358,11 @@ Once there are enough events, the person is offered a few suggested milestones. 
 ### F08. Hot spots
 
 **Consumes**
-- Proposed operation — operation kind, target building block id, proposed label, proposed building block kind, rationale (from F04)
+- Proposed operation — operation kind, target building block id, proposed label, proposed building block kind, proposed reference (for a `resolve` proposal), rationale (from F04)
 - Building block record — id, kind, label, withdrawn flag (from F01)
 
 **Provides**
-- Hot spot inventory — hot spot ids, labels, the building block ids they annotate, and whether each is open (used by F09)
+- Hot spot inventory — hot spot ids, labels, the building block ids they annotate, whether each is open or resolved, and, once resolved, the recorded reference (used by F09)
 
 **Capabilities**
 - A hot spot records pain, dispute, risk, or missing information, and is available from the first minute.
@@ -370,9 +372,12 @@ Once there are enough events, the person is offered a few suggested milestones. 
 - Hot spots are counted and the count is visible.
 - **Every facilitator question still unanswered when the session closes becomes a hot spot**, flagging the region that was never opened. A question counts as answered only by a direct resolving response — a plain on-topic answer, a revealed knowledge gap, a named absent stakeholder, or the stakeholder-check's complete-perspective confirmation — never merely because the contribution also produced an unrelated building block proposal. A phase name nobody expanded is exactly the hidden detail the board exists to reveal.
 - **A model with no hot spots is reported at close as a signal to interpret rather than a pass or a failure**, since what it means depends on F09's stakeholder answer and on how mature the business is.
+- **A hot spot is one of two kinds, and the kind decides whether resolving it is ever necessary — never whether it is possible.** An *informational* hot spot (e.g. "this integration is slow") records a permanent fact about the business and carries no expectation of closure. A *model-affecting* hot spot closes an open question or corrects something in the model itself, and has a genuine done state. Both kinds can be resolved by a later contribution; only the model-affecting kind is ever expected to be.
+- **Resolving a hot spot is deliberate, never inferred.** When a contribution appears to close an open hot spot, the facilitator proposes the resolution through the same F05 accept/edit/reject path as any other proposal — this is not one of the direct-creation triggers above. Accepting requires a recorded reference to what resolved it (see F01); rejecting leaves the hot spot open, exactly as a rejected building-block proposal leaves nothing behind.
+- **Nothing in the product is gated on a hot spot's resolution.** An unresolved model-affecting hot spot is a signal, never a blocker — no action, view, or downstream feature requires it to be closed first.
 
 **Experience**
-Hot spots render as callouts on the building block they annotate, with a running count visible during the session.
+Hot spots render as callouts on the building block they annotate, with a running count visible during the session. A resolved hot spot's callout shows its reference; an open one does not.
 
 ### F09. Stakeholder check and chosen problem
 
@@ -383,7 +388,7 @@ Hot spots render as callouts on the building block they annotate, with a running
 - At close the person is asked **whether anyone else would tell this differently.**
   - **Nobody else** — the population is complete, and the chosen problem stands unqualified.
   - **Somebody** — each named person becomes an absent-stakeholder hot spot, and the chosen problem is recorded as provisional pending them.
-- The person then names the one problem most worth attacking, chosen from the hot spots actually present rather than invented.
+- The person then names the one problem most worth attacking, chosen from the hot spots currently open rather than invented — a resolved hot spot is no longer a candidate.
 - Choosing is skippable, and the reason is recorded: no problem chosen, or no real impediments yet — the latter being the expected answer from a business that has not operated long enough to have any.
 - Both the stakeholder answer and the chosen problem appear in every derived artifact, with their qualification.
 
@@ -628,6 +633,8 @@ graph TD
 - There is no operation that changes a building block's kind.
 - Withdrawing preserves the building block and its id; references to it still resolve.
 - Every operation in the log carries an author, and the log records both proposer and accepter for facilitator-originated operations.
+- A `resolve` operation with no reference is rejected as a schema violation; the snapshot before and after is identical.
+- `resolve` is rejected for any building block that is not a hot spot.
 
 ### F02. Backlog and timeline board
 - Building blocks are not grouped by kind; placed events render in `follows` order along the timeline.
@@ -691,12 +698,15 @@ graph TD
 - A question left open by a building-block proposal that never directly resolved it is still swept into a hot spot at session close, exactly as if it had received no reply at all.
 - A hot spot triggered by an absent stakeholder, a revealed knowledge gap, or an unresolved question at close appears in the model with no facilitator proposal, no accept control, and no rejection path — it is never presented through F05.
 - Withdrawing an annotated building block leaves the hot spot resolvable rather than dangling.
+- An informational hot spot and a model-affecting hot spot can each be resolved by a later contribution; neither kind is resolvable-only-in-principle.
+- A proposed resolution accepted through F05 marks the hot spot resolved and records the reference given; a proposed resolution rejected through F05 leaves the hot spot open and unaffected, identical in effect to a rejected building-block proposal.
+- No feature reads a hot spot's open/resolved state as a precondition for any other action; an unresolved hot spot never blocks anything.
 
 ### F09. Stakeholder check and chosen problem
 - The stakeholder question is asked before the chosen problem is offered.
 - Answering that nobody else would tell it differently records the chosen problem unqualified.
 - Naming other people produces one absent-stakeholder hot spot per person and records the chosen problem as provisional.
-- Problem candidates are exactly the hot spots present in the model; no candidate is generated that is not one.
+- Problem candidates are exactly the hot spots currently open in the model; a resolved hot spot is never offered as a candidate, and no candidate is generated that isn't a hot spot at all.
 - Skipping records which reason applied, and the artifacts state that reason rather than omitting the section.
 
 ### F10. Derived artifacts
@@ -747,12 +757,14 @@ Acceptance criteria not yet elicited — F17 is not ready to spec. The confident
 - **F04 ← F03 (transcript segment):** a segment reaches the facilitator with its text and speaker intact, and the proposals derive from that text.
 - **F04 ← F01 (board snapshot):** given a model containing an existing event, the facilitator can propose a relation or a rewording targeting that event's actual id.
 - **F05 ← F04 (proposed operation):** every proposal returned is presented for disposition, and its label, kind, relations and rationale as displayed match what was returned.
+- **F05 ← F04 (proposed operation, resolve):** a resolve proposal displays the reference given, and accepting it emits a `resolve` operation carrying that same reference.
 - **F06 ← F01 (building block record):** an edit targets the building block by its id, and the resulting operation names that same id.
 - **F06 ← F01 (relations):** removing a rendered connection produces an operation naming exactly that source and target pair and that relation kind.
 - **F07 ← F04 (proposed operation):** a pivotal-mark proposal names an event id in the model, and accepting it marks that event.
 - **F08 ← F04 (proposed operation):** a hot spot proposal names the building block it annotates by id, and accepting it produces an annotation of that building block.
+- **F08 ← F04 (proposed operation, resolve):** a resolve proposal names the open hot spot it targets by id, and accepting it marks that hot spot resolved with the reference given.
 - **F08 ← F01 (building block record):** a hot spot's annotation resolves to a real building block, and withdrawing that building block leaves it resolvable.
-- **F09 ← F08 (hot spot inventory):** the candidate list matches the hot spot inventory exactly, by id and label.
+- **F09 ← F08 (hot spot inventory):** the candidate list matches the open hot spots in the inventory exactly, by id and label; a resolved hot spot never appears in it.
 - **F10 ← F01 (board snapshot):** the artifacts rendered at any moment correspond to the snapshot at that moment, with no building block present in one and absent in the other.
 - **F10 ← F01 (operation log):** the readable account's contributor count and the export's provenance derive from the authors recorded in the log.
 - **F11 ← F04 (proposed operation):** the suite asserts against the operations the facilitator actually returns, not against a recorded fixture of them.
