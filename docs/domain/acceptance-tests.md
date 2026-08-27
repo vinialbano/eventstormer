@@ -1,9 +1,9 @@
 ---
 workshop: design-level
-scope: session-facilitation
+scope: domain-model-capture
 status: draft
 last_updated: 2026-08-27
-digest: d54903d244bb
+digest: da8af55c26ef
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
@@ -12,7 +12,7 @@ derived_from:
     digest: d6648843193b
     at: 2026-08-27
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: 6ae50843569d
+    digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 1926e79a6978
@@ -72,61 +72,82 @@ asserting expected state.
     both a `Resolution Proposed` and a `Building Block Proposed` are created independently —
     rejecting one has no effect on the other.
 
-## Design-Level on Domain Model Capture (2026-08-26)
+## Design-Level on Domain Model Capture (2026-08-26, revised 2026-08-27)
 
-Extracted once the model stabilized. Given/When/Then, asserting expected state. Revised same-day
-once the aggregate design was corrected from a single `Board` into four Building Block aggregates
-plus `Timeline` (see `sessions/2026-08-26-design-level-domain-model-capture.md`) — the observable
-behavior is largely unchanged, but the tests now speak in terms of one `Timeline` instance per
-connected component, not one graph per workshop.
+Extracted once the model stabilized. Given/When/Then, asserting expected state. **Revised
+2026-08-27** once the aggregate design collapsed from four Building Block aggregates plus
+`Timeline` into one event-sourced `Board` (see
+`sessions/2026-08-27-design-level-domain-model-capture-board.md`): every operation is validated
+against the projection of the whole workshop operation log, and the connected-component grouping
+("timeline" tracks) is a derived read model, not an aggregate. Observable behavior is unchanged;
+the tests now speak of the `Board` and its projection.
 
-12. **Given** three events `A`, `B`, `C` already sequenced in one `Timeline` with `A follows B` and
-    `B follows C`, **when** a `Sequence` command proposes `C follows A`, **then** it is rejected as
-    a cycle and the Timeline's edges are unchanged.
+12. **Given** events `A`, `B`, `C` in one workshop's `Board` with `A follows B` and `B follows C`,
+    **when** a `Sequence` operation proposes `C follows A`, **then** it is rejected as a cycle with
+    the offending path named, and the operation log is unchanged.
 
-13. **Given** an event `X` with a `follows` edge established in an earlier session of the same
-    workshop, **when** a later session (of the same workshop) proposes a new edge through the same
-    `Timeline` that would close a cycle through `X`, **then** it is rejected — the cycle check spans
-    the Timeline's whole life, not just the current session.
+13. **Given** an event `X` with a `follows` edge appended to the `Board` in an earlier session of
+    the same workshop, **when** a later session proposes an edge that would close a cycle through
+    `X`, **then** it is rejected — the cycle check folds the whole operation log, not just the
+    current session's operations.
+
+12a. **Given** events `A`, `C`, `B` where `C` already has a `follows` path to `A`, **when**
+    `Insert Between(A, C, B)` is applied, **then** it is rejected as a cycle — `Insert Between` is
+    cycle-checked exactly like `Sequence`, with no "`C` must be a fresh event" exception (#50).
 
 14. **Given** `A follows B` is the only edge between them, **when** `Insert Between(A, C, B)` is
-    applied, **then** the Timeline holds exactly `A follows C` and `C follows B`, `A follows B` no
-    longer exists, and this is true atomically — no intermediate state where both the old and new
-    edges coexist is ever observable.
+    applied, **then** the projection holds exactly `A follows C` and `C follows B`, `A follows B`
+    no longer exists, and this is one operation in the log — no intermediate state where both the
+    old and new edges coexist is ever observable (#34).
 
 15. **Given** event `A` has two successors, `B` and `D` (a branch), **when** `Insert Between(A, C, B)`
     is applied, **then** `A follows D` is untouched; only the `A`–`B` edge is replaced.
 
-16. **Given** a Domain Event with both an incoming and an outgoing `follows` edge and no other path
-    connecting its neighbors, **when** `Withdraw` is applied to it, **then** both edges are removed,
-    its former neighbors are **not** silently rejoined to each other, and the Timeline splits into
-    two.
+16. **Given** a Domain Event with an incoming and an outgoing `follows` edge and no other path
+    connecting its neighbors, **when** `Withdraw` is applied, **then** both edges are removed, its
+    former neighbors are **not** silently rejoined, and the connected-component read model
+    recomputes to two tracks.
 
-16a. **Given** the same setup as 16, but the neighbors are *also* connected by a second, longer path
-    (a bifurcation that reunites downstream — a diamond shape), **when** `Withdraw` is applied to
-    the middle event, **then** both of its edges are removed but the Timeline does **not** split —
-    the remaining path still connects everything, and the connected-components recomputation finds
-    exactly one component.
+16a. **Given** the same setup as 16 but the neighbors are *also* connected by a second, longer path
+    (a diamond), **when** `Withdraw` is applied to the middle event, **then** both its edges are
+    removed but the connected-component read model still finds exactly one track — the remaining
+    path connects everything.
 
 17. **Given** a withdrawn Building Block that, before withdrawal, had several relations, **when**
-    `Reinstate` is applied, **then** it returns naked — no `causedBy`, no annotation, and, for a
-    Domain Event, no Timeline membership — indistinguishable in shape from a freshly captured
-    Building Block.
+    `Reinstate` is applied, **then** it returns naked — no `causedBy`, no annotation, no placement
+    — indistinguishable in shape from a freshly captured Building Block.
 
 18. **Given** two Domain Events with no relation between them, **when** each is independently
-    `Place`d, **then** two separate, single-event Timelines exist; **when** they are later
-    `Sequence`d together, **then** the two Timelines merge into one.
+    `Place`d, **then** the connected-component read model shows two single-event tracks; **when**
+    they are later `Sequence`d together, **then** it shows one track — with **no aggregate merge
+    transaction**, just one more `Sequence` operation appended.
+
+18a. **Given** a workshop's full operation log, **when** it is folded from empty, **then** the
+    reproduced graph is identical to the current projection — building blocks, both relation kinds,
+    annotations, placement, and hot-spot state (F01 line 625).
 
 19. **Given** a resolved Hot Spot with a recorded reference, **when** `Reopen` is applied, **then**
     it returns to `Open` and remains distinct from a new Hot Spot later `Raise`d for a
     recurring-but-differently-caused issue — the two carry different ids.
 
-20. **Given** a Domain Event `E` is linked as caused by Actor `X` (`Link Cause`), **when** `X` is
-    `Withdraw`n, **then** `E`'s `causedBy` list no longer references `X` — `Unlink Cause` fires
-    automatically, without a separate explicit command.
+19a. **Given** a Hot Spot resolved with a reference naming Building Block `B`, **when** `B` is later
+    `Withdraw`n, **then** the Hot Spot stays `Resolved` and the reference value is unchanged — the
+    reference is a recorded value, not a live pointer, and no cascade touches it (#49).
+
+20. **Given** a Domain Event `E` linked as caused by Actor `X` (`Link Cause`), **when** `X` is
+    `Withdraw`n, **then** `E`'s `causedBy` list no longer references `X` — the `Board` appends
+    `Unlink Cause` as a follow-on operation, without a separate explicit command.
+
+20a. **Given** an Actor `X` that has been `Withdraw`n, **when** a `Link Cause` operation names `X`
+    as the source, **then** it is rejected as a no-op with an explicit message, and the log is
+    unchanged (#49).
+
+20b. **Given** an `Annotate` operation naming a target id that no Building Block has, **when** it is
+    applied, **then** it is rejected and the log is unchanged (#49).
 
 21. **Given** a Hot Spot `H` annotates Domain Event `E`, **when** `E` is `Withdraw`n, **then** `H`
-    is also withdrawn automatically, rather than the withdrawal of `E` being blocked.
+    is also withdrawn — the `Board` appends the cascade as a follow-on operation, rather than
+    blocking the withdrawal of `E`.
 
 ## Design-Level on Derived Artifact Generation (2026-08-27)
 

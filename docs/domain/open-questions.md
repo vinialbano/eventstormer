@@ -1,16 +1,16 @@
 ---
 workshop: design-level
-scope: session-facilitation
+scope: domain-model-capture
 status: draft
 last_updated: 2026-08-27
-digest: 0b1217d6fc6c
+digest: bedd10cafb15
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: 6ae50843569d
-    at: 2026-08-26
+    digest: 705129af8f2d
+    at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 1926e79a6978
     at: 2026-08-27
@@ -335,11 +335,10 @@ here.
     merges two building blocks" and the broader no-destructive-delete/no-re-type stance. Not
     modelled. Unowned, undated.
 
-34. **`Insert Between`'s atomicity has no home in F01's current operation model.** F01 guarantees
-    atomicity per single logged operation; `Insert Between` needs the same guarantee across what
-    could be represented as multiple effects (unrelate one edge, relate two). Whether this becomes
-    one log-entry kind or a transactionally-bundled group of three is an implementation decision
-    this session doesn't settle. Unowned, undated.
+34. ~~**`Insert Between`'s atomicity has no home in F01's current operation model.**~~ **Resolved
+    2026-08-27**, Design-Level pass 2. `Insert Between` is **one operation** in the log, atomic
+    because the log append is atomic — F01's per-operation atomicity guarantee covers it directly,
+    with no need for a transactionally-bundled group of three. Acceptance test 14.
 
 35. **`place`/`unplace` are real, independent operations — a corrected hypothesis, not a PRD
     leftover.** This session opened by suspecting `place`/`unplace` were an old name for
@@ -364,10 +363,10 @@ here.
     `acceptance-tests.md`, `open-questions.md` itself, `README.md`, and this session's own record)
     are clean — `check` confirms 0 stale among them. Unowned, undated.
 
-37. **PRD F02's "timeline" (the UI surface: placed-vs-backlog) now names something different from
-    this session's `Timeline` aggregate (one per connected component of sequenced events).** The
-    participant accepted the possible confusion and said the PRD can differentiate the two terms
-    later if it turns out to matter. Not resolved here. Unowned, undated.
+37. **PRD F02's "timeline" (the UI surface: placed-vs-backlog) vs. the modelling term.**
+    **Largely moot as of 2026-08-27** — the `Timeline` aggregate is dissolved (see #48); only
+    F02's UI surface and a derived connected-component read model remain, so the naming clash
+    mostly disappears. The read model still wants a name that isn't "timeline"; minor, unowned.
 
 38. **Withdrawing a Building Block a Hot Spot annotates now cascades — resolved live, corrected
     from an earlier open framing.** Block-vs-cascade was put to the participant directly; cascade
@@ -450,30 +449,29 @@ participant and confirmed as real; 49–54 are recorded as findings for the owni
     apply-confirmation round trip settles them: the first to apply wins, every other accepted
     resolution bounces to `LAPSED` ("already resolved"). AT-39. No extra invariant needed.
 
-48. **`Timeline` crosses its own aggregate boundary.** `Sequence`-as-merge is an atomic write
-    across two `Timeline` instances; the "one per connected component" boundary cannot be
-    loaded/locked without walking the `follows` graph; the backlog of unplaced events has no owner.
-    **Pass 2 (2026-08-27) confirmed the session-runtime side is unaffected** — `Sequence` is just
-    an operation that applies or bounces via `Operation Applied`/`Operation Rejected`. Pass 2 also
-    surfaced a **stronger candidate for Domain Model Capture's resume**: because the workshop
-    operation log is single-writer and applied in arrival order (F01), the model graph could be an
-    **event-sourced projection over that log**, with the no-cycle and endpoint-kind invariants
-    checked at append time against the projection — which would dissolve `Timeline`-as-aggregate
-    and the two-instance merge entirely. Owner: `domain-model-capture` resume. Undated.
+48. ~~**`Timeline` crosses its own aggregate boundary.**~~ **Resolved 2026-08-27**, Design-Level
+    pass 2 on Domain Model Capture (the `Board`). The reframe was adopted: the workshop operation
+    log is single-writer (one open session per workshop, v1) and totally ordered (F01), so the
+    model graph is an **event-sourced projection over that one log**, with every invariant checked
+    at append time against the projection. The four Building Block aggregates and `Timeline` all
+    dissolve into **one event-sourced aggregate, `Board`, one per workshop**. `Sequence`-as-merge,
+    the "one per connected component" boundary and the unowned backlog all disappear — the
+    connected-component grouping is now a derived read model. Full model in
+    `bounded-contexts/domain-model-capture/canvas.md`; reasoning in
+    `sessions/2026-08-27-design-level-domain-model-capture-board.md`.
 
-49. **Cross-aggregate referential integrity is unspecified in Domain Model Capture.** Can
-    `Link Cause` / `Annotate` target an already-`Withdrawn` or non-existent Building Block? The
-    cascade policies handle withdrawal *after* linking, not linking *to* a dead target. A
-    `Hot Spot`'s resolution **reference** may point at a building block that is later `Withdrawn` —
-    the annotation cascade does not cover resolution references, so it dangles. A Domain Event
-    whose `causedBy` cites a non-existent Actor id is unowned. Owner: a Domain Model Capture
-    resume. Unowned, undated.
+49. ~~**Cross-aggregate referential integrity is unspecified in Domain Model Capture.**~~
+    **Resolved 2026-08-27**, Design-Level pass 2. `Link Cause` / `Annotate` naming a withdrawn or
+    non-existent target → rejected at append (F01's existing "targets an id that does not exist →
+    rejected as a no-op"). The `Hot Spot` resolution **reference** is a **recorded value, not a
+    live pointer** (F01: "deliberately untyped… the schema does not constrain its shape") — a
+    reference that later names a withdrawn block is historical text, not a failure state, and the
+    `Board` does not police it. Acceptance tests 19a, 20a, 20b.
 
-50. **`Insert Between` cycle-safety is unstated.** `Sequence` is "cycle-checked"; `Insert
-    Between(A, C, B)` is only described as "atomic". If `C` already sits in the same `Timeline`
-    with a path `C → … → A`, the insert closes a cycle. Acceptance tests 14–15 do not cover it.
-    Either `C` must be a fresh event, or `Insert Between` is cycle-checked too — undecided. Owner:
-    a Domain Model Capture resume, or #46. Unowned, undated.
+50. ~~**`Insert Between` cycle-safety is unstated.**~~ **Resolved 2026-08-27**, Design-Level pass 2.
+    `Insert Between(A, C, B)` is cycle-checked exactly like `Sequence` — validated against the
+    whole-graph projection; if `C` already has a path to `A`, rejected. No "`C` must be a fresh
+    event" exception. Acceptance test 12a.
 
 51. ~~**Flow B of Derived Artifact Generation has a hidden cross-context dependency.**~~
     **Resolved 2026-08-27**, Design-Level pass 2. Domain Model Capture publishes `Operation
@@ -544,6 +542,47 @@ model in `bounded-contexts/session-facilitation/canvas.md`; record in
     and `sessions/2026-08-27-design-level-session-facilitation-runtime.md` — are clean; the cycle
     edges were `ack`ed since all three files were co-authored and verified mutually consistent in
     this pass. The rest is reported, not auto-propagated. Unowned, undated.
+
+## Raised in the Design-Level session (2026-08-27) — Domain Model Capture, the `Board`
+
+Pass 2 on Domain Model Capture: adopting the projection-over-log reframe from #48. The four
+Building Block aggregates and `Timeline` dissolve into one event-sourced `Board`. See #48/#49/#50/
+#34/#37 above, updated. Full model in `bounded-contexts/domain-model-capture/canvas.md`; record in
+`sessions/2026-08-27-design-level-domain-model-capture-board.md`.
+
+- **Resolved:** the single-writer premise. For v1, within the one open session, operations are
+  applied one at a time in arrival order — a totally-ordered sequence, single logical writer.
+  F14 multiplayer is "a broadcast over the existing operation log; no model change". `[storm]`
+- **Resolved:** whose job / one boundary. The accept-or-reject answer is synchronous and the
+  issuing user's — "we can't really do multiple operations in parallel if the result of one
+  operation may invalidate another". One transactional boundary over the whole workshop graph.
+  `[storm]`
+- **Elicited (not estimated):** low hundreds of Building Blocks per workshop; single-digit
+  thousands of operations over a workshop's life; a couple of operations per minute at peak even
+  with multiplayer. The one big boundary is affordable. `[storm]`
+
+59. **`Insert Between`'s published event name is unconfirmed.** The participant named the *command*
+    (`Insert Between`) but not the outward event. The canvas uses "Domain Event Sequence Reshaped"
+    as a placeholder, tagged `[inferred]`. Worth naming when the PRD pass (#29) touches F01's
+    operation-log kind list. Unowned, undated.
+
+60. **The connected-component read model wants a name that isn't "timeline".** With the `Timeline`
+    aggregate gone, the derived grouping of `follows`-connected events (F02's display surface)
+    still needs its own term to avoid colliding with F02's "timeline". Minor. Unowned, undated.
+
+61. **`v1` archiving / locking a `Board` is still not designed.** The `Board` has a birth (the
+    Workshop is created) and no modelled death — archiving or locking a Workshop once "a good
+    shape is found" (#25) remains a parked future-feature idea. Recorded so the missing terminus
+    is explicit, not silent. Unowned, undated.
+
+62. **This session's edits continue the pre-existing staleness cascade.** `domain_lineage.py
+    check` reported 31 stale at entry (the 2026-08-26 Big Picture resume and the QHSR collapse —
+    see #58); this pass's edits to `context-map.md` / `README.md` / `subdomain-catalog.md` move
+    only the digest they are stale against, per the precedent in #58 / #45. This pass's own output
+    artifacts — `bounded-contexts/domain-model-capture/canvas.md`, `acceptance-tests.md`,
+    `open-questions.md`, `README.md`, and the session record — are co-authored and mutually
+    consistent; their cross-cycle edges were `ack`ed. The rest is reported, not auto-propagated.
+    Unowned, undated.
 
 ## Deliberate deviations, recorded rather than silent
 

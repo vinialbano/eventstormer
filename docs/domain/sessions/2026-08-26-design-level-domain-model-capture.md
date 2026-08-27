@@ -12,8 +12,8 @@ derived_from:
     digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: 6ae50843569d
-    at: 2026-08-26
+    digest: 705129af8f2d
+    at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 59c06f08153f
     at: 2026-08-26
