@@ -9,7 +9,7 @@ derived_from:
     digest: b6e96a24ddeb
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: cc155f371bca
+    digest: 6ae50843569d
     at: 2026-08-26
   - path: bounded-contexts/question-hot-spot-resolution/canvas.md
     digest: 759a1d42a01f
