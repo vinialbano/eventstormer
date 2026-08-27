@@ -2,8 +2,8 @@
 workshop: design-level
 scope: session-facilitation
 status: draft
-last_updated: 2026-08-26
-digest: e4393aff3ac9
+last_updated: 2026-08-27
+digest: d4fd9c957b26
 derived_from:
   - path: bounded-contexts/derived-artifact-generation/canvas.md
     digest: b6e96a24ddeb
@@ -15,8 +15,8 @@ derived_from:
     digest: 759a1d42a01f
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 59c06f08153f
-    at: 2026-08-26
+    digest: 1926e79a6978
+    at: 2026-08-27
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c
     at: 2026-08-26
@@ -120,6 +120,32 @@ downstream of **two** Core contexts.
 
 `[inferred]` as a seam (nobody drew the boundary); the evidence under it is `[storm]`. Adopting or
 revising this is `ddd-strategic-design`'s decision — see `open-questions.md` #39.
+
+## Candidate revision — the Domain Model Capture ↔ Session Facilitation surface grew (2026-08-27)
+
+**Same pattern, fuller published language — not a moved boundary.** Design-Level pass 2 on Session
+Facilitation (the session runtime,
+`sessions/2026-08-27-design-level-session-facilitation-runtime.md`) added an
+**apply-confirmation round trip** to the existing OHS + Published Language, Customer/Supplier
+relationship. Domain Model Capture now publishes back, per operation:
+
+| New Boundary Event (Capture → Facilitation) | Keyed to | Consumed by |
+|---|---|---|
+| `Operation Applied` (carries the resulting building block id) | proposal id | `Proposal` → `APPLIED` |
+| `Operation Rejected` (carries the reason) | proposal id | `Proposal` → `APPLY_FAILED` |
+| `Hot Spot Resolved` (already existed; now also keyed to resolution id) | resolution id | `Resolution` → `APPLIED` |
+| `Hot Spot Resolution Rejected` (already-resolved / withdrawn) | resolution id | `Resolution` → `LAPSED` |
+
+New Boundary Commands (Facilitation → Capture): the kind-specific apply-operation commands
+(`Capture Domain Event`, `Identify Actor`, `Sequence`, `Link Cause`, `Annotate`, …) issued on
+`Proposal Accepted`, plus `Resolve Hot Spot` on `Resolution Accepted`. `Raise Hot Spot` is
+unchanged and fire-and-forget.
+
+**No aggregate spans the seam** — `Proposal`/`Resolution` live entirely in Facilitation and only
+*react* to these events. The relationship pattern (OHS + Published Language, Customer/Supplier) is
+unchanged; only the contract surface is fuller. `[storm]` evidence; adopting the wording is
+`ddd-strategic-design`'s. `Operation Applied`'s building-block-id payload also resolves
+`open-questions.md` #51 (Flow B's correlation link).
 
 ## Superseded draft
 

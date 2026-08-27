@@ -1,9 +1,9 @@
 ---
 workshop: design-level
-scope: domain-model-capture
+scope: session-facilitation
 status: draft
-last_updated: 2026-08-26
-digest: fc7e48fb916b
+last_updated: 2026-08-27
+digest: 47d0eb7ca929
 derived_from:
   - path: acceptance-tests.md
     digest: 20103523644f
@@ -17,6 +17,9 @@ derived_from:
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 6ae50843569d
     at: 2026-08-26
+  - path: bounded-contexts/session-facilitation/canvas.md
+    digest: 1926e79a6978
+    at: 2026-08-27
   - path: context-map.md
     digest: a4fe1df64a78
     at: 2026-08-27
@@ -40,6 +43,9 @@ derived_from:
     at: 2026-08-26
   - path: sessions/2026-08-27-design-level-derived-artifact-generation.md
     digest: ecd3d54470f6
+    at: 2026-08-27
+  - path: sessions/2026-08-27-design-level-session-facilitation-runtime.md
+    digest: 35fd6b2ca4f9
     at: 2026-08-27
   - path: subdomain-catalog.md
     digest: e266740011c9
@@ -164,6 +170,26 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
    separate from the on-demand artifact. Completion rules 1–5 hold, 6 N/A. Acceptance tests 22–31.
    Full reasoning in `sessions/2026-08-27-design-level-derived-artifact-generation.md`.
 
+9. **Design-Level EventStorming on Session Facilitation — the session runtime (2026-08-27, pass 2
+   / resume).** Modelled the parts pass 1 (item 6) `[carried]` from `boards/capture-loop.md`
+   rather than designed. Adds three aggregates — **`Session`** (event-sourced; its stream is the
+   session record; owns the atomic unresolved-question snapshot at `Close Session` and
+   interpret-at-most-once), **`Proposal`** (one per proposal-worthy judgment; a disposition
+   lifecycle where `ACCEPTED` is transient and an `Operation Rejected` from Capture sends it to
+   `APPLY_FAILED` → retry), **`Resolution`** (one per resolves-open-hot-spot judgment; every apply
+   bounce terminal, no retry). The interpretation fan-out is plain choreography — no process
+   manager. **`Workshop` simplified:** its "at most one open session" invariant becomes a
+   set-scoped uniqueness *constraint* (not an aggregate rule; the thing Multiplayer relaxes), and
+   `Close Session` moves to `Session` — `Workshop` is now purely format + invitations. The
+   Capture ↔ Facilitation surface grows an **apply-confirmation round trip** (`Operation Applied`/
+   `Operation Rejected`, `Hot Spot Resolved`/`Hot Spot Resolution Rejected` as new Boundary
+   Events) — same pattern, fuller published language; `Operation Applied`'s building-block-id
+   payload resolves Flow B's correlation gap (`open-questions.md` #51). Resolves #46, #47, #51 and
+   the interpretation-failure hot spot; updates #48 (a projection-over-log candidate handed to
+   Domain Model Capture) and #52 (`capture-loop.md` superseded in parts, left unedited). All six
+   completion rules held. Acceptance tests 32–44. Full reasoning in
+   `sessions/2026-08-27-design-level-session-facilitation-runtime.md`.
+
 ## Artifact status
 
 | Artifact | Status | Confidence | Evidence |
@@ -171,7 +197,7 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
 | `domain-and-goals.md` | draft, confirmed strategically | High | Confirmed with the participant this session; Impact Map built from their own words |
 | `subdomain-catalog.md` | draft, confirmed strategically | High | Every row confirmed with the participant, including the Multiplayer row's provisional flag |
 | `bounded-contexts/*/canvas.md` (boundary sections) | draft, confirmed strategically | High | Purpose/type/team/boundary rationale confirmed per context |
-| `bounded-contexts/session-facilitation/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass, 2026-08-26 — `Workshop`/`Session`, the resolution mechanic, and every command/event/policy confirmed live; full reasoning in `sessions/2026-08-26-design-level-session-facilitation.md` |
+| `bounded-contexts/session-facilitation/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass 1 (2026-08-26) — `Workshop`, invitations, resolution mechanic. Pass 2 (2026-08-27, resume) — the session runtime: `Session`/`Proposal`/`Resolution` aggregates, the apply-confirmation round trip, `Workshop` simplified. Reasoning in `sessions/2026-08-26-*` and `sessions/2026-08-27-design-level-session-facilitation-runtime.md` |
 | `bounded-contexts/domain-model-capture/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass, 2026-08-26 — `Board` aggregate, every command/event/invariant confirmed live; full reasoning in `sessions/2026-08-26-design-level-domain-model-capture.md` |
 | `bounded-contexts/derived-artifact-generation/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass, 2026-08-27 — three artifact types (deterministic structured outcome, transcript export, non-deterministic synthesized summary), all on-demand; no aggregate, confirmed invariant-first; full reasoning in `sessions/2026-08-27-design-level-derived-artifact-generation.md` |
 | `bounded-contexts/question-hot-spot-resolution/canvas.md` | **superseded** | — | Retired 2026-08-26 — `ddd-strategic-design` adopted the Design-Level finding that this context folds into Session Facilitation. Preserved unedited (plus a retirement notice) for provenance; see `context-map.md`'s "Decision" section |
@@ -181,7 +207,7 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
 | `context-map.md` (decided form) | draft, confirmed strategically | High | Every relationship reasoned through the U/D test and confirmed with the participant; the 2026-08-26 Question & Hot Spot Resolution collapse is now adopted and reflected in the diagram/table; the Facilitation↔Capture relationship note tightened 2026-08-26 to name `Resolve Hot Spot` explicitly; the Domain Model Capture Design-Level session (2026-08-26) validated the seam without moving it |
 | `sessions/big-picture-context-map.md` (discovered form) | superseded, preserved for provenance | — | The storm's original `[inferred]` candidates; see `context-map.md`'s "Superseded draft" section for how each maps to the decided form |
 | `boards/capture-loop.md` | draft | High | Process Modelling session with the participant, 2026-08-25; every event/command/policy confirmed live, hot spots accounted for |
-| `acceptance-tests.md` | draft | High | Five tests from the capture-loop session, 6–11 from Design-Level on Session Facilitation, 12–21 from Design-Level on Domain Model Capture, and 22–31 from Design-Level on Derived Artifact Generation (2026-08-27) |
+| `acceptance-tests.md` | draft | High | 1–5 capture-loop, 6–11 Design-Level Session Facilitation, 12–21 Design-Level Domain Model Capture, 22–31 Design-Level Derived Artifact Generation, 32–44 Design-Level Session Facilitation session-runtime (2026-08-27) |
 | `open-questions.md` | draft, live | — | Storm-originated hot spots + 5 items from the strategic-design session (7–11) + 3 items from Process Modelling (13–15) + 4 items from the Question & Hot Spot Resolution Design-Level session (17–20) + 9 items from the Session Facilitation Design-Level session (21–29) + 4 items from the Domain Model Capture Design-Level session (32–35); #3/#8/#13/#17/#20/#21/#22/#28 now resolved |
 
 ## Next steps (named, not started)
@@ -195,9 +221,18 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
 - `ddd-strategic-design` to adopt or revise the candidate **Session Facilitation → Derived Artifact
   Generation** context-map edge found 2026-08-27 (open-questions.md #39), and to reflect the PRD F10
   divergence — three artifact types, determinism scoped to two of them (open-questions.md #40).
-- All three v1 contexts with an owner now have a `[storm]`-confirmed event-stormed model. The
-  book's own next action is to prototype (start with Flow A of Derived Artifact Generation) and
-  write down the questions it raises.
+- All three v1 contexts with an owner have a `[storm]`-confirmed event-stormed model, and Session
+  Facilitation's session runtime is now modelled to aggregate level. The book's own next action is
+  to prototype (start with `Session` + the `Proposal` disposition lifecycle, or Flow A of Derived
+  Artifact Generation) and write down the questions it raises.
+- **Domain Model Capture resume:** the projection-over-log candidate for the model graph
+  (`open-questions.md` #48, which would dissolve the `Timeline` boundary question), plus #49
+  (cross-aggregate referential integrity) and #50 (`Insert Between` cycle-safety).
+- **Derived Artifact Generation resume:** how a lapsed / apply-failed proposal renders in Flow B
+  (`open-questions.md` #56).
+- **#27 (open):** the shape of the context the facilitator gathers before its next question —
+  deliberately left unspecified across three passes; unowned. Confirm whether it is more than an
+  implementation detail.
 - Three smaller, genuinely open questions from the Domain Model Capture session, none owned yet:
   whether Hot Spot's `kind` field earns its place (open-questions.md #32), a possible "destroy"
   operation for true duplicates that currently conflicts with the confirmed no-merge rule
@@ -239,8 +274,8 @@ than guessed.
 
 | Artifact | Workshop | Scope | Status | Updated |
 |---|---|---|---|---|
-| [README.md](README.md) | design-level | domain-model-capture | draft | 2026-08-26 |
-| [acceptance-tests.md](acceptance-tests.md) | design-level | derived-artifact-generation | draft | 2026-08-27 |
+| [README.md](README.md) | design-level | session-facilitation | draft | 2026-08-27 |
+| [acceptance-tests.md](acceptance-tests.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [boards/capture-loop.md](boards/capture-loop.md) | process-modelling | capture-loop | draft | 2026-08-26 |
 | [boards/eventstormer-big-picture.md](boards/eventstormer-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
 | [bounded-contexts/derived-artifact-generation/canvas.md](bounded-contexts/derived-artifact-generation/canvas.md) | design-level | derived-artifact-generation | draft | 2026-08-27 |
@@ -249,11 +284,11 @@ than guessed.
 | [bounded-contexts/domain-model-capture/ubiquitous-language.md](bounded-contexts/domain-model-capture/ubiquitous-language.md) | design-level | domain-model-capture | draft | 2026-08-26 |
 | [bounded-contexts/question-hot-spot-resolution/canvas.md](bounded-contexts/question-hot-spot-resolution/canvas.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-26 |
 | [bounded-contexts/question-hot-spot-resolution/ubiquitous-language.md](bounded-contexts/question-hot-spot-resolution/ubiquitous-language.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-26 |
-| [bounded-contexts/session-facilitation/canvas.md](bounded-contexts/session-facilitation/canvas.md) | design-level | session-facilitation | draft | 2026-08-26 |
-| [bounded-contexts/session-facilitation/ubiquitous-language.md](bounded-contexts/session-facilitation/ubiquitous-language.md) | design-level | session-facilitation | draft | 2026-08-26 |
-| [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-26 |
+| [bounded-contexts/session-facilitation/canvas.md](bounded-contexts/session-facilitation/canvas.md) | design-level | session-facilitation | draft | 2026-08-27 |
+| [bounded-contexts/session-facilitation/ubiquitous-language.md](bounded-contexts/session-facilitation/ubiquitous-language.md) | design-level | session-facilitation | draft | 2026-08-27 |
+| [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [domain-and-goals.md](domain-and-goals.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-25 |
-| [open-questions.md](open-questions.md) | big-picture | eventstormer-session | draft | 2026-08-27 |
+| [open-questions.md](open-questions.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [sessions/2026-08-25-big-picture.md](sessions/2026-08-25-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 | [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-26 |
 | [sessions/2026-08-26-big-picture.md](sessions/2026-08-26-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
@@ -261,6 +296,7 @@ than guessed.
 | [sessions/2026-08-26-design-level-session-facilitation.md](sessions/2026-08-26-design-level-session-facilitation.md) | design-level | session-facilitation | draft | 2026-08-26 |
 | [sessions/2026-08-26-design-level.md](sessions/2026-08-26-design-level.md) | design-level | question-hot-spot-resolution | draft | 2026-08-26 |
 | [sessions/2026-08-27-design-level-derived-artifact-generation.md](sessions/2026-08-27-design-level-derived-artifact-generation.md) | design-level | derived-artifact-generation | draft | 2026-08-27 |
+| [sessions/2026-08-27-design-level-session-facilitation-runtime.md](sessions/2026-08-27-design-level-session-facilitation-runtime.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [sessions/big-picture-context-map.md](sessions/big-picture-context-map.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 | [subdomain-catalog.md](subdomain-catalog.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-26 |
 
@@ -270,6 +306,7 @@ graph LR
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> README_md["README.md"]
   bounded_contexts_derived_artifact_generation_canvas_md["bounded-contexts/derived-artifact-generation/canvas.md"] --> README_md["README.md"]
   bounded_contexts_domain_model_capture_canvas_md["bounded-contexts/domain-model-capture/canvas.md"] --> README_md["README.md"]
+  bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"] --> README_md["README.md"]
   context_map_md["context-map.md"] --> README_md["README.md"]
   domain_and_goals_md["domain-and-goals.md"] --> README_md["README.md"]
   open_questions_md["open-questions.md"] --> README_md["README.md"]
@@ -278,6 +315,7 @@ graph LR
   sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"] --> README_md["README.md"]
   sessions_2026_08_26_design_level_md["sessions/2026-08-26-design-level.md"] --> README_md["README.md"]
   sessions_2026_08_27_design_level_derived_artifact_generation_md["sessions/2026-08-27-design-level-derived-artifact-generation.md"] --> README_md["README.md"]
+  sessions_2026_08_27_design_level_session_facilitation_runtime_md["sessions/2026-08-27-design-level-session-facilitation-runtime.md"] --> README_md["README.md"]
   subdomain_catalog_md["subdomain-catalog.md"] --> README_md["README.md"]
   boards_capture_loop_md["boards/capture-loop.md"] --> acceptance_tests_md["acceptance-tests.md"]
   bounded_contexts_derived_artifact_generation_canvas_md["bounded-contexts/derived-artifact-generation/canvas.md"] --> acceptance_tests_md["acceptance-tests.md"]
@@ -315,6 +353,7 @@ graph LR
   open_questions_md["open-questions.md"] --> bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"]
   sessions_2026_08_26_design_level_session_facilitation_md["sessions/2026-08-26-design-level-session-facilitation.md"] --> bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"]
   sessions_2026_08_26_design_level_md["sessions/2026-08-26-design-level.md"] --> bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"]
+  sessions_2026_08_27_design_level_session_facilitation_runtime_md["sessions/2026-08-27-design-level-session-facilitation-runtime.md"] --> bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"]
   subdomain_catalog_md["subdomain-catalog.md"] --> bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"]
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> bounded_contexts_session_facilitation_ubiquitous_language_md["bounded-contexts/session-facilitation/ubiquitous-language.md"]
   bounded_contexts_question_hot_spot_resolution_ubiquitous_language_md["bounded-contexts/question-hot-spot-resolution/ubiquitous-language.md"] --> bounded_contexts_session_facilitation_ubiquitous_language_md["bounded-contexts/session-facilitation/ubiquitous-language.md"]
@@ -358,6 +397,9 @@ graph LR
   bounded_contexts_session_facilitation_canvas_md["bounded-contexts/session-facilitation/canvas.md"] --> sessions_2026_08_27_design_level_derived_artifact_generation_md["sessions/2026-08-27-design-level-derived-artifact-generation.md"]
   context_map_md["context-map.md"] --> sessions_2026_08_27_design_level_derived_artifact_generation_md["sessions/2026-08-27-design-level-derived-artifact-generation.md"]
   open_questions_md["open-questions.md"] --> sessions_2026_08_27_design_level_derived_artifact_generation_md["sessions/2026-08-27-design-level-derived-artifact-generation.md"]
+  boards_capture_loop_md["boards/capture-loop.md"] --> sessions_2026_08_27_design_level_session_facilitation_runtime_md["sessions/2026-08-27-design-level-session-facilitation-runtime.md"]
+  bounded_contexts_derived_artifact_generation_canvas_md["bounded-contexts/derived-artifact-generation/canvas.md"] --> sessions_2026_08_27_design_level_session_facilitation_runtime_md["sessions/2026-08-27-design-level-session-facilitation-runtime.md"]
+  bounded_contexts_domain_model_capture_canvas_md["bounded-contexts/domain-model-capture/canvas.md"] --> sessions_2026_08_27_design_level_session_facilitation_runtime_md["sessions/2026-08-27-design-level-session-facilitation-runtime.md"]
   boards_eventstormer_big_picture_md["boards/eventstormer-big-picture.md"] --> sessions_big_picture_context_map_md["sessions/big-picture-context-map.md"]
   domain_and_goals_md["domain-and-goals.md"] --> subdomain_catalog_md["subdomain-catalog.md"]
   context_map_md["context-map.md"] --> subdomain_catalog_md["subdomain-catalog.md"]

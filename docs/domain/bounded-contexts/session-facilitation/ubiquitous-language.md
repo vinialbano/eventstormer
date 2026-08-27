@@ -2,12 +2,12 @@
 workshop: design-level
 scope: session-facilitation
 status: draft
-last_updated: 2026-08-26
-digest: 3ffac8ef6342
+last_updated: 2026-08-27
+digest: 150088687b1a
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
-    at: 2026-08-26
+    digest: a1fe4f12aaba
+    at: 2026-08-27
   - path: bounded-contexts/question-hot-spot-resolution/ubiquitous-language.md
     digest: d19c35cc15d4
     at: 2026-08-26
@@ -17,8 +17,10 @@ derived_from:
 ---
 # Ubiquitous Language: Session Facilitation
 
-> Design-Level pass (2026-08-26). Most terms below were confirmed live in this session through
-> worked scenarios, replacing the "thin, Big-Picture-only" state this file was previously in.
+> Design-Level pass 1 (2026-08-26): `Workshop`, invitations, resolution.
+> Design-Level pass 2 (2026-08-27): the session runtime — `Session`/`Proposal`/`Resolution` as
+> aggregates, the disposition lifecycle, deferred interpretation. Terms confirmed live through
+> worked scenarios.
 
 **Status:** draft • **Provenance:** `[storm]` unless noted
 
@@ -27,7 +29,15 @@ derived_from:
 | Term | Meaning in this context | Code name(s) / source (`file:line`) | Flags |
 |---|---|---|---|
 | Workshop | The persistent unit: one identity, bound to exactly one format for its whole life, can span many sessions and multiple people | UNCONFIRMED (no code yet) | participant's own term |
-| Session | One sitting: bound to exactly one workshop, started by the creator or an accepted invitee, ends at Session Closed | UNCONFIRMED | participant's own term |
+| Session | One sitting: bound to one workshop, started by the creator or an accepted invitee, ends at Session Closed (terminal — no reopen). An **aggregate** (pass 2), event-sourced: its stream is the session record | UNCONFIRMED | participant's own term |
+| Session record | The `Session` aggregate's event stream — transcript turns, questions, interpretations, judgments, proposal references and dispositions, in order. What Derived Artifact Generation Flow B reads | UNCONFIRMED | pass 2 |
+| Proposal | One pending model operation the facilitator offers for the expert's disposition. An **aggregate** (pass 2), one per proposal-worthy judgment | `boards/capture-loop.md` | resolved 2026-08-26; aggregate 2026-08-27 |
+| Resolution | One pending hot-spot resolution (a hot-spot id + an untyped reference) for the expert's disposition. An **aggregate** (pass 2), separate from Proposal because their outcomes diverge | this session (pass 1); aggregate pass 2 | — |
+| Disposition | A proposal's / resolution's lifecycle state: `PROPOSED` → `EDITED` → `ACCEPTED` (apply pending) → `APPLIED` \| `APPLY_FAILED` (Proposal only) \| `REJECTED` \| `LAPSED` | pass 2 | shared skeleton, code-level only |
+| Apply-failed | A `Proposal` whose operation bounced at apply time (target withdrawn, cycle) — carries the reason, is re-editable and re-acceptable. At Session Closed an apply-failed proposal lapses **and** raises a hot spot (unfulfilled intent) | pass 2 | Proposal only — a Resolution bounce is always terminal |
+| Lapsed | A proposal / resolution that reached a terminal non-outcome at Session Closed: undisposed (quiet) or apply-failed-and-not-retried (raises a hot spot). Distinct from `REJECTED` (the expert said no) | pass 2 | — |
+| Operation Applied / Operation Rejected | Boundary Events from Domain Model Capture confirming (or bouncing) an accepted proposal's operation, keyed to the proposal id. Applied carries the resulting building block id | pass 2 | the apply-confirmation round trip |
+| Deferred interpretation | A `Contribution Made` whose `Interpret Contribution` cannot run (AI Model Provider down) is queued and retried when a model returns. A contribution is interpreted **at most once** | pass 2 | idempotency keyed on contribution id |
 | Facilitator | The AI actor that initiates Question Asked, Building Block Proposed, and Resolution Proposed, running on the AI Model Provider | UNCONFIRMED | role |
 | Contribution | The domain expert's raw input — not yet interpreted | UNCONFIRMED | — |
 | Contribution Interpreted | The facilitator's structured judgment of a Contribution; may carry multiple independent tracks (content judgments, a question-track judgment, or both) | `boards/capture-loop.md` | internal step, not itself called "Proposal" |
@@ -60,12 +70,30 @@ derived_from:
   resolved it is always recorded. Rejecting a proposed resolution leaves the hot spot open,
   unaffected.
 
+- **Disposing a proposal.** The expert edits the wording zero or more times, then accepts or
+  rejects. On accept, the proposed operation is applied to the model by Domain Model Capture and
+  the building block appears a moment later (eventual consistency — a UI animation covers the gap).
+  If the operation bounces (its target was withdrawn, or it would now close a cycle), the proposal
+  becomes *apply-failed*, carries the reason, and the expert can fix and re-accept it or reject it.
+
+- **Closing a session.** `Close Session` stops new contributions and, in the same act, snapshots
+  every still-open question. Each becomes a hot spot. Any apply-failed proposal also becomes a hot
+  spot (the expert wanted it, the system couldn't deliver it); any proposal or resolution the
+  expert simply never acted on lapses quietly. Accepted operations still in flight are allowed to
+  finish after the close.
+
+- **When the model provider is down.** A contribution is still captured — those are the expert's
+  words. Its interpretation is queued and runs when a model (primary or fallback) returns; it is
+  never interpreted twice.
+
 ## Ambiguities & synonyms found (boundary / modelling signals)
 
 | Word | Conflicting meanings / synonyms | Resolution |
 |---|---|---|
 | Proposal vs. Contribution | Both appeared to describe a pre-acceptance artifact | **Resolved 2026-08-26:** three distinct things at three distinct points — `Contribution` (raw) → `Contribution Interpreted` (the judgment, possibly multiple tracks) → `Building Block Proposed`/`Proposal Made` (one specific outcome). Not a boundary signal after all — just an underspecified sequence. |
 | "Resolves a question" vs. "resolves a hot spot" | The predecessor Design-Level session (`sessions/2026-08-26-design-level.md`) named the resolution judgment `resolves-open-hot-spot-or-question` | **Resolved 2026-08-26, self-correction:** every `Question Asked` that outlives its own session is already swept into a `Hot Spot Raised` at close (existing invariant). The resolution mechanic can therefore only ever apply to Hot Spots — the "-or-question" case cannot occur. Judgment renamed `resolves-open-hot-spot`. |
+| Proposal vs. Resolution | Both are "a pending facilitator suggestion awaiting the expert's yes/no", same lifecycle skeleton | **Kept distinct (pass 2, 2026-08-27):** two aggregates, not one. A proposal adds model content; a resolution flips a hot spot's status. Resolutions compete for one `Open` state; proposals don't. A proposal bounce is retryable; a resolution bounce is terminal. F08's informational/model-affecting split will add resolution-only payload rules. |
+| PRD "session" vs. `Session` (this context) | PRD F01's "session" persists, is resumable by URL, survives being closed | **Named (pass 2):** PRD's "session" is closer to this context's `Workshop`. `Session` here is one sitting, and `CLOSED` is terminal. "Reopen where I left it" = start a new `Session` on the same `Workshop`. |
 
 <!-- BEGIN lineage:index -->
 <!-- END lineage:index -->

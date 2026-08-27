@@ -1,9 +1,9 @@
 ---
-workshop: big-picture
-scope: eventstormer-session
+workshop: design-level
+scope: session-facilitation
 status: draft
 last_updated: 2026-08-27
-digest: 709c31e1aaa2
+digest: 0b1217d6fc6c
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
@@ -12,11 +12,11 @@ derived_from:
     digest: 6ae50843569d
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 59c06f08153f
-    at: 2026-08-26
+    digest: 1926e79a6978
+    at: 2026-08-27
   - path: context-map.md
-    digest: e4393aff3ac9
-    at: 2026-08-26
+    digest: d4fd9c957b26
+    at: 2026-08-27
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
     at: 2026-08-26
@@ -430,39 +430,36 @@ has a clear aggregate owner, and whether the aggregate and bounded-context shape
 implementation. Not a workshop: no elicitation, `[review]` provenance. Items 46–48 were put to the
 participant and confirmed as real; 49–54 are recorded as findings for the owning workshop to judge.
 
-46. **The session runtime has no consistency boundary.** `boards/capture-loop.md` deferred
-    aggregates to Design-Level; the Session Facilitation pass then `[carried]` the whole loop
-    unmodelled ("to avoid two sources of truth"), and the Domain Model Capture pass modelled only
-    the accepted-proposal *output* (the building-block graph). Left with no aggregate: question
-    accountability (capture-loop Invariants 1 & 2 — every `Question Asked` resolved before close or
-    swept to `Hot Spot Raised` at `Session Closed`; exemption only by one of four events, never a
-    content judgment), the Proposal lifecycle (edit 0+ times *before* disposition, never after;
-    sibling proposals from one interpretation independent — Invariant 4), and the
-    `Contribution Interpreted` fan-out. Invariants 1–2 are Session-scoped, and `Session` is not
-    `Workshop`. **Confirmed with the participant 2026-08-27: this is its own consistency boundary
-    and needs a Design-Level pass** scoped to the session runtime inside Session Facilitation
-    (`Session` aggregate or process manager). Owner: that pass. Undated.
+46. ~~**The session runtime has no consistency boundary.**~~ **Resolved 2026-08-27**, Design-Level
+    pass 2 on Session Facilitation (the session runtime). Three aggregates added:
+    `Session` (event-sourced, its stream is the session record; owns the atomic unresolved-question
+    snapshot at `Close Session` and interpret-at-most-once), `Proposal` (one per proposal-worthy
+    judgment; disposition lifecycle with an `APPLY_FAILED` → retry path), `Resolution` (one per
+    resolves-open-hot-spot judgment; every apply bounce terminal). The interpretation fan-out is
+    plain choreography — no process manager (capture-loop Inv. 4: nothing coordinates). `Workshop`
+    simplified: lost its "one open session" invariant (now a uniqueness constraint) and `Close
+    Session` (now `Session`'s). Full model in
+    `bounded-contexts/session-facilitation/canvas.md`; reasoning in
+    `sessions/2026-08-27-design-level-session-facilitation-runtime.md`.
 
-47. **The Resolution lifecycle is unowned, and its handler assignment contradicts itself.**
-    `bounded-contexts/session-facilitation/canvas.md` Commands table assigns `Accept Resolution` /
-    `Reject Resolution` to "Handled by: Domain Model Capture"; the same canvas's Events-out table
-    marks `Resolution Proposed / Accepted / Rejected` "(internal)" to Session Facilitation;
-    `bounded-contexts/domain-model-capture/canvas.md` lists neither command (only `Resolve`, on
-    `Resolution Accepted`). No aggregate owns the `Resolution Proposed → Accepted/Rejected`
-    transition, so AT-9's "the hot spot stays open **until** `Accept Resolution` fires" has no home.
-    Also undefined: whether two contributions can each be interpreted as resolving the same hot
-    spot, producing competing `Resolution Proposed`. Owner: the session-runtime Design-Level pass
-    (#46). Undated.
+47. ~~**The Resolution lifecycle is unowned, and its handler assignment contradicts itself.**~~
+    **Resolved 2026-08-27**, Design-Level pass 2. `Resolution` is its own aggregate in Session
+    Facilitation — it handles `Accept`/`Reject Resolution` and the `Resolution Proposed →
+    Accepted/Rejected` transition; the canvas's earlier "handled by Domain Model Capture" was
+    wrong and is corrected. Competing resolutions for one hot spot **are allowed** — the
+    apply-confirmation round trip settles them: the first to apply wins, every other accepted
+    resolution bounces to `LAPSED` ("already resolved"). AT-39. No extra invariant needed.
 
-48. **`Timeline` crosses its own aggregate boundary.** `Sequence`-as-merge is described as an
-    atomic write across two `Timeline` instances ("one transaction") — the thing an aggregate
-    boundary exists to prevent; it needs an explicit domain service + a stated eventual-consistency
-    compromise, or a different boundary. The "one per connected component" boundary cannot be
-    loaded or locked without first walking the `follows` graph to discover its membership. The
-    backlog of unplaced/unsequenced events is folded into the `Timeline` row parenthetically but is
-    not a connected component and has no owner. **Confirmed with the participant 2026-08-27:
-    revisit in the session-runtime Design-Level pass (#46)**, since the merge transaction reaches
-    into Domain Model Capture. Undated.
+48. **`Timeline` crosses its own aggregate boundary.** `Sequence`-as-merge is an atomic write
+    across two `Timeline` instances; the "one per connected component" boundary cannot be
+    loaded/locked without walking the `follows` graph; the backlog of unplaced events has no owner.
+    **Pass 2 (2026-08-27) confirmed the session-runtime side is unaffected** — `Sequence` is just
+    an operation that applies or bounces via `Operation Applied`/`Operation Rejected`. Pass 2 also
+    surfaced a **stronger candidate for Domain Model Capture's resume**: because the workshop
+    operation log is single-writer and applied in arrival order (F01), the model graph could be an
+    **event-sourced projection over that log**, with the no-cycle and endpoint-kind invariants
+    checked at append time against the projection — which would dissolve `Timeline`-as-aggregate
+    and the two-instance merge entirely. Owner: `domain-model-capture` resume. Undated.
 
 49. **Cross-aggregate referential integrity is unspecified in Domain Model Capture.** Can
     `Link Cause` / `Annotate` target an already-`Withdrawn` or non-existent Building Block? The
@@ -478,20 +475,22 @@ participant and confirmed as real; 49–54 are recorded as findings for the owni
     Either `C` must be a fresh event, or `Insert Between` is cycle-checked too — undecided. Owner:
     a Domain Model Capture resume, or #46. Unowned, undated.
 
-51. **Flow B of Derived Artifact Generation has a hidden cross-context dependency.** Flow B
-    "correlates the session log with Domain Model Capture's building blocks **to name what each
-    turn produced**" — which requires a stable `Proposal → resulting Building Block` id link across
-    the context boundary. No canvas records the resulting block id against the proposal
-    (`Proposal Accepted → Capture Domain Event` drops it). Flow B cannot be built until this link
-    exists. Ties to the unadopted context-map edge #39. Owner: the session-runtime Design-Level
-    pass (#46) for the link; `ddd-strategic-design` for #39. Unowned, undated.
+51. ~~**Flow B of Derived Artifact Generation has a hidden cross-context dependency.**~~
+    **Resolved 2026-08-27**, Design-Level pass 2. Domain Model Capture publishes `Operation
+    Applied` (a new Boundary Event, keyed to the proposal id) carrying **the resulting building
+    block id**; the `Proposal` aggregate records it as `resultingBuildingBlockId` on `APPLIED`. The
+    link lives in the session record — exactly what Flow B reads to annotate each turn with what it
+    produced. Recorded on the Capture→Facilitation surface in `context-map.md`. #39 (the Session
+    Facilitation → Derived Artifact Generation edge) is still `ddd-strategic-design`'s to adopt.
 
-52. **`boards/capture-loop.md` is stale against two structural changes it was never resumed for:**
-    the `Workshop`/`Session` split (2026-08-26 Big Picture resume) and the Question & Hot Spot
-    Resolution collapse. Its Invariant 1 is `Session`-scoped and unverified against the split;
-    `Answer Question` still shows "context owner UNCONFIRMED" in two of its tables even though #15
-    declares that dissolved (everything is Facilitation's). Owner: a Process Modelling resume on
-    the capture loop, or absorbed by #46. Unowned, undated.
+52. **`boards/capture-loop.md` is superseded in parts, and left unedited.** Design-Level pass 2
+    (2026-08-27) confirmed: `Answer Question` is handled by the `Session` aggregate (not
+    UNCONFIRMED); question accountability is `Session`-scoped and holds under the `Workshop`/
+    `Session` split (the close-time snapshot is atomic within `Session`); the interpretation flow
+    gains the apply-confirmation round trip. The board file stays as-is per this skill's rule
+    against re-scaling an earlier workshop's artifact —
+    `bounded-contexts/session-facilitation/canvas.md` is now the finer-grained source of truth for
+    the capture loop. A Process Modelling resume would reconcile the board itself. Unowned, undated.
 
 53. **The as-is/to-be distinction (#6) is still unowned after three workshops.** Not cosmetic: a
     to-be session changes what `Domain Problem Stated` means and the facilitator's whole stance
@@ -503,6 +502,48 @@ participant and confirmed as real; 49–54 are recorded as findings for the owni
     resume and the QHSR collapse — see #45, #36, #31, #30); adding these items only moves the
     digest they are stale against, per the precedent in #45. Reported, not auto-propagated.
     `open-questions.md` re-stamped and `index` re-run after this edit. Unowned, undated.
+
+## Raised in the Design-Level session (2026-08-27) — Session Facilitation, the session runtime
+
+Pass 2 on Session Facilitation: modelling the session runtime (`Session`/`Proposal`/`Resolution`
+aggregates) that pass 1 `[carried]` unmodelled. See #46/#47/#48/#51/#52 above, updated. Full
+model in `bounded-contexts/session-facilitation/canvas.md`; record in
+`sessions/2026-08-27-design-level-session-facilitation-runtime.md`.
+
+- **Resolved (a):** `Interpret Contribution`'s failure mode. If the AI Model Provider is
+  unavailable, `Contribution Made` still succeeds (the expert's words), and interpretation is
+  **queued and retried** when a model — primary or fallback — returns. A contribution is
+  interpreted **at most once** (idempotency keyed on contribution id). `[storm]`. Queue/retry
+  mechanics are `anoria-commons:distributed-systems`.
+- **Resolved:** `Start Session`'s dual-write worry. There is none — "at most one open session per
+  workshop" is a set-scoped uniqueness rule (not a `Workshop` invariant), enforced by a partial
+  uniqueness constraint outside any aggregate. `Start Session` reads `Workshop.canStartSession`
+  and writes only `Session`. `Close Session` moved from `Workshop` to `Session`. `[storm]`.
+- **Resolved:** undisposed proposals at `Session Closed` → `LAPSED` (quiet). Apply-failed
+  proposals at close → `LAPSED` **and** `Raise Hot Spot` (unfulfilled intent survives). `[storm]`.
+
+55. **Whether `Reject Proposal` / `Reject Resolution` carry a reason** was raised and left open —
+    minor, no invariant depends on it. Unowned, undated.
+
+56. **How a lapsed or apply-failed proposal renders in Derived Artifact Generation Flow B** —
+    "proposed, not taken" vs. "proposed, failed" are different stories the transcript export
+    should tell. The session record carries the terminal state; the rendering is not designed.
+    Owner: `derived-artifact-generation` resume. Undated.
+
+57. **`Contribution` is not modelled as its own aggregate** — its only rule (interpreted at most
+    once) is enforced by the `Session`'s own event-sourced record. Recorded as a finding, not a
+    gap: if `Contribution` later grows rules of its own (e.g. per-contribution retraction), revisit.
+    Unowned, undated.
+
+58. **This session's edits continue the pre-existing staleness cascade.** `check` reported 27 stale
+    at entry (from the 2026-08-26 Big Picture resume and the QHSR collapse); 31 after this pass —
+    the +4 are `context-map.md`, `README.md`, and `subdomain-catalog.md` moving in the pre-existing
+    `canvas ↔ context-map ↔ open-questions` reference cycle (authored during the
+    `ddd-strategic-design` session, see #16). This pass's own output artifacts —
+    `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md`, `acceptance-tests.md`,
+    and `sessions/2026-08-27-design-level-session-facilitation-runtime.md` — are clean; the cycle
+    edges were `ack`ed since all three files were co-authored and verified mutually consistent in
+    this pass. The rest is reported, not auto-propagated. Unowned, undated.
 
 ## Deliberate deviations, recorded rather than silent
 

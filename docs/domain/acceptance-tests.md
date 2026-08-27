@@ -1,9 +1,9 @@
 ---
 workshop: design-level
-scope: derived-artifact-generation
+scope: session-facilitation
 status: draft
 last_updated: 2026-08-27
-digest: 20103523644f
+digest: d54903d244bb
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
@@ -15,7 +15,7 @@ derived_from:
     digest: 6ae50843569d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 59c06f08153f
+    digest: 1926e79a6978
     at: 2026-08-27
 ---
 # Acceptance tests
@@ -172,3 +172,59 @@ Extracted once the three-flow model stabilized. Given/When/Then, asserting expec
 31. **Given** a JSON structured export from Flow A, **when** it is re-imported, **then** the
     reproduced model is identical — building blocks, both relation kinds, annotations, provenance,
     and the operation log.
+
+## Design-Level on Session Facilitation — the session runtime (2026-08-27)
+
+Extracted once the `Session` / `Proposal` / `Resolution` aggregates and the apply-confirmation
+round trip stabilized. Given/When/Then, asserting expected state.
+
+32. **Given** the AI Model Provider is unavailable, **when** a contribution is made, **then**
+    `Contribution Made` is recorded on the session and no `Contribution Interpreted` exists;
+    **when** a model returns, **then** the contribution is interpreted exactly once.
+
+33. **Given** a contribution that has already been interpreted, **when** `Interpret Contribution`
+    fires again for the same contribution id, **then** no second `Contribution Interpreted` is
+    produced and no duplicate proposals are created.
+
+34. **Given** a contribution interpreted as proposal-worthy but with no question-track judgment
+    (an off-topic answer), **when** the session closes, **then** a `Hot Spot Raised` exists for the
+    triggering question and the proposal is unaffected.
+
+35. **Given** a proposal in `ACCEPTED`, **when** Domain Model Capture emits `Operation Rejected`
+    because the target building block was withdrawn, **then** the proposal is in `APPLY_FAILED`
+    carrying that reason, and `Edit Proposal` and `Accept Proposal` are both accepted from that
+    state.
+
+36. **Given** a proposal in `APPLY_FAILED`, **when** the session closes without the expert
+    re-accepting it, **then** the proposal is `LAPSED` and a `Hot Spot Raised` exists referencing
+    it.
+
+37. **Given** a proposal in `PROPOSED` that the expert never acted on, **when** the session closes,
+    **then** the proposal is `LAPSED` and no hot spot is raised for it.
+
+38. **Given** a proposal in `ACCEPTED` with its apply in flight, **when** the session closes and
+    `Operation Applied` then arrives, **then** the proposal is `APPLIED` and the building block
+    exists.
+
+39. **Given** two resolutions for the same open hot spot, **when** the first is accepted and
+    applied (`Hot Spot Resolved`) and the second is then accepted, **then** the second lands in
+    `LAPSED` with an "already resolved" reason, there is no retry path, and the hot spot carries
+    exactly one recorded reference.
+
+40. **Given** a `Resolution Proposed`, **when** `Reject Resolution` fires, **then** the hot spot
+    stays `Open` and no reference is recorded.
+
+41. **Given** a workshop with one open session, **when** `Start Session` is attempted by an
+    eligible user, **then** it is rejected and the existing session is untouched; **when** that
+    session closes and `Start Session` is retried, **then** a new session is created.
+
+42. **Given** Bob's invitation is `REVOKED`, **when** Bob attempts `Start Session`, **then**
+    `Workshop.canStartSession` is false, the attempt is rejected, and no `Session` is created.
+
+43. **Given** questions Q1 (answered) and Q2 (open) in a session, **when** `Close Session`
+    commits, **then** `Session Closed` carries exactly `[Q2]` and a `Hot Spot Raised` exists for
+    Q2 only.
+
+44. **Given** the stakeholder-check question, **when** a contribution is interpreted as
+    `complete-perspective`, **then** that question is `Resolved` and the workshop's chosen-problem
+    qualification is set.
