@@ -2,8 +2,8 @@
 workshop: big-picture
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-26
-digest: 4c65d5367a9b
+last_updated: 2026-08-27
+digest: 709c31e1aaa2
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
@@ -422,6 +422,87 @@ here.
     artifacts (`bounded-contexts/derived-artifact-generation/*`, `acceptance-tests.md`, `README.md`,
     this file, and the session record) are clean — `check` confirms 0 stale among them. Unowned,
     undated.
+
+## Raised in the cross-workshop review (2026-08-27)
+
+A domain-modeling-lens audit of every artifact — asking whether each business rule and invariant
+has a clear aggregate owner, and whether the aggregate and bounded-context shapes hold up for
+implementation. Not a workshop: no elicitation, `[review]` provenance. Items 46–48 were put to the
+participant and confirmed as real; 49–54 are recorded as findings for the owning workshop to judge.
+
+46. **The session runtime has no consistency boundary.** `boards/capture-loop.md` deferred
+    aggregates to Design-Level; the Session Facilitation pass then `[carried]` the whole loop
+    unmodelled ("to avoid two sources of truth"), and the Domain Model Capture pass modelled only
+    the accepted-proposal *output* (the building-block graph). Left with no aggregate: question
+    accountability (capture-loop Invariants 1 & 2 — every `Question Asked` resolved before close or
+    swept to `Hot Spot Raised` at `Session Closed`; exemption only by one of four events, never a
+    content judgment), the Proposal lifecycle (edit 0+ times *before* disposition, never after;
+    sibling proposals from one interpretation independent — Invariant 4), and the
+    `Contribution Interpreted` fan-out. Invariants 1–2 are Session-scoped, and `Session` is not
+    `Workshop`. **Confirmed with the participant 2026-08-27: this is its own consistency boundary
+    and needs a Design-Level pass** scoped to the session runtime inside Session Facilitation
+    (`Session` aggregate or process manager). Owner: that pass. Undated.
+
+47. **The Resolution lifecycle is unowned, and its handler assignment contradicts itself.**
+    `bounded-contexts/session-facilitation/canvas.md` Commands table assigns `Accept Resolution` /
+    `Reject Resolution` to "Handled by: Domain Model Capture"; the same canvas's Events-out table
+    marks `Resolution Proposed / Accepted / Rejected` "(internal)" to Session Facilitation;
+    `bounded-contexts/domain-model-capture/canvas.md` lists neither command (only `Resolve`, on
+    `Resolution Accepted`). No aggregate owns the `Resolution Proposed → Accepted/Rejected`
+    transition, so AT-9's "the hot spot stays open **until** `Accept Resolution` fires" has no home.
+    Also undefined: whether two contributions can each be interpreted as resolving the same hot
+    spot, producing competing `Resolution Proposed`. Owner: the session-runtime Design-Level pass
+    (#46). Undated.
+
+48. **`Timeline` crosses its own aggregate boundary.** `Sequence`-as-merge is described as an
+    atomic write across two `Timeline` instances ("one transaction") — the thing an aggregate
+    boundary exists to prevent; it needs an explicit domain service + a stated eventual-consistency
+    compromise, or a different boundary. The "one per connected component" boundary cannot be
+    loaded or locked without first walking the `follows` graph to discover its membership. The
+    backlog of unplaced/unsequenced events is folded into the `Timeline` row parenthetically but is
+    not a connected component and has no owner. **Confirmed with the participant 2026-08-27:
+    revisit in the session-runtime Design-Level pass (#46)**, since the merge transaction reaches
+    into Domain Model Capture. Undated.
+
+49. **Cross-aggregate referential integrity is unspecified in Domain Model Capture.** Can
+    `Link Cause` / `Annotate` target an already-`Withdrawn` or non-existent Building Block? The
+    cascade policies handle withdrawal *after* linking, not linking *to* a dead target. A
+    `Hot Spot`'s resolution **reference** may point at a building block that is later `Withdrawn` —
+    the annotation cascade does not cover resolution references, so it dangles. A Domain Event
+    whose `causedBy` cites a non-existent Actor id is unowned. Owner: a Domain Model Capture
+    resume. Unowned, undated.
+
+50. **`Insert Between` cycle-safety is unstated.** `Sequence` is "cycle-checked"; `Insert
+    Between(A, C, B)` is only described as "atomic". If `C` already sits in the same `Timeline`
+    with a path `C → … → A`, the insert closes a cycle. Acceptance tests 14–15 do not cover it.
+    Either `C` must be a fresh event, or `Insert Between` is cycle-checked too — undecided. Owner:
+    a Domain Model Capture resume, or #46. Unowned, undated.
+
+51. **Flow B of Derived Artifact Generation has a hidden cross-context dependency.** Flow B
+    "correlates the session log with Domain Model Capture's building blocks **to name what each
+    turn produced**" — which requires a stable `Proposal → resulting Building Block` id link across
+    the context boundary. No canvas records the resulting block id against the proposal
+    (`Proposal Accepted → Capture Domain Event` drops it). Flow B cannot be built until this link
+    exists. Ties to the unadopted context-map edge #39. Owner: the session-runtime Design-Level
+    pass (#46) for the link; `ddd-strategic-design` for #39. Unowned, undated.
+
+52. **`boards/capture-loop.md` is stale against two structural changes it was never resumed for:**
+    the `Workshop`/`Session` split (2026-08-26 Big Picture resume) and the Question & Hot Spot
+    Resolution collapse. Its Invariant 1 is `Session`-scoped and unverified against the split;
+    `Answer Question` still shows "context owner UNCONFIRMED" in two of its tables even though #15
+    declares that dissolved (everything is Facilitation's). Owner: a Process Modelling resume on
+    the capture loop, or absorbed by #46. Unowned, undated.
+
+53. **The as-is/to-be distinction (#6) is still unowned after three workshops.** Not cosmetic: a
+    to-be session changes what `Domain Problem Stated` means and the facilitator's whole stance
+    (the avanscoperta handbook: "the workshop dynamics are very different"). Needs an owner — a Big
+    Picture resume or a product decision. Re-flagged 2026-08-27.
+
+54. **This review's edit to `open-questions.md` continues the pre-existing staleness cascade.**
+    `domain_lineage.py check` reported 24 stale before this edit (from the 2026-08-26 Big Picture
+    resume and the QHSR collapse — see #45, #36, #31, #30); adding these items only moves the
+    digest they are stale against, per the precedent in #45. Reported, not auto-propagated.
+    `open-questions.md` re-stamped and `index` re-run after this edit. Unowned, undated.
 
 ## Deliberate deviations, recorded rather than silent
 

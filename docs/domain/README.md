@@ -253,7 +253,7 @@ than guessed.
 | [bounded-contexts/session-facilitation/ubiquitous-language.md](bounded-contexts/session-facilitation/ubiquitous-language.md) | design-level | session-facilitation | draft | 2026-08-26 |
 | [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-26 |
 | [domain-and-goals.md](domain-and-goals.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-25 |
-| [open-questions.md](open-questions.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
+| [open-questions.md](open-questions.md) | big-picture | eventstormer-session | draft | 2026-08-27 |
 | [sessions/2026-08-25-big-picture.md](sessions/2026-08-25-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 | [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-26 |
 | [sessions/2026-08-26-big-picture.md](sessions/2026-08-26-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
