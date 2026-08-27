@@ -3,7 +3,7 @@ workshop: design-level
 scope: domain-model-capture
 status: draft
 last_updated: 2026-08-26
-digest: 4a15146849b6
+digest: 8fb8d04365b1
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
@@ -12,7 +12,7 @@ derived_from:
     digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: bf2af41bae0a
+    digest: 6ae50843569d
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 59c06f08153f
@@ -21,7 +21,7 @@ derived_from:
     digest: e4393aff3ac9
     at: 2026-08-26
   - path: open-questions.md
-    digest: db1fd1fe3b12
+    digest: 4c65d5367a9b
     at: 2026-08-26
 ---
 # Session — Design-Level EventStorming: Domain Model Capture
@@ -136,10 +136,10 @@ modelled this session:
 **The seam holds. No revision to `context-map.md`'s relationships is needed** — this session made
 the boundary's commands and events explicit, it didn't move it.
 
-## The aggregate: `Board`
+## The aggregate(s): first draft, `Board`
 
-**Invariants** (invariant-first — see canvas.md for the full numbered list, carried here for the
-record):
+**This section records the first draft's reasoning as it happened — see the Addendum below for
+the same-day correction.** First-draft invariants (invariant-first — carried here for the record):
 
 1. No `follows` edge may create a cycle, checked against the whole graph accumulated across the
    workshop's life. Hard, always enforced.
@@ -149,9 +149,11 @@ record):
 5. `Reinstate` never restores relations — always naked.
 6. `Resolve` requires a reference; `Reopen` requires none. Both target Hot Spot only.
 
-**State machine:** see `bounded-contexts/domain-model-capture/canvas.md` — `Backlog ⇄ Placed`
-crossed with `Active ⇄ Withdrawn`, no modelled death, plus Hot Spot's orthogonal `Open ⇄ Resolved`
-and Domain Event's orthogonal pivotal toggle.
+Invariant 1 survives the correction unchanged in substance — it's still what forces a boundary
+bigger than one record. What changed is the *shape* of that boundary (`Timeline`, one per
+connected component, not `Board`, one per workshop) and the fact that invariants 2–6 never
+actually needed to share a boundary with invariant 1 at all. **See canvas.md for the corrected,
+current model** — this section is history, not the current design.
 
 ## The six completion rules
 
@@ -162,9 +164,9 @@ and Domain Event's orthogonal pivotal toggle.
 | 3 | Every stakeholder reasonably happy | **Holds, with a caveat.** Domain Expert (direct F06 editing) and Session Facilitation (mediated commands) both get what they came for; the Facilitator itself never appears as more than a pass-through actor here, which is expected — it has no stake of its own in this context. |
 | 4 | Every hot spot addressed | **Holds, with owners recorded.** See below — every survivor carries an explicit unowned/undated status or is closed. |
 | 5 | Boundaries visible | **Holds.** Every command/event in the canvas's Commands/Events tables is drawn explicitly as a Boundary Command/Event, not asserted in prose. |
-| 6 | Components have consistent behaviour | **Holds.** `Board`'s state machine reconciled against the command/event tables — no transition without a command, no command without a state accepting it. |
+| 6 | Components have consistent behaviour | **Holds**, re-verified after the correction — each aggregate's state machine (canvas.md) reconciled against the command/event tables; `Timeline`'s birth/merge/split reconciled separately, since it's a structurally different lifecycle from the four Building Block kinds. |
 
-All six held this session — none deferred.
+All six held this session — none deferred, including after the same-day correction (see Addendum).
 
 ## Hot spots surfaced or resolved this session
 
@@ -180,6 +182,72 @@ See `open-questions.md` for the full, dated accounting. Summary:
   atomicity guarantee).
 - **New, recorded as a finding not a gap:** #35 (`place`/`unplace` are real, independent
   operations — this session's own opening hypothesis was wrong, corrected by the participant).
+
+## Addendum — same-day correction: the aggregate boundary was wrong
+
+After close, the participant reviewed the model and pushed back directly: several operations
+(Reword, `causedBy`, annotation) have no invariant reaching outside one or two records, so folding
+everything into one `Board` aggregate was a mis-derivation, not a defensible conservative default.
+This is a **resume of the same workshop**, not a new session — the artifact is still `draft`.
+
+**Re-run of the discovery loop** (`anoria-commons:domain-modeling`'s `aggregate-discovery.md`,
+consulted directly per the participant's request), invariant by invariant:
+
+1. **Reword, Mark/Unmark Pivotal, Resolve, Reopen** — no invariant reaches outside one record.
+   → each Building Block kind is its own aggregate.
+2. **`causedBy`** — structurally typed (Actor/System→Event only), never chains, so no invariant
+   needs more than the two endpoints. Confirmed live: this relation is owned entirely by the
+   **Event's own record** (its `causedBy` list) — the Actor/System holds no back-reference.
+3. **Annotation** — same shape, owned entirely by the **Hot Spot's own record** (one field).
+4. **`follows`** — the one invariant (no cycle) that genuinely needs whole-chain visibility. But
+   the participant sharpened the boundary further: **a `Timeline` is a connected DAG of placed,
+   sequenced Domain Events — a workshop holds many of them**, not one graph for the whole workshop.
+   `Board` (this session's own earlier name) was retired in favor of `Timeline`, named live by the
+   participant, with the workshop-spanning "one big graph" framing explicitly wrong.
+
+**`Timeline`'s birth/merge/split, worked through directly with the participant:**
+
+- **Birth:** `Place` creates a single-event Timeline — confirmed as "the simplest thing to do,"
+  resolving an open question from earlier in the same resume about whether a lone placed event
+  counts as its own Timeline.
+- **Merge:** `Sequence(A, B)` across two different Timelines reads both and commits one surviving
+  instance — confirmed as a legitimate, bounded multi-instance transaction (the union-find shape),
+  not the unbounded multi-aggregate anti-pattern the discovery loop warns against, because the
+  invariant's true reach is exactly the two components being joined.
+- **Split, corrected with a precision the first draft missed:** the participant caught that
+  `Unsequence`/`Withdraw`/`Unplace` should split a Timeline **only if the removal actually
+  disconnects the graph** — "unless there's another branch that keeps the chain united... if we
+  remove one event in the middle of the bifurcation, the timeline is still there." This is a real
+  connected-components recomputation, not a naive "any edge removed = a split."
+
+**Command renaming, prompted by the participant finding the shared `Relate`/`Unrelate` verb
+"awkward" once three structurally different aggregates were involved:**
+
+| Old (this session's first draft) | New | Reasoning |
+|---|---|---|
+| `Relate`/`Unrelate` (`follows`) | `Sequence`/`Unsequence` | Matches this session's own event names (`Domain Event Sequenced`), now the command matches too |
+| `Relate`/`Unrelate` (`causedBy`) | `Link Cause`/`Unlink Cause` | Echoes the original Big Picture board's own wording |
+| `Relate`/`Unrelate` (annotation) | `Annotate`/`Unannotate` | Echoes the PRD's own verb ("a hot spot annotates...") |
+
+**Two new cascading policies, resolved live rather than left as dangling-reference questions:**
+
+- **When an Actor/System is Withdrawn → `Unlink Cause`** on every Domain Event that referenced it.
+  Confirmed: "the Link Cause is cleared. If we reinstate, we'll need to link again" — re-linking is
+  explicit, the facilitator can propose it from history the same way it does elsewhere.
+- **When any Building Block a Hot Spot annotates is Withdrawn → withdraw that Hot Spot too.**
+  Block-vs-cascade was put directly to the participant; cascade won: "probably the latter is
+  better."
+
+**One naming overlap surfaced and deliberately left open:** PRD F02 already uses "timeline" for
+the UI's placed-vs-backlog surface, which is a different concept from this session's `Timeline`
+aggregate. The participant accepted the possible confusion and said the PRD can differentiate the
+two later if it matters — not settled here (`open-questions.md` #37).
+
+`bounded-contexts/domain-model-capture/canvas.md` was rewritten in full to reflect this corrected
+model — the boundary rationale, commands table, events table, policies table, aggregates section
+(now five aggregates, invariant-first, with `Timeline`'s birth/merge/split stated precisely), and
+state machines. `acceptance-tests.md` items 12–19 were revised for the new vocabulary and one new
+connectivity nuance (item 16a); two new tests (20–21) cover the cascading policies.
 
 ## Hand-off
 

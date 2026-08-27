@@ -3,13 +3,13 @@ workshop: big-picture
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-26
-digest: db1fd1fe3b12
+digest: 4c65d5367a9b
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: bf2af41bae0a
+    digest: 6ae50843569d
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 59c06f08153f
@@ -21,7 +21,7 @@ derived_from:
     digest: 308013b9fcc5
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-domain-model-capture.md
-    digest: 4a15146849b6
+    digest: 8fb8d04365b1
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
@@ -117,12 +117,14 @@ here.
    Needs a worked example with the participant. See
    `bounded-contexts/session-facilitation/ubiquitous-language.md`.
 
-8. ~~**Domain Model Capture's aggregate boundary is unconfirmed.**~~ **Resolved 2026-08-26**,
-   Design-Level on Domain Model Capture. `Board` is the aggregate — one per Workshop, accumulating
-   across all of that workshop's sessions. Its load-bearing invariant is the `follows` no-cycle
-   check, which needs whole-graph visibility (the reinstatement question this item originally tied
-   to has separately dissolved — see item 3). See
-   `bounded-contexts/domain-model-capture/canvas.md`.
+8. ~~**Domain Model Capture's aggregate boundary is unconfirmed.**~~ **Resolved 2026-08-26, then
+   corrected same-day.** First pass: `Board`, one aggregate for the whole workshop's graph. The
+   participant challenged this directly — most operations (Reword, `causedBy`, annotation) have no
+   invariant reaching outside one or two records, so lumping them into one boundary was a
+   mis-derivation, not a conservative default. Corrected to four Building Block aggregates (Domain
+   Event, Actor, System, Hot Spot — each protecting only its own local state) plus `Timeline`, one
+   per **connected component** of sequenced events, sized to exactly what the no-cycle invariant
+   needs. See `bounded-contexts/domain-model-capture/canvas.md`.
 
 9. **Derived Artifact Generation: on-demand vs. materialized export.** Whether F10's export is
    computed on request or kept live as a materialized view is undecided, and changes this
@@ -338,10 +340,10 @@ here.
 
 35. **`place`/`unplace` are real, independent operations — a corrected hypothesis, not a PRD
     leftover.** This session opened by suspecting `place`/`unplace` were an old name for
-    `relate`/`unrelate` (same pattern as the earlier "rename"/"Reworded" find). The participant
-    corrected this: a Building Block can be `Placed` on the timeline with zero relations, starting
-    a disconnected track — parallel, unrelated clusters that later merge via `Relate`. Recorded as
-    a finding, not a gap.
+    `relate`/`unrelate`, later renamed `sequence`/`unsequence` (same pattern as the earlier
+    "rename"/"Reworded" find). The participant corrected this: `Place` is the factory that births a
+    single-event `Timeline`; separate, disconnected Timelines later merge via `Sequence`. Recorded
+    as a finding, not a gap.
 
 36. **This session's own repeated edits to `open-questions.md` left several already-stale
     downstream artifacts stale against a moving target**, per `domain_lineage.py check` run at
@@ -358,6 +360,19 @@ here.
     not this workshop's. This session's own artifacts (`bounded-contexts/domain-model-capture/*`,
     `acceptance-tests.md`, `open-questions.md` itself, `README.md`, and this session's own record)
     are clean — `check` confirms 0 stale among them. Unowned, undated.
+
+37. **PRD F02's "timeline" (the UI surface: placed-vs-backlog) now names something different from
+    this session's `Timeline` aggregate (one per connected component of sequenced events).** The
+    participant accepted the possible confusion and said the PRD can differentiate the two terms
+    later if it turns out to matter. Not resolved here. Unowned, undated.
+
+38. **Withdrawing a Building Block a Hot Spot annotates now cascades — resolved live, corrected
+    from an earlier open framing.** Block-vs-cascade was put to the participant directly; cascade
+    won ("the latter is better") — withdrawing the annotated target also withdraws the Hot Spot,
+    rather than blocking the original withdrawal or leaving a dangling annotation. Same session
+    also resolved the parallel `causedBy` case: withdrawing an Actor/System cascades `Unlink Cause`
+    on every Domain Event that referenced it, and reinstating requires re-linking explicitly
+    (the facilitator can propose links from history, same as elsewhere). Both `[storm]`.
 
 ## Deliberate deviations, recorded rather than silent
 

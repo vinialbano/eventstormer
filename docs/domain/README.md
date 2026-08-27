@@ -6,13 +6,13 @@ last_updated: 2026-08-26
 digest: fc7e48fb916b
 derived_from:
   - path: acceptance-tests.md
-    digest: 93baefbb2551
+    digest: a86899f45983
     at: 2026-08-26
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: bf2af41bae0a
+    digest: 6ae50843569d
     at: 2026-08-26
   - path: context-map.md
     digest: e4393aff3ac9
@@ -21,13 +21,13 @@ derived_from:
     digest: 015ff10858df
     at: 2026-08-26
   - path: open-questions.md
-    digest: db1fd1fe3b12
+    digest: 4c65d5367a9b
     at: 2026-08-26
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-domain-model-capture.md
-    digest: 4a15146849b6
+    digest: 8fb8d04365b1
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
@@ -115,18 +115,28 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
    session-scoped — the board itself is left unedited). All six completion rules held. Full
    reasoning in `sessions/2026-08-26-design-level-session-facilitation.md`.
 7. **Design-Level EventStorming on Domain Model Capture (2026-08-26)** turned this context's
-   event-stormed model from `UNCONFIRMED` into `[storm]`-confirmed. Named `Board` as the
-   aggregate — one per Workshop, accumulating across all of that workshop's sessions — protecting
-   the load-bearing invariant that no `follows` edge may create a cycle across the whole graph.
-   Dissolved the reinstatement conflict rule entirely (`open-questions.md` #3): `Reinstate` never
-   restores relations, landing every Building Block back in the backlog naked. Found that
-   `place`/`unplace` are real, independent operations — not derivable from `relate`/`unrelate` as
-   this session first suspected — enabling disconnected timeline tracks that merge later. Added
-   `Insert Between` (a first-class atomic command, not a bundle) and `Reopen` (Resolved → Open, for
-   a Hot Spot) as new verbs. Settled most of the `Hot Spot Raised` payload question
+   event-stormed model from `UNCONFIRMED` into `[storm]`-confirmed, **then corrected its own
+   aggregate design in a same-day resume.** First draft: one `Board` aggregate for the whole
+   workshop's graph. The participant challenged this directly — most operations (Reword,
+   `causedBy`, annotation) have no invariant reaching outside one or two records, so one shared
+   boundary was a mis-derivation. Corrected, invariant-first, to four Building Block aggregates
+   (Domain Event, Actor, System, Hot Spot — each protecting only its own local state) plus
+   `Timeline`, one per **connected component** of sequenced events (a workshop holds many at once),
+   sized to exactly what the no-cycle invariant needs. `Timeline`'s birth (via `Place`, a factory),
+   merge (`Sequence` across two components), and split (only when a removal actually disconnects
+   the graph — a bifurcation that reunites downstream stays whole) are all stated precisely. Renamed
+   the generic `Relate`/`Unrelate` into `Sequence`/`Unsequence` (`follows`), `Link Cause`/
+   `Unlink Cause` (`causedBy`, owned by the Domain Event), and `Annotate`/`Unannotate` (Hot Spot's
+   own target) — the shared verb read as awkward once three structurally different aggregates were
+   involved. Added two cascading policies: withdrawing an Actor/System auto-`Unlink Cause`s every
+   Domain Event that referenced it; withdrawing anything a Hot Spot annotates auto-withdraws that
+   Hot Spot. Also dissolved the reinstatement conflict rule entirely (`open-questions.md` #3):
+   `Reinstate` never restores relations or Timeline membership. Added `Insert Between` (atomic, not
+   a bundle) and `Reopen` (Resolved → Open). Settled most of the `Hot Spot Raised` payload question
    (`open-questions.md` #13/#28); left the `kind` field's own necessity, a possible "destroy"
-   operation, and `Insert Between`'s atomicity guarantee as genuine open questions rather than
-   guessed answers. All six completion rules held. Full reasoning in
+   operation, `Insert Between`'s atomicity guarantee, and the PRD's "timeline" (UI surface) vs.
+   `Timeline` (aggregate) naming overlap as genuine open questions rather than guessed answers. All
+   six completion rules held, both before and after the correction. Full reasoning in
    `sessions/2026-08-26-design-level-domain-model-capture.md`.
 
 ## Artifact status
