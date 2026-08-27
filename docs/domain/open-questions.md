@@ -3,10 +3,13 @@ workshop: big-picture
 scope: eventstormer-session
 status: draft
 last_updated: 2026-08-26
-digest: 20da974d0976
+digest: db1fd1fe3b12
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
+    at: 2026-08-26
+  - path: bounded-contexts/domain-model-capture/canvas.md
+    digest: bf2af41bae0a
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 59c06f08153f
@@ -16,6 +19,9 @@ derived_from:
     at: 2026-08-26
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
+    at: 2026-08-26
+  - path: sessions/2026-08-26-design-level-domain-model-capture.md
+    digest: 4a15146849b6
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
@@ -46,12 +52,12 @@ recorded as the honest state, not filled in.
    unplace, mark pivotal, withdraw, reinstate, set scope, set stakeholder answer, set chosen
    problem`, matching F06's "Withdraw a building block, and reinstate a withdrawn one" exactly.
 
-3. **Reinstatement conflict rule undefined.** The participant decided that withdrawing a
-   Domain Event/Actor/System/Hot Spot severs its connections, and that reinstating requires re-validating
-   the old relations against the board's current state (a stale position, or a `follows` chain that
-   would now cycle, are both possible). The PRD defines no resolution rule for what happens when
-   that re-validation fails. Named as belonging to a deeper session on F06 (Process Modelling or
-   Design-Level). Unowned, undated.
+3. ~~**Reinstatement conflict rule undefined.**~~ **Dissolved 2026-08-26**, Design-Level on Domain
+   Model Capture. `Reinstate` never restores relations — a reinstated Building Block always lands
+   unplaced and unrelated, identical in shape to a fresh one. There is no conflict case left to
+   have a resolution rule for; old relations may be surfaced as UI hints, but that's a
+   facilitation concern, not a `Board` invariant. Full reasoning in
+   `sessions/2026-08-26-design-level-domain-model-capture.md`.
 
 4. ~~**Three policy relationships found, not modelled here** (Policy is out of play in Big Picture;
    named precisely enough for Process Modelling on "the capture loop" to formalize):
@@ -111,9 +117,12 @@ here.
    Needs a worked example with the participant. See
    `bounded-contexts/session-facilitation/ubiquitous-language.md`.
 
-8. **Domain Model Capture's aggregate boundary is unconfirmed.** Candidate: one Building Block, or
-   the whole board — this decides how the reinstatement re-validation rule (item 3 above) actually
-   gets enforced. Needs a Design-Level pass. See `bounded-contexts/domain-model-capture/canvas.md`.
+8. ~~**Domain Model Capture's aggregate boundary is unconfirmed.**~~ **Resolved 2026-08-26**,
+   Design-Level on Domain Model Capture. `Board` is the aggregate — one per Workshop, accumulating
+   across all of that workshop's sessions. Its load-bearing invariant is the `follows` no-cycle
+   check, which needs whole-graph visibility (the reinstatement question this item originally tied
+   to has separately dissolved — see item 3). See
+   `bounded-contexts/domain-model-capture/canvas.md`.
 
 9. **Derived Artifact Generation: on-demand vs. materialized export.** Whether F10's export is
    computed on request or kept live as a materialized view is undecided, and changes this
@@ -145,17 +154,11 @@ here.
 
 ## Raised in the Process Modelling session (2026-08-25) — "the capture loop"
 
-13. **`Hot Spot Raised`'s payload/granularity is undecided, not just deferred to design.** The
-    participant named plausible future features that would need to distinguish *why* a hot spot
-    was raised (e.g., scheduling a session with a named absent stakeholder), but explicitly
-    declined to commit to a shape now, absent knowing what the hot-spot resolution logic will
-    actually need. Attributed to that explicit deferral — not unowned by omission. **Partially
-    informed 2026-08-26** by the Design-Level session's #18/#19 findings (the informational/
-    model-affecting split, and the required-reference invariant) — still not fully settled; revisit
-    at Design-Level on Domain Model Capture, when the resolution logic itself gets designed. See
-    `boards/capture-loop.md`. **Further informed 2026-08-26** by Design-Level on Session
-    Facilitation, which names the full raise/resolve command-and-event shape (`Raise Hot Spot` /
-    `Resolve Hot Spot` → `Hot Spot Resolved`) without deciding payload — see #28.
+13. ~~**`Hot Spot Raised`'s payload/granularity is undecided, not just deferred to design.**~~
+    **Mostly resolved 2026-08-26**, Design-Level on Domain Model Capture. Payload direction agreed:
+    kind (informational/model-affecting), trigger (content/absent-stakeholder/knowledge-gap/
+    unresolved-question), annotation target. **One field stays genuinely open** — whether `kind`
+    itself is worth storing — the participant is explicitly unsure, not merely deferring. See #32.
 
 14. ~~**`Question & Hot Spot Resolution`'s canvas `Events in` table omits `Question Asked` /
     `Question Answered`.**~~ **Moot, 2026-08-26** — #17's seam-collapse was adopted; the canvas
@@ -241,10 +244,10 @@ here.
     many prior sessions — none of this is decided. Unowned, undated; likely an implementation-level
     question rather than a further EventStorming pass, but noted here rather than silently assumed.
 
-28. **`Hot Spot Raised`/`Hot Spot Resolved`'s payload/granularity remains open** (item #13, above,
-    now also covering the resolved side). This session names both the raising and resolving
-    commands/events precisely but does not decide their payload shape — still owned by a future
-    Design-Level pass on Domain Model Capture.
+28. ~~**`Hot Spot Raised`/`Hot Spot Resolved`'s payload/granularity remains open**~~ **Mostly
+    resolved 2026-08-26** — see #13/#32. This session's `Resolve` shape (requires a recorded
+    reference) stands unchanged; Design-Level on Domain Model Capture additionally added `Reopen`
+    (Resolved → Open) to the same command family.
 
 31. **This session's edit to `boards/eventstormer-big-picture.md` (the #23 resume) left 8
     downstream artifacts stale**, per `domain_lineage.py check` run at close: `boards/capture-
@@ -313,6 +316,48 @@ here.
     resolution/{canvas,ubiquitous-language}.md`, `context-map.md`, and this file. Re-run
     `domain_lineage.py stamp`/`link`/`check`/`index` after this edit to confirm no staleness
     remains.
+
+## Raised in the Design-Level session (2026-08-26) — Domain Model Capture
+
+32. **Hot Spot's `kind` field is genuinely unsettled, not deferred.** The payload direction for
+    `Raise Hot Spot` is agreed (kind, trigger, annotation target), but the participant is
+    explicitly unsure whether the `kind` attribute (informational/model-affecting) earns its place
+    as a stored field versus being derivable or unnecessary. Unowned, undated.
+
+33. **A "destroy" operation for true duplicates was floated and left undesigned.** The participant
+    raised the possibility of a real delete, for duplicates found while organizing the timeline,
+    but was explicit about not being sure. It conflicts with F01's confirmed "the system never
+    merges two building blocks" and the broader no-destructive-delete/no-re-type stance. Not
+    modelled. Unowned, undated.
+
+34. **`Insert Between`'s atomicity has no home in F01's current operation model.** F01 guarantees
+    atomicity per single logged operation; `Insert Between` needs the same guarantee across what
+    could be represented as multiple effects (unrelate one edge, relate two). Whether this becomes
+    one log-entry kind or a transactionally-bundled group of three is an implementation decision
+    this session doesn't settle. Unowned, undated.
+
+35. **`place`/`unplace` are real, independent operations — a corrected hypothesis, not a PRD
+    leftover.** This session opened by suspecting `place`/`unplace` were an old name for
+    `relate`/`unrelate` (same pattern as the earlier "rename"/"Reworded" find). The participant
+    corrected this: a Building Block can be `Placed` on the timeline with zero relations, starting
+    a disconnected track — parallel, unrelated clusters that later merge via `Relate`. Recorded as
+    a finding, not a gap.
+
+36. **This session's own repeated edits to `open-questions.md` left several already-stale
+    downstream artifacts stale against a moving target**, per `domain_lineage.py check` run at
+    close: `boards/capture-loop.md`, `bounded-contexts/derived-artifact-generation/canvas.md`, both
+    retired `bounded-contexts/question-hot-spot-resolution/{canvas,ubiquitous-language}.md`, both
+    `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md`,
+    `sessions/2026-08-26-design-level-session-facilitation.md`, `domain-and-goals.md`,
+    `sessions/2026-08-26-design-level.md`, `sessions/big-picture-context-map.md`, and
+    `subdomain-catalog.md`. Every one of these was **already stale before this workshop started**
+    (cascading from the 2026-08-26 Big Picture resume and the Question & Hot Spot Resolution
+    collapse); this session's own edits only moved the digest they're stale *against*, they didn't
+    newly invalidate any of them. Reported, not auto-propagated: refreshing any of these is
+    `session-facilitation`'s, `process-modelling`'s, or `ddd-strategic-design`'s own resume to make,
+    not this workshop's. This session's own artifacts (`bounded-contexts/domain-model-capture/*`,
+    `acceptance-tests.md`, `open-questions.md` itself, `README.md`, and this session's own record)
+    are clean — `check` confirms 0 stale among them. Unowned, undated.
 
 ## Deliberate deviations, recorded rather than silent
 

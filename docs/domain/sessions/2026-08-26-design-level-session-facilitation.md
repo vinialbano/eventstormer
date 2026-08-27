@@ -15,7 +15,7 @@ derived_from:
     digest: e4393aff3ac9
     at: 2026-08-26
   - path: open-questions.md
-    digest: 0e53d26ce8a6
+    digest: 5224a3e7af79
     at: 2026-08-26
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c
