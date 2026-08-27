@@ -1,19 +1,22 @@
 ---
 workshop: design-level
-scope: domain-model-capture
+scope: derived-artifact-generation
 status: draft
-last_updated: 2026-08-26
-digest: a86899f45983
+last_updated: 2026-08-27
+digest: 20103523644f
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
     at: 2026-08-26
+  - path: bounded-contexts/derived-artifact-generation/canvas.md
+    digest: d6648843193b
+    at: 2026-08-27
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 6ae50843569d
-    at: 2026-08-26
+    at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 59c06f08153f
-    at: 2026-08-26
+    at: 2026-08-27
 ---
 # Acceptance tests
 
@@ -124,3 +127,48 @@ connected component, not one graph per workshop.
 
 21. **Given** a Hot Spot `H` annotates Domain Event `E`, **when** `E` is `Withdraw`n, **then** `H`
     is also withdrawn automatically, rather than the withdrawal of `E` being blocked.
+
+## Design-Level on Derived Artifact Generation (2026-08-27)
+
+Extracted once the three-flow model stabilized. Given/When/Then, asserting expected state.
+
+22. **Given** a model at operation-log position N, **when** `Export Structured Model` is run twice
+    with no intervening operation, **then** the two JSON exports are byte-identical and the two
+    Markdown readable accounts are byte-identical.
+
+23. **Given** a building block labelled "Order Plced" that is referenced in the readable account,
+    **when** it is `Reword`ed to "Order Placed" and `Export Structured Model` is run, **then** the
+    account shows "Order Placed" everywhere that block's label is rendered.
+
+24. **Given** a transcript segment and a stored proposal rationale that both contain the literal
+    text "Order Plced", **when** the building block is `Reword`ed to "Order Placed" and
+    `Export Structured Model` is run, **then** the quoted evidence still reads "Order Plced"
+    verbatim — the rewording does not propagate into frozen free text.
+
+25. **Given** a Big Picture session in which the stakeholder check step was never run, **when**
+    `Export Structured Model` is run, **then** the artifact states that the stakeholder check was
+    not run, distinct from a statement that it was run and found nothing.
+
+26. **Given** a model, **when** the Domain Expert requests only the readable account, **then** the
+    JSON export is not produced.
+
+27. **Given** a readable-account preview rendered at operation-log position N, **when** a further
+    operation is applied (position N+1), **then** the preview displays the "model changed since
+    rendered" signal and its content still reflects position N until it is refreshed.
+
+28. **Given** a session with three conversation turns, the second of which produced a proposal that
+    was accepted as building block `B`, **when** `Export Session Transcript` is run, **then** the
+    exported artifact contains all three turns in order and the second is annotated with the
+    proposal and its acceptance as `B`.
+
+29. **Given** the AI Model Provider is unavailable, **when** `Generate Summary` is invoked, **then**
+    no summary artifact is produced, the user is told to retry later, and `Export Structured Model`
+    and `Export Session Transcript` remain available.
+
+30. **Given** a successful `Generate Summary`, **when** the artifact is produced, **then** it
+    carries an explicit AI-generated / non-deterministic marker that distinguishes it from the
+    structured outcome and the transcript export.
+
+31. **Given** a JSON structured export from Flow A, **when** it is re-imported, **then** the
+    reproduced model is identical — building blocks, both relation kinds, annotations, provenance,
+    and the operation log.

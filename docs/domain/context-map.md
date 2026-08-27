@@ -104,6 +104,23 @@ its surviving content was merged into
 [`bounded-contexts/session-facilitation/canvas.md`](bounded-contexts/session-facilitation/canvas.md).
 See `open-questions.md` #17.
 
+## Candidate revision — Session Facilitation → Derived Artifact Generation (discovered 2026-08-27)
+
+**Discovered form, not decided.** The Design-Level pass on Derived Artifact Generation
+(`sessions/2026-08-27-design-level-derived-artifact-generation.md`) found an integration edge this
+map does not record.
+
+| Upstream (U) | Downstream (D) | Candidate relationship | Pattern | Mechanism | Evidence |
+|---|---|---|---|---|---|
+| Session Facilitation | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model (the **session log** — ordered conversation turns + proposal made/accepted/rejected events) | `[storm]`: the participant stated the transcript and the proposal lifecycle "belong to Session Facilitation." Flow B (transcript export) and Flow C (synthesized summary) both read it. Flow B additionally correlates it with Domain Model Capture's building blocks |
+
+The inherited seam **Domain Model Capture → Derived Artifact Generation holds unchanged** — this
+is an *added* upstream, not a moved boundary. Derived Artifact Generation is now a Conformist
+downstream of **two** Core contexts.
+
+`[inferred]` as a seam (nobody drew the boundary); the evidence under it is `[storm]`. Adopting or
+revising this is `ddd-strategic-design`'s decision — see `open-questions.md` #39.
+
 ## Superseded draft
 
 The Big Picture workshop's own context map (candidate seams, `[inferred]`, derived from four of
