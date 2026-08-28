@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-28
-digest: 529880696927
+digest: 35717f1eb29d
 derived_from:
   - path: acceptance-tests.md
     digest: b539eb0b7ab7
@@ -27,7 +27,7 @@ derived_from:
     digest: 015ff10858df
     at: 2026-08-26
   - path: open-questions.md
-    digest: c396b8280c18
+    digest: 2c40caa4a39d
     at: 2026-08-28
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
@@ -51,8 +51,8 @@ derived_from:
     digest: 35fd6b2ca4f9
     at: 2026-08-27
   - path: subdomain-catalog.md
-    digest: e266740011c9
-    at: 2026-08-26
+    digest: c590dae32da0
+    at: 2026-08-28
 ---
 # Domain model — EventStormer
 
@@ -244,16 +244,29 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
    provenance. Left open: Derived Artifact Generation's classification confirm alongside the PRD
    F10 pass (`open-questions.md` #68), and the live strategic-artifact staleness refresh (#69).
 
+13. **`ddd-strategic-design` classification pass (2026-08-28).** Re-confirmed **Derived Artifact
+   Generation = Supporting** with the participant. The PRD F10 reconciliation (commit `ec3d094`)
+   had resolved `open-questions.md` #40 in the *opposite* direction from the 2026-08-27 canvas —
+   every v1 artifact stays deterministic, the AI narrative summary deferred to post-v1 — which
+   *retracts* the two facts #68 flagged (external AI dependency, non-determinism) and leaves the
+   context as pure deterministic template rendering: textbook Supporting, firmer than at phase 03.
+   `subdomain-catalog.md` re-confirmed, its stale status line and an orphaned Multiplayer table
+   row fixed; `subdomain-catalog.md` + `domain-and-goals.md` reference-churn edges `ack`ed after
+   verifying content still holds (#69). New `open-questions.md` #70: the Derived Artifact
+   Generation canvas's Flow C now contradicts the PRD and awaits a `design-level --scope
+   derived-artifact-generation` resume. The canvas is left unedited (its owning workshop's to
+   reconcile); the divergence is flagged in #70 and this artifact-status table.
+
 ## Artifact status
 
 | Artifact | Status | Confidence | Evidence |
 |---|---|---|---|
-| `domain-and-goals.md` | draft, confirmed strategically | High | Confirmed with the participant this session; Impact Map built from their own words |
-| `subdomain-catalog.md` | draft, confirmed strategically | High | Every row confirmed with the participant, including the Multiplayer row's provisional flag |
+| `domain-and-goals.md` | draft, confirmed strategically | High | Confirmed with the participant; Impact Map built from their own words. Reviewed 2026-08-28 against the Big Picture resume + PRD reconciliation — goal and impacts unaffected |
+| `subdomain-catalog.md` | draft, confirmed strategically | High | Every v1 row confirmed with the participant. Re-checked twice since: the 2026-08-26 QHSR collapse (row retired) and the 2026-08-28 Derived Artifact Generation re-confirm after the PRD F10 determinism reconciliation. Multiplayer row still `Low` (roadmap) |
 | `bounded-contexts/*/canvas.md` (boundary sections) | draft, confirmed strategically | High | Purpose/type/team/boundary rationale confirmed per context |
 | `bounded-contexts/session-facilitation/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass 1 (2026-08-26) — `Workshop`, invitations, resolution mechanic. Pass 2 (2026-08-27, resume) — the session runtime: `Session`/`Proposal`/`Resolution` aggregates, the apply-confirmation round trip, `Workshop` simplified. Pass 3 (2026-08-27, narrow resume) — the facilitator's context read models (`Facilitation context` / `Prior-session history` / `Facilitation agenda`), birth-fixed `Workshop.scope`; #27 resolved, no new aggregate. Reasoning in `sessions/2026-08-26-*` and `sessions/2026-08-27-design-level-session-facilitation-{runtime,context}.md` |
 | `bounded-contexts/domain-model-capture/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass 1 (2026-08-26) — commands/events/policies confirmed live. Pass 2 (2026-08-27, resume) — one event-sourced `Board` aggregate over the single-writer operation log; the four Building Block aggregates and `Timeline` dissolved. Reasoning in `sessions/2026-08-26-*` and `sessions/2026-08-27-design-level-domain-model-capture-board.md` |
-| `bounded-contexts/derived-artifact-generation/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed | High | Design-Level pass, 2026-08-27 — three artifact types (deterministic structured outcome, transcript export, non-deterministic synthesized summary), all on-demand; no aggregate, confirmed invariant-first; full reasoning in `sessions/2026-08-27-design-level-derived-artifact-generation.md` |
+| `bounded-contexts/derived-artifact-generation/canvas.md` (event-stormed model) | draft, `[storm]`-confirmed — **stale on Flow C** | Medium | Design-Level pass, 2026-08-27 — three artifact types, all on-demand; no aggregate, confirmed invariant-first. **Flow C (non-deterministic AI summary) superseded 2026-08-28** by the PRD F10 determinism reconciliation; staleness banner on the canvas, awaits a Design-Level resume (`open-questions.md` #70). Boundary + two-Core-upstream integration + no-aggregate finding unaffected. Reasoning in `sessions/2026-08-27-design-level-derived-artifact-generation.md` |
 | `bounded-contexts/question-hot-spot-resolution/canvas.md` | **superseded** | — | Retired 2026-08-26 — `ddd-strategic-design` adopted the Design-Level finding that this context folds into Session Facilitation. Preserved unedited (plus a retirement notice) for provenance; see `context-map.md`'s "Decision" section |
 | `bounded-contexts/session-facilitation/ubiquitous-language.md` | draft, mostly confirmed | High | Confirmed live through worked scenarios, Design-Level pass 2026-08-26 |
 | `bounded-contexts/domain-model-capture/ubiquitous-language.md` | draft, mostly confirmed | High | Extended live, Design-Level pass 2026-08-26 — `Board`, Placed/Unplaced, Relate/Unrelate, Insert Between, Reopen |
@@ -272,14 +285,10 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
 - Multiplayer/Real-time Collaboration needs its own scoping pass before it can be classified with
   confidence, now with a concrete consistency concern to resolve — "at most one open session per
   workshop" is a v1 simplification, not a permanent answer (open-questions.md #10/#26).
-- **Confirm Derived Artifact Generation's Core/Supporting classification** with the participant
-  alongside the PRD F10 pass: it is now a Conformist downstream of two Core contexts, an AI Model
-  Provider consumer, and deliberately non-deterministic in Flow C — all new since phase 03
-  (open-questions.md #68/#40). Expected outcome: unchanged (Supporting), but worth an explicit
-  re-confirm.
-- Refresh the live strategic artifacts (`subdomain-catalog.md`, `domain-and-goals.md`) still stale
-  in the pre-existing cascade — a `ddd-strategic-design` resume, folded in with #68
-  (open-questions.md #69).
+- **Derived Artifact Generation Design-Level resume** to reconcile the canvas's Flow C to PRD F10:
+  the deterministic template summary replaces the non-deterministic AI summary, the AI Model
+  Provider external-system dependency drops (open-questions.md #70). Classification (Supporting)
+  and boundary are settled; this is event-stormed-model depth only.
 - All three v1 contexts with an owner have a `[storm]`-confirmed event-stormed model, and Session
   Facilitation's session runtime is now modelled to aggregate level. The book's own next action is
   to prototype (start with `Session` + the `Proposal` disposition lifecycle, or Flow A of Derived
@@ -346,7 +355,7 @@ than guessed.
 | [bounded-contexts/session-facilitation/canvas.md](bounded-contexts/session-facilitation/canvas.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [bounded-contexts/session-facilitation/ubiquitous-language.md](bounded-contexts/session-facilitation/ubiquitous-language.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-28 |
-| [domain-and-goals.md](domain-and-goals.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-25 |
+| [domain-and-goals.md](domain-and-goals.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-28 |
 | [open-questions.md](open-questions.md) | design-level | session-facilitation | draft | 2026-08-28 |
 | [sessions/2026-08-25-big-picture.md](sessions/2026-08-25-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 | [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-26 |
@@ -359,7 +368,7 @@ than guessed.
 | [sessions/2026-08-27-design-level-session-facilitation-context.md](sessions/2026-08-27-design-level-session-facilitation-context.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [sessions/2026-08-27-design-level-session-facilitation-runtime.md](sessions/2026-08-27-design-level-session-facilitation-runtime.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [sessions/big-picture-context-map.md](sessions/big-picture-context-map.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
-| [subdomain-catalog.md](subdomain-catalog.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-26 |
+| [subdomain-catalog.md](subdomain-catalog.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-28 |
 
 ```mermaid
 graph LR

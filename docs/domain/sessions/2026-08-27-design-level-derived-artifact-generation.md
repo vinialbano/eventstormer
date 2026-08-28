@@ -21,7 +21,7 @@ derived_from:
     digest: ec6dc67a4870
     at: 2026-08-28
   - path: open-questions.md
-    digest: c396b8280c18
+    digest: 2c40caa4a39d
     at: 2026-08-28
 ---
 # Session record — Design-Level EventStorming: Derived Artifact Generation (2026-08-27)

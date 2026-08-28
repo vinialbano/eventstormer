@@ -2,18 +2,18 @@
 workshop: ddd-strategic-design
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-26
-digest: e266740011c9
+last_updated: 2026-08-28
+digest: c590dae32da0
 derived_from:
   - path: domain-and-goals.md
     digest: 015ff10858df
     at: 2026-08-26
   - path: context-map.md
-    digest: 94f3014c1877
-    at: 2026-08-26
+    digest: ec6dc67a4870
+    at: 2026-08-28
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
-    at: 2026-08-26
+    digest: a1fe4f12aaba
+    at: 2026-08-28
 ---
 # Subdomain Catalog
 
@@ -21,8 +21,10 @@ derived_from:
 > with the decisive tell and the sourcing decision that follows. The highest-leverage strategic
 > decision in the model.
 
-**Status:** draft — every row `[confirmed]` in this session, but nothing here has been re-checked
-against downstream bounded-context work yet.
+**Status:** draft — every v1 row `[confirmed]`. Re-checked against downstream work twice since:
+the 2026-08-26 Question & Hot Spot Resolution collapse (row retired, below) and the 2026-08-28
+re-confirmation of Derived Artifact Generation after the PRD F10 determinism reconciliation. The
+Multiplayer row is roadmap and still `Low` confidence.
 
 ## Landscape
 
@@ -49,7 +51,8 @@ flowchart TB
 |---|---|---|---|---|---|---|
 | Session Facilitation (incl. hot spot / question resolution) | Core | Someone would pay for an AI that reliably plays the scarce, skilled human-facilitator role; the logic (asymmetric leniency, lifecycle judgment, and — as of 2026-08-26 — hot spot/question resolution judgment) is complex and evolving, not CRUD | Build, best talent | PRD opportunity section ("nothing in a general-purpose chat enforces that asymmetry"); board actors `[storm]` | High | `[confirmed]`. Absorbed the former "Question & Hot Spot Resolution" Supporting row 2026-08-26 — see below |
 | Domain Model Capture | Core | The mechanism behind the product's central claim — "board and docs are the same object, no drift" — is the typed graph itself: stable ids, reword propagation, invariants across Building Block/relation kinds | Build, best talent | PRD §1 ("a typed graph of building blocks with stable identities"); §2 opportunity ("against drift") | High | `[confirmed]` |
-| Derived Artifact Generation | Supporting | Mostly transformation/rendering of an already-correct model; the differentiating judgment lives upstream in Capture and Facilitation, not in the projection step | Build in-house, not best-talent priority | PRD F10; board §"Facilitation vs. Artifact Consumption" candidate seam | High | `[confirmed]` |
+| Derived Artifact Generation | Supporting | Mostly transformation/rendering of an already-correct model; the differentiating judgment lives upstream in Capture and Facilitation, not in the projection step | Build in-house, not best-talent priority | PRD F10; board §"Facilitation vs. Artifact Consumption" candidate seam | High | `[confirmed]`. Re-confirmed 2026-08-28 after the PRD F10 reconciliation made every v1 artifact deterministic (no language model in any path; the AI narrative summary deferred to post-v1) — this *strengthens* Supporting: no external dependency, no non-determinism, pure template rendering. See `open-questions.md` #40/#68 |
+| Multiplayer / Real-time Collaboration | Core | Kept as one row for now (not yet built/scoped); differentiator angle — solves remote EventStorming's synchronous-meeting bottleneck. **Flagged**: likely splits into a Generic real-time-sync-infra part (buy: CRDTs/presence/transport) and a Core graph-conflict-resolution-semantics part once actually designed | Build, best talent (provisional) | Participant's stated goal (`domain-and-goals.md`); roadmap, not v1 | Low | Roadmap only — not built, not yet scoped for design. Revisit classification (possible split) when this reaches phase 05 |
 
 ### Superseded row — Question & Hot Spot Resolution (Supporting)
 
@@ -61,7 +64,6 @@ Facilitation — detection and resolution both already live in Facilitation's ow
 capability now lives inside the Session Facilitation row. See `context-map.md`'s "Decision"
 section and `open-questions.md` #17. The Core/Supporting *classification lesson* still holds —
 this was a bounded-context boundary correction, not a reclassification of the work's difficulty.
-| Multiplayer / Real-time Collaboration | Core | Kept as one row for now (not yet built/scoped); differentiator angle — solves remote EventStorming's synchronous-meeting bottleneck. **Flagged**: likely splits into a Generic real-time-sync-infra part (buy: CRDTs/presence/transport) and a Core graph-conflict-resolution-semantics part once actually designed | Build, best talent (provisional) | Participant's stated goal (`domain-and-goals.md`); roadmap, not v1 | Low | Roadmap only — not built, not yet scoped for design. Revisit classification (possible split) when this reaches phase 05 |
 
 ## Technical Mechanisms (not subdomains)
 

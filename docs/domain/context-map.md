@@ -21,8 +21,8 @@ derived_from:
     digest: a199731d351c
     at: 2026-08-26
   - path: subdomain-catalog.md
-    digest: e266740011c9
-    at: 2026-08-26
+    digest: c590dae32da0
+    at: 2026-08-28
 ---
 # Context Map
 
