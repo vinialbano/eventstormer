@@ -6,13 +6,13 @@ last_updated: 2026-08-27
 digest: ffd396170be4
 derived_from:
   - path: acceptance-tests.md
-    digest: b539eb0b7ab7
-    at: 2026-08-27
+    digest: 89ee81a531d0
+    at: 2026-08-28
   - path: bounded-contexts/session-facilitation/canvas.md
     digest: 192d89ca4269
     at: 2026-08-27
   - path: open-questions.md
-    digest: 2c40caa4a39d
+    digest: c9a8044f0a62
     at: 2026-08-28
 ---
 # Design-Level EventStorming — Session Facilitation, the facilitator's context (2026-08-27, pass 3 / resume)

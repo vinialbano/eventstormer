@@ -3,11 +3,14 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-28
-digest: 2c40caa4a39d
+digest: c9a8044f0a62
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
     at: 2026-08-26
+  - path: bounded-contexts/derived-artifact-generation/canvas.md
+    digest: 99476d0589b3
+    at: 2026-08-28
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 705129af8f2d
     at: 2026-08-27
@@ -422,8 +425,9 @@ here.
     constraint on `domain-model-capture`, not this context — noted for that context's next resume.
     Unowned, undated.
 
-44. **Whether Flow C's output is persisted or discarded after handover** was not pressed. If
-    persisted, it becomes a stale-able read model like the preview. Unowned, undated.
+44. ~~**Whether Flow C's output is persisted or discarded after handover** was not pressed.~~
+    **Moot 2026-08-28** — the Derived Artifact Generation Design-Level resume retired Flow C to
+    reconcile with PRD F10 (#70). There is no Flow C output to persist.
 
 45. **This session's edits to `context-map.md` and `open-questions.md` moved 24 already-stale
     downstream artifacts further out of date**, per `domain_lineage.py check` run at close. Every
@@ -539,10 +543,11 @@ model in `bounded-contexts/session-facilitation/canvas.md`; record in
 55. **Whether `Reject Proposal` / `Reject Resolution` carry a reason** was raised and left open —
     minor, no invariant depends on it. Unowned, undated.
 
-56. **How a lapsed or apply-failed proposal renders in Derived Artifact Generation Flow B** —
-    "proposed, not taken" vs. "proposed, failed" are different stories the transcript export
-    should tell. The session record carries the terminal state; the rendering is not designed.
-    Owner: `derived-artifact-generation` resume. Undated.
+56. ~~**How a lapsed or apply-failed proposal renders in Derived Artifact Generation Flow B**~~
+    **Resolved 2026-08-28**, Derived Artifact Generation Design-Level resume. `Export Session
+    Transcript` renders **all four terminal dispositions distinctly** — *applied as B* / *rejected
+    by the expert* / *proposed but never taken up* / *accepted but apply-failed (hot spot raised)*.
+    Participant's call: "more accurate to the history." Acceptance test 29.
 
 57. **`Contribution` is not modelled as its own aggregate** — its only rule (interpreted at most
     once) is enforced by the `Session`'s own event-sourced record. Recorded as a finding, not a
@@ -695,17 +700,38 @@ participant after the PRD F10 determinism reconciliation, and refreshed the two 
 this skill owns (see #40, #68 above). No elicitation beyond the one classification confirm.
 `[review]`/decision provenance.
 
-70. **The Derived Artifact Generation canvas's Flow C contradicts PRD F10.** The canvas (dated
-    2026-08-27) models Flow C as a **non-deterministic, AI-generated synthesized summary**, accepted
-    `[storm]` as a v1 goal, and lists **AI Model Provider** as an external system this context
-    depends on. The 2026-08-28 PRD reconciliation (#40) deferred the AI narrative summary to
-    post-v1 and made every v1 artifact deterministic. Per `AGENTS.md`, product truth wins — the
-    canvas is stale. A **Derived Artifact Generation Design-Level resume** owns reconciling the
-    event-stormed model: Flow C becomes the deterministic template summary (PRD F10's "the model's
-    own outline"), the external-systems row drops, and "three artifact types" holds only if the
-    transcript export (PRD F19) is counted as one. This skill does not rewrite the event-stormed
-    depth, and did not touch the canvas — the divergence is flagged here and in `README.md`'s
-    artifact-status table. Owner: `design-level --scope derived-artifact-generation`. Undated.
+70. ~~**The Derived Artifact Generation canvas's Flow C contradicts PRD F10.**~~ **Resolved
+    2026-08-28**, Derived Artifact Generation Design-Level resume
+    (`sessions/2026-08-28-design-level-derived-artifact-generation.md`). Flow C retired: the
+    synthesized summary becomes `Export Model Summary`, a **deterministic template render** (PRD
+    F10's "the model's own outline"); the AI Model Provider external-system row is removed;
+    `Summary Generation Failed` drops. The model is three Boundary Commands — `Export Model`
+    (representation a domain-invisible parameter), `Export Model Summary`, `Export Session
+    Transcript` — plus a **live** in-app readable account (re-renders every applied operation;
+    supersedes the 2026-08-27 stale-able preview). No language model in any path. Canvas,
+    ubiquitous-language, acceptance tests 22–31, and this file updated; all six completion rules
+    reported (1–5 hold, 6 N/A).
+
+## Raised in the Design-Level resume (2026-08-28) — Derived Artifact Generation
+
+Reconciled this context's event-stormed model to PRD F10 after the 2026-08-28 determinism pass
+(#70). Full model in `bounded-contexts/derived-artifact-generation/canvas.md`; record in
+`sessions/2026-08-28-design-level-derived-artifact-generation.md`. #56 and #70 resolved above;
+#44 moot above.
+
+- **Carried, unchanged:** #42 (where the format-step-definition list lives, for the coverage
+  disclosure) and #43 (whether Capture's `Board` embeds every datum `Export Model` /
+  `Export Model Summary` needs). Both stay **unowned and undated** — the participant's explicit
+  choice this pass. #43 remains noted for `domain-model-capture`'s next resume.
+
+71. **This resume's edits continue the pre-existing staleness cascade.** `domain_lineage.py check`
+    reported 12 stale at entry (the 2026-08-26 Big Picture resume and the QHSR collapse — see
+    #69). This pass's own output artifacts — `bounded-contexts/derived-artifact-generation/
+    {canvas,ubiquitous-language}.md`, `acceptance-tests.md`, `open-questions.md`, and the session
+    record — are co-authored and mutually consistent; their upstream edges were re-linked or
+    `ack`ed this pass after verifying content still holds. The canvas is no longer stale against
+    any of its four upstreams. The rest of the cascade is reported, not auto-propagated. Unowned,
+    undated.
 
 ## Deliberate deviations, recorded rather than silent
 

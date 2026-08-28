@@ -9,8 +9,8 @@ derived_from:
     digest: bc6ad40750e0
     at: 2026-08-27
   - path: bounded-contexts/derived-artifact-generation/canvas.md
-    digest: d6648843193b
-    at: 2026-08-27
+    digest: 99476d0589b3
+    at: 2026-08-28
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 705129af8f2d
     at: 2026-08-28

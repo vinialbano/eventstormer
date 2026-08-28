@@ -2,15 +2,15 @@
 workshop: design-level
 scope: session-facilitation
 status: draft
-last_updated: 2026-08-27
-digest: b539eb0b7ab7
+last_updated: 2026-08-28
+digest: 89ee81a531d0
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
     at: 2026-08-26
   - path: bounded-contexts/derived-artifact-generation/canvas.md
-    digest: d6648843193b
-    at: 2026-08-27
+    digest: 99476d0589b3
+    at: 2026-08-28
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 705129af8f2d
     at: 2026-08-27
@@ -149,50 +149,55 @@ the tests now speak of the `Board` and its projection.
     is also withdrawn — the `Board` appends the cascade as a follow-on operation, rather than
     blocking the withdrawal of `E`.
 
-## Design-Level on Derived Artifact Generation (2026-08-27)
+## Design-Level on Derived Artifact Generation (2026-08-27, revised 2026-08-28)
 
-Extracted once the three-flow model stabilized. Given/When/Then, asserting expected state.
+Extracted once the model stabilized; tests 22, 26–30 rewritten on the 2026-08-28 resume that
+retired Flow C and reconciled to PRD F10 (deterministic-only, no language model).
+Given/When/Then, asserting expected state.
 
-22. **Given** a model at operation-log position N, **when** `Export Structured Model` is run twice
-    with no intervening operation, **then** the two JSON exports are byte-identical and the two
-    Markdown readable accounts are byte-identical.
+22. **Given** a model at operation-log position N, **when** `Export Model` (JSON), `Export Model`
+    (readable account) and `Export Model Summary` are each run twice with no intervening
+    operation, **then** each pair of outputs is byte-identical.
 
 23. **Given** a building block labelled "Order Plced" that is referenced in the readable account,
-    **when** it is `Reword`ed to "Order Placed" and `Export Structured Model` is run, **then** the
-    account shows "Order Placed" everywhere that block's label is rendered.
+    **when** it is `Reword`ed to "Order Placed" and `Export Model` (readable account) is run,
+    **then** the account shows "Order Placed" everywhere that block's label is rendered as a
+    reference.
 
 24. **Given** a transcript segment and a stored proposal rationale that both contain the literal
     text "Order Plced", **when** the building block is `Reword`ed to "Order Placed" and
-    `Export Structured Model` is run, **then** the quoted evidence still reads "Order Plced"
-    verbatim — the rewording does not propagate into frozen free text.
+    `Export Model` (readable account) is run, **then** the quoted evidence still reads "Order
+    Plced" verbatim — the rewording does not propagate into frozen free text.
 
 25. **Given** a Big Picture session in which the stakeholder check step was never run, **when**
-    `Export Structured Model` is run, **then** the artifact states that the stakeholder check was
-    not run, distinct from a statement that it was run and found nothing.
+    `Export Model` or `Export Model Summary` is run, **then** the artifact states that the
+    stakeholder check was not run, distinct from a statement that it was run and found nothing.
 
-26. **Given** a model, **when** the Domain Expert requests only the readable account, **then** the
-    JSON export is not produced.
+26. **Given** a model, **when** the Domain Expert requests only the model summary, **then** no
+    model export and no transcript export are produced — requesting one artifact never produces
+    another.
 
-27. **Given** a readable-account preview rendered at operation-log position N, **when** a further
-    operation is applied (position N+1), **then** the preview displays the "model changed since
-    rendered" signal and its content still reflects position N until it is refreshed.
+27. **Given** the live in-app readable account rendered at operation-log position N, **when** a
+    further operation is applied (position N+1), **then** the in-app account re-renders to reflect
+    position N+1 with no staleness signal — it tracks the model the same way the board does.
 
-28. **Given** a session with three conversation turns, the second of which produced a proposal that
-    was accepted as building block `B`, **when** `Export Session Transcript` is run, **then** the
-    exported artifact contains all three turns in order and the second is annotated with the
-    proposal and its acceptance as `B`.
+28. **Given** a session with three conversation turns, the second of which produced a proposal
+    accepted and applied as building block `B`, **when** `Export Session Transcript` is run,
+    **then** the artifact contains all three turns in order and the second is annotated with the
+    proposal and its disposition "applied as B".
 
-29. **Given** the AI Model Provider is unavailable, **when** `Generate Summary` is invoked, **then**
-    no summary artifact is produced, the user is told to retry later, and `Export Structured Model`
-    and `Export Session Transcript` remain available.
+29. **Given** a session with four proposals — one applied as `B`, one rejected by the expert, one
+    never taken up (lapsed quiet at close), one accepted then apply-failed (hot spot raised) —
+    **when** `Export Session Transcript` is run, **then** each of the four terminal dispositions
+    is rendered distinctly on its turn.
 
-30. **Given** a successful `Generate Summary`, **when** the artifact is produced, **then** it
-    carries an explicit AI-generated / non-deterministic marker that distinguishes it from the
-    structured outcome and the transcript export.
+30. **Given** a session in which contributor X accepted 3 proposals, edited 1 and rejected 2,
+    **when** `Export Session Transcript` is run, **then** the artifact reports, for contributor X,
+    accepted 3 / edited 1 / rejected 2 — counts only.
 
-31. **Given** a JSON structured export from Flow A, **when** it is re-imported, **then** the
-    reproduced model is identical — building blocks, both relation kinds, annotations, provenance,
-    and the operation log.
+31. **Given** a JSON model export, **when** it is re-imported, **then** the reproduced model is
+    identical — building blocks, both relation kinds, annotations, provenance, and the operation
+    log.
 
 ## Design-Level on Session Facilitation — the session runtime (2026-08-27)
 

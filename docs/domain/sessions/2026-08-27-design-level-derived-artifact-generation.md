@@ -9,8 +9,8 @@ derived_from:
     digest: a1fe4f12aaba
     at: 2026-08-27
   - path: bounded-contexts/derived-artifact-generation/canvas.md
-    digest: d6648843193b
-    at: 2026-08-27
+    digest: 99476d0589b3
+    at: 2026-08-28
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 705129af8f2d
     at: 2026-08-28
@@ -21,7 +21,7 @@ derived_from:
     digest: ec6dc67a4870
     at: 2026-08-28
   - path: open-questions.md
-    digest: 2c40caa4a39d
+    digest: c9a8044f0a62
     at: 2026-08-28
 ---
 # Session record — Design-Level EventStorming: Derived Artifact Generation (2026-08-27)
