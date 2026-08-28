@@ -12,7 +12,7 @@ derived_from:
     digest: 192d89ca4269
     at: 2026-08-27
   - path: open-questions.md
-    digest: 82b19cc9dbf4
+    digest: c396b8280c18
     at: 2026-08-28
 ---
 # Design-Level EventStorming — Session Facilitation, the facilitator's context (2026-08-27, pass 3 / resume)

@@ -2,8 +2,8 @@
 workshop: design-level
 scope: session-facilitation
 status: draft
-last_updated: 2026-08-27
-digest: 8db1f719ab51
+last_updated: 2026-08-28
+digest: 529880696927
 derived_from:
   - path: acceptance-tests.md
     digest: b539eb0b7ab7
@@ -21,13 +21,13 @@ derived_from:
     digest: 192d89ca4269
     at: 2026-08-27
   - path: context-map.md
-    digest: d4fd9c957b26
+    digest: ec6dc67a4870
     at: 2026-08-28
   - path: domain-and-goals.md
     digest: 015ff10858df
     at: 2026-08-26
   - path: open-questions.md
-    digest: 82b19cc9dbf4
+    digest: c396b8280c18
     at: 2026-08-28
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
@@ -230,6 +230,20 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
    rules hold for the narrow scope. Acceptance tests 45–48. Full reasoning in
    `sessions/2026-08-27-design-level-session-facilitation-context.md`.
 
+12. **`ddd-strategic-design` adoption pass (2026-08-28).** Adopted the two context-map candidate
+   revisions the 2026-08-27 Design-Level passes had left for this skill to rule on. The
+   **Session Facilitation → Derived Artifact Generation** edge is now decided: Upstream-Downstream,
+   Conformist downstream, OHS + Published Language over the **session log** — reasoned through the
+   U/D succeeds-independently test (`open-questions.md` #39). Derived Artifact Generation is a
+   Conformist downstream of **two** Core contexts; the inherited Capture → Artifact seam is
+   unchanged. The **Domain Model Capture ↔ Session Facilitation apply-confirmation round trip**
+   (`Operation Applied`/`Operation Rejected`, `Hot Spot Resolved`/`Hot Spot Resolution Rejected`)
+   is adopted as published-language wording — same pattern, fuller surface (`open-questions.md`
+   #51 now fully closed). `context-map.md` diagram + main table updated; both former "Candidate
+   revision" sections promoted to dated "Decision" sections. No elicitation — `[review]`/decision
+   provenance. Left open: Derived Artifact Generation's classification confirm alongside the PRD
+   F10 pass (`open-questions.md` #68), and the live strategic-artifact staleness refresh (#69).
+
 ## Artifact status
 
 | Artifact | Status | Confidence | Evidence |
@@ -244,7 +258,7 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
 | `bounded-contexts/session-facilitation/ubiquitous-language.md` | draft, mostly confirmed | High | Confirmed live through worked scenarios, Design-Level pass 2026-08-26 |
 | `bounded-contexts/domain-model-capture/ubiquitous-language.md` | draft, mostly confirmed | High | Extended live, Design-Level pass 2026-08-26 — `Board`, Placed/Unplaced, Relate/Unrelate, Insert Between, Reopen |
 | `bounded-contexts/derived-artifact-generation/ubiquitous-language.md` | draft, mostly confirmed | Medium | Extended Design-Level pass 2026-08-27 — the three artifact types, the determinism distinction, session log, preview |
-| `context-map.md` (decided form) | draft, confirmed strategically | High | Every relationship reasoned through the U/D test and confirmed with the participant; the 2026-08-26 Question & Hot Spot Resolution collapse is now adopted and reflected in the diagram/table; the Facilitation↔Capture relationship note tightened 2026-08-26 to name `Resolve Hot Spot` explicitly; the Domain Model Capture Design-Level session (2026-08-26) validated the seam without moving it |
+| `context-map.md` (decided form) | draft, confirmed strategically | High | Every relationship reasoned through the U/D test and confirmed with the participant; the 2026-08-26 Question & Hot Spot Resolution collapse is adopted and reflected in the diagram/table; the Facilitation↔Capture relationship note names `Resolve Hot Spot` explicitly; the Domain Model Capture Design-Level session (2026-08-26) validated the seam without moving it; 2026-08-28 adoption pass added the **Session Facilitation → Derived Artifact Generation** edge and the Capture↔Facilitation apply-confirmation round-trip wording (#39, #51) |
 | `sessions/big-picture-context-map.md` (discovered form) | superseded, preserved for provenance | — | The storm's original `[inferred]` candidates; see `context-map.md`'s "Superseded draft" section for how each maps to the decided form |
 | `boards/capture-loop.md` | draft | High | Process Modelling session with the participant, 2026-08-25; every event/command/policy confirmed live, hot spots accounted for |
 | `acceptance-tests.md` | draft | High | 1–5 capture-loop, 6–11 Design-Level Session Facilitation, 12–21 (+ 12a/16a/18a/19a/20a/20b) Design-Level Domain Model Capture (revised 2026-08-27 for the single-`Board` model), 22–31 Design-Level Derived Artifact Generation, 32–44 Design-Level Session Facilitation session-runtime, 45–48 Design-Level Session Facilitation facilitator-context |
@@ -258,9 +272,14 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
 - Multiplayer/Real-time Collaboration needs its own scoping pass before it can be classified with
   confidence, now with a concrete consistency concern to resolve — "at most one open session per
   workshop" is a v1 simplification, not a permanent answer (open-questions.md #10/#26).
-- `ddd-strategic-design` to adopt or revise the candidate **Session Facilitation → Derived Artifact
-  Generation** context-map edge found 2026-08-27 (open-questions.md #39), and to reflect the PRD F10
-  divergence — three artifact types, determinism scoped to two of them (open-questions.md #40).
+- **Confirm Derived Artifact Generation's Core/Supporting classification** with the participant
+  alongside the PRD F10 pass: it is now a Conformist downstream of two Core contexts, an AI Model
+  Provider consumer, and deliberately non-deterministic in Flow C — all new since phase 03
+  (open-questions.md #68/#40). Expected outcome: unchanged (Supporting), but worth an explicit
+  re-confirm.
+- Refresh the live strategic artifacts (`subdomain-catalog.md`, `domain-and-goals.md`) still stale
+  in the pre-existing cascade — a `ddd-strategic-design` resume, folded in with #68
+  (open-questions.md #69).
 - All three v1 contexts with an owner have a `[storm]`-confirmed event-stormed model, and Session
   Facilitation's session runtime is now modelled to aggregate level. The book's own next action is
   to prototype (start with `Session` + the `Proposal` disposition lifecycle, or Flow A of Derived
@@ -314,7 +333,7 @@ than guessed.
 
 | Artifact | Workshop | Scope | Status | Updated |
 |---|---|---|---|---|
-| [README.md](README.md) | design-level | session-facilitation | draft | 2026-08-27 |
+| [README.md](README.md) | design-level | session-facilitation | draft | 2026-08-28 |
 | [acceptance-tests.md](acceptance-tests.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [boards/capture-loop.md](boards/capture-loop.md) | process-modelling | capture-loop | draft | 2026-08-26 |
 | [boards/eventstormer-big-picture.md](boards/eventstormer-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
@@ -326,9 +345,9 @@ than guessed.
 | [bounded-contexts/question-hot-spot-resolution/ubiquitous-language.md](bounded-contexts/question-hot-spot-resolution/ubiquitous-language.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-26 |
 | [bounded-contexts/session-facilitation/canvas.md](bounded-contexts/session-facilitation/canvas.md) | design-level | session-facilitation | draft | 2026-08-27 |
 | [bounded-contexts/session-facilitation/ubiquitous-language.md](bounded-contexts/session-facilitation/ubiquitous-language.md) | design-level | session-facilitation | draft | 2026-08-27 |
-| [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-27 |
+| [context-map.md](context-map.md) | design-level | session-facilitation | draft | 2026-08-28 |
 | [domain-and-goals.md](domain-and-goals.md) | ddd-strategic-design | eventstormer-session | draft | 2026-08-25 |
-| [open-questions.md](open-questions.md) | design-level | session-facilitation | draft | 2026-08-27 |
+| [open-questions.md](open-questions.md) | design-level | session-facilitation | draft | 2026-08-28 |
 | [sessions/2026-08-25-big-picture.md](sessions/2026-08-25-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-25 |
 | [sessions/2026-08-25-process-modelling.md](sessions/2026-08-25-process-modelling.md) | process-modelling | capture-loop | draft | 2026-08-26 |
 | [sessions/2026-08-26-big-picture.md](sessions/2026-08-26-big-picture.md) | big-picture | eventstormer-session | draft | 2026-08-26 |
