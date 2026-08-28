@@ -12,17 +12,17 @@ derived_from:
     digest: d6648843193b
     at: 2026-08-27
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: 6ae50843569d
-    at: 2026-08-27
+    digest: 705129af8f2d
+    at: 2026-08-28
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 59c06f08153f
-    at: 2026-08-27
+    digest: 192d89ca4269
+    at: 2026-08-28
   - path: context-map.md
-    digest: a4fe1df64a78
-    at: 2026-08-27
+    digest: d4fd9c957b26
+    at: 2026-08-28
   - path: open-questions.md
-    digest: d3d43c214052
-    at: 2026-08-27
+    digest: 82b19cc9dbf4
+    at: 2026-08-28
 ---
 # Session record — Design-Level EventStorming: Derived Artifact Generation (2026-08-27)
 

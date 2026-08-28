@@ -21,14 +21,14 @@ derived_from:
     digest: 192d89ca4269
     at: 2026-08-27
   - path: context-map.md
-    digest: a4fe1df64a78
-    at: 2026-08-27
+    digest: d4fd9c957b26
+    at: 2026-08-28
   - path: domain-and-goals.md
     digest: 015ff10858df
     at: 2026-08-26
   - path: open-questions.md
-    digest: 084867d98992
-    at: 2026-08-27
+    digest: 82b19cc9dbf4
+    at: 2026-08-28
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
     at: 2026-08-26

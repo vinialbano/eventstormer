@@ -12,8 +12,8 @@ derived_from:
     digest: d6648843193b
     at: 2026-08-27
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: 6ae50843569d
-    at: 2026-08-27
+    digest: 705129af8f2d
+    at: 2026-08-28
 ---
 # Session — Design-Level EventStorming: Session Facilitation, the session runtime (pass 2)
 

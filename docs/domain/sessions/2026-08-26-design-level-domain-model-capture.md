@@ -15,14 +15,14 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 59c06f08153f
-    at: 2026-08-26
+    digest: 192d89ca4269
+    at: 2026-08-28
   - path: context-map.md
-    digest: e4393aff3ac9
-    at: 2026-08-26
+    digest: d4fd9c957b26
+    at: 2026-08-28
   - path: open-questions.md
-    digest: 4c65d5367a9b
-    at: 2026-08-26
+    digest: 82b19cc9dbf4
+    at: 2026-08-28
 ---
 # Session — Design-Level EventStorming: Domain Model Capture
 
