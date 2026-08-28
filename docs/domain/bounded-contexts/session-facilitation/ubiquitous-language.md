@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-27
-digest: 150088687b1a
+digest: d71c2dcfc311
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
@@ -48,6 +48,11 @@ derived_from:
 | Hot Spot Resolved | The event recording that a Hot Spot's resolution was accepted and a reference recorded | new, this session | mirrors Hot Spot Raised |
 | Informational hot spot | A hot spot that doesn't affect the model (e.g. "this event is slow because of an external provider") — resolvable, but never required to be resolved | this session, refining `[from QHSR]`'s split | — |
 | Model-affecting hot spot | A hot spot that closes an open question or fixes something in the workshop design itself — has a genuine "done" state, and generally does need resolving eventually, though nothing in the system enforces this | this session, refining `[from QHSR]`'s split | — |
+| Workshop scope | A free-form statement of modelling intent for a `Workshop` — as-is, to-be, or a named area of the business. `Workshop` state, set once via `Set Scope` before or during the first session, **immutable** for the workshop's life. Every `Session` models against it. Changing scope means a new `Workshop` | UNCONFIRMED | pass 3; birth-fixed like `format` |
+| Facilitation context | The composite read model the `Ask Question` policy reads **every turn** to pick the facilitator's next move: recent transcript + open questions + open hot spots + thin/unopened board regions + `Workshop.scope` + the frozen prior-session summary | UNCONFIRMED | pass 3; resolves `open-questions.md` #27 |
+| Prior-session history | A workshop-scoped read model over the **closed** `Session` streams of the same `Workshop`. Each closed session's facilitation summary is frozen in its `Close Session` transaction and never changes | UNCONFIRMED | pass 3 |
+| Facilitation agenda | A **derived** read model of follow-ups the facilitator must not lose: open questions ∪ building blocks that look like unexpanded phase names ∪ whether the stakeholder check is still pending. Not stored | UNCONFIRMED | pass 3 |
+| Interview loop | How the facilitator runs a session: each turn it infers where it is in the (deliberately fluid) EventStorming method and picks a next move — ask the scope question, probe a phase name, chase an unopened region, run the stakeholder check, or guide a stuck expert | UNCONFIRMED | pass 3; `Ask Question` is this, not contribution-reactive |
 | Absent Stakeholder Named | Trigger: a stakeholder who should be present is identified as missing | `[storm]` | policy trigger |
 | Knowledge Gap Revealed | Trigger: the participant admits a gap in their own knowledge | `[storm]` | policy trigger |
 
@@ -62,8 +67,8 @@ derived_from:
   session at a time" rule. Acceptance can later be revoked by the creator.
 - **Starting a session.** Only the creator or a currently-accepted invitee may start one, and only
   if the workshop has no other session currently open. On start, the facilitator always takes the
-  first step — it asks a question, informed by whatever context it has (the workshop's stated
-  purpose, or the history of prior sessions if this one is a continuation).
+  first step — it asks a question, reading `Facilitation context` (the workshop's scope, the live
+  board and transcript, and a frozen summary of every prior session of this workshop).
 - **Resolving a hot spot.** Any open hot spot — informational or model-affecting — can be resolved
   by a later contribution, in the same or a different session, possibly by a different person. The
   facilitator proposes the resolution; the domain expert must confirm it; a reference to what
@@ -85,6 +90,17 @@ derived_from:
 - **When the model provider is down.** A contribution is still captured — those are the expert's
   words. Its interpretation is queued and runs when a model (primary or fallback) returns; it is
   never interpreted twice.
+
+- **Setting the scope.** Before or at the start of the first session, the facilitator proposes a
+  scope statement and the creator accepts, edits, or rejects it — the same review shape as any
+  proposal, but the result is `Workshop` state, not a model operation. Once set, it never changes;
+  a different scope is a different workshop.
+
+- **Asking the next question.** The facilitator runs an interview. Every turn it reads
+  `Facilitation context` — the live board and transcript plus a frozen summary of every earlier
+  session of this workshop — and decides its next move. On `Close Session`, this session's own
+  summary is frozen into `Prior-session history` in the same act as the unresolved-question
+  snapshot.
 
 ## Ambiguities & synonyms found (boundary / modelling signals)
 

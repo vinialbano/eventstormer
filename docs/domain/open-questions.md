@@ -1,9 +1,9 @@
 ---
 workshop: design-level
-scope: domain-model-capture
+scope: session-facilitation
 status: draft
 last_updated: 2026-08-27
-digest: bedd10cafb15
+digest: 084867d98992
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
@@ -12,7 +12,7 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 1926e79a6978
+    digest: 192d89ca4269
     at: 2026-08-27
   - path: context-map.md
     digest: d4fd9c957b26
@@ -244,10 +244,20 @@ here.
     to item #10, above — not a new independent question, but sharpens it with a concrete
     consistency concern to resolve when that scoping happens.
 
-27. **The context a facilitator gathers before asking its first (or next) question is
-    unspecified beyond "whatever context he has."** How much history, summarized how, from how
-    many prior sessions — none of this is decided. Unowned, undated; likely an implementation-level
-    question rather than a further EventStorming pass, but noted here rather than silently assumed.
+27. ~~**The context a facilitator gathers before asking its first (or next) question is
+    unspecified beyond "whatever context it has."**~~ **Resolved 2026-08-27**, Design-Level pass 3
+    (narrow resume on Session Facilitation). `Ask Question` is the facilitator running an
+    **interview loop**, not reacting to a contribution. Its supporting read model is a composite,
+    **`Facilitation context`**, recomputed **every facilitator turn** from: recent transcript,
+    open questions this session, open hot spots, thin/unopened board regions, `Workshop.scope`,
+    and a **frozen prior-session summary**. Two supporting read models: **`Prior-session history`**
+    (projection over the *closed* `Session` streams of the same `Workshop`; each session's summary
+    frozen in its `Close Session` transaction) and **`Facilitation agenda`** (derived: open
+    questions ∪ unexpanded-phase-name building blocks ∪ pending stakeholder check). No new
+    aggregate: "scope set once" is a new `Workshop` invariant, the summary freeze rides on
+    `Session`'s existing atomic close transaction. Full model in
+    `bounded-contexts/session-facilitation/canvas.md`; record in
+    `sessions/2026-08-27-design-level-session-facilitation-context.md`.
 
 28. ~~**`Hot Spot Raised`/`Hot Spot Resolved`'s payload/granularity remains open**~~ **Mostly
     resolved 2026-08-26** — see #13/#32. This session's `Resolve` shape (requires a recorded
@@ -583,6 +593,49 @@ Building Block aggregates and `Timeline` dissolve into one event-sourced `Board`
     `open-questions.md`, `README.md`, and the session record — are co-authored and mutually
     consistent; their cross-cycle edges were `ack`ed. The rest is reported, not auto-propagated.
     Unowned, undated.
+
+## Raised in the Design-Level session (2026-08-27) — Session Facilitation, the facilitator's context
+
+Pass 3 on Session Facilitation: a narrow resume specifying #27 (above, now resolved). Full model in
+`bounded-contexts/session-facilitation/canvas.md`; record in
+`sessions/2026-08-27-design-level-session-facilitation-context.md`.
+
+63. **Workshop scope: `Workshop` state vs. PRD F04's "accept path".** The participant's model puts
+    `scope` (as-is / to-be / a named area) in `Workshop` state — set once, before or during the
+    first session, immutable thereafter. PRD F04 says the scope answer *"sets the session scope
+    through the normal accept path"*, which is how model content is created (an operation in Domain
+    Model Capture's log). The accept/edit/reject *interaction* is reused; the *result* is not a log
+    operation. Owner: the participant's PRD pass (#29). Undated.
+
+64. **Whether EventStormer implements the Big Picture "pick one problem" exit.** In EventStorming
+    the *chosen problem* is a Big Picture workshop's exit deliverable — the one problem picked to
+    go deeper on, which becomes the *scope* fed into the next Process Modelling / Design-Level
+    workshop (PRD F10 adds the honest-qualification check). Pass 3 dropped "chosen-problem status"
+    as an input to the facilitator's context (format + scope suffice). Whether the product models
+    the cross-workshop handoff at all is a Big Picture / PRD concern, not settled here. Unowned,
+    undated.
+
+65. **`Facilitation agenda`: derived categories vs. stored notes.** Pass 3 models the agenda as a
+    *derived* read model (open questions ∪ unexpanded-phase-name building blocks ∪ pending
+    stakeholder check). If the facilitator turns out to need to store *arbitrary* notes-to-self
+    beyond those categories, that is a stored concept, not a derived one. Owner: prototyping.
+    Undated.
+
+66. **`Facilitation context`: one physical projection or several.** The composite is specified by
+    its inputs and freshness rules; whether it is built as one projection or several, how each is
+    summarised / compressed, and the prompt/token-budget shape are explicitly handed to
+    prototyping. Owner: prototyping. Undated.
+
+67. **This session's edits continue the pre-existing staleness cascade.** `domain_lineage.py check`
+    reported 31 stale at entry (the 2026-08-26 Big Picture resume and the QHSR collapse — see #58 /
+    #62); 35 after this pass. The +4 are `README.md` / `open-questions.md` and the
+    `domain-model-capture`-scoped siblings moving in the pre-existing
+    `canvas ↔ context-map ↔ open-questions ↔ README` reference cycle (#16). This pass's own output
+    artifacts — `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md`,
+    `acceptance-tests.md`, `open-questions.md`, `README.md`, and
+    `sessions/2026-08-27-design-level-session-facilitation-context.md` — are co-authored and
+    mutually consistent; their cross-cycle edges were `ack`ed. The rest is reported, not
+    auto-propagated. Unowned, undated.
 
 ## Deliberate deviations, recorded rather than silent
 

@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-27
-digest: 1926e79a6978
+digest: 192d89ca4269
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
@@ -18,7 +18,7 @@ derived_from:
     digest: d4fd9c957b26
     at: 2026-08-27
   - path: open-questions.md
-    digest: 0b1217d6fc6c
+    digest: 084867d98992
     at: 2026-08-27
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
@@ -42,6 +42,13 @@ derived_from:
 > aggregates (`Session`, `Proposal`, `Resolution`), simplifies `Workshop`, and corrects the
 > canvas's earlier "handled by Domain Model Capture" attribution of the resolution commands. Full
 > reasoning in `sessions/2026-08-27-design-level-session-facilitation-runtime.md`.
+> **Design-Level pass 3 (2026-08-27, resume, narrow)** — specifies `open-questions.md` #27: the
+> read model behind the `Ask Question` policy. `Ask Question` is the facilitator running an
+> interview loop, not reacting to a contribution. Adds three read models (`Facilitation context`
+> live, `Prior-session history` frozen-at-close, `Facilitation agenda` derived), a birth-fixed
+> immutable `scope` on `Workshop`, and extends `Session`'s close transaction to freeze a
+> facilitation summary. No new aggregate. Full reasoning in
+> `sessions/2026-08-27-design-level-session-facilitation-context.md`.
 
 > **Absorbed 2026-08-26:** the former Question & Hot Spot Resolution context folded into this one.
 > See `../../context-map.md`'s "Decision" section, `../../open-questions.md` #17, and the retired
@@ -92,6 +99,8 @@ derived_from:
 | Command | Actor / source | Handled by | Produces event(s) | Notes |
 |---|---|---|---|---|
 | Start Workshop | Creator (any user, v1) | `Workshop` | Workshop Started | Format chosen here, fixed thereafter |
+| Propose Scope | Facilitator (automatic, before / at the start of the first session) | AI Model Provider | Scope Proposed | Mirrors the F05 review shape; the result is `Workshop` state, **not** a log operation (PRD F04 divergence — `../../open-questions.md` #63) |
+| Set Scope | Creator | `Workshop` | Scope Set | Accept/edit of the proposed scope. Legal **once**, before or during the first session; rejected thereafter. `scope` is immutable for the `Workshop`'s life |
 | Invite Stakeholder | Creator only, v1 | `Workshop` | Stakeholder Invited | "Any member can invite" parked |
 | Accept / Decline / Revoke Invitation | Invitee / Invitee / Creator | `Workshop` | Invitation Accepted / Declined / Revoked | Decline from `INVITED` only; revoke from `INVITED` or `ACCEPTED` |
 | Start Session | Creator or currently-`ACCEPTED` invitee | app service: reads `Workshop.canStartSession`, then creates `Session` | Session Started | Eligibility is a pure read of `Workshop`; the one-open-session constraint (not an aggregate) rejects a second open session |
@@ -130,6 +139,7 @@ derived_from:
 | Event | Consumed by | Meaning | Produced by |
 |---|---|---|---|
 | Workshop Started / Stakeholder Invited / Invitation Accepted/Declined/Revoked | (internal) | `Workshop` lifecycle | `Workshop` |
+| Scope Proposed / Scope Set | (internal — the scope review UI; then every session reads `Workshop.scope`) | Workshop modelling intent (as-is / to-be / a named area) established | AI Model Provider / `Workshop` |
 | Session Started | (internal, triggers Ask Question) | A sitting began | `Session` (birth) |
 | Session Closed (carries the unresolved-question ids as of the close) | (internal — sweep policies) | A sitting ended | `Session` |
 | Contribution Made / Contribution Interpreted | (internal — fan-out) | Raw input, then the facilitator's judgment | `Session` / AI Model Provider |
@@ -144,7 +154,8 @@ derived_from:
 
 | When | Then | Notes |
 |---|---|---|
-| Session Started | Ask Question | The facilitator takes the first step, informed by the workshop purpose and prior-session history (exact shape UNCONFIRMED — `../../open-questions.md` #27) |
+| Session Started | Ask Question | The facilitator takes the first step, reading `Facilitation context` (recomputed this turn). **#27 resolved (pass 3)** — read model specified below |
+| every facilitator turn (not only Session Started) | Ask Question | The interview loop: each turn the facilitator picks its next move — scope question, probe a phase name, chase an unopened region, run the stakeholder check, or guide a stuck expert — from `Facilitation context` |
 | Contribution Made | Interpret Contribution | Deferred + retried if the AI Model Provider is down; idempotent per contribution id |
 | Contribution Interpreted, judgment = proposal-worthy (0+) | Propose Building Block | One `Proposal` per judgment |
 | Contribution Interpreted, judgment = resolves-open-hot-spot (0+) | Propose Resolution | One `Resolution` per judgment |
@@ -160,28 +171,38 @@ derived_from:
 | Hot Spot Resolved | `Resolution` → APPLIED | |
 | Hot Spot Resolution Rejected | `Resolution` → LAPSED; tell the expert | No retry |
 | Session Closed | for each unresolved question id in the payload: Raise Hot Spot | `[carried]`, `[from QHSR]` — the close-time question sweep |
+| Session Closed | compute and freeze this session's facilitation summary, in the **same transaction** as the unresolved-question snapshot | **new (pass 3).** Feeds `Prior-session history` for later sessions of the same `Workshop`; `CLOSED` is terminal so the summary never changes |
 | Session Closed | for each `Proposal` in `APPLY_FAILED`: → LAPSED **and** Raise Hot Spot; for each undisposed `Proposal`/`Resolution` (`PROPOSED`/`EDITED`): → LAPSED (quiet) | **new (pass 2).** Unfulfilled intent survives as a hot spot; an untouched guess lapses silently |
 | Session Closed | `Workshop` frees its one-open-session slot | Reacts only — `Workshop` no longer tracks sessions directly |
 
 ### Queries / views / read models
 
-| Query / view | Used by | Answers | Backed by |
-|---|---|---|---|
-| Open hot spots for this workshop | the resolution judgment inside `Interpret Contribution` | "What could this contribution be resolving?" | Domain Model Capture's Hot Spot Building Blocks, filtered to `Open` |
-| Open questions in this session | `Ask Question` policy; the close-time sweep | "What is still unresolved this sitting?" | projection over the `Session` stream |
-| Un-interpreted contributions | the deferred-interpretation retry | "What is waiting for the model provider?" | projection over the `Session` stream |
-| Pending proposals / resolutions in this session | the expert's review UI | "What is waiting on me?" | `Proposal` / `Resolution` aggregates, non-terminal |
-| Context for the next question | `Ask Question` policy | "What should the facilitator ask next?" | UNCONFIRMED shape — `../../open-questions.md` #27 |
+| Query / view | Used by | Answers | Backed by | Freshness |
+|---|---|---|---|---|
+| Open hot spots for this workshop | the resolution judgment inside `Interpret Contribution` | "What could this contribution be resolving?" | Domain Model Capture's Hot Spot Building Blocks, filtered to `Open` | — |
+| Open questions in this session | `Ask Question` policy; the close-time sweep | "What is still unresolved this sitting?" | projection over the `Session` stream | — |
+| Un-interpreted contributions | the deferred-interpretation retry | "What is waiting for the model provider?" | projection over the `Session` stream | — |
+| Pending proposals / resolutions in this session | the expert's review UI | "What is waiting on me?" | `Proposal` / `Resolution` aggregates, non-terminal | — |
+| `Facilitation context` | `Ask Question` policy, **every turn** | "What should the facilitator ask / do next?" | composite: recent transcript + open questions + open hot spots + thin/unopened regions + `Workshop.scope` + frozen prior-session summary | live inputs recomputed **every facilitator turn**; prior-session half frozen. One physical projection or several is prototyping (`../../open-questions.md` #66) |
+| `Prior-session history` | `Facilitation context` | "What happened in earlier sessions of this workshop?" | projection over the **closed** `Session` streams for this `workshopId`; each summary frozen in its `Close Session` transaction | append-only; each entry immutable once written |
+| `Facilitation agenda` | `Facilitation context` | "What follow-ups must the facilitator not lose?" | **derived** (not stored): open questions ∪ building blocks that look like unexpanded phase names ∪ pending stakeholder check | recomputed with the live half. Stored notes beyond these categories → `../../open-questions.md` #65 |
+| `Thin / unopened regions` | `Facilitation agenda`, `Facilitation context` | "Where is the board empty or shallow?" | projection over Domain Model Capture's graph (building blocks + `follows`/`causedBy` connectivity) — **the same upstream read as `Open hot spots for this workshop`**, new purpose | reads Capture's model graph |
+
+*The expert's apparent state (stuck / terse / fluent) is deliberately **not** a read model — it is
+the AI Model Provider's read of the recent transcript at decision time.*
 
 ### Aggregates / consistency boundaries
 
 **Invariant-first.** Pass 1 named only `Workshop`; pass 2 found three more the session runtime
-needs, each protecting a rule that reaches beyond a single record.
+needs, each protecting a rule that reaches beyond a single record. **Pass 3 added no aggregate** —
+the facilitator's context is a set of read models, "scope is set once" is a new `Workshop`
+invariant, and "the prior-session summary is frozen at close" rides on `Session`'s existing atomic
+close transaction.
 
 | Aggregate | Protects (the invariant) | Handles | Notes |
 |---|---|---|---|
-| `Workshop` | Format is fixed at birth; the invitation state machine; `canStartSession(userId)` is answerable from creator + invitation state | Start Workshop, Invite/Accept/Decline/Revoke, `canStartSession` (read) | Pass 2 **removed** its "one open session" invariant (now a constraint) and `Close Session` (now `Session`'s). Now purely format + invitations |
-| `Session` | Lifecycle `OPEN → CLOSED` (terminal); **the unresolved-question snapshot is consistent as of `Close Session`**; a contribution is interpreted at most once | Make Contribution, Ask Question, Answer Question, Reveal Knowledge Gap, Name Absent Stakeholder, Confirm Complete Perspective, Close Session | Event-sourced — its stream **is** the session record Derived Artifact Generation Flow B reads. Holds `Map<QuestionId, Open\|Resolved>` and an interpret-once ledger keyed on contribution id |
+| `Workshop` | Format is fixed at birth; **`scope` is set exactly once (before or during the first session) and is immutable thereafter — birth-fixed, like format (pass 3)**; the invitation state machine; `canStartSession(userId)` is answerable from creator + invitation state | Start Workshop, Set Scope, Invite/Accept/Decline/Revoke, `canStartSession` (read) | Pass 2 **removed** its "one open session" invariant (now a constraint) and `Close Session` (now `Session`'s). Now format + `scope` + invitations. No corrective policy for scope — a scope change means a **new `Workshop`** (templated from this one) |
+| `Session` | Lifecycle `OPEN → CLOSED` (terminal); **`Close Session` computes, atomically in one transaction, both the unresolved-question snapshot and this session's frozen facilitation summary (pass 3)**; a contribution is interpreted at most once | Make Contribution, Ask Question, Answer Question, Reveal Knowledge Gap, Name Absent Stakeholder, Confirm Complete Perspective, Close Session | Event-sourced — its stream **is** the session record Derived Artifact Generation Flow B reads. Holds `Map<QuestionId, Open\|Resolved>` and an interpret-once ledger keyed on contribution id |
 | `Proposal` | Exactly one disposition state at a time; `ACCEPTED`/`APPLIED`/`REJECTED`/`LAPSED` transitions are legal only from the states the machine allows; no edit after a terminal state | Propose Building Block (birth), Edit/Accept/Reject Proposal, Operation Applied/Rejected (from Capture) | One per proposal-worthy judgment. Records `resultingBuildingBlockId` on `APPLIED` |
 | `Resolution` | Same disposition invariant; **every apply bounce is terminal** (no retry) | Propose Resolution (birth), Edit/Accept/Reject Resolution, Hot Spot Resolved / Hot Spot Resolution Rejected (from Capture) | One per resolves-open-hot-spot judgment |
 
@@ -201,10 +222,13 @@ an estimate here would be `[inferred]`, not a domain fact. Left open for all fou
 
 ### State machines
 
-**`Workshop`** — unchanged from pass 1 except that session start/close no longer transition it:
+**`Workshop`** — unchanged from pass 1 except that session start/close no longer transition it, and
+`Set Scope` fixes `scope` once (before or during the first session):
 
 ```
         (birth: Start Workshop → Workshop Started)   format fixed, creator set
+                                    │
+                              Set Scope (once, before/during session 1 → Scope Set)   scope fixed
 
 Invite Stakeholder (creator only)
         │
@@ -331,7 +355,10 @@ flowchart LR
 
 | Topic | Type | What's unresolved | Next |
 |---|---|---|---|
-| Context shape for the first/next question | white-spot | "Whatever context the facilitator has" — how much history, summarized how — still unspecified | `../../open-questions.md` #27 |
+| Context shape for the first/next question | ~~white-spot~~ **resolved (pass 3, 2026-08-27)** | `Facilitation context` / `Prior-session history` / `Facilitation agenda` specified above | `../../open-questions.md` #27 |
+| Workshop scope: `Workshop` state vs. PRD F04 "accept path" | white-spot, owned | The interaction is F05-shaped but the result is `Workshop` state, not a log operation | `../../open-questions.md` #63 — participant's PRD pass |
+| Does EventStormer implement the Big Picture "pick one problem" exit? | white-spot | The chosen problem is a cross-workshop handoff; whether the product models it is unsettled | `../../open-questions.md` #64, unowned |
+| `Facilitation agenda`: derived vs. stored notes; `Facilitation context` physical decomposition | white-spot | Settled by prototyping, not modelling | `../../open-questions.md` #65 / #66 |
 | `Reject Proposal` / `Reject Resolution` reason | white-spot, minor | Whether a rejection carries a reason | `../../open-questions.md` #55, unowned |
 | How a lapsed / apply-failed proposal renders in Flow B | white-spot | "proposed, not taken" vs "proposed, failed" | `../../open-questions.md` #56 — Derived Artifact Generation resume |
 | As-is/to-be distinction | white-spot | Not distinguished anywhere | `../../open-questions.md` #6 |

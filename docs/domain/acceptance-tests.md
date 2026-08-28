@@ -1,9 +1,9 @@
 ---
 workshop: design-level
-scope: domain-model-capture
+scope: session-facilitation
 status: draft
 last_updated: 2026-08-27
-digest: da8af55c26ef
+digest: b539eb0b7ab7
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
@@ -15,7 +15,7 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 1926e79a6978
+    digest: 192d89ca4269
     at: 2026-08-27
 ---
 # Acceptance tests
@@ -249,3 +249,24 @@ round trip stabilized. Given/When/Then, asserting expected state.
 44. **Given** the stakeholder-check question, **when** a contribution is interpreted as
     `complete-perspective`, **then** that question is `Resolved` and the workshop's chosen-problem
     qualification is set.
+
+## Design-Level — Session Facilitation, the facilitator's context (2026-08-27, pass 3)
+
+45. **Given** a workshop whose `scope` is `Scope Set`, **when** `Set Scope` is issued again during
+    the first session, **then** it is rejected and `Workshop.scope` is unchanged; **when** it is
+    issued in a later session, **then** it is likewise rejected.
+
+46. **Given** a workshop with two closed sessions and one open session, **when** the `Ask Question`
+    policy fires, **then** `Facilitation context` contains the frozen summaries of exactly the two
+    closed sessions plus the live inputs (recent transcript, open questions, open hot spots,
+    thin/unopened regions, `Workshop.scope`) recomputed as of that turn.
+
+47. **Given** an open session with question Q1 still open and a new contribution just interpreted,
+    **when** the facilitator takes its next turn, **then** `Facilitation context`'s live half
+    reflects the new contribution and Q1's state, and its `Prior-session history` half is byte-for-byte
+    unchanged from the previous turn.
+
+48. **Given** a session with question Q1 open and a building block that looks like an unexpanded
+    phase name, **when** `Close Session` commits, **then** the frozen facilitation summary for that
+    session is written in the same transaction as the unresolved-question snapshot, and both are
+    consistent as of the close.
