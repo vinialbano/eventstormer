@@ -607,6 +607,19 @@ Pass 3 on Session Facilitation: a narrow resume specifying #27 (above, now resol
     Model Capture's log). The accept/edit/reject *interaction* is reused; the *result* is not a log
     operation. Owner: the participant's PRD pass (#29). Undated.
 
+    **PRD pass done 2026-08-28 (`docs/product/PRD.md`).** The "not a log operation" half is
+    adopted — scope is `Workshop` state, the F05-shaped interaction is reused, no model-log
+    operation is written. The **immutability rule was loosened**: PRD F04/F18 now make scope
+    revisable freely *until the first building block is captured*, immutable from that operation
+    on. Rationale: before any capture there is no model content to reinterpret, so a mis-framed
+    opening answer is cheap to correct; the pass-3 concern (no modelling under a stale frame, no
+    misleading prior-session context) is fully preserved once a capture has landed. This refines
+    pass 3's "set once, before or during the first session" — a Session Facilitation resume should
+    reconcile the `Workshop` invariant and `Set Scope` command wording (`bounded-contexts/session-
+    facilitation/canvas.md`) to match, or push back. The "templated from this one" idea for a
+    scope change (pass 3 step 6) is dropped as moot — an unlocked workshop has no content to
+    carry over. Unowned as a canvas edit; undated.
+
 64. **Whether EventStormer implements the Big Picture "pick one problem" exit.** In EventStorming
     the *chosen problem* is a Big Picture workshop's exit deliverable — the one problem picked to
     go deeper on, which becomes the *scope* fed into the next Process Modelling / Design-Level
