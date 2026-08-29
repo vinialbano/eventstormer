@@ -372,22 +372,22 @@ usable type export
 **Tools**: MCP: `context7` (Zod 4 `.brand()` / `z.$brand`) · Skill: NONE
 
 **Done when**:
-- [ ] `pnpm add zod@4.4.3` (exact pin — matches `research/research-server.md` / the currently
+- [x] `pnpm add zod@4.4.3` (exact pin — matches `research/research-server.md` / the currently
   hoisted version); `zod` appears in `package.json` `dependencies`
-- [ ] `plumbing/ids.ts`: `import type { z } from 'zod'`; `export type WorkshopId = string &
+- [x] `plumbing/ids.ts`: `import type { z } from 'zod'`; `export type WorkshopId = string &
   z.$brand<'WorkshopId'>` (+ `SessionId`, `BuildingBlockId`); the hand-rolled `interface Brand`
   is gone; generators unchanged in behaviour (`nanoid() as unknown as WorkshopId` is acceptable;
   a single-line `unsafeBrand` helper is also fine)
-- [ ] `plumbing/ids.ts` still imports **only** `nanoid` (runtime) + `zod` (`import type`) — the
+- [x] `plumbing/ids.ts` still imports **only** `nanoid` (runtime) + `zod` (`import type`) — the
   `not-to-dev-dep` rule exempts type-only, and after the promotion `zod` is a real dep anyway
-- [ ] `ids.test.ts`: keep the URL-safe / distinctness / `@ts-expect-error`-on-bare-string cases;
+- [x] `ids.test.ts`: keep the URL-safe / distinctness / `@ts-expect-error`-on-bare-string cases;
   add one asserting a value typed `string & z.$brand<'WorkshopId'>` is assignable to `WorkshopId`
   (proves the seam compatibility T10 relies on)
-- [ ] `pnpm knip` — `zod` not flagged unused (T9a itself doesn't consume it at runtime, but
+- [x] `pnpm knip` — `zod` not flagged unused (T9a itself doesn't consume it at runtime, but
   `import type` counts; if knip still flags it, that's expected until T10 lands — note it and
   proceed, T10's runtime import clears it within the same batch)
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: unchanged from T9 (~29) — ids test count steady, maybe +1
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: unchanged from T9 (~29) — ids test count steady, maybe +1
 
 **Tests**: unit · **Gate**: build
 **Commit**: `fix(plumbing): use Zod $brand for id types; add zod as a direct dependency`

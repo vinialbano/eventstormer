@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { z } from 'zod'
 import {
   newBuildingBlockId,
   newSessionId,
@@ -28,6 +29,15 @@ describe('branded ids', () => {
     // @ts-expect-error a plain string is not assignable to WorkshopId
     const bad: WorkshopId = 'not-a-workshop-id'
     expect(typeof bad).toBe('string')
+  })
+
+  it('accepts a Zod $brand-shaped value where a WorkshopId is required (seam compatibility)', () => {
+    // The type `z.string().brand<'WorkshopId'>()` infers in the domain schema
+    // module — assignable here with no cast, which is what T10 relies on.
+    const plain: string = newWorkshopId()
+    const fromSchema = plain as string & z.$brand<'WorkshopId'>
+    const asWorkshopId: WorkshopId = fromSchema
+    expect(typeof asWorkshopId).toBe('string')
   })
 
   it('workshopUrlSlug returns the id verbatim (already URL-safe)', () => {

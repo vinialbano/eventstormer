@@ -1,19 +1,19 @@
 import { nanoid } from 'nanoid'
+import type { z } from 'zod'
 
 /**
- * Branded id types and their generators. The brand *symbols* live here so
- * `plumbing/` stays a true leaf (an `EventStore` signature can name a
- * `WorkshopId` without importing a context); the Zod *schemas* that validate a
- * string into one of these live in `domain-model-capture/domain/schema/`.
+ * Branded id types and their generators. The id *types* live here so `plumbing/`
+ * stays a true leaf (an `EventStore` signature can name a `WorkshopId` without
+ * importing a context); the Zod *schemas* that validate a string into one of
+ * these live in `domain-model-capture/domain/schema/`.
+ *
+ * One brand mechanism, Zod's: `string & z.$brand<'X'>` is exactly what
+ * `z.string().brand<'X'>()` infers, so a value parsed by the schema is
+ * assignable here with no cast at the seam (design Risks / Tech Decisions).
  */
-
-interface Brand<B extends string> {
-  readonly __brand: B
-}
-
-export type WorkshopId = string & Brand<'WorkshopId'>
-export type SessionId = string & Brand<'SessionId'>
-export type BuildingBlockId = string & Brand<'BuildingBlockId'>
+export type WorkshopId = string & z.$brand<'WorkshopId'>
+export type SessionId = string & z.$brand<'SessionId'>
+export type BuildingBlockId = string & z.$brand<'BuildingBlockId'>
 
 /**
  * `nanoid()` is a 21-char id over the URL-safe alphabet `A-Za-z0-9_-` — no `/`
