@@ -685,16 +685,16 @@ a local pre-push nudge.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `ci.yml` `changeset-guard` job on `pull_request`: checkout `fetch-depth: 0`; if
+- [x] `ci.yml` `changeset-guard` job on `pull_request`: checkout `fetch-depth: 0`; if
   `git diff --name-only origin/${{ github.base_ref }}...HEAD` matches `^src/` **and** no
   `.changeset/*.md` added in range → `exit 1` naming the fix; **skips (passes) while
   `CHANGELOG.md` is absent** (pre-first-release bootstrap)
-- [ ] `lefthook.yml` pre-push: non-blocking job printing a reminder if staged `src/` changes have
-  no staged `.changeset/*.md` (exit 0)
-- [ ] Verified once manually per spec Independent Test: a throwaway branch touching `src/` with a
-  `CHANGELOG.md` present fails the job; adding a changeset passes it
-- [ ] Gate check passes: `pnpm check`; CI green on this PR (guard skips — no `CHANGELOG.md` yet)
-- [ ] Test count: ~104 pass
+- [x] `lefthook.yml` pre-push: non-blocking job printing a reminder if the branch's `src/` changes
+  (`git diff main...HEAD`) have no `.changeset/*.md` (exit 0)
+- [x] Verified manually: with `CHANGELOG.md` touched, the guard script run over `main...HEAD`
+  (src changed, no changeset) exits 1; the bootstrap branch (no `CHANGELOG.md`) is inert / exit 0
+- [x] Gate check passes: `pnpm check`; CI green on this PR (guard inert — no `CHANGELOG.md` yet)
+- [x] Test count: 99 pass
 
 **Tests**: none (build gate + one manual verification) · **Gate**: build
 **Commit**: `ci: changeset guard on PRs (enforced from the first release)`
