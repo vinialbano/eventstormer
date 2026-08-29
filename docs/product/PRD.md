@@ -300,7 +300,7 @@ A text field sits below the board with a submit control. Submitting clears it an
 - Transcript segment — text, timestamp, spoken-or-typed, speaker (from F03)
 - Board snapshot — all building block records, relations, hot spot annotations (from F01)
 - Workshop record — the modelling intent (scope), whether it has been set yet, and the format (from F18)
-- Facilitation context — assembled each turn from the recent transcript (F03), the open questions and frozen summaries of earlier closed sessions on the workshop (F18), and the open hot spots and thinly-covered or unopened regions of the model (F01, F08)
+- Facilitation context — assembled each turn from the recent transcript (F03), the open questions and frozen summaries of earlier closed sessions on the workshop (F18), and the open hot spots and thinly-covered or unopened regions of the model (F01)
 
 **Provides**
 - Proposed operation — operation kind, target building block id where applicable, proposed label, proposed building block kind, proposed relations, proposed reference (for a `resolve` proposal), and a short rationale (used by F05, F07, F08, F11, F12)
@@ -658,7 +658,7 @@ A generate/download control alongside F10's produces the transcript export on re
 | F03 | Text capture | 1 | F01 |
 | F04 | AI facilitator | 1 | F01, F03, F18 |
 | F05 | Proposal review | 1 | F02, F04 |
-| F06 | Direct model editing | 1 | F02 |
+| F06 | Direct model editing | 1 | F01, F02 |
 | F07 | Pivotal events | 2 | F02, F04 |
 | F08 | Hot spots | 2 | F01, F02, F04 |
 | F09 | Stakeholder check and chosen problem | 1 | F02, F08, F18 |
@@ -713,7 +713,8 @@ graph TD
   F18 --> F14
   F02 --> F05[F05 Proposal review]
   F04 --> F05
-  F02 --> F06[F06 Model editing]
+  F01 --> F06[F06 Model editing]
+  F02 --> F06
   F02 --> F07[F07 Pivotal events]
   F04 --> F07
   F02 --> F08
