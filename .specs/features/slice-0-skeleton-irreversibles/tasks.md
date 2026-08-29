@@ -13,7 +13,7 @@ discrimination sensor).
 ---
 
 **Design**: `.specs/features/slice-0-skeleton-irreversibles/design.md`
-**Status**: In Progress — **Batch 1 (T1–T8) complete** (`f6753df`…`6a8bc7b`, `pnpm check` green, 26 tests). AGENTS.md layout reconciled (`4a510ad`, orchestrator). Batch 2 (T9→T9a→T10–T16) next.
+**Status**: In Progress — **Batches 1 & 2 complete** (T1–T16 + T9a; `f6753df`…`43a858a`; `pnpm check` green, 95 tests). Batch 3 (T17–T21) dispatching; Verifier auto-runs after T21.
 
 ---
 

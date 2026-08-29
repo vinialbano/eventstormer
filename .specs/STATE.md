@@ -34,12 +34,27 @@ capture.
 
 **Active feature:** `slice-0-skeleton-irreversibles` (GitHub issue #37)
 **Branch:** `slice-0-skeleton-irreversibles` (off `main`)
-**Phase:** Execute. **Batch 1 (T1–T8) complete** — `f6753df`…`6a8bc7b`, `pnpm check` green,
-26 tests. Plus `4a510ad` (orchestrator: AGENTS.md layout reconciled — was flagged stale by the
-worker; ADR-002 lists it as part of the migration). Dispatching Batch 2 next.
+**Phase:** Execute. **Batch 1 (T1–T8) ✅** (`f6753df`…`6a8bc7b`) + `4a510ad` (AGENTS.md layout).
+**Batch 2 (T9, T9a, T10–T16) ✅** (`eae93a1`…`43a858a`) + `9052450` (AD-013/14 docs). `pnpm check`
+green, **95 tests** (18 files). Dispatching Batch 3 next; Verifier runs automatically after T21.
 **Scope size:** Large (30 requirement IDs; 10 components; **22 tasks** — T9a added mid-execute).
-**Batch status:** Batch 1 — ✅ done. Batch 2 (T9, **T9a**, T10–T16) — dispatching. Batch 3
-(T17–T21) — pending.
+**Batch status:** Batch 1 — ✅. Batch 2 — ✅. Batch 3 (T17–T21) — dispatching.
+
+**Batch 2 deviations (all reasoned; several are improvements — no SPEC_DEVIATION markers):**
+- T14 kind-permission: an **exhaustive deterministic loop** over all 14 not-implemented op kinds
+  instead of a `fast-check` property — strictly stronger than sampling over a finite domain, and
+  `fast-check` isn't installed until T15. ADR-008's named property #3 (replay consistency) IS in
+  T15's `replay.test.ts`.
+- T9 sqlite adapter persists the **caller-supplied `opVersion`** (parity with the in-memory impl
+  and the `StoredOperationInput` port contract), not a hard-stamped `OP_SCHEMA_VERSION`. Every
+  Slice 0 caller passes `OP_SCHEMA_VERSION`; **Slice 2+ handlers must continue to** — note for the
+  app layer.
+- T13 `emptyWriteModel` / `emptySnapshot` are **factory functions**, not shared `const`s, so pure
+  folds can't share mutable `Map` state.
+- `raise-hot-spot` operation variant carries `modelAffecting: z.boolean().default(true)`, mirroring
+  the `hotSpot` building block (AD-014).
+- T12 `switch`-exhaustiveness over `Operation['kind']` verified by a transiently planted missing
+  case (lint failed "Cases not matched: reopen", reverted).
 
 **Batch 1 deviations (all reasoned, documented in commits/tasks.md):**
 - `host-imports-only-context-api` depcruise rule added in T3 (not T2) so T2's gate stayed green
