@@ -193,12 +193,13 @@ is earned as the **test seam** (in-memory impl) + **API-shaping** over `node:sql
    `app/` (enforced by the existing `plumbing-is-a-leaf` dependency-cruiser rule).
 2. WHEN an id helper is called THEN it SHALL produce a `nanoid`-based value typed as the requested
    brand, and a workshop-URL helper SHALL produce a URL-safe slug.
-3. WHEN `plumbing/` is inspected THEN it SHALL export an `EventStore` port (interface) whose
-   `append(stream, expectedPosition, operations)` takes a **namespaced stream key**
-   (`(context, aggregate, id)` — Slice 0 uses `domain-model-capture` / `board` / `<workshopId>`,
-   per ADR-003) and an **ordered batch of ≥1 operations**, committing them in one transaction
-   (rejecting with a *transient* error on a stale `expectedPosition`), plus a read that returns a
-   stream's full operation list in log order. No consumer reads a stream outside its own context.
+3. WHEN `plumbing/` is inspected THEN it SHALL export a **synchronous** `EventStore` port
+   (interface — no `Promise`, per AD-013) whose `append(stream, expectedPosition, operations)`
+   takes a **namespaced stream key** (`(context, aggregate, id)` — Slice 0 uses
+   `domain-model-capture` / `board` / `<workshopId>`, per ADR-003) and an **ordered batch of ≥1
+   operations**, committing them in one transaction (rejecting with a *transient* error on a stale
+   `expectedPosition`), plus a read that returns a stream's full operation list in log order. No
+   consumer reads a stream outside its own context.
 4. WHEN the `node:sqlite` adapter appends a batch THEN each row SHALL include the workshop id, a
    monotonic per-workshop position, the `op_version`, the author, the serialized operation
    payload, and a timestamp; the whole batch SHALL be one `BEGIN IMMEDIATE` / `COMMIT` unit (no

@@ -76,7 +76,7 @@ T4 → T5 → T6 → T7 → T8
 ### Phase 3: sqlite adapter & schema SSOT
 
 ```
-T9 → T10 → T11 → T12
+T9 → T9a → T10 → T11 → T12
 ```
 
 ### Phase 4: Board, contract sensor
@@ -269,16 +269,24 @@ factory (run against the in-memory impl here; T9 plugs the sqlite adapter into t
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `port.ts` exports `StreamKey`, `StoredOperation`, `StoredOperationInput`, `AppendConflict`
-  (`classification:'transient'`), and `interface EventStore { append(stream, expectedPosition,
-  ops): Promise<Result<{nextPosition}, AppendConflict>>; read(stream): Promise<StoredOperation[]> }`
-- [ ] `memory-store.ts` enforces `expectedPosition` (`-1` for a new stream) and batch-atomicity
-- [ ] `contract-test.ts` exports a `describe`-factory `eventStoreContract(name, makeStore)`:
+- [x] `port.ts` exports `StreamKey`, `StoredOperation`, `StoredOperationInput`, `AppendConflict`
+  (`classification:'transient'`), and the **synchronous** `interface EventStore { append(stream,
+  expectedPosition, ops): Result<{nextPosition}, AppendConflict>; read(stream): StoredOperation[] }`
+  — **no `Promise`** (AD-013); `memory-store.ts` and `contract-test.ts` have no `async`/`await`
+- [x] `memory-store.ts` enforces `expectedPosition` (`-1` for a new stream) and batch-atomicity
+- [x] `contract-test.ts` exports a `describe`-factory `eventStoreContract(name, makeStore)`:
   3-op batch → positions `0,1,2`; stale `expectedPosition` → transient `err`; a batch whose 2nd
   op throws leaves the stream at its pre-batch length; reads return log order
-- [ ] `memory-store.test.ts` runs `eventStoreContract('memory', …)`
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~17 + ~5 = ~22 pass
+- [x] `memory-store.test.ts` runs `eventStoreContract('memory', …)`
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: 17 + 4 = 21 pass
+
+> SPEC_DEVIATION: `.dependency-cruiser.cjs` `not-to-dev-dep` `from.pathNot` broadened from
+> `\.(spec|test)\.(ts|tsx)$` to `(\.(spec|test)|-test)\.(ts|tsx)$` so the shared test-support
+> module `contract-test.ts` (imports `vitest`, never ships) is exempt. Verified by planting
+> `import { describe } from 'vitest'` in `port.ts` and observing `not-to-dev-dep` fail, then
+> reverting. Not in T7's listed files; required by the shared-contract-suite pattern the task
+> mandates.
 
 **Tests**: integration · **Gate**: full
 **Commit**: `feat(plumbing): EventStore port, in-memory impl, shared contract suite`
@@ -330,7 +338,8 @@ on construction; plugs into the shared contract suite. Adds `db:reset`.
   `expectedPosition` → insert the whole batch (each row stamped `op_version = OP_SCHEMA_VERSION`,
   `at` from the passed value) → `COMMIT`; conflict → `ROLLBACK` + transient `err`; never calls
   `row.hasOwnProperty`
-- [ ] `read` uses `stmt.iterate()` and returns log order
+- [ ] `read` uses `stmt.iterate()` and returns log order; the adapter is **synchronous** — no
+  `async`/`await`/`Promise` (AD-013; `DatabaseSync` is sync)
 - [ ] DB path from `EVENTSTORMER_DB` env (default `./data/eventstormer.db`); tests use a temp file
 - [ ] `sqlite-adapter.test.ts` runs `eventStoreContract('node:sqlite', …)` — same suite as T7
 - [ ] `package.json` `db:reset` deletes `data/eventstormer.db`, `-wal`, `-shm`

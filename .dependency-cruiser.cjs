@@ -140,8 +140,10 @@ module.exports = {
     {
       name: 'not-to-dev-dep',
       severity: 'error',
-      comment: 'Shipped code must not depend on a devDependency.',
-      from: { path: '^src', pathNot: '\\.(spec|test)\\.(ts|tsx)$' },
+      comment:
+        'Shipped code must not depend on a devDependency. `*.test.ts` and shared test-support ' +
+        'modules (`*-test.ts`, e.g. the EventStore contract suite) are exempt — they never ship.',
+      from: { path: '^src', pathNot: '(\\.(spec|test)|-test)\\.(ts|tsx)$' },
       to: { dependencyTypes: ['npm-dev'], dependencyTypesNot: ['type-only'] },
     },
   ],

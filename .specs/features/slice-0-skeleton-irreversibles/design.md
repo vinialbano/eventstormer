@@ -279,26 +279,25 @@ Pull F06 reword/withdraw HTTP handler into Slice 0.
 - **`clock.ts`**:
   - `type Clock = () => string` (ISO-8601 UTC). `systemClock` the default; tests pass a fixed one. Injected into the application layer (Slice 2+), which passes `now` down — not into `decide` (`software-design`: prefer a passed value over a clock interface reaching into the domain).
 - **`event-store/`**:
-  - `port.ts`:
+  - `port.ts` — **synchronous** (AD-013):
     ```ts
     type StreamKey = { context: string; aggregate: string; id: string };
     type StoredOperation = { position: number; at: string; opVersion: number; operation: unknown };
     interface EventStore {
-      append(stream: StreamKey, expectedPosition: number, ops: StoredOperationInput[]): Promise<Result<{ nextPosition: number }, AppendConflict>>;
-      read(stream: StreamKey): Promise<StoredOperation[]>;  // log order
+      append(stream: StreamKey, expectedPosition: number, ops: StoredOperationInput[]): Result<{ nextPosition: number }, AppendConflict>;
+      read(stream: StreamKey): StoredOperation[];  // log order
     }
     ```
     `expectedPosition` = the caller's last-seen position (`-1` for a new stream). `AppendConflict = { kind: 'stale-position'; actual: number; classification: 'transient' }`.
-  - `sqlite-adapter.ts` — the **only** `node:sqlite` importer. `DatabaseSync`; migrations (component 7); `append` runs `BEGIN IMMEDIATE` → re-check `MAX(position)` == `expectedPosition` → insert the batch → `COMMIT` (or `ROLLBACK` + `err`). Reads via `stmt.iterate()`. Never touches `row.hasOwnProperty`.
+    **No `Promise`** — `node:sqlite` (`DatabaseSync`), the `better-sqlite3` escape hatch, and the in-memory impl are all synchronous, and ADR-001 explicitly chose sync (`@libsql/client` was rejected partly because "async everywhere means your reducer/replay call sites become async"). A speculative `Promise` here is unearned async — `@typescript-eslint/require-await` flags it. Slice 2+ handlers call this from inside async Hono routes with no problem.
+  - `sqlite-adapter.ts` — the **only** `node:sqlite` importer. `DatabaseSync` (synchronous); migrations (component 7); `append` runs `BEGIN IMMEDIATE` → re-check `MAX(position)` == `expectedPosition` → insert the batch → `COMMIT` (or `ROLLBACK` + `err`). Reads via `stmt.iterate()`. Never touches `row.hasOwnProperty`.
   - `memory-store.ts` — `Map<string, StoredOperation[]>` keyed by `context/aggregate/id`; identical `expectedPosition` + batch-atomic semantics. Lives in `plumbing/` (not test-only) — Slice 1's decider tests import it.
   - `contract-test.ts` — one `describe` factory run against both impls (S0-11b): batch of 3 → positions `0,1,2`; stale `expectedPosition` → transient `err`; a batch that throws mid-insert leaves the stream at its pre-batch length.
-- **Dependencies**: `nanoid` (ids only), `node:sqlite` (sqlite-adapter only), `zod` brand types (types only). No import from any context or `host`/`app`.
-- **Reuses**: the branded-id types from `domain-model-capture/domain/schema/ids.ts` — **type-only
-  import** (allowed: `plumbing` may not import context *runtime*, but a `import type` of a brand
-  marker is a compile-time-only edge; if dependency-cruiser's `tsPreCompilationDeps` flags it,
-  move the brand-symbol type to `plumbing/ids.ts` and have the schema module import it the other
-  way). **Design note:** to keep `plumbing` a clean leaf, the brand *symbols* live in
-  `plumbing/ids.ts`; the Zod *schemas* that apply them live in the domain schema module. See Risks.
+- **Dependencies**: `nanoid` (ids only), `node:sqlite` (sqlite-adapter only), `zod` (type-only,
+  for `z.$brand` in `ids.ts`). No import from any context or `host`/`app`.
+- **Reuses**: nothing from a context. The id *types* are defined here (`string & z.$brand<'…'>`);
+  the domain schema module's `z.string().brand<'…'>()` produces the structurally identical type
+  (see Risks / Tech Decisions — one brand mechanism, Zod's).
 
 ### 7. Database migrations + `db:reset`
 
@@ -443,7 +442,7 @@ truly unexpected, status mapping only in `http.ts`).
 
 | Concern | Location | Impact | Mitigation |
 | --- | --- | --- | --- |
-| `plumbing/` needs the branded-id *types* but must not import a context's runtime (leaf rule) | `src/plumbing/event-store/port.ts`, `.dependency-cruiser.cjs` `plumbing-is-a-leaf` | `EventStore`/`ids` signatures want `WorkshopId` etc.; a runtime import would break the leaf rule and `tsPreCompilationDeps` catches even `import type` | **Brand symbols live in `plumbing/ids.ts`** (`type WorkshopId = string & { __brand: 'WorkshopId' }` or a `z.core` brand symbol); the domain schema module imports *them* and attaches Zod validation. Dependency points plumbing→nothing, domain→plumbing. Verified by a planted violation. |
+| `plumbing/` needs the branded-id *types* but must not import a context's runtime (leaf rule) | `src/plumbing/event-store/port.ts`, `src/plumbing/ids.ts`, `.dependency-cruiser.cjs` `plumbing-is-a-leaf` | `ids` generators return `WorkshopId` etc.; a runtime import of the domain schema module would break the leaf rule (`tsPreCompilationDeps` catches even `import type`) | **One brand mechanism — Zod's own `$brand` symbol.** `plumbing/ids.ts` expresses the id types with Zod's primitive: `import type { z } from 'zod'; export type WorkshopId = string & z.$brand<'WorkshopId'>` (+ the nanoid generators). `domain-model-capture/domain/schema/ids.ts` owns the runtime schemas: `export const WorkshopId = z.string().brand<'WorkshopId'>()`. `z.infer<typeof WorkshopId>` is **structurally identical** to `plumbing`'s type — zero cast at the seam. `plumbing` imports only `zod` (an allowed npm dep, not a context). **Do NOT** hand-roll `string & { __brand: '…' }` (drifts from Zod's shape) or introduce a separate `declare const brand: unique symbol` (Matt Pocock's standalone pattern) — a second brand mechanism makes `plumbing`'s `WorkshopId` incompatible with the schema's `z.infer` and forces a cast at every plumbing↔domain crossing, reintroducing the id-mixup class the brand exists to prevent. `z.$brand` already *is* the hygienic unique-symbol pattern, with Zod owning the symbol. |
 | dependency-cruiser rule rewrite is the highest-bug-risk task — silent-pass is the failure mode the repo already hit once (pnpm anchor) | `.dependency-cruiser.cjs` | A decorative rule = the one non-negotiable invariant unenforced | Every rule re-verified by planting a real violation and watching `pnpm depcruise` fail, then reverting — commit message records each. Non-negotiable per `AGENTS.md`. |
 | Flipping `coverage.thresholds.autoUpdate: true` rewrites `vite.config.ts` on every local `pnpm test:coverage` | `vite.config.ts:38-49` | An agent running coverage mid-task produces an unrelated config diff; a 0/0-branch file can wedge the first real branch | CI runs `pnpm test`, **not** `pnpm test:coverage` — the ratchet only moves locally and deliberately. Note in `domain-model-capture/domain/AGENTS.md` that a threshold bump from coverage is a real, committed change. Hard `**/domain/** ≥ 90%` glob deferred to Slice 6 (ADR-010). |
 | ADR-004 says "derived contract via `z.toJSONSchema()`"; ADR-005 says the facilitator passes the Zod union to `Output.object` directly — apparent contradiction | `docs/adr/004`, `docs/adr/005`, component 4 | An implementer builds a runtime derivation the facilitator never uses, or skips the check ADR-004 wants | Design resolves it: the derived schema is a **compile-time compatibility sensor** (+ what the R3 spike checks live), not the runtime artifact. Flag a one-line ADR-004 clarification for Slice 6 (`## Risks` → follow-up). |
@@ -467,11 +466,12 @@ truly unexpected, status mapping only in `http.ts`).
 | `author` placement | **On the `Operation`** (`{ proposer?, accepter }`), parsed as part of the frozen schema | F01: "every operation carries an author … both proposer and accepter". It is part of the log contract, not envelope metadata. |
 | `OperationId` | **Omit** from the frozen v:1 union now | ADR-004 lists only Workshop/Session/BuildingBlock ids; the log `(stream, position)` pair is a sufficient identity for Slice 0. Add a branded `OperationId` in the slice that proves it needs one (Slice 2 apply round-trip correlation) — a new variant field is additive. |
 | Stream key shape | 3 columns `(context, aggregate, stream_id)`, not one delimited string | ADR-003 "namespaced per context + aggregate"; clean `PRIMARY KEY` and a future `WHERE context = ?` guard. |
-| Brand symbols home | `src/plumbing/ids.ts` (symbols) + domain schema module (Zod validation) | Keeps `plumbing/` a true leaf while letting `EventStore` signatures use `WorkshopId`. |
+| Brand mechanism | **Zod's `$brand` only.** `plumbing/ids.ts`: `type WorkshopId = string & z.$brand<'WorkshopId'>` (type-only `zod` import) + nanoid generators. Domain schema module: `z.string().brand<'WorkshopId'>()`. Same structural shape → no cast at the seam. | ADR-004 mandates `.brand()`; a second brand (hand-rolled `__brand` or a standalone `unique symbol`) yields an incompatible `WorkshopId` and a cast at every plumbing↔domain crossing. Zod's `$brand` is already a hygienic unique symbol. |
 | `changeset-guard` bootstrap | Job no-ops until `CHANGELOG.md` exists | Passes cleanly on Slice 0; enforces from Slice 1 — no "merge red" exception to remember. |
 | In-memory `EventStore` lives in `plumbing/`, not `test/` | first-class module | Slice 1's decider tests import it too; a shared contract test proves parity with the sqlite adapter (`software-design`: seam, not a mock). |
+| `EventStore` port is **synchronous** (AD-013) | `Result<…>` / `StoredOperation[]`, no `Promise` | Every implementation is sync (`node:sqlite` `DatabaseSync`, `better-sqlite3`, in-memory); ADR-001 chose sync deliberately; a speculative `Promise` is unearned async (`require-await` lint catches it) and would make every replay call site async for no benefit. |
 
-> **Project-level decisions** to append to `.specs/STATE.md` after design approval: AD-010
-> (derived contract = compile-time sensor; ADR-004 clarification queued), AD-011 (`OperationId`
-> omitted from v:1; add on proven need), AD-012 (`at` stamped by the application layer from
-> `Clock`, not read by `decide`).
+> **Project-level decisions** in `.specs/STATE.md`: AD-010 (derived contract = compile-time
+> sensor; ADR-004 clarification queued), AD-011 (`OperationId` omitted from v:1; add on proven
+> need), AD-012 (`at` stamped by the application layer from `Clock`, not read by `decide`),
+> AD-013 (`EventStore` port synchronous — no `Promise`).
