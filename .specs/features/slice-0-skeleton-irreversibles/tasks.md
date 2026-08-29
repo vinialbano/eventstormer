@@ -219,14 +219,15 @@ generators + workshop-URL slug helper.
 **Tools**: MCP: `context7` (nanoid v6 API) · Skill: NONE
 
 **Done when**:
-- [ ] `nanoid@6` added to `dependencies`
-- [ ] Exports brand symbol types `WorkshopId`, `SessionId`, `BuildingBlockId` (and the marker
-  used to build them) and generators `newWorkshopId()`, `newSessionId()`, `newBuildingBlockId()`
-  returning the branded type; `workshopUrlSlug(id): string`
-- [ ] Unit tests: generated ids are URL-safe (`/^[A-Za-z0-9_-]+$/`), 21 chars, mutually distinct
+- [x] `nanoid@6.0.1` added to `dependencies` (exact pin, per tooling-gotchas / AD-001)
+- [x] Exports brand types `WorkshopId`, `SessionId`, `BuildingBlockId` (`string & { __brand }`;
+  the `Brand` marker is module-private — inlined rather than exported so knip stays a true
+  signal) and generators `newWorkshopId()`, `newSessionId()`, `newBuildingBlockId()` returning
+  the branded type; `workshopUrlSlug(id): string`
+- [x] Unit tests: generated ids are URL-safe (`/^[A-Za-z0-9_-]+$/`), 21 chars, mutually distinct
   across 1000 draws; a bare string is not assignable to `WorkshopId` (`@ts-expect-error`)
-- [ ] Gate check passes: `pnpm test` + `pnpm knip` (nanoid used)
-- [ ] Test count: ~9 + ~5 = ~14 pass
+- [x] Gate check passes: `pnpm test` + `pnpm knip` (nanoid used)
+- [x] Test count: 11 + 4 = 15 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(plumbing): branded id symbols and nanoid generators`
