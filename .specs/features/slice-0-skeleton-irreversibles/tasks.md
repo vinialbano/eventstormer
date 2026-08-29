@@ -245,11 +245,11 @@ generators + workshop-URL slug helper.
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Exports `type Clock = () => string` and `systemClock` (ISO-8601 UTC)
-- [ ] Unit tests: `systemClock()` matches an ISO-8601 UTC regex; a fixed test clock is
+- [x] Exports `type Clock = () => string` and `systemClock` (ISO-8601 UTC)
+- [x] Unit tests: `systemClock()` matches an ISO-8601 UTC regex; a fixed test clock is
   substitutable and returns its constant
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~14 + ~3 = ~17 pass
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: 15 + 2 = 17 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(plumbing): Clock abstraction`
