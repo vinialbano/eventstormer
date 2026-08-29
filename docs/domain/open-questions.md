@@ -733,6 +733,29 @@ Reconciled this context's event-stormed model to PRD F10 after the 2026-08-28 de
     any of its four upstreams. The rest of the cascade is reported, not auto-propagated. Unowned,
     undated.
 
+## Raised in the `ddd-strategic-design` reconciliation pass (2026-08-28)
+
+72. **Propagated the PRD F10 determinism pass (#70) into the two artifacts that still described
+    the retired Flow C.** The 2026-08-28 Derived Artifact Generation resume (#70) retired the
+    synthesized summary but reported the downstream effect as a staleness cascade rather than
+    editing the affected artifacts. This pass corrected them, `[review]`/decision provenance, no
+    elicitation:
+    - `context-map.md` — the **Session Facilitation → Derived Artifact Generation** row and its
+      Decision section: dropped Flow C; the edge now carries **two published reads**, the
+      **session record** (`Session` stream — turns + `Proposal` lifecycle, read by
+      `Export Session Transcript`) and the **workshop record** (F18 — format/scope/stakeholder/
+      chosen-problem, read by `Export Model`); replaced the unconfirmed term "session log" with
+      "session record" throughout; refreshed the stale `derived_from` digest for the DAG canvas.
+    - `bounded-contexts/session-facilitation/canvas.md` — the Downstream bullet said the edge was
+      "a candidate context-map edge under review (#39)"; #39 was **adopted 2026-08-28**, so it now
+      reads as decided, and names both reads. The Flow B disposition-rendering hot-spot row (#56)
+      marked resolved.
+    - Not touched: `README.md` narrative items 12/14 (transition history, correct as written) and
+      the `boards/` records (owned by their own workshops).
+    - **Cascade note:** `context-map.md`'s own `digest:` and `last_updated` edges are now stale
+      against the `domain_lineage.py` tool, which isn't present in this repo to recompute them.
+      Reported, not auto-propagated — consistent with #69/#71. Unowned, undated.
+
 ## Deliberate deviations, recorded rather than silent
 
 - **Granularity.** Big Picture's default is coarse; this board went fine-grained (every kind gets

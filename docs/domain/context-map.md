@@ -6,7 +6,7 @@ last_updated: 2026-08-28
 digest: ec6dc67a4870
 derived_from:
   - path: bounded-contexts/derived-artifact-generation/canvas.md
-    digest: d6648843193b
+    digest: 99476d0589b3
     at: 2026-08-28
   - path: bounded-contexts/domain-model-capture/canvas.md
     digest: 705129af8f2d
@@ -46,7 +46,7 @@ flowchart LR
 
   Capture -->|"OHS + Published Language\n(Building Block lifecycle contract,\nincl. apply-confirmation round trip)"| Facil
   Capture -->|"OHS + Published Language\n(read model)\nConformist"| Artifact
-  Facil -->|"OHS + Published Language\n(session log)\nConformist"| Artifact
+  Facil -->|"OHS + Published Language\n(session record + workshop record)\nConformist"| Artifact
 
   classDef core fill:#ffe0e6,stroke:#c1123e,color:#000
   classDef sup fill:#e0ecff,stroke:#1f5fbf,color:#000
@@ -59,7 +59,7 @@ flowchart LR
 |---|---|---|---|---|---|---|
 | Domain Model Capture | Session Facilitation | Upstream-Downstream | OHS + Published Language, accommodated as Customer/Supplier | in-process command/query (v1: single deployable) | Building Block lifecycle contract (create/rework/withdraw/reinstate, incl. Hot Spot Building Blocks raised **and resolved** by Facilitation's own resolution judgment — `Raise Hot Spot`/`Resolve Hot Spot`, formalized as commands 2026-08-26), plus the **apply-confirmation round trip** (`Operation Applied`/`Operation Rejected`, `Hot Spot Resolved`/`Hot Spot Resolution Rejected` — full surface below) | Both Core & volatile. Capture is self-contained and generic; Facilitation cannot ship without it (U/D tell). Facilitation is the primary consumer shaping the contract — its needs are formally accommodated, not merely conformed to. `[confirmed]` |
 | Domain Model Capture | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model | the read-only model projection (PRD F10) | Thin, stateless projection; no accommodation needed. `[confirmed]` |
-| Session Facilitation | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model | the **session log** — ordered conversation turns + proposal made/accepted/rejected/applied events | Flow B (transcript export) and Flow C (synthesized summary) both read it; the participant confirmed the transcript and proposal lifecycle "belong to Session Facilitation." An *added* upstream, not a moved boundary — Derived Artifact Generation is a Conformist downstream of **two** Core contexts. Thin projection; no accommodation. `[storm]`, adopted 2026-08-28 |
+| Session Facilitation | Derived Artifact Generation | Upstream-Downstream | OHS + Published Language, Conformist downstream | in-process read model | two published reads: the **session record** (`Session` stream — conversation turns + the full `Proposal` lifecycle), read by `Export Session Transcript`; and the **workshop record** (F18 — format, scope, stakeholder answer, chosen-problem qualification), read by `Export Model` | The participant confirmed the transcript and proposal lifecycle "belong to Session Facilitation." An *added* upstream, not a moved boundary — Derived Artifact Generation is a Conformist downstream of **two** Core contexts. Thin projection; no accommodation. `[storm]`, adopted 2026-08-28; reconciled to the PRD F10 pass 2026-08-28 — Flow C (synthesized summary) retired, so no non-deterministic reader remains |
 
 ## Why Capture is the hub, not each pair modelled separately
 
@@ -69,10 +69,10 @@ two ad hoc integrations — this is the technical expression of the product's ow
 many derived views." A Core context exposing a deliberate, stable public contract (rather than
 leaking internals) is the point, not a violation of Core-protection.
 
-Session Facilitation is a second, smaller Open-Host Service: its **session log** is a published
-read model that Derived Artifact Generation conforms to. Both Core contexts publish deliberate
-contracts and Derived Artifact Generation conforms to both — the same "one model, many derived
-views" shape, one layer out.
+Session Facilitation is a second, smaller Open-Host Service: its **session record** and
+**workshop record** are published read models that Derived Artifact Generation conforms to. Both
+Core contexts publish deliberate contracts and Derived Artifact Generation conforms to both — the
+same "one model, many derived views" shape, one layer out.
 
 ## Deployment note
 
@@ -115,20 +115,25 @@ See `open-questions.md` #17.
 
 The Design-Level pass on Derived Artifact Generation
 (`sessions/2026-08-27-design-level-derived-artifact-generation.md`) found an integration edge this
-map did not record: Flow B (transcript export) and Flow C (synthesized summary) both read Session
-Facilitation's **session log** — ordered conversation turns + proposal made/accepted/rejected/applied
-events. The participant stated the transcript and the proposal lifecycle "belong to Session
-Facilitation."
+map did not record: Derived Artifact Generation reads Session Facilitation directly. The
+participant stated the transcript and the proposal lifecycle "belong to Session Facilitation."
 
 Reasoned through the U/D test: Session Facilitation succeeds independently of Derived Artifact
 Generation; the reverse is false (no artifact without a session to derive it from). Upstream →
 downstream, with no power for the downstream to shape the contract — **Conformist**. Session
-Facilitation publishes the session log as a deliberate read model → **OHS + Published Language**.
+Facilitation publishes its read models as a deliberate contract → **OHS + Published Language**.
 
 **Adopted by `ddd-strategic-design`, 2026-08-28.** Recorded in the diagram and the main table
 above. The inherited **Domain Model Capture → Derived Artifact Generation** seam holds unchanged —
 this is an *added* upstream, not a moved boundary. Derived Artifact Generation is a Conformist
 downstream of **two** Core contexts. Resolves `open-questions.md` #39.
+
+**Reconciled to the PRD F10 determinism pass (2026-08-28, `open-questions.md` #70).** That pass
+retired Flow C (the non-deterministic synthesized summary). The Session Facilitation → Derived
+Artifact Generation edge stands, now carrying **two published reads**: the **session record**
+(the `Session` stream — turns + the full `Proposal` lifecycle) that `Export Session Transcript`
+reads, and the **workshop record** (F18 — format, scope, stakeholder answer, chosen-problem
+qualification) that `Export Model` reads. No reader on this edge is non-deterministic.
 
 ## Decision — the Domain Model Capture ↔ Session Facilitation surface adopted (2026-08-28)
 
@@ -167,7 +172,7 @@ mapped closely to this decided form:
 | Storm candidate | Outcome here |
 |---|---|
 | Session Lifecycle vs. Modeling Capture | Became **Session Facilitation** vs. **Domain Model Capture** — confirmed as two Core contexts, Capture upstream |
-| Facilitation vs. Artifact Consumption | Became **Session Facilitation/Domain Model Capture** vs. **Derived Artifact Generation** — confirmed. Domain Model Capture is the primary upstream (the model projection); Session Facilitation is a second upstream (the session log, adopted 2026-08-28) that the storm candidate anticipated |
+| Facilitation vs. Artifact Consumption | Became **Session Facilitation/Domain Model Capture** vs. **Derived Artifact Generation** — confirmed. Domain Model Capture is the primary upstream (the model projection); Session Facilitation is a second upstream (the session record + workshop record, adopted 2026-08-28) that the storm candidate anticipated |
 | Question & Hot Spot Resolution | Initially confirmed as its own context; later folded into **Session Facilitation** once a Design-Level pass tested and disproved the "runs on its own clock" rationale — see the Decision section above |
 
 <!-- BEGIN lineage:index -->

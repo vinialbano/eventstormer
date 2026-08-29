@@ -2,7 +2,7 @@
 workshop: design-level
 scope: session-facilitation
 status: draft
-last_updated: 2026-08-27
+last_updated: 2026-08-28
 digest: 192d89ca4269
 derived_from:
   - path: boards/capture-loop.md
@@ -343,8 +343,11 @@ flowchart LR
 
 - **Upstream (this context depends on):** Domain Model Capture — OHS + Published Language,
   accommodated as Customer/Supplier.
-- **Downstream:** Derived Artifact Generation reads the `Session` stream (the session record) —
-  a candidate context-map edge under review (`../../open-questions.md` #39).
+- **Downstream:** Derived Artifact Generation reads the `Session` stream (the session record) for
+  `Export Session Transcript`, and the workshop record (F18 — format, scope, stakeholder answer,
+  chosen-problem qualification) for `Export Model` — OHS + Published Language, Conformist
+  downstream. A decided context-map edge (`../../open-questions.md` #39, adopted by
+  `ddd-strategic-design` 2026-08-28).
 - **Boundary Commands (out):** `Raise Hot Spot`, `Resolve Hot Spot`, and the kind-specific
   apply-operation commands (`Capture Domain Event`, `Identify Actor`, `Sequence`, `Link Cause`, …).
 - **Boundary Events (in):** `Operation Applied`, `Operation Rejected`, `Hot Spot Resolved`,
@@ -360,7 +363,7 @@ flowchart LR
 | Does EventStormer implement the Big Picture "pick one problem" exit? | white-spot | The chosen problem is a cross-workshop handoff; whether the product models it is unsettled | `../../open-questions.md` #64, unowned |
 | `Facilitation agenda`: derived vs. stored notes; `Facilitation context` physical decomposition | white-spot | Settled by prototyping, not modelling | `../../open-questions.md` #65 / #66 |
 | `Reject Proposal` / `Reject Resolution` reason | white-spot, minor | Whether a rejection carries a reason | `../../open-questions.md` #55, unowned |
-| How a lapsed / apply-failed proposal renders in Flow B | white-spot | "proposed, not taken" vs "proposed, failed" | `../../open-questions.md` #56 — Derived Artifact Generation resume |
+| How a lapsed / apply-failed proposal renders in Flow B | ~~white-spot~~ **resolved 2026-08-28** | `Export Session Transcript` renders all four terminal dispositions distinctly (applied / rejected / never-taken / apply-failed) | `../../open-questions.md` #56 |
 | As-is/to-be distinction | white-spot | Not distinguished anywhere | `../../open-questions.md` #6 |
 | PRD gap: resolve/close mechanic, and now the Proposal/Session vocabulary | white-spot, owned | F08/F01 plus `Session`/`Workshop`/`lapsed`/`apply-failed` | `../../open-questions.md` #19/#29 — participant owns the PRD pass |
 | Invitation expiry, broader invite permissions, workshop archive/lock | parked feature ideas | Not modelled | `../../open-questions.md` #25 |
