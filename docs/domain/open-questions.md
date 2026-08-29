@@ -289,10 +289,11 @@ here.
     `bounded-contexts/session-facilitation/canvas.md` was re-linked this session, since the
     corresponding wording change was made in the same pass. Unowned, undated.
 
-29. **PRD gap (item #19, above) has an owner now.** The participant will update F08 (and F01's
+29. ~~**PRD gap (item #19, above) has an owner now.**~~ The participant will update F08 (and F01's
     operation-log kind list) after this workshop concludes, now that this session gives the full
     candidate design (`Resolve Hot Spot` → `Hot Spot Resolved`, the required reference, both hot-spot
     kinds resolvable but only model-affecting ones expected to need it).
+    **Done 2026-08-29** — see #19.
 
 ## Raised in the Design-Level session (2026-08-26) — Question & Hot Spot Resolution
 
@@ -307,16 +308,17 @@ here.
     `bounded-contexts/question-hot-spot-resolution/canvas.md`; its surviving content is merged into
     `bounded-contexts/session-facilitation/canvas.md`. `subdomain-catalog.md` updated to match.
 
-18. **Two kinds of hot spot, previously undifferentiated in the PRD.** Informational/pain-point
+18. ~~**Two kinds of hot spot, previously undifferentiated in the PRD.**~~ Informational/pain-point
     hot spots (e.g. "this event is slow because of an external provider") don't affect the model
     and need no resolution — already consistent with F08's "annotating nothing is valid" stance.
     Model-affecting hot spots close an open question or fix something in the workshop design, and
-    do have a genuine "done" state. `[storm]`, confirmed by the participant 2026-08-26. Whether
-    F08 needs updating to name this split explicitly is a product decision, not decided here.
-    Unowned, undated.
+    do have a genuine "done" state. `[storm]`, confirmed by the participant 2026-08-26.
+    **Resolved 2026-08-29 by the PRD reconciliation pass (`docs/product/PRD.md`, commit
+    `0fe511f`).** F08 now names the informational / model-affecting split explicitly and states
+    that both kinds are resolvable but only model-affecting ones are expected to need it.
 
-19. **Hot spot/question resolution is entirely unspecified in the PRD, and now has a candidate
-    shape.** F08 defines creation, annotation, and counting, but no resolve/close operation — the
+19. ~~**Hot spot/question resolution is entirely unspecified in the PRD, and now has a candidate
+    shape.**~~ F08 defines creation, annotation, and counting, but no resolve/close operation — the
     "resolvable" language at PRD line 693 is never cashed into a command or event, and F01's
     operation-log kind list has no `resolve` verb. `[code]`, disclosed to the participant before
     design proceeded. This session elicited a candidate: resolution is a **deliberate, confirmed
@@ -324,8 +326,10 @@ here.
     auto-raise policies), and it **must carry a recorded reference to what resolved it** — deliberately
     untyped (a note, a link, a building block, or anything else). `[storm]`. **#17 is now decided
     (adopted)** — this lives in Session Facilitation's event-stormed model (see its canvas'
-    Policies table). Still needs a PRD update (F08, and F01's operation-log kind list); unowned as
-    a next action, undated.
+    Policies table). **PRD update done 2026-08-29 (`docs/product/PRD.md`, commit `0fe511f`):** F08
+    carries the full resolve/reopen mechanic (deliberate act through the F05 accept/edit/reject
+    path, required untyped reference, reopen to correct a wrong resolution) and F01's operation-kind
+    list names `resolve` and `reopen`.
 
 20. ~~**This session's edits to `context-map.md` and `open-questions.md` left 10 artifacts stale**~~
     **Resolved, 2026-08-26.** #17 was adopted and every affected artifact was refreshed together in
@@ -337,16 +341,25 @@ here.
 
 ## Raised in the Design-Level session (2026-08-26) — Domain Model Capture
 
-32. **Hot Spot's `kind` field is genuinely unsettled, not deferred.** The payload direction for
+32. ~~**Hot Spot's `kind` field is genuinely unsettled, not deferred.**~~ The payload direction for
     `Raise Hot Spot` is agreed (kind, trigger, annotation target), but the participant is
     explicitly unsure whether the `kind` attribute (informational/model-affecting) earns its place
-    as a stored field versus being derivable or unnecessary. Unowned, undated.
+    as a stored field versus being derivable or unnecessary.
+    **Settled 2026-08-29 by [ADR-004](../adr/004-operation-log-schema-and-versioning.md)
+    (effort-map [#20](https://github.com/vinialbano/eventstormer/issues/20)):** `kind` **is** a
+    stored field, set at `Raise Hot Spot` time, default model-affecting, changeable by a
+    reword-style operation — the facilitator picks it from conversational context that is absent
+    from the graph at replay time, so there is nothing to derive it from. PRD F08 updated to match
+    (commit on branch `docs/prd-consistency-fixes`).
 
-33. **A "destroy" operation for true duplicates was floated and left undesigned.** The participant
+33. ~~**A "destroy" operation for true duplicates was floated and left undesigned.**~~ The participant
     raised the possibility of a real delete, for duplicates found while organizing the timeline,
     but was explicit about not being sure. It conflicts with F01's confirmed "the system never
-    merges two building blocks" and the broader no-destructive-delete/no-re-type stance. Not
-    modelled. Unowned, undated.
+    merges two building blocks" and the broader no-destructive-delete/no-re-type stance.
+    **Rejected for v1 2026-08-29 by [ADR-004](../adr/004-operation-log-schema-and-versioning.md)
+    (effort-map [#20](https://github.com/vinialbano/eventstormer/issues/20)):** no `destroy`
+    operation — `Withdraw` already covers "stop showing this" and F01 deliberately preserves
+    duplicates. PRD needs no change (it never named one).
 
 34. ~~**`Insert Between`'s atomicity has no home in F01's current operation model.**~~ **Resolved
     2026-08-27**, Design-Level pass 2. `Insert Between` is **one operation** in the log, atomic
