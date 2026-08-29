@@ -194,7 +194,8 @@ Pull F06 reword/withdraw HTTP handler into Slice 0.
   - `ids.ts` — `WorkshopId`, `SessionId`, `BuildingBlockId`, `OperationId` (pending — see Tech
     Decisions) as `z.string().brand<'WorkshopId'>()` etc. Static-only (research/harness-tools).
   - `building-blocks.ts` — `z.discriminatedUnion('kind', [domainEvent, actor, system, hotSpot])`.
-    `hotSpot` carries `kind: z.enum(['informational','model-affecting']).default('model-affecting')`.
+    `hotSpot` carries `modelAffecting: z.boolean().default(true)` (AD-014 — the
+    informational/model-affecting split; **not** named `kind`, which is the union discriminant).
   - `operations.ts` — the frozen union (below).
   - `author.ts` — `Author = z.object({ proposer: PartyRef.optional(), accepter: PartyRef })`
     (a human-authored direct edit has `accepter` only; a facilitator-originated op has both).

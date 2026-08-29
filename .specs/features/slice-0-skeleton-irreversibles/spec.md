@@ -41,7 +41,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | --- | --- |
 | `sequence` / `unsequence` / `insert between` / `place` / `unplace` / `link cause` / `annotate` / `mark pivotal` / `resolve` / `reopen` **behaviour** | Slices 3–4. Their schema variants ARE defined and frozen here (see S0-05); the decider does not handle them yet. |
 | Withdrawal **cascades** (`unlink cause` / hot-spot `withdraw` follow-ons) | No `causedBy` or annotation edges exist until slices 3–4; there is nothing to cascade. The cascade tests (acceptance-tests 20, 21) belong to those slices. |
-| Hot-spot capture, `kind` field behaviour, resolution | Slice 4. The `hotSpot` building-block schema and the `kind` field are defined here (frozen), unused by the decider. |
+| Hot-spot capture, `modelAffecting` behaviour, resolution | Slice 4. The `hotSpot` building-block schema and its `modelAffecting` boolean (AD-014) are defined here (frozen), unused by the decider. |
 | Workshop / Session aggregates, the one-open-session index | Slice 1. This slice's `Board` is keyed by a `WorkshopId` it does not itself mint through a lifecycle. |
 | The AI facilitator, the interpret call, prompt assembly | Slice 1. |
 | In-process event bus, JSONL model-call logger | Deferred to Slice 1 where the first consumer (the facilitator) lands — see Assumptions. |
@@ -77,7 +77,7 @@ Every ambiguity is resolved or recorded here — nothing is left silently unclea
 | `fast-check` incremental-replay-consistency property | Slice 0 installs `fast-check` (devDep) and implements ADR-008's named property #3: `replay(log ++ [op]) === evolve(replay(log), op)` for the four implemented operations. Not "if cheap" — ADR-008 names it. | ADR-008 §property tests | y — ADR-008 |
 | Coverage `thresholds.autoUpdate: true` flips ON in Slice 0 | `vite.config.ts`'s own comment says "Enable autoUpdate once real tests exist, per the plan." Slice 0 is when real domain tests first exist. The hard `**/domain/** ≥ 90%` glob stays Slice 6 (ADR-010). | ADR-008 (`thresholds.autoUpdate: true` ratchet) + the config's own TODO | y — ADR-008 |
 | `capture` is kind-specific | Three operation variants — `capture-domain-event`, `identify-actor`, `identify-system` — not one generic `capture` with a `kind` payload field | Canvas Commands table: "Kind-specific, not a generic 'Create Building Block'"; `src/domain/AGENTS.md` invariant | y — canvas `[storm]` |
-| `hotSpot` capture variant | The `raise-hot-spot` operation variant and the `hotSpot` building-block schema (incl. the `kind` field, default `model-affecting`) are defined and frozen, but the decider rejects `raise-hot-spot` as "not yet implemented" or simply does not branch on it | Slice 4 owns hot-spot behaviour; the frozen shape must still exist now per ADR-004 and #32's settlement in ADR-004 | y — inferred from ADR-004 |
+| `hotSpot` capture variant | The `raise-hot-spot` operation variant and the `hotSpot` building-block schema (incl. `modelAffecting: z.boolean().default(true)` — AD-014) are defined and frozen, but the decider rejects `raise-hot-spot` as "not yet implemented" | Slice 4 owns hot-spot behaviour; the frozen shape must still exist now per ADR-004 and #32's settlement in ADR-004 | y — inferred from ADR-004 |
 | DB file location and lifecycle | `./data/eventstormer.db`, created and migrated on first store construction; `data/` is gitignored; `pnpm db:reset` deletes the file | DESIGN.md §7 states this path and `pnpm db:reset` | y — DESIGN.md |
 | Structured-output round-trip spike | Run as a P2 story: install `ai` + `@ai-sdk/anthropic`, one throwaway probe **outside the test suite**, findings recorded as a decision in `.specs/STATE.md` and appended to `research/research-aisdk.md`. Not a blocking gate. | ADR-010 lists it as a ~1h spike at the head of the slice; it de-risks Slice 1's schema shape without adding a paid CI call | y — inferred from ADR-010 |
 | `health` route after the migration | Moves to `src/host/` (it is composition-root infrastructure, not a bounded context); keeps exposing `opSchemaVersion` | ADR-002's tree has no generic `capabilities/`; `host/` is the composition root | y — inferred from ADR-002 |
@@ -158,8 +158,10 @@ possible change". It must exist before the first operation is ever written.
    facilitator-originated operation.
 5. WHEN a `resolve` operation is parsed with no `reference` field THEN parsing SHALL fail; the
    `reference` field SHALL be required and its value unconstrained in shape.
-6. WHEN a `hotSpot` building-block schema is parsed THEN it SHALL carry a `kind` field with values
-   `informational` | `model-affecting` defaulting to `model-affecting`.
+6. WHEN a `hotSpot` building-block schema is parsed THEN it SHALL carry a boolean field
+   `modelAffecting` defaulting to `true` (AD-014 — the informational/model-affecting split;
+   `false` = informational, `true` = model-affecting). It SHALL NOT be named `kind` (the union
+   discriminant) and SHALL NOT be an enum.
 7. WHEN `OP_SCHEMA_VERSION` and `canReplay` are imported THEN `canReplay(1)` SHALL be `true`,
    `canReplay(2)` `false`, and `REPLAYABLE_OP_SCHEMA_VERSIONS` SHALL contain every version from 1
    to `OP_SCHEMA_VERSION` (the existing `schema-version.ts` behaviour, relocated).
@@ -432,7 +434,7 @@ without it, but Slice 1 depends on the answer.
 | S0-04 | P1: Layout migration — AGENTS.md move, vitest/knip globs, health → host, one-file route composition, `pnpm dev` | Design | Pending |
 | S0-05 | P1: Schema SSOT — branded ids, full building-block + operation unions | Design | Pending |
 | S0-06 | P1: Schema SSOT — `v: z.literal(1)` + `.default(1)`, reject `v:2` | Design | Pending |
-| S0-07 | P1: Schema SSOT — author (proposer/accepter), `resolve` requires `reference`, `hotSpot.kind` default | Design | Pending |
+| S0-07 | P1: Schema SSOT — author (proposer/accepter), `resolve` requires `reference`, `hotSpot.modelAffecting` boolean default `true` (AD-014) | Design | Pending |
 | S0-08 | P1: Schema SSOT — `schema-version.ts` relocated; `zod` a direct dep; zero framework imports | Design | Pending |
 | S0-09 | P1: plumbing — `Result<T,E>` + combinators, leaf rule | Design | Pending |
 | S0-10 | P1: plumbing — nanoid id + brand helpers, workshop-slug helper (nanoid contained to this one seam) | Design | Pending |
