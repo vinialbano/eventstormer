@@ -40,6 +40,6 @@
       "~/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "*.config.ts", "vite.config.ts"],
+  "include": ["src/**/*.ts", "src/**/*.vue", "scripts/**/*.ts", "*.config.ts", "vite.config.ts"],
   "exclude": ["node_modules", "dist", "coverage"]
 }

@@ -552,3 +552,54 @@ model: wrapLanguageModel({ model: anthropic('claude-sonnet-4-5'), middleware: ex
 Do **not** reach back for `generateObject` just to get `repairText`. Trading the supported API for a repair hook you probably will not need is the wrong trade, and it forecloses ever combining tool calls with structured output in one request.
 
 **Telemetry:** register `new OpenTelemetry()` once in a Nitro server plugin, then it is on by default for every call — no per-call flag. Set `telemetry: { functionId: 'propose-operations' }` on the call so the spans are attributable. Confirm: **cost is not computed; you get `gen_ai.usage.input_tokens`, `output_tokens`, `cache_read.input_tokens`, `cache_creation.input_tokens` and nothing else token-wise.** Total and reasoning tokens are available on `result.usage` but are not emitted as span attributes — record them yourself if you need them.
+
+---
+
+## R3 spike — structured-output round-trip probe (Slice 0, S0-27 / S0-28)
+
+**Date:** 2026-08-29
+**Probe:** `scripts/spike-structured-output.ts`, run via `pnpm spike:structured-output` (jiti).
+**Status: READY BUT UNRUN.** No `ANTHROPIC_API_KEY` is available in this environment — the probe
+prints `skipped — no ANTHROPIC_API_KEY` and exits 0. Running it against the live API is the
+maintainer's to do; the key is theirs to supply. The batch was **not** blocked on this.
+
+### What the probe pins (ADR-005's exact setup)
+
+- `generateText` + `Output.object({ schema: z.object({ interpretation: z.array(Operation), nextMove }) })`
+  — the **object wrapper**, not a bare `Output.array` (ADR-005 §Consequences: "the R3 spike now
+  tests the object wrapper, not a bare array").
+- `model: anthropic('claude-sonnet-5')` — no date suffix.
+- `providerOptions.anthropic.structuredOutputMode: 'outputFormat'` pinned — the only path that runs
+  the `oneOf → anyOf` sanitiser.
+- **No `temperature`** — Sonnet 5 has `rejectsSamplingParameters: true`; a `temperature` would be
+  stripped and surface in `result.warnings`.
+- `interpretation` is `z.array(Operation)` where `Operation` is the **real frozen v:1 discriminated
+  union** (`src/domain-model-capture/domain/schema/operations.ts`, 20 variants), reached through
+  `src/domain-model-capture/api.ts`.
+- Prints `result.output`, `result.warnings`, `result.finishReason`, `result.usage`.
+
+### Source-level prediction (from this document's own §2–§3 findings, unchanged)
+
+`@ai-sdk/anthropic@4.0.41` rewrites `oneOf → anyOf` in `sanitizeSchema` (`dist/index.js:3538-3542`),
+applied via `sanitizeJsonSchema(responseFormat.schema)` at `dist/index.js:3932` — i.e. **only on
+the `outputFormat` path**, which the probe pins. `sanitizeSchema` recurses through `properties` and
+`items`, so the discriminated union's `oneOf` nested at
+`properties.interpretation.items.oneOf` (one level deeper than a bare `Output.array`) is still
+reached and rewritten. The wrapped union is therefore **expected to round-trip**; `oneOf → anyOf`
+**is** applied by the provider SDK, not by us.
+
+This is corroborated independently by the Slice 0 compile-time sensor
+`src/domain-model-capture/domain/anthropic-contract.ts` + its test: `z.toJSONSchema(Operation, …)`
+with a mutating `override` rewrites every `oneOf` at any depth, and the test asserts
+`JSON.stringify(...)` contains no `"oneOf"`. So even if a future provider-SDK version dropped its
+sanitiser, our derivation still produces an Anthropic-safe schema.
+
+### To run it (maintainer)
+
+```
+ANTHROPIC_API_KEY=sk-ant-... pnpm spike:structured-output
+```
+
+Record `result.output` (did the wrapped union parse?), the full `result.warnings` array, and
+whether an HTTP 400 `Schema type 'oneOf' is not supported` occurred, back into this section and
+`.specs/STATE.md`.

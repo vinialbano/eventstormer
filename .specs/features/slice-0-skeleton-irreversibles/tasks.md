@@ -13,7 +13,8 @@ discrimination sensor).
 ---
 
 **Design**: `.specs/features/slice-0-skeleton-irreversibles/design.md`
-**Status**: In Progress — **Batches 1 & 2 complete** (T1–T16 + T9a; `f6753df`…`43a858a`; `pnpm check` green, 95 tests). Batch 3 (T17–T21) dispatching; Verifier auto-runs after T21.
+**Status**: In Progress — **Batches 1, 2 & 3 complete** (T1–T21 + T9a; `f6753df`…batch-3 head;
+`pnpm check` green, 99 tests). Verifier auto-runs next.
 
 ---
 
@@ -741,18 +742,29 @@ a local pre-push nudge.
 **Tools**: MCP: `context7` (AI SDK 7 `generateText` + `Output.object`) · Skill: NONE
 
 **Done when**:
-- [ ] `ai@7` + `@ai-sdk/anthropic@4` added (devDependencies — spike-only)
-- [ ] `scripts/spike-structured-output.ts`: `generateText({ model: anthropic('claude-sonnet-5'),
-  output: Output.object({ interpretation: z.array(Operation), nextMove: <minimal schema> }),
+- [x] `ai@7.0.77` + `@ai-sdk/anthropic@4.0.41` added (devDependencies — spike-only, exact pins per
+  `research/research-aisdk.md`)
+- [x] `scripts/spike-structured-output.ts`: `generateText({ model: anthropic('claude-sonnet-5'),
+  output: Output.object({ schema: z.object({ interpretation: z.array(Operation), nextMove }) }),
   providerOptions: { anthropic: { structuredOutputMode: 'outputFormat' } } })` — **no
-  `temperature`**; prints the result, the parsed output, and `result.warnings`; prints
-  `"skipped — no ANTHROPIC_API_KEY"` and exits 0 if the key is absent
-- [ ] Not imported by any test; `pnpm knip` clean (listed as `entry` or `ignore`); not in CI
-- [ ] A dated findings block appended to `research/research-aisdk.md` and a decision entry to
-  `.specs/STATE.md` stating whether the wrapped discriminated union round-tripped and whether
-  `oneOf → anyOf` sanitisation was needed/applied
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: ~104 pass
+  `temperature`**; prints `result.output`, `result.warnings`, `finishReason`, `usage`; prints
+  `"skipped — no ANTHROPIC_API_KEY"` and exits 0 if the key is absent (verified — it exits 0)
+- [x] Not imported by any test; `pnpm knip` clean (knip auto-discovers `scripts/`); not in CI;
+  run via `pnpm spike:structured-output` (jiti, resolves the `~/` alias)
+- [x] A dated findings block appended to `research/research-aisdk.md`; AD-015 added to
+  `.specs/STATE.md` — probe **ready but UNRUN** (no key in build env; maintainer's to run).
+  `oneOf → anyOf` **is needed and is applied** — by `@ai-sdk/anthropic@4.0.41` on the pinned
+  `outputFormat` path and by the `anthropic-contract.ts` compile-time sensor as backstop; live
+  round-trip confirmation pending the maintainer's run.
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: 99 pass
+
+> SPEC_DEVIATION: `tsconfig.json` `include` gains `scripts/**/*.ts` (not in T21's listed files) so
+> the probe is typechecked and lintable — ESLint's `projectService` rejects a `.ts` file absent
+> from every tsconfig. `scripts/` is outside `src`, so depcruise never scans it (the `~/` import
+> across the context boundary is not a `plumbing`/`domain` violation). Added `spike:structured-output`
+> npm script (jiti) since neither `node --strip-types` nor `vite-node` resolves the `~/` alias the
+> real `Operation` union pulls transitively.
 
 **Tests**: none (deliverable is the finding) · **Gate**: build
 **Commit**: `chore: structured-output round-trip spike (R3) + findings`
