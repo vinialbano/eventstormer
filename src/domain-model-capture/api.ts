@@ -3,8 +3,22 @@
  * contexts and the composition root reach this context only through here —
  * never its `domain/`, `capabilities/`, or `infrastructure/`.
  */
+export { decide } from './domain/board/decide.ts'
+export { evolve } from './domain/board/evolve.ts'
 export {
-  Author,
+  type Author,
+  type BoardSnapshot,
+  type BoardWriteModel,
+  type BuildingBlockKind,
+  emptySnapshot,
+  emptyWriteModel,
+  type Rejection,
+  type SnapshotBlock,
+} from './domain/board/model.ts'
+export { project } from './domain/board/project.ts'
+export { replay, replayWriteModel } from './domain/board/replay.ts'
+export {
+  Author as AuthorSchema,
   BuildingBlock,
   BuildingBlockId,
   canReplay,

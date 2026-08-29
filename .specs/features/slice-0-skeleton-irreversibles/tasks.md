@@ -555,20 +555,20 @@ incremental-consistency guarantees.
 **Tools**: MCP: `context7` (`fast-check` property API) · Skill: NONE
 
 **Done when**:
-- [ ] `project(snap, op): BoardSnapshot` — folds capture (adds block w/ label + `provenance` from
+- [x] `project(snap, op): BoardSnapshot` — folds capture (adds block w/ label + `provenance` from
   `op.author`, `placement:'backlog'`), reword (new label, same id, no dedup), withdraw
   (`withdrawn:true`), reinstate (`withdrawn:false`); bumps `position`
-- [ ] `replay(log): BoardSnapshot = log.reduce(project, emptySnapshot)`;
+- [x] `replay(log): BoardSnapshot = log.reduce(project, emptySnapshot)`;
   `replayWriteModel(log): BoardWriteModel = log.reduce(evolve, emptyWriteModel)`
-- [ ] `fast-check` added to `devDependencies`
-- [ ] Tests: `replay(log) === snapshot` on targeted sequences (inline `// AT-18a`);
+- [x] `fast-check` added to `devDependencies`
+- [x] Tests: `replay(log) === snapshot` on targeted sequences (inline `// AT-18a`);
   **required property** `replay(log ++ [op]) === evolve(replay(log), op)` equivalent for
   `project` (`replay(log ++ [op])` deep-equals `project(replay(log), op)`); two identical labels
   both survive replay
-- [ ] `api.ts` re-exports `decide`, `evolve`, `project`, `replay`, `replayWriteModel` + the model
+- [x] `api.ts` re-exports `decide`, `evolve`, `project`, `replay`, `replayWriteModel` + the model
   types
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: ~87 + ~10 = ~97 pass
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: ~87 + ~10 = ~97 pass
 
 **Tests**: unit · **Gate**: build
 **Commit**: `feat(domain-model-capture): Board project + replay`
