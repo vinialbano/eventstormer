@@ -603,3 +603,68 @@ ANTHROPIC_API_KEY=sk-ant-... pnpm spike:structured-output
 Record `result.output` (did the wrapped union parse?), the full `result.warnings` array, and
 whether an HTTP 400 `Schema type 'oneOf' is not supported` occurred, back into this section and
 `.specs/STATE.md`.
+
+---
+
+## R3 spike — LIVE RESULTS (2026-08-29, `claude-sonnet-5`, real API)
+
+Run against the live API with a real key. **The core question is answered and two new blockers
+surfaced — both matter for Slice 1's facilitator, neither blocks Slice 0.**
+
+### Script fixes needed first (the probe had never been run)
+
+1. **`.env` is not auto-loaded** by a standalone script — added `process.loadEnvFile()` (Node-24
+   built-in, no dotenv dep) at the top.
+2. **The `~/` tsconfig path alias** is not resolved by `jiti` out of the box — the
+   `spike:structured-output` npm script now sets `JITI_TSCONFIG_PATHS=1`.
+3. **AI SDK 7 forbids a `system`-role message** in `messages` — "Use the `instructions` option
+   instead." Switched to `instructions:` + `prompt:`.
+
+### Run A — the Zod union passed directly (ADR-005's exact shape)
+
+```
+AI_APICallError (HTTP 400):
+output_config.format.schema: Empty schema ({}) that accepts any JSON value is not
+supported. Please specify a concrete type.
+```
+
+- **`oneOf → anyOf` is NOT the blocker** — no `oneOf` error ever appears; the provider SDK's
+  sanitiser handles it on the `outputFormat` path, as predicted.
+- The blocker is **`resolve.reference: z.unknown()`** (deliberately untyped in storage per
+  ADR-004) → `z.toJSONSchema` emits `{}` → Anthropic's `output_config` rejects any empty schema.
+
+### Run B — derived JSON Schema with `{}` sub-schemas patched to `{ type: 'string' }`
+
+```
+AI_APICallError (HTTP 400):
+Schemas contains too many optional parameters (41), which would make grammar
+compilation inefficient. Reduce the number of optional parameters in your tool
+schemas (limit: 24).
+```
+
+- Past the empty-schema error, straight into a **hard Anthropic limit: ≤ 24 optional parameters**
+  in a structured-output schema.
+- The full 20-variant union has ~41 optionals — dominated by `v: z.literal(1).default(1)` on
+  **every** variant (`.default()` ⇒ optional in the input schema), plus `author.proposer`, etc.
+
+### Conclusion — for Slice 1
+
+The facilitator **cannot** pass `z.array(Operation)` (the whole frozen union) to `Output.object`.
+It needs a **hand-shaped projection** of the storage schema:
+
+- only the operation kinds the facilitator actually proposes (per the `domain-model-capture`
+  canvas: `capture-*`, `reword`, `mark-pivotal`, `annotate`, `raise-hot-spot`, `resolve`,
+  `sequence`, `link-cause` — **not** the human-direct edits `place`/`unplace`/`withdraw`/
+  `reinstate`/`unsequence`/`unlink-cause`/`unannotate`/`unmark-pivotal`/`reopen`);
+- **drop `v`** from the AI contract — the app stamps `OP_SCHEMA_VERSION` on append (AD-012's
+  sibling); this alone removes ~20 optionals;
+- `reference` concretely typed (`z.string()` — a note/link/id as text);
+- `author` supplied by the app, not the model.
+
+This **strengthens AD-010**: the AI contract is not merely a sanitised *view* of the storage
+schema — it is a smaller, purpose-built schema. `anthropic-contract.ts`'s compile-time sensor
+stays useful as a drift check on the shared *shapes*, but Slice 1 authors the projection
+explicitly.
+
+`oneOf → anyOf` round-trip: **not fully confirmed** (never got a clean call) but **not the
+problem** — no `oneOf` error at any point. A clean confirmation comes with Slice 1's projection.
