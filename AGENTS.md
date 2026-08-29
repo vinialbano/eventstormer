@@ -23,28 +23,37 @@ the pre-push hook run exactly this; they must never be able to disagree about wh
 
 ## The one rule that is not negotiable
 
-`src/domain/` imports nothing from a framework. Full detail — including all domain invariants —
-is in `src/domain/AGENTS.md`, auto-loaded whenever a file in that directory is open.
+Any `**/domain/**` directory imports nothing from a framework or a Node builtin. Full detail —
+including all domain invariants — is in each context's `domain/AGENTS.md` (currently
+`src/domain-model-capture/domain/AGENTS.md`), auto-loaded whenever a file in that directory is open.
 
 ## Layout
 
+Organised by bounded context first, capability second — never by technical layer (ADR-002).
+
 ```
-src/domain/            model, reducer, replay, invariants, graph ranking. Framework-free.
-src/capabilities/      one folder per use-case slice; each owns its http.ts, logic, and data
-src/plumbing/          result types, ids, errors — extracted on the Rule of Three, not before
-src/app/               Vue UI
+src/domain-model-capture/       Core   — the Board: operation log + graph projection
+src/session-facilitation/       Core   — Workshop / Session / Proposal / Resolution; the facilitator
+src/derived-artifact-generation/ Supporting — deterministic template renders
+src/host/                       composition root: Hono app, route mounting, wiring
+src/plumbing/                   Result, branded ids, EventStore port + adapter, clock, bus
+src/app/                        Vue SPA — talks to capabilities over HTTP only
 ```
 
-Every arrow here is enforced by dependency-cruiser, and each rule was verified by planting a
-violation and watching it fail — not by reading the config:
+Each context folder holds its own `domain/`, `capabilities/<slice>/`, `infrastructure/`, and a
+single `api.ts` — added only when earned. Every arrow is enforced by dependency-cruiser, and each
+rule was verified by planting a violation and watching it fail — not by reading the config:
 
-- `domain` may not import a framework, a Node builtin, or anything above it.
-- `plumbing` is a leaf; it may not reach back into `domain`, `capabilities`, or `app`.
-- Capability slices may not import each other. Share through `domain` or `plumbing`.
-- `app` talks to capabilities over HTTP, never by importing their `http.ts` or `data.ts`.
+- `**/domain/**` may not import a framework, a Node builtin, or anything above it.
+- `plumbing/` is a leaf; it may not reach back into a context, `host/`, or `app/`.
+- Cross-context imports go only through the other context's `api.ts` — never its `domain/`,
+  `capabilities/`, or `infrastructure/`. `host/` may import a context's `api.ts` only.
+- Capability slices within a context may not import each other. Share through that context's
+  `domain/` or through `plumbing/`.
+- `app/` talks to capabilities over HTTP, never by importing their `http.ts` or `data.ts`.
 
-Routes are composed, not discovered. A slice exports its routes from `http.ts`; one composition
-file mounts them all. There is no filesystem routing anywhere in this project.
+Routes are composed, not discovered. A slice exports its Hono router; `src/host/routes.ts` mounts
+them all. There is no filesystem routing anywhere in this project.
 
 ## Read on demand
 
@@ -52,8 +61,8 @@ file mounts them all. There is no filesystem routing anywhere in this project.
   surface; the index to `docs/adr/`. Read before designing a slice or touching a cross-cutting
   concern.
 - `docs/domain/README.md` — the confirmed subdomain catalog, bounded-context canvases, and context
-  map. Read before naming a domain concept, designing a new capability slice, or touching
-  `src/domain/`'s public vocabulary.
+  map. Read before naming a domain concept, designing a new capability slice, or touching a
+  context's `domain/` public vocabulary.
 - `docs/tooling-gotchas.md` — TypeScript/ESLint/dependency-cruiser/CI facts. Read before touching
   any of those configs.
 - `docs/framework-gotchas.md` — Hono/Vue/Pinia/dagre/`node:sqlite` version facts. Read before
