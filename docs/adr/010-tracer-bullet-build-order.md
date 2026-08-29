@@ -10,10 +10,10 @@
 
 The PRD's dependency graph (§8) is structurally correct but sequencing-blind: it puts F09 (the
 chosen problem — the session's closing deliverable) in wave 5, downstream of nearly everything,
-and treats every wave-1 feature as equal. The evaluation is really about the **facilitator** and
-the **no-drift claim** (a live projection of the model, never a hand-maintained copy). A build
-sequenced by the graph spends its first days on the board's visuals and reaches the graded
-substance late.
+and treats every wave-1 feature as equal. What actually demonstrates the product is the
+**facilitator** and the **no-drift claim** (a live projection of the model, never a
+hand-maintained copy). A build sequenced by the graph spends its first days on the board's
+visuals and reaches that substance late.
 
 ## Considered Options
 
@@ -41,7 +41,7 @@ substance late.
 ### Deliberate deviations from the wave graph
 
 - **F10 readable-account is pulled to slice 2, ahead of F02 (the board).** It is the thesis beat
-  and needs no board visuals; F02 is lower value-per-hour for the evaluation.
+  and needs no board visuals; F02 is lower value-per-hour for demonstrating the product.
 - **F06 is split** — reword/withdraw in slice 2 (the money shot), relation edits in slice 3.
 - **F09 / F19 stay late**, as the graph has them.
 
@@ -53,9 +53,9 @@ of their slice.
 
 ## Consequences
 
-- **Positive:** the graded capabilities and the demo beat exist early and get the most iteration
-  time; the irreversible decisions (persistence port, op-schema versioning) are exercised on day
-  one; the cut line means a time crunch drops depth, not the thesis.
+- **Positive:** the load-bearing capabilities and the demo beat exist early and get the most
+  iteration time; the irreversible decisions (persistence port, op-schema versioning) are
+  exercised on day one; the cut line means a time crunch drops depth, not the thesis.
 - **Negative:** F01 is touched across several slices (relations, hot spots, cascades added later)
   — mitigated by the op-schema-versioning discipline in slice 0.
 - **Negative:** per-slice hand-off to `spec-driven-development` re-establishes context each time;

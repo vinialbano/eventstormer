@@ -8,19 +8,20 @@
 
 ## Context and Problem Statement
 
-The deliverable is a repository link. The stack helps: `node:sqlite` needs no database server,
-and the only external dependency is the Anthropic API (which needs a key).
+The way people encounter EventStormer is a repository they clone and run. The stack helps:
+`node:sqlite` needs no database server, and the only external dependency is the Anthropic API
+(which needs a key).
 
 ## Decision Outcome
 
-- **Local-only. No hosted deployment.** A grader clones and runs it with their own
-  `ANTHROPIC_API_KEY`. A public deploy would mean paying for graders' API usage and managing a
-  shared key — not worth it for a prototype. A Node-host deploy is a ~1 hour add later if a live
-  link is wanted; not v1.
+- **Local-only. No hosted deployment.** You clone and run it with your own `ANTHROPIC_API_KEY`.
+  A public deploy would mean paying for everyone's API usage and managing a shared key — not
+  worth it for a prototype. A Node-host deploy is a ~1 hour add later if a live link is wanted;
+  not v1.
 - **No Docker, no devcontainer.** Single process, embedded `node:sqlite`, one external API — the
   README says so. The only reproducibility risk is the Node version → ship a `.node-version`
   matching the `>=24.16.0` engines pin (`engine-strict=true` already enforces it). Revisit only
-  if a grader genuinely cannot get Node 24.
+  if someone genuinely cannot get Node 24.
 - **Run from a fresh clone — three documented steps, no wizard:**
   ```
   pnpm install
@@ -41,7 +42,7 @@ and the only external dependency is the Anthropic API (which needs a key).
 ## Consequences
 
 - **Positive:** nothing to install, run, or explain beyond Node + pnpm + a key; the demo covers
-  the grader who won't run it.
+  anyone who won't run it themselves.
 - **Negative:** no one-click live link; mitigated by the recording and the ~1 hour deploy escape
   hatch.
 

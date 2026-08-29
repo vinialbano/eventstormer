@@ -8,8 +8,9 @@
 
 ## Context and Problem Statement
 
-The facilitator is the graded core. It turns a domain expert's plain-language contribution into
-properly-formed operations, constrained to the schema, while holding an asymmetric quality bar —
+The facilitator is the heart of the product. It turns a domain expert's plain-language
+contribution into properly-formed operations, constrained to the schema, while holding an
+asymmetric quality bar —
 lenient on the human's phrasing, strict on names it supplies itself. It must survive a provider
 outage and a malformed response, and its cost must be controlled.
 

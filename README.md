@@ -6,9 +6,8 @@ edits, or rejects each one. What they build is not a picture of the domain — i
 model itself, a typed graph with stable identities, and every artifact engineering reads
 afterwards is derived from it rather than transcribed from it.
 
-An open-source project, started for the RadHires Harness Challenge. Product definition:
-[`docs/product/PRD.md`](docs/product/PRD.md). Architecture and the decisions behind it:
-[`DESIGN.md`](DESIGN.md) and [`docs/adr/`](docs/adr/).
+Product definition: [`docs/product/PRD.md`](docs/product/PRD.md). Architecture and the decisions
+behind it: [`DESIGN.md`](DESIGN.md) and [`docs/adr/`](docs/adr/).
 
 > **Status: scaffold.** The harness, the model and the board are not built yet. What runs today
 > is the toolchain, the architecture gates, and a health endpoint. See
