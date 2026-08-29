@@ -33,11 +33,23 @@ capture.
 
 **Active feature:** `slice-0-skeleton-irreversibles` (GitHub issue #37)
 **Branch:** `slice-0-skeleton-irreversibles` (off `main`)
-**Phase:** Execute. Batch 1 (T1–T8) running — T1–T6 committed (`f6753df`…`a0ecf20`), T7–T8 in
-progress. Baseline `pnpm test` was 4.
+**Phase:** Execute. **Batch 1 (T1–T8) complete** — `f6753df`…`6a8bc7b`, `pnpm check` green,
+26 tests. Plus `4a510ad` (orchestrator: AGENTS.md layout reconciled — was flagged stale by the
+worker; ADR-002 lists it as part of the migration). Dispatching Batch 2 next.
 **Scope size:** Large (30 requirement IDs; 10 components; **22 tasks** — T9a added mid-execute).
-**Batch status:** Batch 1 (T1–T8) — running. Batch 2 (T9, **T9a**, T10–T16) — pending. Batch 3
+**Batch status:** Batch 1 — ✅ done. Batch 2 (T9, **T9a**, T10–T16) — dispatching. Batch 3
 (T17–T21) — pending.
+
+**Batch 1 deviations (all reasoned, documented in commits/tasks.md):**
+- `host-imports-only-context-api` depcruise rule added in T3 (not T2) so T2's gate stayed green
+  while `host/health.ts` still imported domain directly; T3 does the rule + its planted violation.
+- `knip.json` `entry` += `src/*/api.ts` — context public-surface re-exports aren't "unused" pre-Slice-1.
+- T7 SPEC_DEVIATION: `.dependency-cruiser.cjs` `not-to-dev-dep` `pathNot` widened to also exempt
+  `*-test.ts` (shared test-support like `contract-test.ts`, which imports vitest, never ships) —
+  verified the rule still catches real production→devDep imports. Revisit at Verifier / cleanup.
+- T8 `applyMigrations` takes a structural `MigrationDb` so `migrations.ts` imports no `node:sqlite`
+  (adapter is T9 — still the only intended importer).
+- README stale layout → Slice 6 (per DESIGN.md).
 
 **Mid-execute corrections (artifacts updated):**
 - **AD-013** — `EventStore` port is **synchronous** (no `Promise`); every impl is sync,

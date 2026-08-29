@@ -13,7 +13,7 @@ discrimination sensor).
 ---
 
 **Design**: `.specs/features/slice-0-skeleton-irreversibles/design.md`
-**Status**: Approved (2026-08-29) — tools: context7 for API lookups, no per-task skills; execution: batch sub-agents (3 batches)
+**Status**: In Progress — **Batch 1 (T1–T8) complete** (`f6753df`…`6a8bc7b`, `pnpm check` green, 26 tests). AGENTS.md layout reconciled (`4a510ad`, orchestrator). Batch 2 (T9→T9a→T10–T16) next.
 
 ---
 
@@ -333,20 +333,20 @@ on construction; plugs into the shared contract suite. Adds `db:reset`.
 **Tools**: MCP: `context7` (`node:sqlite` API) · Skill: NONE
 
 **Done when**:
-- [ ] `createSqliteEventStore(path)` constructs `DatabaseSync`, sets WAL (asserted), runs
+- [x] `createSqliteEventStore(path)` constructs `DatabaseSync`, sets WAL (asserted), runs
   `applyMigrations`
-- [ ] `append` = `BEGIN IMMEDIATE` → re-read `MAX(position)` per stream → compare to
+- [x] `append` = `BEGIN IMMEDIATE` → re-read `MAX(position)` per stream → compare to
   `expectedPosition` → insert the whole batch (each row stamped `op_version = OP_SCHEMA_VERSION`,
   `at` from the passed value) → `COMMIT`; conflict → `ROLLBACK` + transient `err`; never calls
   `row.hasOwnProperty`
-- [ ] `read` uses `stmt.iterate()` and returns log order; the adapter is **synchronous** — no
+- [x] `read` uses `stmt.iterate()` and returns log order; the adapter is **synchronous** — no
   `async`/`await`/`Promise` (AD-013; `DatabaseSync` is sync)
-- [ ] DB path from `EVENTSTORMER_DB` env (default `./data/eventstormer.db`); tests use a temp file
-- [ ] `sqlite-adapter.test.ts` runs `eventStoreContract('node:sqlite', …)` — same suite as T7
-- [ ] `package.json` `db:reset` deletes `data/eventstormer.db`, `-wal`, `-shm`
-- [ ] `pnpm depcruise` shows `node:sqlite` imported **only** here
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~24 + ~5 (contract suite) = ~29 pass
+- [x] DB path from `EVENTSTORMER_DB` env (default `./data/eventstormer.db`); tests use a temp file
+- [x] `sqlite-adapter.test.ts` runs `eventStoreContract('node:sqlite', …)` — same suite as T7
+- [x] `package.json` `db:reset` deletes `data/eventstormer.db`, `-wal`, `-shm`
+- [x] `pnpm depcruise` shows `node:sqlite` imported **only** here
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: ~24 + ~5 (contract suite) = ~29 pass
 
 **Tests**: integration · **Gate**: full
 **Commit**: `feat(plumbing): node:sqlite EventStore adapter`
