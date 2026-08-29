@@ -406,18 +406,18 @@ usable type export
 **Tools**: MCP: `context7` (Zod 4 `.brand()`) · Skill: NONE
 
 **Done when**:
-- [ ] `ids.ts` exports `WorkshopId`, `SessionId`, `BuildingBlockId` Zod schemas
+- [x] `ids.ts` exports `WorkshopId`, `SessionId`, `BuildingBlockId` Zod schemas
   (`z.string().brand<…>()`); `z.infer<typeof WorkshopId>` is the **same** type as
   `plumbing/ids.ts`'s `WorkshopId` (both `string & z.$brand<'WorkshopId'>`) — assignable both
   directions with no cast
-- [ ] `author.ts` exports `Author = z.object({ proposer: PartyRef.optional(), accepter: PartyRef })`
+- [x] `author.ts` exports `Author = z.object({ proposer: PartyRef.optional(), accepter: PartyRef })`
   (`PartyRef` = a minimal `z.object` naming the party)
-- [ ] Tests: a bare string fails `.parse` narrowing to the brand at compile time
+- [x] Tests: a bare string fails `.parse` narrowing to the brand at compile time
   (`@ts-expect-error`); `Author` accepts `{ accepter }` alone and `{ proposer, accepter }`;
   rejects `{ proposer }` alone
-- [ ] `pnpm depcruise` — schema dir imports no framework
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~29 + ~6 = ~35 pass
+- [x] `pnpm depcruise` — schema dir imports no framework
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: ~29 + ~6 = ~35 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(domain-model-capture): branded id schemas and Author`
