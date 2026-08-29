@@ -18,7 +18,7 @@ export default defineConfig({
     // lookahead, gets excluded, and Vite answers it with the SPA instead of
     // Hono answering 404. Verified with curl.
     devServer({
-      entry: 'src/server.ts',
+      entry: 'src/host/index.ts',
       exclude: [/^(?!\/api(?:\/|$)).*/],
       injectClientScript: false,
     }),
@@ -35,7 +35,12 @@ export default defineConfig({
       include: ['src/**/*.ts', 'src/**/*.vue'],
       // Entry points are never imported by a test and would sit at 0%, dragging
       // any future ratchet down for no signal.
-      exclude: ['src/**/*.test.ts', 'src/server.ts', 'src/app/main.ts'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/host/index.ts',
+        'src/host/routes.ts',
+        'src/app/main.ts',
+      ],
       // No thresholds yet, deliberately. `thresholds.autoUpdate` rewrites THIS
       // FILE in place on every full coverage run, and with no real tests it
       // writes meaningless floors — branches measures 0/0, which reports as

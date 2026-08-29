@@ -1,4 +1,4 @@
-# src/domain/ — path-scoped
+# src/domain-model-capture/domain/ — path-scoped
 
 Loaded automatically when work happens in this directory. Restates and expands the one rule that
 governs everything here; see the root `AGENTS.md` for everything else.

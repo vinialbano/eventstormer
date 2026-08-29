@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { testClient } from 'hono/testing'
-import { healthRoutes } from './http.ts'
+import { healthRoutes } from './health.ts'
 
 describe('health', () => {
   it('reports the op schema version this build replays', async () => {
