@@ -86,9 +86,16 @@ module.exports = {
       },
     },
 
-    // `host-imports-only-context-api` is added in T3, together with the
-    // `domain-model-capture/api.ts` seam and the rewire of `host/health.ts`
-    // through it — T3's planted violation exercises exactly that rule.
+    {
+      name: 'host-imports-only-context-api',
+      severity: 'error',
+      comment:
+        'The composition root wires contexts together, but only through their api.ts. Importing ' +
+        "a context's domain/, capabilities/, or infrastructure/ directly bypasses the one seam " +
+        'that keeps a context replaceable.',
+      from: { path: '^src/host/' },
+      to: { path: `^src/(${CONTEXTS})/`, pathNot: '^src/[^/]+/api\\.ts$' },
+    },
 
     {
       name: 'ui-does-not-import-server-code',

@@ -170,13 +170,14 @@ anchor, `no-circular`, `not-to-dev-dep`, `no-orphans`); only `from`/`to` anchors
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `api.ts` re-exports `OP_SCHEMA_VERSION`, `canReplay`, `REPLAYABLE_OP_SCHEMA_VERSIONS`
-- [ ] `host/health.ts` imports `OP_SCHEMA_VERSION` from `../domain-model-capture/api.ts` (not a
+- [x] `api.ts` re-exports `OP_SCHEMA_VERSION`, `canReplay`, `REPLAYABLE_OP_SCHEMA_VERSIONS`
+- [x] `host/health.ts` imports `OP_SCHEMA_VERSION` from `../domain-model-capture/api.ts` (not a
   `domain/` path)
-- [ ] `pnpm depcruise` proves `host/` importing a context `domain/` file directly would fail
-  (`host-imports-only-context-api`) — planted + reverted
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: 3 pass
+- [x] `pnpm depcruise` proves `host/` importing a context `domain/` file directly would fail
+  (`host-imports-only-context-api`) — rule added here, planted + reverted
+- [x] Gate check passes: `pnpm check` (knip `entry` extended with `src/*/api.ts` so the
+  public-surface re-exports are not flagged unused before their Slice 1+ consumers land)
+- [x] Test count: 4 pass (health `testClient` test covers the seam)
 
 **Tests**: none (covered by the carried health `testClient` test) · **Gate**: build
 **Commit**: `feat(domain-model-capture): api.ts cross-context seam`
