@@ -195,12 +195,12 @@ anchor, `no-circular`, `not-to-dev-dep`, `no-orphans`); only `from`/`to` anchors
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Exports `type Result<T,E>`, `ok`, `err`, `isOk`, `isErr`, `map`, `andThen`
-- [ ] `plumbing/` imports nothing from a context / `host` / `app` (`plumbing-is-a-leaf`)
-- [ ] Unit tests: `ok`/`err` construction, `map` skips on `err`, `andThen` chains and
+- [x] Exports `type Result<T,E>`, `ok`, `err`, `isOk`, `isErr`, `map`, `andThen`
+- [x] `plumbing/` imports nothing from a context / `host` / `app` (`plumbing-is-a-leaf`)
+- [x] Unit tests: `ok`/`err` construction, `map` skips on `err`, `andThen` chains and
   short-circuits, narrowing works
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: 3 (carried) + ~6 new = ~9 pass
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: 4 carried + 7 new = 11 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(plumbing): Result<T,E> and combinators`
