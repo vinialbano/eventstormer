@@ -115,13 +115,13 @@ through `api.ts`).
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `src/domain/`, `src/capabilities/`, `src/server.ts` no longer exist; the tree matches
+- [x] `src/domain/`, `src/capabilities/`, `src/server.ts` no longer exist; the tree matches
   design component 1 (only `domain-model-capture/`, `plumbing/` *(empty dir ok — populated
   Phase 2)*, `host/`, `app/`)
-- [ ] `pnpm dev` serves the SPA and `curl localhost:5173/api/health` → `{"status":"ok","opSchemaVersion":1}`
-- [ ] The moved `schema-version` and `health` tests pass unchanged
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: 4 pass (3 in `schema-version.test.ts` + 1 health) — baseline, no deletions
+- [x] `pnpm dev` serves the SPA and `curl localhost:5173/api/health` → `{"status":"ok","opSchemaVersion":1}`
+- [x] The moved `schema-version` and `health` tests pass unchanged
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: 4 pass (3 in `schema-version.test.ts` + 1 health) — baseline, no deletions
 
 **Tests**: none (move only — existing tests carried) · **Gate**: build
 **Commit**: `refactor: migrate scaffold to context-first layout (ADR-002)`
@@ -141,15 +141,17 @@ anchor, `no-circular`, `not-to-dev-dep`, `no-orphans`); only `from`/`to` anchors
 **Tools**: MCP: `context7` (dependency-cruiser rule syntax if needed) · Skill: NONE
 
 **Done when**:
-- [ ] Rules present per design component 2: `domain-imports-no-framework` (glob `[^/]+/domain/`),
+- [x] Rules present per design component 2: `domain-imports-no-framework` (glob `[^/]+/domain/`),
   `domain-imports-no-node-builtins`, `domain-imports-nothing-above`, `plumbing-is-a-leaf`,
-  `cross-context-only-via-api`, `host-imports-only-context-api`, `ui-does-not-import-server-code`,
-  `no-cross-slice-imports` (path generalised), plus the unchanged three
-- [ ] Each new/changed rule verified: a planted violation was committed transiently, `pnpm depcruise`
+  `cross-context-only-via-api`, `ui-does-not-import-server-code`,
+  `no-cross-slice-imports` (path generalised), plus the unchanged three.
+  `host-imports-only-context-api` is added in T3 (SPEC_DEVIATION — see commit), the task that
+  creates `api.ts` and rewires `host/health.ts` so the gate stays green.
+- [x] Each new/changed rule verified: a planted violation was committed transiently, `pnpm depcruise`
   failed on it, and it was reverted — the commit message lists every rule and its planted case
-- [ ] A type-only framework import in `domain-model-capture/domain/` still fails (`tsPreCompilationDeps`)
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: 4 pass (unchanged)
+- [x] A type-only framework import in `domain-model-capture/domain/` still fails (`tsPreCompilationDeps`)
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: 4 pass (unchanged)
 
 **Tests**: none (build gate + manual plant-a-violation) · **Gate**: build
 **Commit**: `build: context-first dependency-cruiser rules, each verified by a planted violation`
