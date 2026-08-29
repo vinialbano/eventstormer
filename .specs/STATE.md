@@ -35,11 +35,25 @@ capture.
 
 **Active feature:** `slice-0-skeleton-irreversibles` (GitHub issue #37)
 **Branch:** `slice-0-skeleton-irreversibles` (off `main`)
-**Phase:** Execute. **Batch 1 (T1–T8) ✅** (`f6753df`…`6a8bc7b`) + `4a510ad` (AGENTS.md layout).
-**Batch 2 (T9, T9a, T10–T16) ✅** (`eae93a1`…`43a858a`) + `9052450` (AD-013/14 docs). `pnpm check`
-green, **95 tests** (18 files). Dispatching Batch 3 next; Verifier runs automatically after T21.
-**Scope size:** Large (30 requirement IDs; 10 components; **22 tasks** — T9a added mid-execute).
-**Batch status:** Batch 1 — ✅. Batch 2 — ✅. Batch 3 (T17–T21) — dispatching.
+**Phase:** Execute — **all 22 tasks done** (T1–T21 + T9a), 26 commits `f6753df`…`6981768`
+(range `49b779a..HEAD`). `pnpm check` + `pnpm build` green, **99 tests** (19 files), depcruise
+clean, no DB files tracked. **Independent Verifier dispatched next.**
+**Scope size:** Large (30 requirement IDs; 10 components; 22 tasks).
+**Batch status:** Batch 1 ✅ · Batch 2 ✅ · Batch 3 ✅. Verifier — dispatching.
+
+**Batch 3 deviations:**
+- T17 `plumbing-is-a-leaf` `.test.ts` carve-out — **rejected & fixed** (`6981768`): the round-trip
+  test moved to `src/domain-model-capture/persistence-roundtrip.test.ts` (it asserts a
+  domain-model-capture property); the architecture rule reverted to `from: { path: '^src/plumbing/' }`,
+  re-verified by a planted violation.
+- T18 SPEC_DEVIATION: `@changesets/cli` pinned `2.31.1` (3.x needs `pnpm >=10`; repo pins
+  `pnpm@8.15.4` + `engine-strict`). 2.x takes the identical config. Revisit when the pnpm pin moves.
+- T21 SPEC_DEVIATION: `tsconfig.json` `include` += `scripts/**/*.ts` (ESLint `projectService`
+  needs it) + a `spike:structured-output` script (jiti for the `~/` alias). `scripts/` is outside
+  `src/` so depcruise never scans it.
+- **AD-015** — the R3 spike is built + green but **UNRUN** (no `ANTHROPIC_API_KEY`); the
+  maintainer runs `pnpm spike:structured-output` before Slice 1. Source analysis confirms
+  `oneOf → anyOf` is needed and applied (SDK on the live path + our sensor as backstop).
 
 **Batch 2 deviations (all reasoned; several are improvements — no SPEC_DEVIATION markers):**
 - T14 kind-permission: an **exhaustive deterministic loop** over all 14 not-implemented op kinds
