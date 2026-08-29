@@ -6,7 +6,9 @@ edits, or rejects each one. What they build is not a picture of the domain — i
 model itself, a typed graph with stable identities, and every artifact engineering reads
 afterwards is derived from it rather than transcribed from it.
 
-Built for the RadHires Harness Challenge. Product definition: [`docs/product/PRD.md`](docs/product/PRD.md).
+An open-source project, started for the RadHires Harness Challenge. Product definition:
+[`docs/product/PRD.md`](docs/product/PRD.md). Architecture and the decisions behind it:
+[`DESIGN.md`](DESIGN.md) and [`docs/adr/`](docs/adr/).
 
 > **Status: scaffold.** The harness, the model and the board are not built yet. What runs today
 > is the toolchain, the architecture gates, and a health endpoint. See
@@ -29,7 +31,7 @@ One process. Vite serves the SPA and hands `/api/*` to the Hono app in the same 
 | Variable | Required | Notes |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | for the facilitator | Not yet read by anything. `.env` is gitignored. |
-| `FACILITATOR_MODEL` | no | Defaults to `claude-opus-5`. Model ids take no date suffix. |
+| `FACILITATOR_MODEL` | no | Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)). Model ids take no date suffix. |
 | `PORT` | no | Defaults to 5173. |
 
 ## What is real vs stubbed
