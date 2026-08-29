@@ -33,10 +33,20 @@ capture.
 
 **Active feature:** `slice-0-skeleton-irreversibles` (GitHub issue #37)
 **Branch:** `slice-0-skeleton-irreversibles` (off `main`)
-**Phase:** Execute — tasks approved; batch sub-agents accepted (3 batches: P1+P2 / P3+P4 / P5).
-Baseline `pnpm test` = 4 passing. Dispatching Batch 1 (T1–T8).
-**Scope size:** Large (30 requirement IDs; 10 components; 21 tasks).
-**Batch status:** Batch 1 (T1–T8) — dispatched. Batch 2 (T9–T16), Batch 3 (T17–T21) — pending.
+**Phase:** Execute. Batch 1 (T1–T8) running — T1–T6 committed (`f6753df`…`a0ecf20`), T7–T8 in
+progress. Baseline `pnpm test` was 4.
+**Scope size:** Large (30 requirement IDs; 10 components; **22 tasks** — T9a added mid-execute).
+**Batch status:** Batch 1 (T1–T8) — running. Batch 2 (T9, **T9a**, T10–T16) — pending. Batch 3
+(T17–T21) — pending.
+
+**Mid-execute corrections (artifacts updated):**
+- **AD-013** — `EventStore` port is **synchronous** (no `Promise`); every impl is sync,
+  ADR-001 chose sync, `require-await` flagged the speculative async. Worker already applied it to
+  `port.ts`/`memory-store.ts`/`contract-test.ts`.
+- **T9a inserted** (head of Batch 2) — T5's `plumbing/ids.ts` shipped a hand-rolled
+  `interface Brand<B> { __brand: B }`, incompatible with Zod's `z.string().brand()` (→
+  `string & z.$brand<'X'>`). T9a rewrites it to `z.$brand` and promotes `zod` to a direct
+  dependency (was transitive-via-knip; needed by T10–T16). "Promote zod" bullet removed from T12.
 
 **ADR-compliance pass — adjustments folded into the spec:**
 - `EventStore` stream key is namespaced `(context, aggregate, id)` — ADR-003 verbatim (was Board-specific).

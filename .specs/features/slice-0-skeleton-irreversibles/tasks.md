@@ -304,14 +304,15 @@ factory (run against the in-memory impl here; T9 plugs the sqlite adapter into t
 **Tools**: MCP: `context7` (`node:sqlite` DDL / PRAGMA) · Skill: NONE
 
 **Done when**:
-- [ ] Exports `MIGRATIONS: Migration[]` (`{ id:number; up:string }`) with migration `001` =
+- [x] Exports `MIGRATIONS: Migration[]` (`{ id:number; up:string }`) with migration `001` =
   the `operation_log` table (3-column stream key + `position` + `op_version` + `at` + `operation`,
   `PRIMARY KEY (context,aggregate,stream_id,position)`)
-- [ ] Exports `applyMigrations(db)` — creates `_migrations`, applies each absent id in order inside
-  one `BEGIN IMMEDIATE`, records it
-- [ ] Unit test: no migration `up` string contains `DROP` or `ALTER … DROP` (S0-19 AC2 guard)
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~22 + ~2 = ~24 pass
+- [x] Exports `applyMigrations(db)` — creates `_migrations`, applies each absent id in order inside
+  one `BEGIN IMMEDIATE`, records it. `db` is a structural `MigrationDb` (`exec`/`prepare`) so this
+  module imports no `node:sqlite` — the real `DatabaseSync` satisfies it (T9).
+- [x] Unit test: no migration `up` string contains `DROP` or `ALTER … DROP` (S0-19 AC2 guard)
+- [x] Gate check passes: `pnpm check` (last task of Phase 2 → build gate)
+- [x] Test count: 21 + 5 = 26 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(plumbing): additive migration runner + operation_log DDL`
@@ -352,20 +353,63 @@ on construction; plugs into the shared contract suite. Adds `db:reset`.
 
 ---
 
+### T9a: Fix `plumbing/ids.ts` to Zod's `$brand`; promote `zod` to a direct dependency
+
+**What**: Corrective task. T5 shipped `plumbing/ids.ts` with a hand-rolled `interface Brand<B> {
+readonly __brand: B }`. That type is **not** structurally compatible with what
+`z.string().brand<'X'>()` infers (`string & z.$brand<'X'>`), so T10's assignability requirement
+would fail or force a cast at every `plumbing ↔ domain` seam — the exact id-mixup class the brand
+exists to prevent. Fix: one brand mechanism, Zod's. Also, `zod` is currently only a transitive
+devDependency (via knip) — promote it now so T10/T11/T12/T16 can import it at runtime.
+**Where**: `src/plumbing/ids.ts` (modify), `src/plumbing/ids.test.ts` (modify), `package.json`
+(add `zod` to `dependencies`)
+**Depends on**: T5
+**Reuses**: design.md Risks/Tech-Decisions rows "brand mechanism" (updated 2026-08-29); context7
+Zod-4 verification that `z.string().brand<'X'>()` → `string & z.$brand<'X'>` and `z.$brand` is a
+usable type export
+**Requirement**: S0-10, AD-011, S0-08 (`zod` a direct dep — moved here from T12)
+
+**Tools**: MCP: `context7` (Zod 4 `.brand()` / `z.$brand`) · Skill: NONE
+
+**Done when**:
+- [ ] `pnpm add zod@4.4.3` (exact pin — matches `research/research-server.md` / the currently
+  hoisted version); `zod` appears in `package.json` `dependencies`
+- [ ] `plumbing/ids.ts`: `import type { z } from 'zod'`; `export type WorkshopId = string &
+  z.$brand<'WorkshopId'>` (+ `SessionId`, `BuildingBlockId`); the hand-rolled `interface Brand`
+  is gone; generators unchanged in behaviour (`nanoid() as unknown as WorkshopId` is acceptable;
+  a single-line `unsafeBrand` helper is also fine)
+- [ ] `plumbing/ids.ts` still imports **only** `nanoid` (runtime) + `zod` (`import type`) — the
+  `not-to-dev-dep` rule exempts type-only, and after the promotion `zod` is a real dep anyway
+- [ ] `ids.test.ts`: keep the URL-safe / distinctness / `@ts-expect-error`-on-bare-string cases;
+  add one asserting a value typed `string & z.$brand<'WorkshopId'>` is assignable to `WorkshopId`
+  (proves the seam compatibility T10 relies on)
+- [ ] `pnpm knip` — `zod` not flagged unused (T9a itself doesn't consume it at runtime, but
+  `import type` counts; if knip still flags it, that's expected until T10 lands — note it and
+  proceed, T10's runtime import clears it within the same batch)
+- [ ] Gate check passes: `pnpm check`
+- [ ] Test count: unchanged from T9 (~29) — ids test count steady, maybe +1
+
+**Tests**: unit · **Gate**: build
+**Commit**: `fix(plumbing): use Zod $brand for id types; add zod as a direct dependency`
+
+---
+
 ### T10: `domain-model-capture/domain/schema/ids.ts` + `author.ts`
 
-**What**: The branded id *schemas* (Zod, applying T5's symbols) and the `Author` value object.
+**What**: The branded id *schemas* (Zod `.brand()`) and the `Author` value object.
 **Where**: `src/domain-model-capture/domain/schema/ids.ts`, `author.ts`, `ids.test.ts`,
 `author.test.ts`
-**Depends on**: T5
-**Reuses**: T5 brand symbols; `research/harness-tools.md` (`.brand()` is static-only)
+**Depends on**: T9a
+**Reuses**: T9a's `plumbing/ids.ts` `z.$brand` types; `research/harness-tools.md` (`.brand()` is static-only)
 **Requirement**: S0-05 (ids), S0-07 (author)
 
 **Tools**: MCP: `context7` (Zod 4 `.brand()`) · Skill: NONE
 
 **Done when**:
 - [ ] `ids.ts` exports `WorkshopId`, `SessionId`, `BuildingBlockId` Zod schemas
-  (`z.string().brand<…>()`), whose inferred types are assignable to/from T5's symbol types
+  (`z.string().brand<…>()`); `z.infer<typeof WorkshopId>` is the **same** type as
+  `plumbing/ids.ts`'s `WorkshopId` (both `string & z.$brand<'WorkshopId'>`) — assignable both
+  directions with no cast
 - [ ] `author.ts` exports `Author = z.object({ proposer: PartyRef.optional(), accepter: PartyRef })`
   (`PartyRef` = a minimal `z.object` naming the party)
 - [ ] Tests: a bare string fails `.parse` narrowing to the brand at compile time
@@ -408,9 +452,9 @@ compose in v4)
 ### T12: `domain-model-capture/domain/schema/operations.ts` — the frozen `v:1` operation union
 
 **What**: The full 20-variant discriminated union, frozen at `v: z.literal(1)`, plus the schema
-barrel and `api.ts` re-exports; promote `zod` to a direct dependency.
+barrel and `api.ts` re-exports. (`zod` was promoted to a direct dependency in T9a.)
 **Where**: `src/domain-model-capture/domain/schema/operations.ts`, `index.ts`, `operations.test.ts`;
-`src/domain-model-capture/api.ts` (modify); `package.json` (`zod` → `dependencies`)
+`src/domain-model-capture/api.ts` (modify)
 **Depends on**: T10, T11
 **Reuses**: the canvas Commands table (verbatim shapes for all 20); AD-003, AD-011 (`OperationId`
 omitted), AD-012 (`at` not on the op)
@@ -427,7 +471,6 @@ omitted), AD-012 (`at` not on the op)
 - [ ] `resolve` carries `reference: z.unknown()` **required** (a missing key fails `.parse`)
 - [ ] `schema/index.ts` re-exports `Operation`, `BuildingBlock`, `Author`, the id schemas,
   `OP_SCHEMA_VERSION`, `canReplay`; `api.ts` re-exports the same
-- [ ] `zod` moved to `dependencies`
 - [ ] Tests: a valid instance of **every** variant parses; `v` absent → `1`; `v:2` → parse error;
   `resolve` without `reference` → parse error; `switch (op.kind)` over `Operation` is exhaustive
   (a deliberately missing branch fails `pnpm lint` via `switch-exhaustiveness-check`)
@@ -706,14 +749,14 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1 ──→ T2 ──→ T3
 Phase 2:  T4 ──→ T5 ──→ T6 ──→ T7 ──→ T8
-Phase 3:  T9 ──→ T10 ──→ T11 ──→ T12
+Phase 3:  T9 ──→ T9a ──→ T10 ──→ T11 ──→ T12
 Phase 4:  T13 ──→ T14 ──→ T15 ──→ T16
 Phase 5:  T17 ──→ T18 ──→ T19 ──→ T20 ──→ T21
 ```
 
 Execution is strictly sequential. Batch packing (≈7 tasks/worker, whole phases): **batch 1** =
-Phase 1 + Phase 2 (8 tasks), **batch 2** = Phase 3 + Phase 4 (8 tasks), **batch 3** = Phase 5
-(5 tasks) → ~3 workers. Verifier runs automatically after T21.
+Phase 1 + Phase 2 (8 tasks, done), **batch 2** = Phase 3 + Phase 4 (9 tasks — T9a added
+mid-execute), **batch 3** = Phase 5 (5 tasks) → ~3 workers. Verifier runs automatically after T21.
 
 ---
 
@@ -730,6 +773,7 @@ Phase 1 + Phase 2 (8 tasks), **batch 2** = Phase 3 + Phase 4 (8 tasks), **batch 
 | T7 | port + in-memory impl + contract factory (one cohesive unit in one dir) | ✅ Granular (cohesive) |
 | T8 | one module + tests | ✅ Granular |
 | T9 | one module + tests | ✅ Granular |
+| T9a | one file rewrite + one dep add (corrective) | ✅ Granular |
 | T10 | two small schema files (ids + author), same dir, cohesive | ✅ Granular (cohesive) |
 | T11 | one module + tests | ✅ Granular |
 | T12 | one module + barrel + api re-export | ✅ Granular (cohesive) |
@@ -756,7 +800,8 @@ Phase 1 + Phase 2 (8 tasks), **batch 2** = Phase 3 + Phase 4 (8 tasks), **batch 
 | T7 | T4 | T6→T7 | ✅ (T4 earlier, same phase) |
 | T8 | T1 | T7→T8 | ✅ (T1 earlier) |
 | T9 | T7, T8 | T8→T9 | ✅ (both earlier) |
-| T10 | T5 | T9→T10 | ✅ (T5 earlier) |
+| T9a | T5 | T9→T9a | ✅ (T5 earlier — corrective task added mid-execute) |
+| T10 | T9a | T9a→T10 | ✅ |
 | T11 | T10 | T10→T11 | ✅ |
 | T12 | T10, T11 | T11→T12 | ✅ (both earlier) |
 | T13 | T12 | T12→T13 | ✅ |
@@ -785,6 +830,7 @@ order; every task-body `Depends on` is an earlier task. ✅ Consistent.
 | T7 | Plumbing `EventStore` (port + memory impl) | integration | integration | ✅ |
 | T8 | Plumbing migrations | unit (no-DROP guard) | unit | ✅ |
 | T9 | Plumbing sqlite adapter | integration | integration | ✅ |
+| T9a | Plumbing `ids` (corrective rewrite) | unit | unit | ✅ |
 | T10 | Domain schema (ids/author) | unit | unit | ✅ |
 | T11 | Domain schema (building blocks) | unit | unit | ✅ |
 | T12 | Domain schema (operations) | unit | unit | ✅ |
