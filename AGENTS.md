@@ -48,6 +48,9 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 
 ## Read on demand
 
+- `DESIGN.md` — the system's shape (three bounded contexts), the decision table, and the `/api`
+  surface; the index to `docs/adr/`. Read before designing a slice or touching a cross-cutting
+  concern.
 - `docs/domain/README.md` — the confirmed subdomain catalog, bounded-context canvases, and context
   map. Read before naming a domain concept, designing a new capability slice, or touching
   `src/domain/`'s public vocabulary.

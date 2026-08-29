@@ -1,7 +1,7 @@
 # ADR-001: Adopt Vite + Vue 3 + Hono + node:sqlite Over Nuxt and NestJS
 
 - **Date**: 2026-08-24
-- **Status**: Accepted
+- **Status**: Accepted — the stack stands; the **layout** section is superseded by [ADR-002](002-context-first-layout-and-synchronous-choreography.md) (context-first, not layer-first), and the `FACILITATOR_MODEL` default changes to `claude-sonnet-5` per [ADR-005](005-ai-facilitator.md)
 - **Deciders**: Vinicius Albano
 - **Tags**: architecture, stack, backend, frontend, persistence
 
