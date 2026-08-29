@@ -3,6 +3,7 @@
  * contexts and the composition root reach this context only through here —
  * never its `domain/`, `capabilities/`, or `infrastructure/`.
  */
+export { anthropicOperationSchema } from './domain/anthropic-contract.ts'
 export { decide } from './domain/board/decide.ts'
 export { evolve } from './domain/board/evolve.ts'
 export {

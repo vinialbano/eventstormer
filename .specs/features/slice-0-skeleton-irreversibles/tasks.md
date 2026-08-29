@@ -588,15 +588,15 @@ incremental-consistency guarantees.
 **Tools**: MCP: `context7` (Zod 4 `z.toJSONSchema` params) · Skill: NONE
 
 **Done when**:
-- [ ] `anthropicOperationSchema()` calls `z.toJSONSchema(Operation, { target:'draft-2020-12',
+- [x] `anthropicOperationSchema()` calls `z.toJSONSchema(Operation, { target:'draft-2020-12',
   io:'input', unrepresentable:'throw', override })` where `override` rewrites any `oneOf` →
   `anyOf` in place
-- [ ] Framework-free (`z.toJSONSchema` is Zod-native) — `pnpm depcruise` clean
-- [ ] `api.ts` re-exports `anthropicOperationSchema`; `pnpm knip` does not flag it
-- [ ] Tests: `JSON.stringify(anthropicOperationSchema())` contains no `"oneOf"`; the `v` field
+- [x] Framework-free (`z.toJSONSchema` is Zod-native) — `pnpm depcruise` clean
+- [x] `api.ts` re-exports `anthropicOperationSchema`; `pnpm knip` does not flag it
+- [x] Tests: `JSON.stringify(anthropicOperationSchema())` contains no `"oneOf"`; the `v` field
   appears as optional under `io:'input'`; a shape snapshot
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: ~97 + ~3 = ~100 pass
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: ~97 + ~3 = ~100 pass
 
 **Tests**: unit · **Gate**: build
 **Commit**: `feat(domain-model-capture): Anthropic-contract compatibility sensor`
