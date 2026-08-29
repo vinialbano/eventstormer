@@ -26,7 +26,7 @@ discrimination sensor).
 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | --- | --- | --- | --- | --- |
-| Domain — schema (Zod SSOT) | unit | Every operation variant + every building-block kind parses; brand rejects bare string (`@ts-expect-error`); `v` defaults to 1 and rejects `v:2`; `resolve` rejects missing `reference`; `hotSpot.kind` defaults. 1:1 to S0-05…08. | `src/domain-model-capture/domain/schema/*.test.ts` | `pnpm test` |
+| Domain — schema (Zod SSOT) | unit | Every operation variant + every building-block kind parses; brand rejects bare string (`@ts-expect-error`); `v` defaults to 1 and rejects `v:2`; `resolve` rejects missing `reference`; `hotSpot.modelAffecting` defaults to `true` (AD-014). 1:1 to S0-05…08. | `src/domain-model-capture/domain/schema/*.test.ts` | `pnpm test` |
 | Domain — `Board` decide/evolve/project/replay | unit (**heaviest weight** — ADR-008) | All branches; 1:1 to spec ACs S0-13…18b; `Given(ops)/When(op)/Then(events\|rejection)` through the operation; `replay(log)===snapshot` (AT-18a); **required** `fast-check` property `replay(log ++ [op]) === evolve(replay(log), op)` + a kind-permission property; inline `// AT-*` / `// PRD F01` tags | `src/domain-model-capture/domain/board/*.test.ts` | `pnpm test` |
 | Domain — anthropic-contract sensor | unit | Output has no `oneOf` at any depth; `io:'input'` picks up the `v` default; snapshot of the shape | `src/domain-model-capture/domain/anthropic-contract.test.ts` | `pnpm test` |
 | Plumbing — `Result`, `ids`, `Clock` | unit | All branches; combinators; ids URL-safe + distinct + branded; fixed-clock substitutable | `src/plumbing/*.test.ts` | `pnpm test` |
@@ -431,18 +431,20 @@ usable type export
 **Depends on**: T10
 **Reuses**: the canvas building-block kinds; `research/harness-tools.md` (discriminated unions
 compose in v4)
-**Requirement**: S0-05 (building blocks), S0-07 (`hotSpot.kind`)
+**Requirement**: S0-05 (building blocks), S0-07 (`hotSpot.modelAffecting`, AD-014)
 
 **Tools**: MCP: `context7` (Zod 4 `z.discriminatedUnion`) · Skill: NONE
 
 **Done when**:
-- [ ] `z.discriminatedUnion('kind', [domainEvent, actor, system, hotSpot])`; each carries
+- [x] `z.discriminatedUnion('kind', [domainEvent, actor, system, hotSpot])` with discriminant
+  values `'domain-event' | 'actor' | 'system' | 'hot-spot'`; each variant carries
   `id: BuildingBlockId`, `label: z.string()`
-- [ ] `hotSpot` carries `kind: z.enum(['informational','model-affecting']).default('model-affecting')`
-- [ ] Tests: each kind parses; `hotSpot` without `kind` → `model-affecting`; a bad discriminant
-  fails
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~35 + ~6 = ~41 pass
+- [x] `hotSpot` carries `modelAffecting: z.boolean().default(true)` (AD-014 — the
+  informational/model-affecting split; **not** `kind`, **not** an enum)
+- [x] Tests: each kind parses; `hotSpot` without `modelAffecting` → `true`; `modelAffecting:false`
+  round-trips; a bad `kind` discriminant fails
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: ~35 + ~6 = ~41 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(domain-model-capture): building-block schema union`
