@@ -67,10 +67,8 @@ module.exports = {
       comment:
         'src/plumbing/ holds Result, branded id symbols, the Clock and the EventStore port + ' +
         'adapters. It may not reach back into the layers that use it — including a type-only ' +
-        "import of a context's schema (tsPreCompilationDeps catches those too). `*.test.ts` is " +
-        'exempt: a cross-layer integration test (the persistence round-trip) wires plumbing to a ' +
-        'context, and never ships.',
-      from: { path: '^src/plumbing/', pathNot: '\\.test\\.ts$' },
+        "import of a context's schema (tsPreCompilationDeps catches those too).",
+      from: { path: '^src/plumbing/' },
       to: { path: `^src/(${CONTEXTS}|host|app)/` },
     },
 

@@ -628,13 +628,15 @@ more; design says the store, so `event-store/`)
 - [x] Gate check passes: `pnpm check` (99 pass, was 95)
 - [x] Test count: 95 + 4 = 99 pass
 
-> SPEC_DEVIATION: `.dependency-cruiser.cjs` `plumbing-is-a-leaf` `from.pathNot` gains `\.test\.ts$`
-> so this cross-layer integration test may wire `plumbing/` to `domain-model-capture/api.ts` — the
-> round-trip Approach A keeps in test code until Slice 2. Production `plumbing/` still cannot import
-> upward: verified by planting `import { replay } from '~/domain-model-capture/api.ts'` in `port.ts`
-> and watching `plumbing-is-a-leaf` fail, then reverting. Mirrors T7's `not-to-dev-dep` exemption.
-> No `dispose`/`close` API exists on the port (Approach A — primitives only); a second
-> `createSqliteEventStore` on the same file is the restart simulation (WAL permits it).
+> Placement: the test lives at `src/domain-model-capture/persistence-roundtrip.test.ts` (context
+> root, NOT under `domain/`) — it asserts a domain-model-capture property (the Board model
+> surviving a restart) that happens to use a plumbing adapter. From there it freely imports
+> `~/plumbing/event-store/*` downward and its own `./api.ts`; `node:fs/os/path` are fine (the
+> node-builtin rule is scoped to `**/domain/**`). **No dependency-cruiser rule changed** —
+> `plumbing-is-a-leaf` stays `from: { path: '^src/plumbing/' }`, re-verified by planting a
+> `plumbing/ → ~/domain-model-capture/api.ts` import in `memory-store.ts` (non-test) and watching
+> it fail, then reverting. No `dispose`/`close` API exists on the port (Approach A — primitives
+> only); a second `createSqliteEventStore` on the same file is the restart simulation (WAL permits it).
 
 **Tests**: integration · **Gate**: full
 **Commit**: `test(domain-model-capture): workshop model survives a process restart`

@@ -2,14 +2,9 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import {
-  emptySnapshot,
-  Operation,
-  OP_SCHEMA_VERSION,
-  replay,
-} from '~/domain-model-capture/api.ts'
-import type { StoredOperationInput, StreamKey } from './port.ts'
-import { createSqliteEventStore } from './sqlite-adapter.ts'
+import type { StoredOperationInput, StreamKey } from '~/plumbing/event-store/port.ts'
+import { createSqliteEventStore } from '~/plumbing/event-store/sqlite-adapter.ts'
+import { emptySnapshot, Operation, OP_SCHEMA_VERSION, replay } from './api.ts'
 
 /**
  * The end-to-end proof that a workshop's model survives a process restart
