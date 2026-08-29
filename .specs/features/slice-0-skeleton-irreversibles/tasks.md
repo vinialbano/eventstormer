@@ -522,19 +522,19 @@ omitted), AD-012 (`at` not on the op)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `decide(wm, op): Result<Operation[], Rejection>` — pure, zero I/O; re-parses `op` (maps
+- [x] `decide(wm, op): Result<Operation[], Rejection>` — pure, zero I/O; re-parses `op` (maps
   `ZodError` → `{kind:'schema',classification:'systemic'}`); handles `capture-domain-event` /
   `identify-actor` / `identify-system` (duplicate-id guard), `reword` (unknown-target +
   empty-label), `withdraw` (unknown-target), `reinstate` (unknown-target + not-withdrawn);
   `switch (op.kind)` is exhaustive — the other 16 kinds return
   `{kind:'not-implemented-in-slice',classification:'systemic'}`
-- [ ] `evolve(wm, op): BoardWriteModel` — folds capture (adds id→{kind,withdrawn:false}),
+- [x] `evolve(wm, op): BoardWriteModel` — folds capture (adds id→{kind,withdrawn:false}),
   withdraw (`withdrawn:true`), reinstate (`withdrawn:false`); reword is a no-op on the write model
-- [ ] Tests, `Given(prior ops)/When(op)/Then(events|rejection)` **through the operation**, 1:1 to
+- [x] Tests, `Given(prior ops)/When(op)/Then(events|rejection)` **through the operation**, 1:1 to
   S0-13…17; a `fast-check` kind-permission property (no unimplemented kind returns `ok`); inline
   `// AT-17` tag on the reinstate-is-naked case
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~69 + ~18 = ~87 pass
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: ~69 + ~18 = ~87 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(domain-model-capture): Board decide + evolve`
