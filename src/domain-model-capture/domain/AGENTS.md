@@ -47,3 +47,10 @@ behind a port in a capability slice.
 
 Tests run with `environment: 'node'` — no DOM, ever, in this directory. If a test here starts
 needing `jsdom`, the layer has grown a dependency it must not have.
+
+`vite.config.ts` sets `coverage.thresholds.autoUpdate: true` — the ratchet. `pnpm test:coverage`
+rewrites any numeric threshold in that file **upward** only; a change to those numbers is a
+deliberate, committed decision, never regenerate-and-discard, never lowered by hand. No number is
+seeded yet, so nothing is written back today; the hard `**/domain/** ≥ 90%` glob arrives in a
+later slice (ADR-010). CI runs `pnpm test`, not `pnpm test:coverage`, so the ratchet only moves
+locally and on purpose.

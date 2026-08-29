@@ -41,12 +41,16 @@ export default defineConfig({
         'src/host/routes.ts',
         'src/app/main.ts',
       ],
-      // No thresholds yet, deliberately. `thresholds.autoUpdate` rewrites THIS
-      // FILE in place on every full coverage run, and with no real tests it
-      // writes meaningless floors — branches measures 0/0, which reports as
-      // 100%, so the first partially-covered branch you ever write would fail
-      // the build. Enable autoUpdate once real tests exist, per the plan.
-      // (An absent threshold key is skipped by the checker, not enforced.)
+      // The ratchet is ON: real domain tests now exist. `thresholds.autoUpdate`
+      // rewrites the numbers below into THIS FILE on every `pnpm test:coverage`
+      // run, only ever upward. A diff to these numbers is a deliberate,
+      // committed change — never regenerate-and-discard, and never lower them by
+      // hand. No global or per-glob number is set; the hard `**/domain/** ≥ 90%`
+      // glob is a later slice (ADR-010). CI runs `pnpm test`, not
+      // `pnpm test:coverage`, so the ratchet only moves locally and on purpose.
+      thresholds: {
+        autoUpdate: true,
+      },
     },
     projects: [
       {
