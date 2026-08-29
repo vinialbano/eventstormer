@@ -465,20 +465,20 @@ omitted), AD-012 (`at` not on the op)
 **Tools**: MCP: `context7` (Zod 4 `z.literal().default()`, discriminatedUnion) · Skill: NONE
 
 **Done when**:
-- [ ] `opBase = { v: z.literal(1).default(1), author: Author }` spread into every variant
-- [ ] `Operation = z.discriminatedUnion('kind', [...20])`: `capture-domain-event`, `identify-actor`,
+- [x] `opBase = { v: z.literal(1).default(1), author: Author }` spread into every variant
+- [x] `Operation = z.discriminatedUnion('kind', [...20])`: `capture-domain-event`, `identify-actor`,
   `identify-system`, `raise-hot-spot`, `reword`, `withdraw`, `reinstate`, `place`, `unplace`,
   `sequence`, `unsequence`, `insert-between`, `link-cause`, `unlink-cause`, `annotate`,
   `unannotate`, `mark-pivotal`, `unmark-pivotal`, `resolve`, `reopen`
-- [ ] `resolve` carries `reference: z.unknown()` **required** (a missing key fails `.parse`)
-- [ ] `schema/index.ts` re-exports `Operation`, `BuildingBlock`, `Author`, the id schemas,
+- [x] `resolve` carries `reference: z.unknown()` **required** (a missing key fails `.parse`)
+- [x] `schema/index.ts` re-exports `Operation`, `BuildingBlock`, `Author`, the id schemas,
   `OP_SCHEMA_VERSION`, `canReplay`; `api.ts` re-exports the same
-- [ ] Tests: a valid instance of **every** variant parses; `v` absent → `1`; `v:2` → parse error;
+- [x] Tests: a valid instance of **every** variant parses; `v` absent → `1`; `v:2` → parse error;
   `resolve` without `reference` → parse error; `switch (op.kind)` over `Operation` is exhaustive
   (a deliberately missing branch fails `pnpm lint` via `switch-exhaustiveness-check`)
-- [ ] `pnpm depcruise` — zero framework / `node:*` imports in the schema module
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: ~41 + ~25 = ~66 pass
+- [x] `pnpm depcruise` — zero framework / `node:*` imports in the schema module
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: ~41 + ~25 = ~66 pass
 
 **Tests**: unit · **Gate**: build
 **Commit**: `feat(domain-model-capture): frozen v:1 operation schema union`
