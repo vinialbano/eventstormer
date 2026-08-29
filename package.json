@@ -19,11 +19,14 @@
     "test:coverage": "vitest run --coverage",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
     "db:reset": "node --eval \"for (const s of ['', '-wal', '-shm']) require('node:fs').rmSync('data/eventstormer.db' + s, { force: true })\"",
+    "changeset": "changeset",
     "knip": "knip",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm depcruise && pnpm knip",
     "prepare": "lefthook install"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "0.5.2",
+    "@changesets/cli": "2.31.1",
     "@commitlint/cli": "21.2.2",
     "@commitlint/config-conventional": "21.2.2",
     "@eslint/js": "^10.0.1",

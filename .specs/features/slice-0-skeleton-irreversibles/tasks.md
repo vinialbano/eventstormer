@@ -652,15 +652,21 @@ more; design says the store, so `event-store/`)
 **Tools**: MCP: `context7` (`@changesets/cli` config, `changesets/action`) · Skill: NONE
 
 **Done when**:
-- [ ] `@changesets/cli` + `@changesets/changelog-github` in `devDependencies`
-- [ ] `.changeset/config.json`: `baseBranch:"main"`, `commit:false`, `access:"restricted"`,
+- [x] `@changesets/cli` + `@changesets/changelog-github` in `devDependencies`
+- [x] `.changeset/config.json`: `baseBranch:"main"`, `commit:false`, `access:"restricted"`,
   `changelog:["@changesets/changelog-github",{ "repo":"vinialbano/eventstormer" }]`
-- [ ] `release.yml`: `changesets/action@v1` on push to `main`, `contents: write` +
+- [x] `release.yml`: `changesets/action@v1` on push to `main`, `contents: write` +
   `pull-requests: write`, **no** `publish:` input, maintains the "Version Packages" PR
-- [ ] `package.json` `version` still `0.1.0`; `changeset` script present
-- [ ] `pnpm changeset --help` runs
-- [ ] Gate check passes: `pnpm check`
-- [ ] Test count: ~104 pass (unchanged)
+- [x] `package.json` `version` still `0.1.0`; `changeset` script present
+- [x] `pnpm changeset --help` runs
+- [x] Gate check passes: `pnpm check`
+- [x] Test count: 99 pass (unchanged)
+
+> SPEC_DEVIATION: `@changesets/cli` pinned to `2.31.1` (not `3.x`) and `@changesets/changelog-github`
+> to `0.5.2` (not `1.x`). `@changesets/cli@3` requires `pnpm >=10`; this repo pins
+> `packageManager: pnpm@8.15.4` with `engine-strict=true`, so `3.x` cannot install. The `2.x` line
+> is the long-standing stable major and supports the identical config. Revisit when the pnpm pin
+> moves (out of Slice 0 scope).
 
 **Tests**: none (build gate) · **Gate**: build
 **Commit**: `build: Changesets + release workflow (ADR-009)`
