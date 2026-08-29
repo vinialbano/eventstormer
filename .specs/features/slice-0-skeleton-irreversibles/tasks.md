@@ -496,14 +496,14 @@ omitted), AD-012 (`at` not on the op)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `BoardWriteModel = Map<BuildingBlockId, { kind: BuildingBlockKind; withdrawn: boolean }>`,
+- [x] `BoardWriteModel = Map<BuildingBlockId, { kind: BuildingBlockKind; withdrawn: boolean }>`,
   `emptyWriteModel`
-- [ ] `BoardSnapshot` per design (blocks map with `kind/label/withdrawn/placement:'backlog'/provenance`,
+- [x] `BoardSnapshot` per design (blocks map with `kind/label/withdrawn/placement:'backlog'/provenance`,
   `position`), `emptySnapshot` (`position: -1`)
-- [ ] `Rejection = { kind: 'schema'|'unknown-target'|'empty-label'|'duplicate-id'|'not-withdrawn'|'not-implemented-in-slice'; classification: 'systemic'; …detail }`
-- [ ] Tests: `emptySnapshot`/`emptyWriteModel` shape; a `Rejection` is a valid `Result` `E`
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~66 + ~3 = ~69 pass
+- [x] `Rejection = { kind: 'schema'|'unknown-target'|'empty-label'|'duplicate-id'|'not-withdrawn'|'not-implemented-in-slice'; classification: 'systemic'; …detail }`
+- [x] Tests: `emptySnapshot`/`emptyWriteModel` shape; a `Rejection` is a valid `Result` `E`
+- [x] Gate check passes: `pnpm test`
+- [x] Test count: ~66 + ~3 = ~69 pass
 
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(domain-model-capture): Board write model, snapshot, Rejection types`
