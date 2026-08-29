@@ -36,12 +36,13 @@ describe('project (read-model fold)', () => {
   })
 
   it('reword changes the label but not the id, and never dedupes (S0-15)', () => {
-    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'same' }))
-    snap = project(snap, op({ kind: 'capture-domain-event', id: 'e2', label: 'same' }))
-    snap = project(snap, op({ kind: 'reword', target: 'e1', label: 'same' }))
-    expect(snap.blocks.get(bid('e1'))?.label).toBe('same')
-    expect(snap.blocks.get(bid('e2'))?.label).toBe('same')
-    expect(snap.blocks.size).toBe(2)
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'first' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'e2', label: 'first' }))
+    snap = project(snap, op({ kind: 'reword', target: 'e1', label: 'reworded' }))
+    expect(snap.blocks.get(bid('e1'))?.label).toBe('reworded') // the new label is written
+    expect(snap.blocks.get(bid('e1'))?.kind).toBe('domain-event') // id and kind unchanged
+    expect(snap.blocks.get(bid('e2'))?.label).toBe('first') // the identical-label sibling is untouched
+    expect(snap.blocks.size).toBe(2) // no dedupe, though the two shared a label
   })
 
   it('withdraw flips withdrawn to true; reinstate returns a naked active block (AT-17)', () => {
