@@ -15,8 +15,8 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
-    at: 2026-08-27
+    digest: d5a22da1bd2b
+    at: 2026-08-28
 ---
 # Acceptance tests
 

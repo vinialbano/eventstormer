@@ -12,10 +12,10 @@ derived_from:
     digest: 759a1d42a01f
     at: 2026-08-26
   - path: context-map.md
-    digest: ec6dc67a4870
+    digest: 08139f4e07eb
     at: 2026-08-28
   - path: open-questions.md
-    digest: c9a8044f0a62
+    digest: a2c4534da2e1
     at: 2026-08-28
 ---
 # Session — Design-Level EventStorming: Question & Hot Spot Resolution

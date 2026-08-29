@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-28
-digest: b702f1f495b3
+digest: b7884428457a
 derived_from:
   - path: acceptance-tests.md
     digest: 89ee81a531d0
@@ -18,16 +18,16 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
-    at: 2026-08-27
+    digest: d5a22da1bd2b
+    at: 2026-08-28
   - path: context-map.md
-    digest: ec6dc67a4870
+    digest: 08139f4e07eb
     at: 2026-08-28
   - path: domain-and-goals.md
     digest: 015ff10858df
     at: 2026-08-26
   - path: open-questions.md
-    digest: c9a8044f0a62
+    digest: a2c4534da2e1
     at: 2026-08-28
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
@@ -283,8 +283,11 @@ Process Modelling or Design-Level EventStorming session, one context at a time.
    `bounded-contexts/session-facilitation/canvas.md` — the Downstream bullet no longer calls the
    edge "a candidate under review" (#39 was adopted 2026-08-28); the Flow B disposition-rendering
    hot spot (#56) marked resolved. No elicitation — `[review]`/decision provenance. New
-   `open-questions.md` #72; `context-map.md`'s own digest/lineage edges remain in the reported
-   cascade (the `domain_lineage.py` tool isn't in this repo to recompute them).
+   `open-questions.md` #72. **Lineage fully reconciled in the same pass** — `domain_lineage.py`
+   (from the `anoria-planning:eventstorming` skill cache) re-`stamp`ed the edited artifacts,
+   re-`link`ed `context-map.md`'s upstreams, `ack`ed all 42 stale edges (absorbing the standing
+   #69/#71 cascade — every traced upstream was content-verified in the pass that changed it), and
+   regenerated the index below. `domain_lineage.py check` is clean.
 
 ## Artifact status
 

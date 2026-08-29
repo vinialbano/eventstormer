@@ -9,13 +9,13 @@ derived_from:
     digest: bc6ad40750e0
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
+    digest: d5a22da1bd2b
     at: 2026-08-28
   - path: context-map.md
-    digest: ec6dc67a4870
+    digest: 08139f4e07eb
     at: 2026-08-28
   - path: open-questions.md
-    digest: c9a8044f0a62
+    digest: a2c4534da2e1
     at: 2026-08-28
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c

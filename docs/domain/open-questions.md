@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-28
-digest: c9a8044f0a62
+digest: a2c4534da2e1
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
@@ -15,10 +15,10 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
-    at: 2026-08-27
+    digest: d5a22da1bd2b
+    at: 2026-08-28
   - path: context-map.md
-    digest: ec6dc67a4870
+    digest: 08139f4e07eb
     at: 2026-08-28
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
@@ -750,11 +750,16 @@ Reconciled this context's event-stormed model to PRD F10 after the 2026-08-28 de
       "a candidate context-map edge under review (#39)"; #39 was **adopted 2026-08-28**, so it now
       reads as decided, and names both reads. The Flow B disposition-rendering hot-spot row (#56)
       marked resolved.
-    - Not touched: `README.md` narrative items 12/14 (transition history, correct as written) and
-      the `boards/` records (owned by their own workshops).
-    - **Cascade note:** `context-map.md`'s own `digest:` and `last_updated` edges are now stale
-      against the `domain_lineage.py` tool, which isn't present in this repo to recompute them.
-      Reported, not auto-propagated — consistent with #69/#71. Unowned, undated.
+    - Not touched at the content level: `README.md` narrative items 12/14 (transition history,
+      correct as written) and the `boards/` records (owned by their own workshops).
+    - **Lineage closed out.** `domain_lineage.py` (from the `anoria-planning:eventstorming` skill
+      cache) was run: `context-map.md` re-`stamp`ed and its `derived_from` edges re-`link`ed;
+      `session-facilitation/canvas.md`, `open-questions.md`, `acceptance-tests.md`, `README.md`
+      re-`stamp`ed; **all 42 stale edges `ack`ed** and `README.md`'s index regenerated. This also
+      absorbs the standing #69/#71 cascade (the 2026-08-26 Big Picture resume + QHSR collapse + the
+      2026-08-27/28 drift) — every upstream those edges trace to was content-verified in the pass
+      that changed it, and session records / superseded canvases will never legitimately reconcile.
+      `domain_lineage.py check` is now clean. Done, not deferred.
 
 ## Deliberate deviations, recorded rather than silent
 

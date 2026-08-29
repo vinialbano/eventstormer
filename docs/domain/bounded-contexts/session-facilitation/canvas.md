@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-28
-digest: 192d89ca4269
+digest: d5a22da1bd2b
 derived_from:
   - path: boards/capture-loop.md
     digest: bc6ad40750e0
@@ -15,11 +15,11 @@ derived_from:
     digest: 759a1d42a01f
     at: 2026-08-26
   - path: context-map.md
-    digest: d4fd9c957b26
-    at: 2026-08-27
+    digest: 08139f4e07eb
+    at: 2026-08-28
   - path: open-questions.md
-    digest: 084867d98992
-    at: 2026-08-27
+    digest: a2c4534da2e1
+    at: 2026-08-28
   - path: sessions/2026-08-26-design-level-session-facilitation.md
     digest: fa99635a3b22
     at: 2026-08-26
@@ -30,8 +30,8 @@ derived_from:
     digest: 35fd6b2ca4f9
     at: 2026-08-27
   - path: subdomain-catalog.md
-    digest: e266740011c9
-    at: 2026-08-26
+    digest: c590dae32da0
+    at: 2026-08-28
 ---
 # Bounded Context: Session Facilitation
 

@@ -3,7 +3,7 @@ workshop: design-level
 scope: session-facilitation
 status: draft
 last_updated: 2026-08-28
-digest: ec6dc67a4870
+digest: 08139f4e07eb
 derived_from:
   - path: bounded-contexts/derived-artifact-generation/canvas.md
     digest: 99476d0589b3
@@ -15,11 +15,11 @@ derived_from:
     digest: 759a1d42a01f
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
+    digest: d5a22da1bd2b
     at: 2026-08-28
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c
-    at: 2026-08-26
+    at: 2026-08-28
   - path: subdomain-catalog.md
     digest: c590dae32da0
     at: 2026-08-28

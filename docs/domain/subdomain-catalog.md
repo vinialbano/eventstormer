@@ -9,7 +9,7 @@ derived_from:
     digest: 015ff10858df
     at: 2026-08-26
   - path: context-map.md
-    digest: ec6dc67a4870
+    digest: 08139f4e07eb
     at: 2026-08-28
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba

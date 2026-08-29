@@ -15,13 +15,13 @@ derived_from:
     digest: 705129af8f2d
     at: 2026-08-28
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
+    digest: d5a22da1bd2b
     at: 2026-08-28
   - path: context-map.md
-    digest: ec6dc67a4870
+    digest: 08139f4e07eb
     at: 2026-08-28
   - path: open-questions.md
-    digest: c9a8044f0a62
+    digest: a2c4534da2e1
     at: 2026-08-28
 ---
 # Session record — Design-Level EventStorming: Derived Artifact Generation (2026-08-27)

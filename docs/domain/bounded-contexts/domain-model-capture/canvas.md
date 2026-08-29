@@ -12,14 +12,14 @@ derived_from:
     digest: a1fe4f12aaba
     at: 2026-08-26
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 1926e79a6978
-    at: 2026-08-27
+    digest: d5a22da1bd2b
+    at: 2026-08-28
   - path: context-map.md
-    digest: d4fd9c957b26
-    at: 2026-08-27
+    digest: 08139f4e07eb
+    at: 2026-08-28
   - path: open-questions.md
-    digest: bedd10cafb15
-    at: 2026-08-27
+    digest: a2c4534da2e1
+    at: 2026-08-28
   - path: sessions/2026-08-26-design-level-domain-model-capture.md
     digest: 8fb8d04365b1
     at: 2026-08-26
@@ -27,8 +27,8 @@ derived_from:
     digest: 56a9cc417c6d
     at: 2026-08-27
   - path: subdomain-catalog.md
-    digest: e266740011c9
-    at: 2026-08-26
+    digest: c590dae32da0
+    at: 2026-08-28
 ---
 # Bounded Context: Domain Model Capture
 

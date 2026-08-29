@@ -9,10 +9,10 @@ derived_from:
     digest: 89ee81a531d0
     at: 2026-08-28
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 192d89ca4269
-    at: 2026-08-27
+    digest: d5a22da1bd2b
+    at: 2026-08-28
   - path: open-questions.md
-    digest: c9a8044f0a62
+    digest: a2c4534da2e1
     at: 2026-08-28
 ---
 # Design-Level EventStorming — Session Facilitation, the facilitator's context (2026-08-27, pass 3 / resume)
