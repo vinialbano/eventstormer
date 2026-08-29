@@ -617,15 +617,23 @@ more; design says the store, so `event-store/`)
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Test: build a store on a temp DB → `append` a batch of capture+reword+withdraw ops (stamped
+- [x] Test: build a store on a temp DB → `append` a batch of capture+reword+withdraw ops (stamped
   `at` from a fixed clock) → dispose → build a **second** store on the same file → `read` →
   `replay` → snapshot deep-equals the snapshot from `replay` of the same ops in-memory
-- [ ] Test: `read` on a never-written stream → `[]` → `replay([])` → `emptySnapshot`
-- [ ] Test: every persisted row has a non-null `op_version` equal to `OP_SCHEMA_VERSION`
-- [ ] Test: auto-migrate — pointing a fresh store at a non-existent path creates + migrates it with
+- [x] Test: `read` on a never-written stream → `[]` → `replay([])` → `emptySnapshot`
+- [x] Test: every persisted row has a non-null `op_version` equal to `OP_SCHEMA_VERSION`
+- [x] Test: auto-migrate — pointing a fresh store at a non-existent path creates + migrates it with
   no manual step
-- [ ] Gate check passes: `pnpm test`
-- [ ] Test count: ~100 + ~4 = ~104 pass
+- [x] Gate check passes: `pnpm check` (99 pass, was 95)
+- [x] Test count: 95 + 4 = 99 pass
+
+> SPEC_DEVIATION: `.dependency-cruiser.cjs` `plumbing-is-a-leaf` `from.pathNot` gains `\.test\.ts$`
+> so this cross-layer integration test may wire `plumbing/` to `domain-model-capture/api.ts` — the
+> round-trip Approach A keeps in test code until Slice 2. Production `plumbing/` still cannot import
+> upward: verified by planting `import { replay } from '~/domain-model-capture/api.ts'` in `port.ts`
+> and watching `plumbing-is-a-leaf` fail, then reverting. Mirrors T7's `not-to-dev-dep` exemption.
+> No `dispose`/`close` API exists on the port (Approach A — primitives only); a second
+> `createSqliteEventStore` on the same file is the restart simulation (WAL permits it).
 
 **Tests**: integration · **Gate**: full
 **Commit**: `test(domain-model-capture): workshop model survives a process restart`
