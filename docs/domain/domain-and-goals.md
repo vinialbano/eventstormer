@@ -2,14 +2,15 @@
 workshop: ddd-strategic-design
 scope: eventstormer-session
 status: draft
-last_updated: 2026-08-25
+last_updated: 2026-08-28
+digest: 015ff10858df
 derived_from:
   - path: open-questions.md
-    digest: 401ba0ab793e
-    at: 2026-08-26
+    digest: a2c4534da2e1
+    at: 2026-08-28
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
-    at: 2026-08-26
+    digest: a1fe4f12aaba
+    at: 2026-08-28
 ---
 # Business Domain & Goals
 

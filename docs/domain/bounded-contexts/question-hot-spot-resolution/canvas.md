@@ -6,17 +6,17 @@ last_updated: 2026-08-26
 digest: 759a1d42a01f
 derived_from:
   - path: context-map.md
-    digest: 94f3014c1877
-    at: 2026-08-26
+    digest: 08139f4e07eb
+    at: 2026-08-28
   - path: open-questions.md
-    digest: 401ba0ab793e
-    at: 2026-08-26
+    digest: a2c4534da2e1
+    at: 2026-08-28
   - path: sessions/2026-08-26-design-level.md
     digest: a199731d351c
     at: 2026-08-26
   - path: subdomain-catalog.md
-    digest: e266740011c9
-    at: 2026-08-26
+    digest: c590dae32da0
+    at: 2026-08-28
 ---
 # Bounded Context: Question & Hot Spot Resolution — SUPERSEDED
 

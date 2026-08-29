@@ -6,11 +6,11 @@ last_updated: 2026-08-26
 digest: d19c35cc15d4
 derived_from:
   - path: context-map.md
-    digest: 94f3014c1877
-    at: 2026-08-26
+    digest: 08139f4e07eb
+    at: 2026-08-28
   - path: open-questions.md
-    digest: 401ba0ab793e
-    at: 2026-08-26
+    digest: a2c4534da2e1
+    at: 2026-08-28
 ---
 # Ubiquitous Language: Question & Hot Spot Resolution — SUPERSEDED
 

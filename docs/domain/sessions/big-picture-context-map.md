@@ -6,8 +6,8 @@ last_updated: 2026-08-25
 digest: cbd6e95ca6c5
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
-    at: 2026-08-26
+    digest: a1fe4f12aaba
+    at: 2026-08-28
 ---
 # Context map — EventStormer (discovered form)
 

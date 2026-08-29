@@ -6,8 +6,8 @@ last_updated: 2026-08-26
 digest: bc6ad40750e0
 derived_from:
   - path: boards/eventstormer-big-picture.md
-    digest: 568f97a816f3
-    at: 2026-08-26
+    digest: a1fe4f12aaba
+    at: 2026-08-28
 ---
 # Board — EventStormer: the capture loop (Process Modelling)
 

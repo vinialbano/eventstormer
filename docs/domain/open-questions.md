@@ -1,22 +1,25 @@
 ---
-workshop: big-picture
-scope: eventstormer-session
+workshop: design-level
+scope: session-facilitation
 status: draft
-last_updated: 2026-08-26
-digest: 4c65d5367a9b
+last_updated: 2026-08-28
+digest: a2c4534da2e1
 derived_from:
   - path: boards/eventstormer-big-picture.md
     digest: a1fe4f12aaba
     at: 2026-08-26
+  - path: bounded-contexts/derived-artifact-generation/canvas.md
+    digest: 99476d0589b3
+    at: 2026-08-28
   - path: bounded-contexts/domain-model-capture/canvas.md
-    digest: 6ae50843569d
-    at: 2026-08-26
+    digest: 705129af8f2d
+    at: 2026-08-27
   - path: bounded-contexts/session-facilitation/canvas.md
-    digest: 59c06f08153f
-    at: 2026-08-26
+    digest: d5a22da1bd2b
+    at: 2026-08-28
   - path: context-map.md
-    digest: e4393aff3ac9
-    at: 2026-08-26
+    digest: 08139f4e07eb
+    at: 2026-08-28
   - path: sessions/2026-08-26-big-picture.md
     digest: 308013b9fcc5
     at: 2026-08-26
@@ -126,9 +129,12 @@ here.
    per **connected component** of sequenced events, sized to exactly what the no-cycle invariant
    needs. See `bounded-contexts/domain-model-capture/canvas.md`.
 
-9. **Derived Artifact Generation: on-demand vs. materialized export.** Whether F10's export is
-   computed on request or kept live as a materialized view is undecided, and changes this
-   context's event-stormed model shape (whether it has any Events in at all). See
+9. ~~**Derived Artifact Generation: on-demand vs. materialized export.**~~ **Resolved 2026-08-27**,
+   Design-Level on Derived Artifact Generation. **On-demand only** — every artifact is generated
+   when requested and nothing exists between requests; real-time regeneration was judged "a waste
+   of time." A **readable-account preview** persists as an eventually-consistent read model that is
+   allowed to be stale and carries a "model changed since rendered" signal. Consequence: this
+   context has **no Events in** required for correctness. Full model in
    `bounded-contexts/derived-artifact-generation/canvas.md`.
 
 10. **Multiplayer / Real-time Collaboration's classification is provisional.** Catalogued as one
@@ -241,10 +247,20 @@ here.
     to item #10, above — not a new independent question, but sharpens it with a concrete
     consistency concern to resolve when that scoping happens.
 
-27. **The context a facilitator gathers before asking its first (or next) question is
-    unspecified beyond "whatever context he has."** How much history, summarized how, from how
-    many prior sessions — none of this is decided. Unowned, undated; likely an implementation-level
-    question rather than a further EventStorming pass, but noted here rather than silently assumed.
+27. ~~**The context a facilitator gathers before asking its first (or next) question is
+    unspecified beyond "whatever context it has."**~~ **Resolved 2026-08-27**, Design-Level pass 3
+    (narrow resume on Session Facilitation). `Ask Question` is the facilitator running an
+    **interview loop**, not reacting to a contribution. Its supporting read model is a composite,
+    **`Facilitation context`**, recomputed **every facilitator turn** from: recent transcript,
+    open questions this session, open hot spots, thin/unopened board regions, `Workshop.scope`,
+    and a **frozen prior-session summary**. Two supporting read models: **`Prior-session history`**
+    (projection over the *closed* `Session` streams of the same `Workshop`; each session's summary
+    frozen in its `Close Session` transaction) and **`Facilitation agenda`** (derived: open
+    questions ∪ unexpanded-phase-name building blocks ∪ pending stakeholder check). No new
+    aggregate: "scope set once" is a new `Workshop` invariant, the summary freeze rides on
+    `Session`'s existing atomic close transaction. Full model in
+    `bounded-contexts/session-facilitation/canvas.md`; record in
+    `sessions/2026-08-27-design-level-session-facilitation-context.md`.
 
 28. ~~**`Hot Spot Raised`/`Hot Spot Resolved`'s payload/granularity remains open**~~ **Mostly
     resolved 2026-08-26** — see #13/#32. This session's `Resolve` shape (requires a recorded
@@ -332,11 +348,10 @@ here.
     merges two building blocks" and the broader no-destructive-delete/no-re-type stance. Not
     modelled. Unowned, undated.
 
-34. **`Insert Between`'s atomicity has no home in F01's current operation model.** F01 guarantees
-    atomicity per single logged operation; `Insert Between` needs the same guarantee across what
-    could be represented as multiple effects (unrelate one edge, relate two). Whether this becomes
-    one log-entry kind or a transactionally-bundled group of three is an implementation decision
-    this session doesn't settle. Unowned, undated.
+34. ~~**`Insert Between`'s atomicity has no home in F01's current operation model.**~~ **Resolved
+    2026-08-27**, Design-Level pass 2. `Insert Between` is **one operation** in the log, atomic
+    because the log append is atomic — F01's per-operation atomicity guarantee covers it directly,
+    with no need for a transactionally-bundled group of three. Acceptance test 14.
 
 35. **`place`/`unplace` are real, independent operations — a corrected hypothesis, not a PRD
     leftover.** This session opened by suspecting `place`/`unplace` were an old name for
@@ -361,10 +376,10 @@ here.
     `acceptance-tests.md`, `open-questions.md` itself, `README.md`, and this session's own record)
     are clean — `check` confirms 0 stale among them. Unowned, undated.
 
-37. **PRD F02's "timeline" (the UI surface: placed-vs-backlog) now names something different from
-    this session's `Timeline` aggregate (one per connected component of sequenced events).** The
-    participant accepted the possible confusion and said the PRD can differentiate the two terms
-    later if it turns out to matter. Not resolved here. Unowned, undated.
+37. **PRD F02's "timeline" (the UI surface: placed-vs-backlog) vs. the modelling term.**
+    **Largely moot as of 2026-08-27** — the `Timeline` aggregate is dissolved (see #48); only
+    F02's UI surface and a derived connected-component read model remain, so the naming clash
+    mostly disappears. The read model still wants a name that isn't "timeline"; minor, unowned.
 
 38. **Withdrawing a Building Block a Hot Spot annotates now cascades — resolved live, corrected
     from an earlier open framing.** Block-vs-cascade was put to the participant directly; cascade
@@ -373,6 +388,378 @@ here.
     also resolved the parallel `causedBy` case: withdrawing an Actor/System cascades `Unlink Cause`
     on every Domain Event that referenced it, and reinstating requires re-linking explicitly
     (the facilitator can propose links from history, same as elsewhere). Both `[storm]`.
+
+## Raised in the Design-Level session (2026-08-27) — Derived Artifact Generation
+
+39. ~~**New context-map edge: Session Facilitation → Derived Artifact Generation.**~~ **Adopted
+    2026-08-28** by `ddd-strategic-design`. Reasoned through the U/D test: Session Facilitation
+    succeeds independently of Derived Artifact Generation, not the reverse → Upstream-Downstream,
+    Conformist downstream, OHS + Published Language (the **session log** is a published read model).
+    The inherited Capture → Artifact seam is unchanged; Derived Artifact Generation is now a
+    Conformist downstream of two Core contexts. The Capture ↔ Facilitation apply-confirmation
+    round-trip wording was adopted in the same pass. `context-map.md` diagram + main table updated;
+    both former "Candidate revision" sections promoted to dated "Decision" sections.
+
+40. ~~**PRD F10 divergence — artifact count and determinism.**~~ **Resolved 2026-08-28 by the PRD
+    reconciliation pass (`docs/product/PRD.md`, commit `ec3d094`), in the opposite direction from
+    this session's canvas.** After a stress-test round, F10 keeps **every v1 artifact
+    deterministic** — JSON export, template-rendered readable account, and a template-rendered
+    *deterministic* summary ("the model's own outline"), plus the F19 verbatim transcript export.
+    **No v1 artifact calls a language model**; the AI-written narrative summary is deliberately
+    **deferred** to post-v1 (section 7). Consequence: the Derived Artifact Generation canvas's Flow
+    C (non-deterministic AI summary) is now stale against product truth — see #70. Strategic
+    consequence: Derived Artifact Generation has no external AI dependency and no non-determinism in
+    v1, which *strengthens* its Supporting classification (#68).
+
+41. **DDD-artifact generator deferred.** Deriving EventStorming / Strategic-DDD artifacts (boards,
+    canvases, context maps) from the model was raised this session and explicitly left out of v1.
+    Unowned, undated.
+
+42. **Flow A coverage disclosure needs a source of truth for "what steps a format has."** Every
+    deterministic artifact must state which steps of its format were not run — which requires
+    knowing the full step list for that format. Where that definition lives is unspecified.
+    Unowned, undated.
+
+43. **Upstream-completeness constraint on Domain Model Capture.** The participant's idea that
+    Capture's aggregates should embed every datum Flow A's deterministic report needs is a shaping
+    constraint on `domain-model-capture`, not this context — noted for that context's next resume.
+    Unowned, undated.
+
+44. ~~**Whether Flow C's output is persisted or discarded after handover** was not pressed.~~
+    **Moot 2026-08-28** — the Derived Artifact Generation Design-Level resume retired Flow C to
+    reconcile with PRD F10 (#70). There is no Flow C output to persist.
+
+45. **This session's edits to `context-map.md` and `open-questions.md` moved 24 already-stale
+    downstream artifacts further out of date**, per `domain_lineage.py check` run at close. Every
+    one was **already stale before this workshop started** (cascading from the 2026-08-26 Big
+    Picture resume and the Question & Hot Spot Resolution collapse — see #31, #30, #36); this
+    session only moved the digest they are stale *against*. Reported, not auto-propagated, per this
+    skill's rule — refreshing them is `ddd-strategic-design`'s, `session-facilitation`'s, or
+    `process-modelling`'s own resume to make. `context-map.md` additionally now carries a real new
+    staleness edge from `bounded-contexts/derived-artifact-generation/canvas.md` (the canvas grew
+    this session) — `ddd-strategic-design` folds that in when it adopts #39. This session's own
+    artifacts (`bounded-contexts/derived-artifact-generation/*`, `acceptance-tests.md`, `README.md`,
+    this file, and the session record) are clean — `check` confirms 0 stale among them. Unowned,
+    undated.
+
+## Raised in the cross-workshop review (2026-08-27)
+
+A domain-modeling-lens audit of every artifact — asking whether each business rule and invariant
+has a clear aggregate owner, and whether the aggregate and bounded-context shapes hold up for
+implementation. Not a workshop: no elicitation, `[review]` provenance. Items 46–48 were put to the
+participant and confirmed as real; 49–54 are recorded as findings for the owning workshop to judge.
+
+46. ~~**The session runtime has no consistency boundary.**~~ **Resolved 2026-08-27**, Design-Level
+    pass 2 on Session Facilitation (the session runtime). Three aggregates added:
+    `Session` (event-sourced, its stream is the session record; owns the atomic unresolved-question
+    snapshot at `Close Session` and interpret-at-most-once), `Proposal` (one per proposal-worthy
+    judgment; disposition lifecycle with an `APPLY_FAILED` → retry path), `Resolution` (one per
+    resolves-open-hot-spot judgment; every apply bounce terminal). The interpretation fan-out is
+    plain choreography — no process manager (capture-loop Inv. 4: nothing coordinates). `Workshop`
+    simplified: lost its "one open session" invariant (now a uniqueness constraint) and `Close
+    Session` (now `Session`'s). Full model in
+    `bounded-contexts/session-facilitation/canvas.md`; reasoning in
+    `sessions/2026-08-27-design-level-session-facilitation-runtime.md`.
+
+47. ~~**The Resolution lifecycle is unowned, and its handler assignment contradicts itself.**~~
+    **Resolved 2026-08-27**, Design-Level pass 2. `Resolution` is its own aggregate in Session
+    Facilitation — it handles `Accept`/`Reject Resolution` and the `Resolution Proposed →
+    Accepted/Rejected` transition; the canvas's earlier "handled by Domain Model Capture" was
+    wrong and is corrected. Competing resolutions for one hot spot **are allowed** — the
+    apply-confirmation round trip settles them: the first to apply wins, every other accepted
+    resolution bounces to `LAPSED` ("already resolved"). AT-39. No extra invariant needed.
+
+48. ~~**`Timeline` crosses its own aggregate boundary.**~~ **Resolved 2026-08-27**, Design-Level
+    pass 2 on Domain Model Capture (the `Board`). The reframe was adopted: the workshop operation
+    log is single-writer (one open session per workshop, v1) and totally ordered (F01), so the
+    model graph is an **event-sourced projection over that one log**, with every invariant checked
+    at append time against the projection. The four Building Block aggregates and `Timeline` all
+    dissolve into **one event-sourced aggregate, `Board`, one per workshop**. `Sequence`-as-merge,
+    the "one per connected component" boundary and the unowned backlog all disappear — the
+    connected-component grouping is now a derived read model. Full model in
+    `bounded-contexts/domain-model-capture/canvas.md`; reasoning in
+    `sessions/2026-08-27-design-level-domain-model-capture-board.md`.
+
+49. ~~**Cross-aggregate referential integrity is unspecified in Domain Model Capture.**~~
+    **Resolved 2026-08-27**, Design-Level pass 2. `Link Cause` / `Annotate` naming a withdrawn or
+    non-existent target → rejected at append (F01's existing "targets an id that does not exist →
+    rejected as a no-op"). The `Hot Spot` resolution **reference** is a **recorded value, not a
+    live pointer** (F01: "deliberately untyped… the schema does not constrain its shape") — a
+    reference that later names a withdrawn block is historical text, not a failure state, and the
+    `Board` does not police it. Acceptance tests 19a, 20a, 20b.
+
+50. ~~**`Insert Between` cycle-safety is unstated.**~~ **Resolved 2026-08-27**, Design-Level pass 2.
+    `Insert Between(A, C, B)` is cycle-checked exactly like `Sequence` — validated against the
+    whole-graph projection; if `C` already has a path to `A`, rejected. No "`C` must be a fresh
+    event" exception. Acceptance test 12a.
+
+51. ~~**Flow B of Derived Artifact Generation has a hidden cross-context dependency.**~~
+    **Resolved 2026-08-27**, Design-Level pass 2. Domain Model Capture publishes `Operation
+    Applied` (a new Boundary Event, keyed to the proposal id) carrying **the resulting building
+    block id**; the `Proposal` aggregate records it as `resultingBuildingBlockId` on `APPLIED`. The
+    link lives in the session record — exactly what Flow B reads to annotate each turn with what it
+    produced. Recorded on the Capture→Facilitation surface in `context-map.md`. #39 (the Session
+    Facilitation → Derived Artifact Generation edge) was adopted 2026-08-28.
+
+52. **`boards/capture-loop.md` is superseded in parts, and left unedited.** Design-Level pass 2
+    (2026-08-27) confirmed: `Answer Question` is handled by the `Session` aggregate (not
+    UNCONFIRMED); question accountability is `Session`-scoped and holds under the `Workshop`/
+    `Session` split (the close-time snapshot is atomic within `Session`); the interpretation flow
+    gains the apply-confirmation round trip. The board file stays as-is per this skill's rule
+    against re-scaling an earlier workshop's artifact —
+    `bounded-contexts/session-facilitation/canvas.md` is now the finer-grained source of truth for
+    the capture loop. A Process Modelling resume would reconcile the board itself. Unowned, undated.
+
+53. **The as-is/to-be distinction (#6) is still unowned after three workshops.** Not cosmetic: a
+    to-be session changes what `Domain Problem Stated` means and the facilitator's whole stance
+    (the avanscoperta handbook: "the workshop dynamics are very different"). Needs an owner — a Big
+    Picture resume or a product decision. Re-flagged 2026-08-27.
+
+54. **This review's edit to `open-questions.md` continues the pre-existing staleness cascade.**
+    `domain_lineage.py check` reported 24 stale before this edit (from the 2026-08-26 Big Picture
+    resume and the QHSR collapse — see #45, #36, #31, #30); adding these items only moves the
+    digest they are stale against, per the precedent in #45. Reported, not auto-propagated.
+    `open-questions.md` re-stamped and `index` re-run after this edit. Unowned, undated.
+
+## Raised in the Design-Level session (2026-08-27) — Session Facilitation, the session runtime
+
+Pass 2 on Session Facilitation: modelling the session runtime (`Session`/`Proposal`/`Resolution`
+aggregates) that pass 1 `[carried]` unmodelled. See #46/#47/#48/#51/#52 above, updated. Full
+model in `bounded-contexts/session-facilitation/canvas.md`; record in
+`sessions/2026-08-27-design-level-session-facilitation-runtime.md`.
+
+- **Resolved (a):** `Interpret Contribution`'s failure mode. If the AI Model Provider is
+  unavailable, `Contribution Made` still succeeds (the expert's words), and interpretation is
+  **queued and retried** when a model — primary or fallback — returns. A contribution is
+  interpreted **at most once** (idempotency keyed on contribution id). `[storm]`. Queue/retry
+  mechanics are `anoria-commons:distributed-systems`.
+- **Resolved:** `Start Session`'s dual-write worry. There is none — "at most one open session per
+  workshop" is a set-scoped uniqueness rule (not a `Workshop` invariant), enforced by a partial
+  uniqueness constraint outside any aggregate. `Start Session` reads `Workshop.canStartSession`
+  and writes only `Session`. `Close Session` moved from `Workshop` to `Session`. `[storm]`.
+- **Resolved:** undisposed proposals at `Session Closed` → `LAPSED` (quiet). Apply-failed
+  proposals at close → `LAPSED` **and** `Raise Hot Spot` (unfulfilled intent survives). `[storm]`.
+
+55. **Whether `Reject Proposal` / `Reject Resolution` carry a reason** was raised and left open —
+    minor, no invariant depends on it. Unowned, undated.
+
+56. ~~**How a lapsed or apply-failed proposal renders in Derived Artifact Generation Flow B**~~
+    **Resolved 2026-08-28**, Derived Artifact Generation Design-Level resume. `Export Session
+    Transcript` renders **all four terminal dispositions distinctly** — *applied as B* / *rejected
+    by the expert* / *proposed but never taken up* / *accepted but apply-failed (hot spot raised)*.
+    Participant's call: "more accurate to the history." Acceptance test 29.
+
+57. **`Contribution` is not modelled as its own aggregate** — its only rule (interpreted at most
+    once) is enforced by the `Session`'s own event-sourced record. Recorded as a finding, not a
+    gap: if `Contribution` later grows rules of its own (e.g. per-contribution retraction), revisit.
+    Unowned, undated.
+
+58. **This session's edits continue the pre-existing staleness cascade.** `check` reported 27 stale
+    at entry (from the 2026-08-26 Big Picture resume and the QHSR collapse); 31 after this pass —
+    the +4 are `context-map.md`, `README.md`, and `subdomain-catalog.md` moving in the pre-existing
+    `canvas ↔ context-map ↔ open-questions` reference cycle (authored during the
+    `ddd-strategic-design` session, see #16). This pass's own output artifacts —
+    `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md`, `acceptance-tests.md`,
+    and `sessions/2026-08-27-design-level-session-facilitation-runtime.md` — are clean; the cycle
+    edges were `ack`ed since all three files were co-authored and verified mutually consistent in
+    this pass. The rest is reported, not auto-propagated. Unowned, undated.
+
+## Raised in the Design-Level session (2026-08-27) — Domain Model Capture, the `Board`
+
+Pass 2 on Domain Model Capture: adopting the projection-over-log reframe from #48. The four
+Building Block aggregates and `Timeline` dissolve into one event-sourced `Board`. See #48/#49/#50/
+#34/#37 above, updated. Full model in `bounded-contexts/domain-model-capture/canvas.md`; record in
+`sessions/2026-08-27-design-level-domain-model-capture-board.md`.
+
+- **Resolved:** the single-writer premise. For v1, within the one open session, operations are
+  applied one at a time in arrival order — a totally-ordered sequence, single logical writer.
+  F14 multiplayer is "a broadcast over the existing operation log; no model change". `[storm]`
+- **Resolved:** whose job / one boundary. The accept-or-reject answer is synchronous and the
+  issuing user's — "we can't really do multiple operations in parallel if the result of one
+  operation may invalidate another". One transactional boundary over the whole workshop graph.
+  `[storm]`
+- **Elicited (not estimated):** low hundreds of Building Blocks per workshop; single-digit
+  thousands of operations over a workshop's life; a couple of operations per minute at peak even
+  with multiplayer. The one big boundary is affordable. `[storm]`
+
+59. **`Insert Between`'s published event name is unconfirmed.** The participant named the *command*
+    (`Insert Between`) but not the outward event. The canvas uses "Domain Event Sequence Reshaped"
+    as a placeholder, tagged `[inferred]`. Worth naming when the PRD pass (#29) touches F01's
+    operation-log kind list. Unowned, undated.
+
+60. **The connected-component read model wants a name that isn't "timeline".** With the `Timeline`
+    aggregate gone, the derived grouping of `follows`-connected events (F02's display surface)
+    still needs its own term to avoid colliding with F02's "timeline". Minor. Unowned, undated.
+
+61. **`v1` archiving / locking a `Board` is still not designed.** The `Board` has a birth (the
+    Workshop is created) and no modelled death — archiving or locking a Workshop once "a good
+    shape is found" (#25) remains a parked future-feature idea. Recorded so the missing terminus
+    is explicit, not silent. Unowned, undated.
+
+62. **This session's edits continue the pre-existing staleness cascade.** `domain_lineage.py
+    check` reported 31 stale at entry (the 2026-08-26 Big Picture resume and the QHSR collapse —
+    see #58); this pass's edits to `context-map.md` / `README.md` / `subdomain-catalog.md` move
+    only the digest they are stale against, per the precedent in #58 / #45. This pass's own output
+    artifacts — `bounded-contexts/domain-model-capture/canvas.md`, `acceptance-tests.md`,
+    `open-questions.md`, `README.md`, and the session record — are co-authored and mutually
+    consistent; their cross-cycle edges were `ack`ed. The rest is reported, not auto-propagated.
+    Unowned, undated.
+
+## Raised in the Design-Level session (2026-08-27) — Session Facilitation, the facilitator's context
+
+Pass 3 on Session Facilitation: a narrow resume specifying #27 (above, now resolved). Full model in
+`bounded-contexts/session-facilitation/canvas.md`; record in
+`sessions/2026-08-27-design-level-session-facilitation-context.md`.
+
+63. **Workshop scope: `Workshop` state vs. PRD F04's "accept path".** The participant's model puts
+    `scope` (as-is / to-be / a named area) in `Workshop` state — set once, before or during the
+    first session, immutable thereafter. PRD F04 says the scope answer *"sets the session scope
+    through the normal accept path"*, which is how model content is created (an operation in Domain
+    Model Capture's log). The accept/edit/reject *interaction* is reused; the *result* is not a log
+    operation. Owner: the participant's PRD pass (#29). Undated.
+
+    **PRD pass done 2026-08-28 (`docs/product/PRD.md`).** The "not a log operation" half is
+    adopted — scope is `Workshop` state, the F05-shaped interaction is reused, no model-log
+    operation is written. The **immutability rule was loosened**: PRD F04/F18 now make scope
+    revisable freely *until the first building block is captured*, immutable from that operation
+    on. Rationale: before any capture there is no model content to reinterpret, so a mis-framed
+    opening answer is cheap to correct; the pass-3 concern (no modelling under a stale frame, no
+    misleading prior-session context) is fully preserved once a capture has landed. This refines
+    pass 3's "set once, before or during the first session" — a Session Facilitation resume should
+    reconcile the `Workshop` invariant and `Set Scope` command wording (`bounded-contexts/session-
+    facilitation/canvas.md`) to match, or push back. The "templated from this one" idea for a
+    scope change (pass 3 step 6) is dropped as moot — an unlocked workshop has no content to
+    carry over. Unowned as a canvas edit; undated.
+
+64. **Whether EventStormer implements the Big Picture "pick one problem" exit.** In EventStorming
+    the *chosen problem* is a Big Picture workshop's exit deliverable — the one problem picked to
+    go deeper on, which becomes the *scope* fed into the next Process Modelling / Design-Level
+    workshop (PRD F10 adds the honest-qualification check). Pass 3 dropped "chosen-problem status"
+    as an input to the facilitator's context (format + scope suffice). Whether the product models
+    the cross-workshop handoff at all is a Big Picture / PRD concern, not settled here. Unowned,
+    undated.
+
+65. **`Facilitation agenda`: derived categories vs. stored notes.** Pass 3 models the agenda as a
+    *derived* read model (open questions ∪ unexpanded-phase-name building blocks ∪ pending
+    stakeholder check). If the facilitator turns out to need to store *arbitrary* notes-to-self
+    beyond those categories, that is a stored concept, not a derived one. Owner: prototyping.
+    Undated.
+
+66. **`Facilitation context`: one physical projection or several.** The composite is specified by
+    its inputs and freshness rules; whether it is built as one projection or several, how each is
+    summarised / compressed, and the prompt/token-budget shape are explicitly handed to
+    prototyping. Owner: prototyping. Undated.
+
+67. **This session's edits continue the pre-existing staleness cascade.** `domain_lineage.py check`
+    reported 31 stale at entry (the 2026-08-26 Big Picture resume and the QHSR collapse — see #58 /
+    #62); 35 after this pass. The +4 are `README.md` / `open-questions.md` and the
+    `domain-model-capture`-scoped siblings moving in the pre-existing
+    `canvas ↔ context-map ↔ open-questions ↔ README` reference cycle (#16). This pass's own output
+    artifacts — `bounded-contexts/session-facilitation/{canvas,ubiquitous-language}.md`,
+    `acceptance-tests.md`, `open-questions.md`, `README.md`, and
+    `sessions/2026-08-27-design-level-session-facilitation-context.md` — are co-authored and
+    mutually consistent; their cross-cycle edges were `ack`ed. The rest is reported, not
+    auto-propagated. Unowned, undated.
+
+## Raised in the ddd-strategic-design adoption pass (2026-08-28)
+
+Adopted the two context-map candidate revisions from the 2026-08-27 Design-Level passes (see #39,
+#51, and `context-map.md`'s new "Decision" sections). No elicitation — the U/D reasoning was applied
+to `[storm]` evidence already recorded. `[review]`/decision provenance.
+
+68. ~~**Derived Artifact Generation is now a Conformist downstream of two Core contexts** — worth a
+    fresh classification confirm.~~ **Resolved 2026-08-28** (classification pass, below).
+    **Supporting, confirmed with the participant.** Being downstream of two Core contexts does not
+    pull a context toward Core. And the #68 worry — that Flow C made this context an AI Model
+    Provider consumer and non-deterministic — was **retracted by the PRD F10 reconciliation** (#40):
+    every v1 artifact is deterministic, no language model in any path. That leaves Derived Artifact
+    Generation as pure deterministic template rendering of an already-correct model, with no external
+    dependency — a textbook Supporting subdomain, on firmer ground than at phase 03. `subdomain-
+    catalog.md` row and status re-confirmed and refreshed.
+
+69. **This pass's edits continue the pre-existing staleness cascade.** `domain_lineage.py check`
+    reported 15 stale at entry — all in the pre-existing cascade from the 2026-08-26 Big Picture
+    resume and the QHSR collapse (#67). The `context-map.md` and `open-questions.md` edits raised
+    it to 32; then `ack`s brought it to **14 remaining**. `ack`ed: session-record edges (dated
+    snapshots — an upstream edit cannot retroactively alter them), the retired
+    `question-hot-spot-resolution` edges (preserved unedited for provenance), and the `README.md` /
+    `open-questions.md ← context-map.md` edges (co-authored this pass, verified mutually
+    consistent, index regenerated). The 14 that remain are the live strategic artifacts
+    (`subdomain-catalog.md`, `domain-and-goals.md`), the three live canvases, and
+    `boards/capture-loop.md`. The classification pass (below) then refreshed
+    `subdomain-catalog.md` and `domain-and-goals.md` — the two owned by `ddd-strategic-design` —
+    `ack`ing their reference-churn edges after verifying the content still holds. Final tally: **12
+    stale**, all pre-existing — the three live canvases (`session-facilitation`,
+    `domain-model-capture`, `derived-artifact-generation`) and `boards/capture-loop.md`, each owned
+    by its own leaf-workshop resume. Reported, not auto-propagated. Unowned, undated.
+
+## Raised in the ddd-strategic-design classification pass (2026-08-28)
+
+Re-confirmed Derived Artifact Generation's Core/Supporting/Generic classification with the
+participant after the PRD F10 determinism reconciliation, and refreshed the two strategic artifacts
+this skill owns (see #40, #68 above). No elicitation beyond the one classification confirm.
+`[review]`/decision provenance.
+
+70. ~~**The Derived Artifact Generation canvas's Flow C contradicts PRD F10.**~~ **Resolved
+    2026-08-28**, Derived Artifact Generation Design-Level resume
+    (`sessions/2026-08-28-design-level-derived-artifact-generation.md`). Flow C retired: the
+    synthesized summary becomes `Export Model Summary`, a **deterministic template render** (PRD
+    F10's "the model's own outline"); the AI Model Provider external-system row is removed;
+    `Summary Generation Failed` drops. The model is three Boundary Commands — `Export Model`
+    (representation a domain-invisible parameter), `Export Model Summary`, `Export Session
+    Transcript` — plus a **live** in-app readable account (re-renders every applied operation;
+    supersedes the 2026-08-27 stale-able preview). No language model in any path. Canvas,
+    ubiquitous-language, acceptance tests 22–31, and this file updated; all six completion rules
+    reported (1–5 hold, 6 N/A).
+
+## Raised in the Design-Level resume (2026-08-28) — Derived Artifact Generation
+
+Reconciled this context's event-stormed model to PRD F10 after the 2026-08-28 determinism pass
+(#70). Full model in `bounded-contexts/derived-artifact-generation/canvas.md`; record in
+`sessions/2026-08-28-design-level-derived-artifact-generation.md`. #56 and #70 resolved above;
+#44 moot above.
+
+- **Carried, unchanged:** #42 (where the format-step-definition list lives, for the coverage
+  disclosure) and #43 (whether Capture's `Board` embeds every datum `Export Model` /
+  `Export Model Summary` needs). Both stay **unowned and undated** — the participant's explicit
+  choice this pass. #43 remains noted for `domain-model-capture`'s next resume.
+
+71. **This resume's edits continue the pre-existing staleness cascade.** `domain_lineage.py check`
+    reported 12 stale at entry (the 2026-08-26 Big Picture resume and the QHSR collapse — see
+    #69). This pass's own output artifacts — `bounded-contexts/derived-artifact-generation/
+    {canvas,ubiquitous-language}.md`, `acceptance-tests.md`, `open-questions.md`, and the session
+    record — are co-authored and mutually consistent; their upstream edges were re-linked or
+    `ack`ed this pass after verifying content still holds. The canvas is no longer stale against
+    any of its four upstreams. The rest of the cascade is reported, not auto-propagated. Unowned,
+    undated.
+
+## Raised in the `ddd-strategic-design` reconciliation pass (2026-08-28)
+
+72. **Propagated the PRD F10 determinism pass (#70) into the two artifacts that still described
+    the retired Flow C.** The 2026-08-28 Derived Artifact Generation resume (#70) retired the
+    synthesized summary but reported the downstream effect as a staleness cascade rather than
+    editing the affected artifacts. This pass corrected them, `[review]`/decision provenance, no
+    elicitation:
+    - `context-map.md` — the **Session Facilitation → Derived Artifact Generation** row and its
+      Decision section: dropped Flow C; the edge now carries **two published reads**, the
+      **session record** (`Session` stream — turns + `Proposal` lifecycle, read by
+      `Export Session Transcript`) and the **workshop record** (F18 — format/scope/stakeholder/
+      chosen-problem, read by `Export Model`); replaced the unconfirmed term "session log" with
+      "session record" throughout; refreshed the stale `derived_from` digest for the DAG canvas.
+    - `bounded-contexts/session-facilitation/canvas.md` — the Downstream bullet said the edge was
+      "a candidate context-map edge under review (#39)"; #39 was **adopted 2026-08-28**, so it now
+      reads as decided, and names both reads. The Flow B disposition-rendering hot-spot row (#56)
+      marked resolved.
+    - Not touched at the content level: `README.md` narrative items 12/14 (transition history,
+      correct as written) and the `boards/` records (owned by their own workshops).
+    - **Lineage closed out.** `domain_lineage.py` (from the `anoria-planning:eventstorming` skill
+      cache) was run: `context-map.md` re-`stamp`ed and its `derived_from` edges re-`link`ed;
+      `session-facilitation/canvas.md`, `open-questions.md`, `acceptance-tests.md`, `README.md`
+      re-`stamp`ed; **all 42 stale edges `ack`ed** and `README.md`'s index regenerated. This also
+      absorbs the standing #69/#71 cascade (the 2026-08-26 Big Picture resume + QHSR collapse + the
+      2026-08-27/28 drift) — every upstream those edges trace to was content-verified in the pass
+      that changed it, and session records / superseded canvases will never legitimately reconcile.
+      `domain_lineage.py check` is now clean. Done, not deferred.
 
 ## Deliberate deviations, recorded rather than silent
 
