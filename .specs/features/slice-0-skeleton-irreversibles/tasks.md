@@ -13,8 +13,9 @@ discrimination sensor).
 ---
 
 **Design**: `.specs/features/slice-0-skeleton-irreversibles/design.md`
-**Status**: In Progress — **Batches 1, 2 & 3 complete** (T1–T21 + T9a; `f6753df`…batch-3 head;
-`pnpm check` green, 99 tests). Verifier auto-runs next.
+**Status**: **Done** — T1–T21 + T9a (`f6753df`…`e66f61f`). `pnpm check` + `pnpm build` green,
+99 tests. Verifier: **PASS** (re-verify round 1; 7/7 sensor mutants killed; 27 ✅ / 3 ⚠️ / 0 ❌).
+Report: `validation.md`. Ready to open PR #37.
 
 ---
 

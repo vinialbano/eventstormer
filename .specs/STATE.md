@@ -35,11 +35,33 @@ capture.
 
 **Active feature:** `slice-0-skeleton-irreversibles` (GitHub issue #37)
 **Branch:** `slice-0-skeleton-irreversibles` (off `main`)
-**Phase:** Execute — **all 22 tasks done** (T1–T21 + T9a), 26 commits `f6753df`…`6981768`
-(range `49b779a..HEAD`). `pnpm check` + `pnpm build` green, **99 tests** (19 files), depcruise
-clean, no DB files tracked. **Independent Verifier dispatched next.**
+**Phase:** **COMPLETE — verified.** All 22 tasks (T1–T21 + T9a), `f6753df`…`e66f61f`
+(range `49b779a..HEAD`). `pnpm check` + `pnpm build` green, **99 tests** (19 files), depcruise +
+knip clean, no DB files tracked.
+**Verifier verdict: PASS ✅** (re-verify round 1) — `validation.md`. Round 0 found one Major gap
+(S0-15: the read-model `reword` fold had a tautological test — mutant survived); fixed in
+`e66f61f` (test-only, +7/-6); round 1 re-injected the mutation → now killed. Final sensor 7/7,
+spec traceability 27 ✅ / 3 ⚠️ (non-blocking, Slice 6) / 0 ❌.
+**Next:** open PR for issue #37. Then Slice 1 (F18/F03/F04/F05 — the capture loop).
 **Scope size:** Large (30 requirement IDs; 10 components; 22 tasks).
-**Batch status:** Batch 1 ✅ · Batch 2 ✅ · Batch 3 ✅. Verifier — dispatching.
+
+**Lessons recorded (candidates, `.specs/LESSONS.md`):**
+- L-001 (`domain/fold-tests`) — assert a fold that sets a field against a value distinct from the
+  prior state; a reword-to-the-same-label test + replay-vs-`project`-incremental comparison both
+  let a non-writing fold pass green.
+- L-002 (`plumbing/event-store`) — a spec AC listing record fields ("each row SHALL include the
+  author") is satisfiable by a column OR a field in the serialized payload; pin which at Design.
+
+**Slice 6 follow-ups (from `validation.md` non-blocking notes + earlier ADs):**
+- ADR-004 one-line clarification: the derived Anthropic contract is a compile-time sensor (AD-010).
+- `docs/domain/` "kind" → `modelAffecting` vocabulary reconciliation (AD-014).
+- `not-to-dev-dep` `-test.ts` carve-out is slightly broad (a prod file named `x-test.ts` would be
+  exempt) — tighten.
+- README stale layout; `.node-version` file; the hard `**/domain/** ≥ 90%` coverage glob.
+- Corrupt-DB-file edge case has no test; S0-11 concurrent-append AC is exercised only as the
+  sequential stale-position path.
+- The R3 spike (`pnpm spike:structured-output`) still needs a live run with the maintainer's
+  `ANTHROPIC_API_KEY` before Slice 1's facilitator contract is final (AD-015).
 
 **Batch 3 deviations:**
 - T17 `plumbing-is-a-leaf` `.test.ts` carve-out — **rejected & fixed** (`6981768`): the round-trip

@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 3,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "surviving_mutant::when testing a reducer fold that sets a field assert against a value distinct from the input state s prior value asserting the block s label same after rewording it to same or comparing replay log only to a project built incremental lets a fold that stops writing the field pass green",
+      "text": "When testing a reducer/fold that sets a field, assert against a value distinct from the input state's prior value — asserting the block's label 'same' after rewording it to 'same', or comparing replay(log) only to a project-built incremental, lets a fold that stops writing the field pass green.",
+      "signal": "surviving_mutant",
+      "scope": "domain/fold-tests",
+      "status": "candidate",
+      "features": [
+        "slice-0-skeleton-irreversibles"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/domain-model-capture/domain/board/project.test.ts:38 (domain/fold-tests)"
+      ],
+      "created": "2026-08-29T21:53:38Z",
+      "last_seen": "2026-08-29T21:53:38Z"
+    },
+    {
+      "id": "L-002",
+      "key": "spec_precision_gap::spec ac listing row record fields each row shall include the author is satisfiable two ways a dedicated column or a field inside the serialized payload the implementation chose the latter author lives in operation json flag which one the ac means at design time",
+      "text": "Spec AC listing row/record fields ('each row SHALL include the author') is satisfiable two ways — a dedicated column or a field inside the serialized payload; the implementation chose the latter (author lives in operation JSON). Flag which one the AC means at Design time.",
+      "signal": "spec_precision_gap",
+      "scope": "plumbing/event-store",
+      "status": "candidate",
+      "features": [
+        "slice-0-skeleton-irreversibles"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "S0-11 AC4 (plumbing/event-store)"
+      ],
+      "created": "2026-08-29T21:53:44Z",
+      "last_seen": "2026-08-29T21:53:44Z"
+    }
+  ]
+}

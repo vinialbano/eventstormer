@@ -428,38 +428,40 @@ without it, but Slice 1 depends on the answer.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| S0-01 | P1: Layout migration | Design | Pending |
-| S0-02 | P1: Layout migration — framework-free glob + planted violation | Design | Pending |
-| S0-03 | P1: Layout migration — cross-context-via-api.ts glob + planted violation | Design | Pending |
-| S0-04 | P1: Layout migration — AGENTS.md move, vitest/knip globs, health → host, one-file route composition, `pnpm dev` | Design | Pending |
-| S0-05 | P1: Schema SSOT — branded ids, full building-block + operation unions | Design | Pending |
-| S0-06 | P1: Schema SSOT — `v: z.literal(1)` + `.default(1)`, reject `v:2` | Design | Pending |
-| S0-07 | P1: Schema SSOT — author (proposer/accepter), `resolve` requires `reference`, `hotSpot.modelAffecting` boolean default `true` (AD-014) | Design | Pending |
-| S0-08 | P1: Schema SSOT — `schema-version.ts` relocated; `zod` a direct dep; zero framework imports | Design | Pending |
-| S0-09 | P1: plumbing — `Result<T,E>` + combinators, leaf rule | Design | Pending |
-| S0-10 | P1: plumbing — nanoid id + brand helpers, workshop-slug helper (nanoid contained to this one seam) | Design | Pending |
-| S0-11 | P1: plumbing — `EventStore` port; **namespaced stream key** `(context, aggregate, id)` (ADR-003); **batch-atomic** `append(stream, expectedPos, ops[])`; `node:sqlite` adapter; row shape; single-adapter rule; `BEGIN IMMEDIATE` concurrency | Design | Pending |
-| S0-11b | P1: plumbing — first-class **in-memory `EventStore`**; one shared contract-test suite over both impls | Design | Pending |
-| S0-12 | P1: plumbing — `Clock` abstraction | Design | Pending |
-| S0-13 | P1: Board decider — pure `decide`/`evolve` over the **slim write model** (`id → {kind, withdrawn}`); separate `project`/`replay` read-model fold; functional core, zero I/O | Design | Pending |
-| S0-14 | P1: Board decider — capture (3 kind-specific variants); snapshot shows label + provenance | Design | Pending |
-| S0-15 | P1: Board decider — reword (id stable, empty rejected, unknown-target systemic no-op, no dedup) | Design | Pending |
-| S0-16 | P1: Board decider — withdraw / reinstate (naked, id preserved) | Design | Pending |
-| S0-17 | P1: Board decider — reject on schema or write-model failure; `Rejection` carries systemic/transient classification; write model + snapshot unchanged | Design | Pending |
-| S0-18 | P1: Board decider — decider tests `Given/When/Then(events\|rejection)`; replay tests `replay(log)===snapshot` (AT-18a); **required `fast-check` property** `replay(log ++ [op]) === evolve(replay(log), op)` (ADR-008 #3); inline `// AT-*` tags, no matrix file; author (proposer + accepter) preserved in provenance | Design | Pending |
-| S0-18b | P1: Board decider — exhaustive `decide` switch over the frozen union; not-yet-implemented variants rejected explicitly | Design | Pending |
-| S0-19 | P1: Persistence — auto-create + additive auto-migrate; `op_version` non-null on every row | Design | Pending |
-| S0-20 | P1: Persistence — replay-on-load equals pre-restart snapshot; empty stream → empty snapshot | Design | Pending |
-| S0-21 | P1: Persistence — `pnpm db:reset` | Design | Pending |
-| S0-22 | P1: Anthropic contract — `z.toJSONSchema()` + `oneOf`→`anyOf` override; no `oneOf` at any depth | Design | Pending |
-| S0-23 | P1: Anthropic contract — pure derivation in `domain-model-capture/domain/`; no hand-copy; knip-clean; framework-free; re-exported via `api.ts` | Design | Pending |
-| S0-24 | P1: Changesets — config values; standing Version Packages PR; no `publish` | Design | Pending |
-| S0-25 | P1: Changesets — CI check fails a `src/**` diff with no changeset | Design | Pending |
-| S0-26 | P1: Release — `package.json` stays `0.1.0`; `pnpm check` + CI (+`build`) green; `coverage.thresholds.autoUpdate: true` flipped on | Design | Pending |
-| S0-27 | P2: Spike — install `ai`/`@ai-sdk/anthropic`; probe with ADR-005's exact setup (`claude-sonnet-5`, `Output.object` wrapper, `outputFormat`, no temperature); record `result.warnings` | Design | Pending |
-| S0-28 | P2: Spike — findings to `.specs/STATE.md` + `research/research-aisdk.md` (incl. `oneOf→anyOf` verdict); probe outside test suite, knip-clean; no test hits the real API | Design | Pending |
+| S0-01 | P1: Layout migration | Verify | ✅ Verified |
+| S0-02 | P1: Layout migration — framework-free glob + planted violation | Verify | ✅ Verified |
+| S0-03 | P1: Layout migration — cross-context-via-api.ts glob + planted violation | Verify | ✅ Verified |
+| S0-04 | P1: Layout migration — AGENTS.md move, vitest/knip globs, health → host, one-file route composition, `pnpm dev` | Verify | ✅ Verified |
+| S0-05 | P1: Schema SSOT — branded ids, full building-block + operation unions | Verify | ✅ Verified |
+| S0-06 | P1: Schema SSOT — `v: z.literal(1)` + `.default(1)`, reject `v:2` | Verify | ✅ Verified |
+| S0-07 | P1: Schema SSOT — author (proposer/accepter), `resolve` requires `reference`, `hotSpot.modelAffecting` boolean default `true` (AD-014) | Verify | ✅ Verified |
+| S0-08 | P1: Schema SSOT — `schema-version.ts` relocated; `zod` a direct dep; zero framework imports | Verify | ✅ Verified |
+| S0-09 | P1: plumbing — `Result<T,E>` + combinators, leaf rule | Verify | ✅ Verified |
+| S0-10 | P1: plumbing — nanoid id + brand helpers, workshop-slug helper (nanoid contained to this one seam) | Verify | ✅ Verified |
+| S0-11 | P1: plumbing — `EventStore` port; **namespaced stream key** `(context, aggregate, id)` (ADR-003); **batch-atomic** `append(stream, expectedPos, ops[])`; `node:sqlite` adapter; row shape; single-adapter rule; `BEGIN IMMEDIATE` concurrency | Verify | ⚠️ Verified* |
+| S0-11b | P1: plumbing — first-class **in-memory `EventStore`**; one shared contract-test suite over both impls | Verify | ✅ Verified |
+| S0-12 | P1: plumbing — `Clock` abstraction | Verify | ✅ Verified |
+| S0-13 | P1: Board decider — pure `decide`/`evolve` over the **slim write model** (`id → {kind, withdrawn}`); separate `project`/`replay` read-model fold; functional core, zero I/O | Verify | ✅ Verified |
+| S0-14 | P1: Board decider — capture (3 kind-specific variants); snapshot shows label + provenance | Verify | ✅ Verified |
+| S0-15 | P1: Board decider — reword (id stable, empty rejected, unknown-target systemic no-op, no dedup) | Verify | ✅ Verified |
+| S0-16 | P1: Board decider — withdraw / reinstate (naked, id preserved) | Verify | ✅ Verified |
+| S0-17 | P1: Board decider — reject on schema or write-model failure; `Rejection` carries systemic/transient classification; write model + snapshot unchanged | Verify | ✅ Verified |
+| S0-18 | P1: Board decider — decider tests `Given/When/Then(events\|rejection)`; replay tests `replay(log)===snapshot` (AT-18a); **required `fast-check` property** `replay(log ++ [op]) === evolve(replay(log), op)` (ADR-008 #3); inline `// AT-*` tags, no matrix file; author (proposer + accepter) preserved in provenance | Verify | ✅ Verified |
+| S0-18b | P1: Board decider — exhaustive `decide` switch over the frozen union; not-yet-implemented variants rejected explicitly | Verify | ✅ Verified |
+| S0-19 | P1: Persistence — auto-create + additive auto-migrate; `op_version` non-null on every row | Verify | ✅ Verified |
+| S0-20 | P1: Persistence — replay-on-load equals pre-restart snapshot; empty stream → empty snapshot | Verify | ✅ Verified |
+| S0-21 | P1: Persistence — `pnpm db:reset` | Verify | ⚠️ Verified* |
+| S0-22 | P1: Anthropic contract — `z.toJSONSchema()` + `oneOf`→`anyOf` override; no `oneOf` at any depth | Verify | ✅ Verified |
+| S0-23 | P1: Anthropic contract — pure derivation in `domain-model-capture/domain/`; no hand-copy; knip-clean; framework-free; re-exported via `api.ts` | Verify | ✅ Verified |
+| S0-24 | P1: Changesets — config values; standing Version Packages PR; no `publish` | Verify | ✅ Verified |
+| S0-25 | P1: Changesets — CI check fails a `src/**` diff with no changeset | Verify | ⚠️ Verified* |
+| S0-26 | P1: Release — `package.json` stays `0.1.0`; `pnpm check` + CI (+`build`) green; `coverage.thresholds.autoUpdate: true` flipped on | Verify | ✅ Verified |
+| S0-27 | P2: Spike — install `ai`/`@ai-sdk/anthropic`; probe with ADR-005's exact setup (`claude-sonnet-5`, `Output.object` wrapper, `outputFormat`, no temperature); record `result.warnings` | Verify | ✅ Verified |
+| S0-28 | P2: Spike — findings to `.specs/STATE.md` + `research/research-aisdk.md` (incl. `oneOf→anyOf` verdict); probe outside test suite, knip-clean; no test hits the real API | Verify | ✅ Verified |
 
-**Coverage:** 30 total (S0-01…28 plus S0-11b, S0-18b), 0 mapped to tasks (Tasks phase pending), 0 unmapped.
+**Coverage:** 30 total. Verified 2026-08-29 — 27 ✅ Verified · 3 ⚠️ Verified with spec-precision gaps
+(marked `*`: S0-11 no `author` column / race exercised as sequential; S0-21 & S0-25 config-only,
+not test-exercised). S0-15 fixed in `e66f61f` (re-verify round 1). See `validation.md`.
 
 ---
 
