@@ -581,10 +581,16 @@ proposal → `Proposal.decide(Lapse Proposal, {cause})` (`PROPOSED`/`EDITED`/hel
 **Requirement**: S1-06, S1-07, S1-37
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: close lapses `PROPOSED`/`EDITED`/held quietly + `APPLY_FAILED`; `ACCEPTED` in-flight survives; re-running close → no-op; a 3rd session's `facilitationContext` carries the first two `sessionSummary`s
-- [ ] crash-mid-close (skip step 2/3) → `reconcile` completes it
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] test: close lapses `PROPOSED`/`EDITED` quietly + `APPLY_FAILED` (cause `apply-failed`); `ACCEPTED` in-flight survives; re-running close → no-op; a 3rd session's `facilitationContext` carries the prior `sessionSummary`s (interpret-contribution test)
+- [x] crash-mid-close (skip step 2/3) → `reconcile` completes it (lapses the proposals too)
+- [x] `pnpm check && pnpm build` green (304 tests)
+**Tests**: integration · **Gate**: build — ✅ done, commit `T23`
+
+NOTE: the idempotent close tail (session_index flip + proposal lapse) is a shared
+`infrastructure/session-close.ts` `finishClose(deps, sessionId)` — the `close-session` handler
+calls it after appending `Session Closed`, and `reconcilePendingDerivations` calls it for any
+half-closed session, so a crash mid-close self-heals without either capability importing the other
+(AD-024).
 
 ### T24: `session-facilitation/api.ts` + `host/config.ts`
 **What**: `api.ts` re-exports every capability's Hono router **and** `interpretContribution` /

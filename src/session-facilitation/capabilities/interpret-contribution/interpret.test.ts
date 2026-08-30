@@ -6,7 +6,7 @@ import type { ContributionId, ProposalId, QuestionId, SessionId, WorkshopId } fr
 import { err, ok, type Result } from '~/plumbing/result.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
-import { reserve, type SessionIndexDb } from '../../infrastructure/session-index.ts'
+import { close as closeIndexRow, reserve, type SessionIndexDb } from '../../infrastructure/session-index.ts'
 import { sessionStream, workshopStream } from '../../infrastructure/streams.ts'
 import { ProposalEvent, SessionEvent } from '../../domain/schema/events.ts'
 import type { Facilitator, FacilitatorFailure } from '../../infrastructure/facilitator/port.ts'
@@ -256,6 +256,39 @@ describe('interpretContribution — FIFO and one-in-flight (S1-14, S1-29)', () =
 
     expect(sessionEvents().some((e) => e.type === 'Contribution Interpreted')).toBe(false)
     expect(interpretCalls).toBe(0)
+  })
+})
+
+describe('interpretContribution — a later session sees prior summaries (S1-35, S1-37)', () => {
+  it('assembles prior closed sessions into the facilitation prompt', async () => {
+    // two closed sessions, each with one contribution
+    for (const [id, body] of [['s_a', 'first session line'], ['s_b', 'second session line']] as const) {
+      const sid = id as SessionId
+      store.append(sessionStream(sid), -1, [
+        { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sid, workshopId: w, at } },
+        { at, opVersion: 1, operation: { v: 1, type: 'Contribution Made', sessionId: sid, contributionId: `${id}_c`, speaker: 'Dana', body, source: 'typed', at } },
+        { at, opVersion: 1, operation: { v: 1, type: 'Session Closed', sessionId: sid, workshopId: w, unresolvedQuestionIds: [], at } },
+      ])
+      reserve(db, w, sid, at)
+      closeIndexRow(db, sid, at)
+    }
+
+    seedSession()
+    contribute('a member borrowed a book', 'c_1')
+
+    let captured = ''
+    const d = deps([turn([])])
+    d.facilitator.interpret = (input) => {
+      captured = input.prompt
+      interpretCalls += 1
+      return Promise.resolve(ok(turn([])))
+    }
+
+    await interpretContribution(d)
+
+    expect(captured).toContain('## Prior sessions')
+    expect(captured).toContain('Session 1:')
+    expect(captured).toContain('Session 2:')
   })
 })
 

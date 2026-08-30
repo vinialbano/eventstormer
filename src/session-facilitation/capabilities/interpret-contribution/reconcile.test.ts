@@ -201,4 +201,53 @@ describe('reconcilePendingDerivations — crash-consistency (S1-56, S1-65)', () 
     reconcilePendingDerivations(deps())
     expect(sessionIdsFor(db, w).closed).toEqual([s])
   })
+
+  it('completes a crash-mid-close: lapses the session proposals the close handler did not reach', () => {
+    // one proposed proposal, and Session Closed on the stream, but the index row still open
+    store.append(sessionStream(s), store.read(sessionStream(s)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId: s,
+          contributionId: 'c_1',
+          tracks: [{ track: 'propose-building-block', proposalId: 'p_x', blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' }],
+          at,
+        },
+      },
+      {
+        at,
+        opVersion: 1,
+        operation: { v: 1, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [], at },
+      },
+    ])
+    store.append(proposalStream('p_x' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Building Block Proposed',
+          proposalId: 'p_x',
+          sessionId: s,
+          contributionId: 'c_1',
+          blockKind: 'domain-event',
+          label: 'Book borrowed',
+          bar: 'strict',
+          at,
+        },
+      },
+    ])
+
+    reconcilePendingDerivations(deps())
+
+    expect(sessionIdsFor(db, w)).toEqual({ closed: [s] })
+    expect(
+      store
+        .read(proposalStream('p_x' as ProposalId))
+        .map((r) => (r.operation as { type: string }).type),
+    ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
+  })
 })

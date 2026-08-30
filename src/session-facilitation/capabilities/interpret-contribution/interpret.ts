@@ -11,7 +11,8 @@ import { replay as replaySession } from '../../domain/session/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
-import { close as closeSessionIndexRow, openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
+import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
+import { finishClose } from '../../infrastructure/session-close.ts'
 import { proposalStream, sessionStream, storedOps, workshopStream } from '../../infrastructure/streams.ts'
 import type { InterpretContributionDeps } from './deps.ts'
 
@@ -283,8 +284,7 @@ export const reconcilePendingDerivations = (deps: InterpretContributionDeps): vo
     for (const e of events) {
       if (e.type === 'Contribution Interpreted') deriveTracks(deps, e)
     }
-    const closed = events.find((e) => e.type === 'Session Closed')
-    if (closed !== undefined) closeSessionIndexRow(deps.db, sessionId, closed.at)
+    if (events.some((e) => e.type === 'Session Closed')) finishClose(deps, sessionId)
   }
 }
 
