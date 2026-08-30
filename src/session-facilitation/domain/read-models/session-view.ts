@@ -23,6 +23,9 @@ interface TranscriptTurn {
   /** Present on `contribution` turns — the client welds proposal cards to the
    * turn that produced them. */
   contributionId?: ContributionId
+  /** Present on `question` turns — the client renders the `scope` question as an
+   * F05 card rather than a plain message. */
+  questionKind?: 'scope' | 'phase' | 'free'
 }
 
 interface OpenQuestion {
@@ -84,7 +87,13 @@ export const sessionView = (
           resolved: false,
         })
         if (e.kind === 'scope') scopeStatement = e.scopeStatement
-        transcript.push({ kind: 'question', speaker: 'facilitator', text: e.text, at: e.at })
+        transcript.push({
+          kind: 'question',
+          speaker: 'facilitator',
+          text: e.text,
+          at: e.at,
+          questionKind: e.kind,
+        })
         break
       case 'Question Answered': {
         const q = questions.get(e.questionId)

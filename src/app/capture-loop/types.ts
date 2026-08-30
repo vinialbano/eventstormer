@@ -20,6 +20,8 @@ export interface TranscriptTurn {
   at: string
   /** Present on `contribution` turns — proposal cards weld to the turn that produced them. */
   contributionId?: string
+  /** Present on `question` turns — the `scope` question renders as an F05 card. */
+  questionKind?: 'scope' | 'phase' | 'free'
 }
 
 export interface OpenQuestion {

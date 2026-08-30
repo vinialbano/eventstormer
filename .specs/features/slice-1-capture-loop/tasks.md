@@ -719,10 +719,14 @@ pre-`askOpeningQuestion` "getting started" placeholder.
 **Reuses**: the proposal-card component; `session` store `scope` state
 **Requirement**: S1-08, S1-11, S1-61
 **Tools**: MCP: NONE · Skill: `impeccable`
-**Done when**:
-- [ ] jsdom tests: drawer widen/collapse; a drawer row click scrolls to + pulses the inline card; scope card accept → `POST /scope` → scope status `set`; reject → card clears
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit (jsdom) · **Gate**: build
+- [x] jsdom tests: drawer widen via the `Pending ● n` handle + collapse; a drawer row click collapses the drawer, scrolls to + pulses the inline card; `Accept all remaining` accepts every non-held pending once; scope card accept → `POST /workshops/:id/scope` with the proposed statement; reject → card clears, no POST; getting-started placeholder before the scope question exists
+- [x] `pnpm check && pnpm build` green (349 tests)
+**Tests**: unit (jsdom) · **Gate**: build — ✅ done, commit `T29`
+
+NOTE: the scope card reuses `ProposalCard` (`kindLabel="SCOPE"`); `sessionView` question turns
+gained an additive `questionKind` so the `scope` question folds into the card instead of also
+rendering as a plain message. The drawer lives inside the dock panel (widens it rightward); below
+1024px it is hidden and the conversation column goes full-width.
 
 ### T30: SPA — workshop-create + start-session screens, routing, visual check
 **What**: A minimal create form (`creatorName`) → `POST /workshops` → route to

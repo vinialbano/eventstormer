@@ -414,10 +414,10 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-05 | P1 Session lifecycle (resume) | Execute | ✅ T17 (start-session — reserve → Session Started → 202; new session after close) |
 | S1-06 | P1 Session lifecycle (close mechanic) | Execute | ✅ T7 (Session.decide Close Session — idempotent) |
 | S1-07 | P1 Session lifecycle (rebuild from log) | Execute | ◐ T11 (GET /board rebuilds from log; close/reopen T23) |
-| S1-08 | P1 Workshop/scope (forced scope question) | Design | Pending |
+| S1-08 | P1 Workshop/scope (forced scope question) | Execute | ◐ T20 (`askOpeningQuestion`) + T29 (scope question renders as the first dock F05 card; `questionKind` seam) |
 | S1-09 | P1 Workshop/scope (Set Scope, no log op) | Execute | ✅ T6 (Set Scope validates statement, repeatable) |
 | S1-10 | P1 Workshop/scope (revision window + lock) | Execute | ✅ T16 (set-scope handler precondition — readBuildingBlocks().length === 0 else 409) |
-| S1-11 | P1 Workshop/scope (F05 review shape) | Design | Pending |
+| S1-11 | P1 Workshop/scope (F05 review shape) | Execute | ✅ T29 (scope card = `ProposalCard` accept/edit/reject → `POST /workshops/:id/scope`; reject clears) |
 | S1-12 | P1 Capture (segment fields) | Execute | ✅ T7 + T18 (POST /contributions → 202; segment carries session id / speaker / at / source:typed) |
 | S1-13 | P1 Capture (empty/whitespace) | Execute | ✅ T7 + T18 (whitespace-only → 204 no-op, no segment) |
 | S1-14 | P1 Capture (FIFO queue) | Execute | ◐ T7 (decider open/closed; FIFO queue is T19) |
@@ -460,7 +460,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-51a | cross — update `docs/domain/open-questions.md` #63 (scope resolution) **this slice** | Design | Pending |
 | S1-51b | cross — Slice-6 doc reconciliation (ADR-005/007 wording, canvas scope + Held + summary + AD-021, #66) | Design | Pending — Slice 6 |
 | S1-52 | P1 Proposal (Hold — `Proposal Held`/`Unheld` events, non-terminal) | Execute | ✅ T8 (Proposal Held/Unheld — reversible marker) |
-| S1-53 | P1 Proposal (`Accept all` cluster + `Accept all remaining` drawer; no reject-all) | Execute | ◐ T28 (`Accept all` per cluster when >1 acceptable; drawer `Accept all remaining` T29) |
+| S1-53 | P1 Proposal (`Accept all` cluster + `Accept all remaining` drawer; no reject-all) | Execute | ✅ T28 + T29 (`Accept all` per cluster; `Accept all remaining` in the drawer accepts every non-held pending once; no reject-all anywhere) |
 | S1-54 | P1 Capture screen (inline proposal cards welded to the turn; card-to-sticky flight + receipt) | Execute | ◐ T28 (cards weld to their contribution turn via `contributionId`; transcript receipt on APPLIED; flight T30) |
 | S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Execute | ◐ T28 (composer always enabled + quiet `Catching up…`; `useReducedMotion`; full keyboard sweep T30) |
 | S1-56 | P1 Facilitator (interpretation crash-consistency — `Contribution Interpreted` sole commit point; derived streams idempotent; worker reconciles) | Design | Pending |
@@ -468,7 +468,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-58 | P1 Workshop/scope (`askOpening` owned by the worker; produced when a provider returns if down at session start) | Design | Pending |
 | S1-59 | P1 Facilitator (`answer-question` track with an unknown `questionId` is dropped, logged, no `Question Answered`) | Execute | ✅ T7 (Answer Question rejects unknown/resolved id) |
 | S1-60 | P1 Session lifecycle (`sessionSummary` — read-time projection, no model call, no struct in the event) | Execute | ✅ T7 (Session Closed carries no summary struct) |
-| S1-61 | P1 Capture screen (scope shown as an accept/edit/reject card in the dock — no separate screen) | Design | Pending |
+| S1-61 | P1 Capture screen (scope shown as an accept/edit/reject card in the dock — no separate screen) | Execute | ✅ T29 (rendered in the dock feed as the first F05 card; no separate route) |
 | S1-62 | P1 Facilitator (hard `.max(12)` tracks/turn + `.max(200)` label — the real "not unbounded" bound) | Execute | ✅ T12 (schema `.max(12)` / `.max(200)`; 13-track + long-label rejection tested) |
 | S1-63 | P1 Facilitator (`nextMove.ask` → `Question Asked {kind:'free'}` with a minted `questionId` — the follow-up question gets a lifecycle) | Design | Pending |
 | S1-64 | P1 Facilitator (`Contribution Interpretation Failed` is a distinct event, not a flag) | Execute | ✅ T3 (own event in the Session SSOT) |
