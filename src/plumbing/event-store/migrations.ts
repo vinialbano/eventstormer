@@ -67,7 +67,13 @@ export const applyMigrations = (db: MigrationDb): void => {
 
     db.exec('COMMIT')
   } catch (error) {
-    db.exec('ROLLBACK')
+    // A failed migration may have been auto-rolled-back already (SQLITE_FULL /
+    // SQLITE_IOERR); guard the ROLLBACK so it cannot bury the real failure.
+    try {
+      db.exec('ROLLBACK')
+    } catch {
+      // transaction already gone — nothing to undo
+    }
     throw error
   }
 }

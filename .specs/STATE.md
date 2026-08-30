@@ -13,7 +13,7 @@ capture.
 
 | ID | Decision | Rationale | Date | Scope |
 | --- | --- | --- | --- | --- |
-| AD-001 | Id generation uses `nanoid` (pin `nanoid@6.0.1`). Branded ids (`WorkshopId`, `SessionId`, `BuildingBlockId`, `OperationId`) wrap nanoid values; the resumable workshop URL is a nanoid slug. | ADR-004 fixed `.brand()` but not the generator. nanoid is URL-safe, short, one small dep, and the pin was pre-verified in the research phase (DECISIONS-PENDING §2). Rejected `node:crypto.randomUUID()` — longer, less friendly as a URL slug. | 2026-08-29 | Slice 0 + all later slices |
+| AD-001 | Id generation uses `nanoid` (pin `nanoid@6.0.1`). Branded ids (`WorkshopId`, `SessionId`, `BuildingBlockId`; `OperationId` **dropped from v:1 — superseded by AD-011**) wrap nanoid values; the resumable workshop URL is a nanoid slug. | ADR-004 fixed `.brand()` but not the generator. nanoid is URL-safe, short, one small dep, and the pin was pre-verified in the research phase (DECISIONS-PENDING §2). Rejected `node:crypto.randomUUID()` — longer, less friendly as a URL slug. | 2026-08-29 | Slice 0 + all later slices |
 | AD-002 | The in-process event bus and the JSONL model-call logger are deferred from Slice 0 to Slice 1. | ADR-010 lists both in Slice 0's `plumbing/`, but the first consumer (the facilitator) is Slice 1. Building them in Slice 0 leaves unused exports that `knip` flags and violates the "no speculative abstraction" quality bar. Deliberate deviation from ADR-010's slice table. | 2026-08-29 | Slice 0 / Slice 1 |
 | AD-003 | Slice 0's Zod SSOT defines and freezes the **full** operation discriminated union — every variant in the `domain-model-capture` canvas Commands table — with `v: z.literal(1)`. The `Board` decider handles only `capture-domain-event` / `identify-actor` / `identify-system` / `reword` / `withdraw` / `reinstate`; every other variant is rejected with an explicit "not implemented in this slice" rejection (exhaustive switch). | ADR-004: schema "written first, in Slice 0, with the canvas open"; `switch-exhaustiveness-check` over the frozen union forces every later slice to handle its new operations. Canvas shapes are `[storm]`-confirmed, so freezing now is low-risk. | 2026-08-29 | Slice 0 |
 | AD-004 | Slice 0 keeps `package.json` at `0.1.0` and consumes **no** changeset. The "`src/**` diff ⇒ `.changeset/*.md` required" CI check is added in Slice 0 but first enforced from Slice 1; Slice 0's own PR is the documented bootstrap exception. | Matches ADR-009's "`0.1.0` when Slice 0 lands"; avoids a spurious `0.2.0` on the first `changeset version` run. | 2026-08-29 | Slice 0 / release process |
@@ -75,10 +75,6 @@ spec traceability 27 ✅ / 3 ⚠️ (non-blocking, Slice 6) / 0 ❌.
 - T21 SPEC_DEVIATION: `tsconfig.json` `include` += `scripts/**/*.ts` (ESLint `projectService`
   needs it) + a `spike:structured-output` script (jiti for the `~/` alias). `scripts/` is outside
   `src/` so depcruise never scans it.
-- **AD-015** — the R3 spike is built + green but **UNRUN** (no `ANTHROPIC_API_KEY`); the
-  maintainer runs `pnpm spike:structured-output` before Slice 1. Source analysis confirms
-  `oneOf → anyOf` is needed and applied (SDK on the live path + our sensor as backstop).
-
 **Batch 2 deviations (all reasoned; several are improvements — no SPEC_DEVIATION markers):**
 - T14 kind-permission: an **exhaustive deterministic loop** over all 14 not-implemented op kinds
   instead of a `fast-check` property — strictly stronger than sampling over a finite domain, and
@@ -127,14 +123,6 @@ spec traceability 27 ✅ / 3 ⚠️ (non-blocking, Slice 6) / 0 ❌.
   wrapper (not bare `Output.array`), `structuredOutputMode: 'outputFormat'`, no `temperature`.
 - Deferred (were ambiguous): `.node-version` → Slice 6 (ADR-010); `pnpm dev` `ANTHROPIC_API_KEY`
   fail-fast → Slice 1 (first consumer).
-
-**Open for Design to settle:** `OperationId` brand — added beyond ADR-004's list; keep only if the
-apply round-trip / correlation genuinely needs an id the log position can't serve.
-
-**Next step:** user approves `tasks.md` and answers the per-task tools question → Execute.
-21 tasks > 8 → offer batch sub-agents (batch 1 = P1+P2, batch 2 = P3+P4, batch 3 = P5).
-
-**Not yet started:** any code.
 
 **Design decisions settled (see `design.md` Tech Decisions):** Approach A; derived contract =
 compile-time sensor (AD-010); `OperationId` omitted (AD-011); `at` from Clock in the app layer,

@@ -215,7 +215,7 @@ Pull F06 reword/withdraw HTTP handler into Slice 0.
   //   mark-pivotal, unmark-pivotal, resolve (reference: z.unknown() — REQUIRED), reopen
   export const Operation = z.discriminatedUnion('kind', [ /* all 20 */ ]);
   ```
-  Shapes for the 16 not-yet-implemented variants are taken **verbatim from the canvas Commands
+  Shapes for the 14 not-yet-implemented variants are taken **verbatim from the canvas Commands
   table** and frozen. `resolve.reference` is `z.unknown()` but **required** (S0-07 AC5) — shape
   unconstrained, presence enforced.
 - **Interfaces**: `Operation` (schema + inferred type), `BuildingBlock`, `Author`, the branded id
@@ -246,7 +246,7 @@ Pull F06 reword/withdraw HTTP handler into Slice 0.
   - **Write model** — `type BoardWriteModel = Map<BuildingBlockId, { kind: BuildingBlockKind; withdrawn: boolean }>`. The *only* thing `decide` reads. Slices 3–4 add `follows`/`causedBy` adjacency and hot-spot state here.
   - **Snapshot (read model)** — `type BoardSnapshot = { blocks: Map<BuildingBlockId, { kind; label; withdrawn; placement: 'backlog'; provenance: Author }>; position: number }`. What `replay` yields and consumers use. Placement is always `'backlog'` in Slice 0 (no `place` yet).
 - **Interfaces**:
-  - `decide(wm: BoardWriteModel, op: Operation): Result<Operation[], Rejection>` — pure, zero I/O. Returns `ok([op])` for the four implemented kinds on success (cascades add more, later slices); `err(rejection)` otherwise. Exhaustive `switch (op.kind)` — the 16 unimplemented kinds return `err({ kind: 'not-implemented-in-slice', operation: op.kind, classification: 'systemic' })`.
+  - `decide(wm: BoardWriteModel, op: Operation): Result<Operation[], Rejection>` — pure, zero I/O. Returns `ok([op])` for the four implemented kinds on success (cascades add more, later slices); `err(rejection)` otherwise. Exhaustive `switch (op.kind)` — the 14 unimplemented kinds return `err({ kind: 'not-implemented-in-slice', operation: op.kind, classification: 'systemic' })`.
   - `evolve(wm: BoardWriteModel, op: Operation): BoardWriteModel` — the write-model fold.
   - `project(snap: BoardSnapshot, op: Operation): BoardSnapshot` — the snapshot fold (also bumps `position`).
   - `replay(log: Operation[]): BoardSnapshot` — `log.reduce(project, emptySnapshot)`.

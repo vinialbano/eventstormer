@@ -11,7 +11,7 @@ exemption to make a build pass.
 
 If a type here seems to need a framework, the design is wrong: the dependency points the wrong
 way. Move the framework-facing part into a capability or an adapter. No I/O — persistence lives
-behind a port in a capability slice.
+behind the `EventStore` port in `src/plumbing/event-store/`.
 
 ## Domain invariants — code must preserve these
 

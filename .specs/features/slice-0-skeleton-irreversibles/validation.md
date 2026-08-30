@@ -87,7 +87,7 @@ Citations are `file:line` + assertion. `✅` = assertion targets the spec-define
 
 | Criterion | Spec outcome | Evidence | Result |
 | --- | --- | --- | --- |
-| S0-01 tree shape | `src/` has `domain-model-capture/ plumbing/ host/ app/`, no `src/domain/` `src/capabilities/` `src/server.ts` | `ls src/` → `app domain-model-capture host plumbing`; `git diff --stat` shows `src/{server.ts => host/routes.ts}`, `src/{=>domain-model-capture}/domain/…` | ✅ |
+| S0-01 tree shape | `src/` has `domain-model-capture/` (`domain/` + `api.ts`; `capabilities/`/`infrastructure/` created only when earned — none in Slice 0), `plumbing/`, `host/`, `app/`; no top-level `src/domain/` `src/capabilities/` `src/server.ts` | `ls src/` → `app domain-model-capture host plumbing`; `ls src/domain-model-capture/` → `api.ts domain`; `git diff --stat` shows `src/{server.ts => host/routes.ts}`, `src/{=>domain-model-capture}/domain/…` | ✅ |
 | S0-02 framework-free glob is an error | `pnpm depcruise` errors on `**/domain/**` importing hono/vue/ai/node:* | `.dependency-cruiser.cjs:23-51` rules `domain-imports-no-framework` / `-no-node-builtins`, `from: '^src/[^/]+/domain/'`, `severity: error`; **re-verified live** — planted `import {Hono}` in `domain-model-capture/domain/_probe.ts` → `error domain-imports-no-framework`, exit 1 | ✅ |
 | S0-03 cross-context glob is an error | importing another context's `domain/`/`capabilities/`/`infrastructure/` (not `api.ts`) fails depcruise | `.dependency-cruiser.cjs:76-88` `cross-context-only-via-api` + `:90-97` `host-imports-only-context-api` | ✅ |
 | S0-04 each rule proven by a planted+reverted violation | evidence in commit message or design doc | `ad90f4c` commit body lists 7 rules each with its planted case; `7bcdf54` documents `host-imports-only-context-api`'s plant; `6981768` re-verifies `plumbing-is-a-leaf` | ✅ |
@@ -146,7 +146,7 @@ Citations are `file:line` + assertion. `✅` = assertion targets the spec-define
 | S0-18 **required** `fast-check` property `replay(log ++ [op]) === project(replay(log), op)` (ADR-008 #3) | | `replay.test.ts:74-80` `fc.assert(fc.property(fc.array(...POOL), fc.constantFrom(...POOL), …))` | ✅ |
 | S0-18 author (proposer + accepter) preserved in provenance | | `project.test.ts:30-35` `provenance).toEqual({proposer:{name:'facilitator'}, accepter:{name:'Dana'}})` | ✅ |
 | S0-18 inline `// AT-*` tags, no matrix file | | `decide.test.ts:108` `// AT-17`, `replay.test.ts:28` `// AT-18a`, `:73` `// ADR-008 property #3`, `:40` `// PRD F01 replay` | ✅ |
-| S0-18b exhaustive `decide` switch; not-yet-implemented variants rejected explicitly | | `decide.ts:59-73` 14 kinds → `{kind:'not-implemented-in-slice', classification:'systemic', operation:o.kind}`; `decide.test.ts:151-163` loops all 14 (`NOT_IMPLEMENTED`) asserting exact rejection | ✅ (spec/tasks prose says "16 unbuilt kinds"; union is 20, 6 implemented → **14**. Code correct; spec text imprecise.) |
+| S0-18b exhaustive `decide` switch; not-yet-implemented variants rejected explicitly | | `decide.ts:59-73` 14 kinds → `{kind:'not-implemented-in-slice', classification:'systemic', operation:o.kind}`; `decide.test.ts:151-163` loops all 14 (`NOT_IMPLEMENTED`) asserting exact rejection | ✅ (union is 20, 6 implemented → **14** unbuilt; spec/design/tasks prose corrected to match.) |
 
 ### P1 — Persisted log, auto-migrate, replay-on-load (S0-19…21)
 

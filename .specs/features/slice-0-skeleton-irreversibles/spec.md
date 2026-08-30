@@ -102,8 +102,10 @@ Doing it later means moving live model code.
 **Acceptance Criteria**:
 
 1. WHEN the migration is complete THEN `src/` SHALL contain `domain-model-capture/` (with its own
-   `domain/`, `capabilities/`, `infrastructure/`, `api.ts`), `plumbing/`, `host/`, and `app/`, and
-   SHALL NOT contain a top-level `src/domain/` or `src/capabilities/`.
+   `domain/` and `api.ts`; `capabilities/` and `infrastructure/` are the canonical shape of a
+   context folder but are created only by the slice that earns them — none in Slice 0 under
+   Approach A), `plumbing/`, `host/`, and `app/`, and SHALL NOT contain a top-level `src/domain/`
+   or `src/capabilities/`.
 2. WHEN a file under any `**/domain/**` imports from `hono`, `vue`, `pinia`, `ai`, `@ai-sdk/*`,
    `@vue-flow/*`, `@dagrejs/*`, `vite`, or a `node:*` builtin THEN `pnpm depcruise` SHALL fail
    with an error (not a warning).

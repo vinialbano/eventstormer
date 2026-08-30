@@ -36,7 +36,7 @@ src/domain-model-capture/       Core   — the Board: operation log + graph proj
 src/session-facilitation/       Core   — Workshop / Session / Proposal / Resolution; the facilitator
 src/derived-artifact-generation/ Supporting — deterministic template renders
 src/host/                       composition root: Hono app, route mounting, wiring
-src/plumbing/                   Result, branded ids, EventStore port + adapter, clock, bus
+src/plumbing/                   Result, branded ids, EventStore port + adapter, clock (bus: Slice 1)
 src/app/                        Vue SPA — talks to capabilities over HTTP only
 ```
 

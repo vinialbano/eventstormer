@@ -559,9 +559,9 @@ Do **not** reach back for `generateObject` just to get `repairText`. Trading the
 
 **Date:** 2026-08-29
 **Probe:** `scripts/spike-structured-output.ts`, run via `pnpm spike:structured-output` (jiti).
-**Status: READY BUT UNRUN.** No `ANTHROPIC_API_KEY` is available in this environment — the probe
-prints `skipped — no ANTHROPIC_API_KEY` and exits 0. Running it against the live API is the
-maintainer's to do; the key is theirs to supply. The batch was **not** blocked on this.
+**Status: RUN 2026-08-29** (`claude-sonnet-5`, real API) — results in "LIVE RESULTS" below; the
+decision is recorded as AD-015. Absent a key the probe prints `skipped — no ANTHROPIC_API_KEY`
+and exits 0, so it is safe in CI.
 
 ### What the probe pins (ADR-005's exact setup)
 
@@ -578,31 +578,11 @@ maintainer's to do; the key is theirs to supply. The batch was **not** blocked o
   `src/domain-model-capture/api.ts`.
 - Prints `result.output`, `result.warnings`, `result.finishReason`, `result.usage`.
 
-### Source-level prediction (from this document's own §2–§3 findings, unchanged)
-
-`@ai-sdk/anthropic@4.0.41` rewrites `oneOf → anyOf` in `sanitizeSchema` (`dist/index.js:3538-3542`),
-applied via `sanitizeJsonSchema(responseFormat.schema)` at `dist/index.js:3932` — i.e. **only on
-the `outputFormat` path**, which the probe pins. `sanitizeSchema` recurses through `properties` and
-`items`, so the discriminated union's `oneOf` nested at
-`properties.interpretation.items.oneOf` (one level deeper than a bare `Output.array`) is still
-reached and rewritten. The wrapped union is therefore **expected to round-trip**; `oneOf → anyOf`
-**is** applied by the provider SDK, not by us.
-
-This is corroborated independently by the Slice 0 compile-time sensor
-`src/domain-model-capture/domain/anthropic-contract.ts` + its test: `z.toJSONSchema(Operation, …)`
-with a mutating `override` rewrites every `oneOf` at any depth, and the test asserts
-`JSON.stringify(...)` contains no `"oneOf"`. So even if a future provider-SDK version dropped its
-sanitiser, our derivation still produces an Anthropic-safe schema.
-
-### To run it (maintainer)
-
-```
-ANTHROPIC_API_KEY=sk-ant-... pnpm spike:structured-output
-```
-
-Record `result.output` (did the wrapped union parse?), the full `result.warnings` array, and
-whether an HTTP 400 `Schema type 'oneOf' is not supported` occurred, back into this section and
-`.specs/STATE.md`.
+The Slice 0 compile-time sensor `src/domain-model-capture/domain/anthropic-contract.ts` + its test
+back this up independently: `z.toJSONSchema(Operation, …)` with a mutating `override` rewrites
+every `oneOf` at any depth, and the test asserts `JSON.stringify(...)` contains no `"oneOf"` — so
+even if a future provider-SDK version dropped its own sanitiser, our derivation still produces an
+Anthropic-safe schema.
 
 ---
 

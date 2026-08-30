@@ -29,6 +29,12 @@ describe('createSqliteEventStore', () => {
     expect(store.read(stream)).toEqual([])
   })
 
+  it('closes the handle and rethrows when construction fails (e.g. WAL unavailable)', () => {
+    // `:memory:` cannot run in WAL — the PRAGMA reports 'memory', tripping the
+    // assertion. The handle must be closed before the error escapes, not leaked.
+    expect(() => createSqliteEventStore(':memory:')).toThrow(/WAL journal mode/)
+  })
+
   it('persists op_version and at from the input on every row', () => {
     const store = makeStore()
     store.append(stream, -1, [

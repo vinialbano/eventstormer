@@ -528,7 +528,7 @@ omitted), AD-012 (`at` not on the op)
   `ZodError` → `{kind:'schema',classification:'systemic'}`); handles `capture-domain-event` /
   `identify-actor` / `identify-system` (duplicate-id guard), `reword` (unknown-target +
   empty-label), `withdraw` (unknown-target), `reinstate` (unknown-target + not-withdrawn);
-  `switch (op.kind)` is exhaustive — the other 16 kinds return
+  `switch (op.kind)` is exhaustive — the other 14 kinds return
   `{kind:'not-implemented-in-slice',classification:'systemic'}`
 - [x] `evolve(wm, op): BoardWriteModel` — folds capture (adds id→{kind,withdrawn:false}),
   withdraw (`withdrawn:true`), reinstate (`withdrawn:false`); reword is a no-op on the write model
