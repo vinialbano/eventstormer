@@ -64,7 +64,20 @@ capture.
   (`http.ts` + `accept.ts`), `close-session` capability, `domain/read-models/proposals-view.ts`,
   `infrastructure/session-close.ts`, `host/{config,scheduler}.ts`, `session-facilitation/api.ts`
   fully populated, `plumbing/ids.ts` `newProposalId`/`newQuestionId`.
-- **B5 (T26–T30), B6 (T31–T32) — pending.** Then the mandatory Verifier sub-agent → `validation.md`.
+- **B5 (T26–T30) ✅** — through `9ebd269` (`0f65b05` T26 · `13e3a3f` T27 · `607665c` T28 ·
+  `87e83d3` T29 · `9ebd269` T30). 355 tests. `pnpm check && pnpm build` green. The Vue SPA
+  (`src/app/capture-loop/`): 3 cold-load Pinia stores + `useInterpretationPoll` (AD-018), a
+  framework-free `layoutBoard` + `BoardWall` renderer (backlog only, `placed`/`arrows` reserved
+  for slice 3), the `FacilitatorDock` (conversation + inline `ProposalCard`s + in-dock
+  `PendingDrawer` + scope card, `reka-ui` Collapsible), `CreateWorkshop` + `CaptureScreen` +
+  `vue-router@5`. `DESIGN.md` founded here. Deviations: (a) `sessionView` gained additive
+  `contributionId` + `questionKind` on transcript turns (the UI welds cards to their turn and
+  folds the scope question into a card); (b) `GET /workshops/:id/session` returns 200
+  `{sessionId:null,sessionOpen:false,creatorName}` for a known workshop with no session (404 =
+  unknown workshop only) so the browser console stays clean; (c) new depcruise rule
+  `no-cross-store-imports`; (d) `@playwright/test` + `test:e2e` deferred to T31 (its
+  `playwright.config.ts` lands atomically there). `@vue/test-utils` added (dev).
+- **B6 (T31–T32) — pending.** Then the mandatory Verifier sub-agent → `validation.md`.
 `context7` allowed broadly; `impeccable` mandatory T27–T30; E2E via `FACILITATOR_MODE=scripted`.
 Earlier: DESIGN complete (2 review rounds), AD-017…AD-024.
 **Branch:** create `slice-1-capture-loop` off `main` before T1. `spec.md` (~70 requirement IDs),
