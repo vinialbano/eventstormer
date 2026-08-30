@@ -8,7 +8,7 @@ import { type BoardWriteModel, emptyWriteModel } from './model.ts'
 const author = { accepter: { name: 'Dana' } }
 const op = (raw: Record<string, unknown>): Operation => Operation.parse({ author, ...raw })
 
-/** Given(prior operations): fold them into the write model (docs/adr/008 style). */
+/** Given(prior operations): fold them into the write model (ADR-008 style). */
 const given = (priors: Record<string, unknown>[]): BoardWriteModel =>
   priors.reduce((wm, raw) => evolve(wm, op(raw)), emptyWriteModel())
 

@@ -4,7 +4,7 @@ import { applyMigrations, type Migration, type MigrationDb } from '~/plumbing/ev
  * `session-facilitation`'s projection tables. They live in the same SQLite file
  * as the operation log (transactional locality) but are this context's own — so
  * they carry their own id sequence, tracked in `_sf_migrations`, never colliding
- * with the operation-log set. Additive-only, same as docs/adr/004: no `up` string
+ * with the operation-log set. Additive-only, same as ADR-004: no `up` string
  * drops a column.
  *
  * - `session_index` — one row per session; `UNIQUE(workshop_id) WHERE

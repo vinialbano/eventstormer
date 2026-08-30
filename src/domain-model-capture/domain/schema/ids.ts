@@ -8,7 +8,7 @@ import { z } from 'zod'
  * context's schema surface a single import. `BuildingBlockId` is this context's
  * own; `z.infer` of it is `string & z.$brand<'BuildingBlockId'>`, structurally
  * identical to `plumbing/ids.ts`'s mirror, so a parsed value crosses the
- * plumbing seam with no cast (docs/adr/004).
+ * plumbing seam with no cast (ADR-004).
  *
  * Branding is static-only: `.parse` returns the string unchanged.
  */

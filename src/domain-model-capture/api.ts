@@ -1,5 +1,5 @@
 /**
- * The sole cross-context surface for domain-model-capture (docs/adr/002). Other
+ * The sole cross-context surface for domain-model-capture (ADR-002). Other
  * contexts and the composition root reach this context only through here —
  * never its `domain/`, `capabilities/`, or `infrastructure/`.
  */

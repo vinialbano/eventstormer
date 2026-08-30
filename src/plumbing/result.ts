@@ -1,6 +1,6 @@
 /**
  * The explicit-outcome type the domain returns instead of throwing for a
- * rejection (docs/adr/003). Kept minimal — extend on use, not on spec; `neverthrow`
+ * rejection (ADR-003). Kept minimal — extend on use, not on spec; `neverthrow`
  * is held in reserve if the combinator set ever grows past what is earned.
  */
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E }

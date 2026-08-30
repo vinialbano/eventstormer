@@ -11,7 +11,7 @@ import { InterpretedBlockKind, InterpretationBar, InterpretedTrack } from './int
 
 /**
  * The frozen per-aggregate event SSOTs for `session-facilitation`. One
- * framework-free definition (docs/adr/004 discipline). Every event carries
+ * framework-free definition (ADR-004 discipline). Every event carries
  * `v: z.literal(1)` — a future shape change adds `z.literal(2)` variants beside
  * these, never mutates one. `at` is an ISO-8601 UTC string stamped from the
  * `Clock` in the application layer.

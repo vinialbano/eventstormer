@@ -2,7 +2,7 @@ import type { ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import type { StoredOperationInput } from '~/plumbing/event-store/port.ts'
 
 /**
- * The `session-facilitation` event-stream keys (docs/adr/003 namespacing) and the
+ * The `session-facilitation` event-stream keys (ADR-003 namespacing) and the
  * one place the stored-op schema version is stamped. Shared by every capability
  * handler — capabilities never import one another.
  */

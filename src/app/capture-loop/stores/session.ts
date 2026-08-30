@@ -5,7 +5,7 @@ import type { SessionView } from '../types.ts'
 
 /**
  * The `session` store — cold-loads from the single GET `/workshops/:id/session`
- * (docs/adr/007: one store, one GET, no store imports another). `refetch` is what the
+ * (ADR-007: one store, one GET, no store imports another). `refetch` is what the
  * short-poll and every post-mutation refresh call.
  */
 export const useSessionStore = defineStore('session', () => {

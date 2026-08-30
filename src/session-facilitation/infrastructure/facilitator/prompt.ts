@@ -1,11 +1,11 @@
 import type { FacilitationContext } from '../../domain/read-models/facilitation.ts'
 
 /**
- * The facilitator's system instructions and per-turn input assembly (docs/adr/005).
+ * The facilitator's system instructions and per-turn input assembly (ADR-005).
  *
  * `buildInstructions()` is stable across a session — the role, the asymmetric
  * bar, the Big-Picture legend, the phase rule, the move menu, the output
- * contract, and 5–6 few-shot examples in the **library-lending** domain (docs/adr/005
+ * contract, and 5–6 few-shot examples in the **library-lending** domain (ADR-005
  * — deliberately disjoint from the restaurant/kitchen eval fixture, so the eval
  * measures generalisation, not memorisation).
  *

@@ -1,5 +1,5 @@
 /**
- * The board wall layout — a pure function, no Vue, no DOM (docs/adr/006: the board
+ * The board wall layout — a pure function, no Vue, no DOM (ADR-006: the board
  * renderer is framework-free and swappable). Slice 1 lays out the **backlog
  * only**: a titled frame top-left and its stickies flowed left→right,
  * top→bottom in fixed cells. The timeline, sequence arrows and pivotal bars are

@@ -70,7 +70,7 @@ describe('replay', () => {
     expect(wm.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
   })
 
-  // docs/adr/008 property #3 (required): incremental-replay consistency for `project`.
+  // ADR-008 property #3 (required): incremental-replay consistency for `project`.
   it('replay(log ++ [op]) deep-equals project(replay(log), op)', () => {
     fc.assert(
       fc.property(fc.array(fc.constantFrom(...POOL)), fc.constantFrom(...POOL), (log, next) => {

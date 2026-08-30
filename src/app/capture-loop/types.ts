@@ -1,6 +1,6 @@
 /**
  * Read-model shapes the capture screen consumes over HTTP. The SPA talks to
- * capabilities through `fetch` only (docs/adr/007) and never imports server code, so
+ * capabilities through `fetch` only (ADR-007) and never imports server code, so
  * the shapes `GET /workshops/:id/session`, `GET /sessions/:id/proposals`, and
  * `GET /workshops/:id/board` return are mirrored here by hand. A drift shows up
  * as a failing store test, not a silent type hole.

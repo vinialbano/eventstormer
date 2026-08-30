@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { FacilitationContext } from '../../domain/read-models/facilitation.ts'
 import { buildInstructions, buildTurnInput } from './prompt.ts'
 
-describe('buildInstructions — the system prompt', () => {
+describe('buildInstructions — the system prompt (ADR-005)', () => {
   const instructions = buildInstructions().toLowerCase()
 
   it('states the role, the asymmetric bar, the Big-Picture legend, the phase rule, and the move menu', () => {

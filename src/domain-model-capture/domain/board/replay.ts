@@ -6,7 +6,7 @@ import { project } from './project.ts'
 /**
  * Rebuild the read-model snapshot by folding the whole operation log from empty
  * (F01: "replaying the operation log from empty reproduces the current snapshot
- * exactly"). No snapshot cache in v1 (docs/adr/004).
+ * exactly"). No snapshot cache in v1 (ADR-004).
  */
 export const replay = (log: Operation[]): BoardSnapshot => log.reduce(project, emptySnapshot())
 

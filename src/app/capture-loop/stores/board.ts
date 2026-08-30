@@ -6,7 +6,7 @@ import type { BoardSnapshot } from '../types.ts'
 const EMPTY: BoardSnapshot = { position: -1, blocks: [] }
 
 /**
- * The `board` store — cold-loads from `/workshops/:id/board` (docs/adr/007). The
+ * The `board` store — cold-loads from `/workshops/:id/board` (ADR-007). The
  * board stream 404s until the first operation is applied, so an empty board is
  * a normal state, not an error. Refetched only after an accept resolves — never
  * optimistically (the wall is server-confirmed).
