@@ -329,10 +329,10 @@ existing stream → `stale-position`, nothing written; `append(stream, pos, [])`
 **Requirement**: S1-07, S1-46, S1-48
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] route returns the snapshot for a workshop rebuilt from its log; 404 for an unknown id
-- [ ] both new contract-test cases pass for the in-memory **and** sqlite impls
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] route returns the snapshot for a workshop rebuilt from its log; 404 for an unknown id
+- [x] both new contract-test cases pass for the in-memory **and** sqlite impls
+- [x] `pnpm check && pnpm build` green (227 tests)
+**Tests**: integration · **Gate**: build — ✅ done, commit `T11`
 
 ### T12: `FacilitationTurnSchema` + the ACL map to `InterpretedTrack`
 **What**: The Anthropic-shaped `Output.object({ interpretation: z.array(Track).max(12), nextMove })`
