@@ -423,8 +423,8 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-14 | P1 Capture (FIFO queue) | Execute | ◐ T7 (decider open/closed; FIFO queue is T19) |
 | S1-15 | P1 Capture (open→succeed, closed→reject) | Execute | ✅ T7 (open→succeed, closed→reject) |
 | S1-16 | P1 Facilitator (always-async; short-poll transport) | Design | Pending |
-| S1-17 | P1 Facilitator (one merged call/turn) | Design | Pending |
-| S1-18 | P1 Facilitator (model + SDK config) | Design | Pending |
+| S1-17 | P1 Facilitator (one merged call/turn) | Execute | ✅ T13 (one merged generateText call; Output.object; outputFormat; effort low; no temperature) |
+| S1-18 | P1 Facilitator (model + SDK config) | Execute | ✅ T13 (claude-sonnet-5 → sonnet → claude-haiku-4-5 ladder; warnings logged) |
 | S1-19 | P1 Facilitator (hand-shaped projection schema, AD-015) | Execute | ✅ T12 (FacilitationTurnSchema — ≤24 optionals, no empty subschema; ACL map) |
 | S1-20 | P1 Facilitator (re-inflated op validates against SSOT) | Execute | ◐ T10 (applyOperation → decide; re-inflation .parse T22) |
 | S1-21 | P1 Facilitator (past-tense domain event) | Design | Pending — translation-layer test here; **judgment quality verified by the Slice-5 eval** |
@@ -433,10 +433,10 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-24 | P1 Facilitator (deeper-format notice) | Design | Pending — notice plumbing here; **format-naming judgment = Slice-5 eval** |
 | S1-25 | P1 Facilitator (multi-track turn) | Design | Pending |
 | S1-26 | P1 Facilitator (interpret at most once) | Execute | ✅ T7 (interpret-once ledger; 2nd → ok([])) |
-| S1-27 | P1 Facilitator (provider-down, exactly once) | Design | Pending |
-| S1-28 | P1 Facilitator (schema-fail: one retry then terminal) | Design | Pending |
+| S1-27 | P1 Facilitator (provider-down, exactly once) | Execute | ✅ T13 (provider-down walks the ladder, then returns provider-down for the tick to retry) |
+| S1-28 | P1 Facilitator (schema-fail: one retry then terminal) | Execute | ✅ T13 (schema-invalid: one retry total with error fed back, then terminal) |
 | S1-29 | P1 Facilitator (one in flight/session; queue is a projection) | Design | Pending |
-| S1-30 | P1 Facilitator (Anthropic mocked in tests) | Design | Pending |
+| S1-30 | P1 Facilitator (Anthropic mocked in tests) | Execute | ✅ T13 (generate mocked at the `ai` boundary — no real HTTP in any test) |
 | S1-31 | P1 Facilitator (JSONL model-call logger) | Execute | ✅ T4 (plumbing/model-call-log) |
 | S1-32 | P1 Facilitator (fail fast on missing key) | Design | Pending |
 | S1-33 | P1/P2 Control flow (forced opening bookend) | Design | Pending |

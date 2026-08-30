@@ -92,3 +92,17 @@ export const FacilitationTurnSchema = z.object({
   nextMove: NextMove,
 })
 export type FacilitationTurn = z.infer<typeof FacilitationTurnSchema>
+
+/**
+ * The `askOpening` output — the scope question plus a first-draft scope statement
+ * the expert reviews with the F05 accept/edit/reject card (S1-08).
+ */
+export const OpeningQuestionSchema = z.object({
+  questionText: z.string().min(1).describe('The scope question to put to the expert.'),
+  scopeStatement: z
+    .string()
+    .min(1)
+    .max(10_000)
+    .describe('A first-draft one-sentence statement of the business being mapped, for the expert to accept or edit.'),
+})
+export type OpeningQuestion = z.infer<typeof OpeningQuestionSchema>

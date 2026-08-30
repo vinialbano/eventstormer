@@ -369,11 +369,16 @@ Promote `ai` + `@ai-sdk/anthropic` to `dependencies`; add `@ai-sdk/otel` (verify
 **Requirement**: S1-17, S1-18, S1-27, S1-28, S1-30, S1-31
 **Tools**: MCP: `context7` (`ai`, `@ai-sdk/anthropic`, `@ai-sdk/otel`) · Skill: NONE
 **Done when**:
-- [ ] `generateText` mocked at the `ai` boundary — **no test makes a real HTTP call**
-- [ ] tests: ladder walks primary→haiku on `provider-down`; `schema-invalid` retried once then returned; `warnings` logged; a JSONL line written
-- [ ] `knip` clean after the devDep→dep promotion
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit + integration · **Gate**: build
+- [x] `generateText` mocked at the `ai` boundary (`deps.generate` seam) — **no test makes a real HTTP call**
+- [x] tests: ladder walks primary→haiku on `provider-down`; `schema-invalid` retried once then returned; `warnings` logged; a JSONL line written; usage + cost recorded
+- [x] `knip` clean after the devDep→dep promotion (`ai` + `@ai-sdk/anthropic` → deps; `@ai-sdk/otel@1.0.77` added)
+- [x] `pnpm check && pnpm build` green (242 tests)
+**Tests**: unit + integration · **Gate**: build — ✅ done, commit `T13`
+
+NOTE: `@ai-sdk/otel` registered lazily inside `defaultGenerate` (`ensureTelemetry`) so knip sees a
+real consumer; `config.ts` (T24) needs no separate registration call. `effort: 'low'` passed via
+`providerOptions.anthropic`. Port takes pre-assembled `{ instructions, prompt }` strings (T14 builds
+them).
 
 ### T14: `prompt.ts` — system instructions + few-shot + context assembly
 **What**: `buildInstructions()` (role + asymmetric bar + Big-Picture legend + phase rule + move
