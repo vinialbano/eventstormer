@@ -763,9 +763,19 @@ proposed building blocks → assert they appear in the backlog. Add `pnpm test:e
 **Requirement**: spec Success Criteria; S1-46
 **Tools**: MCP: `context7` (`@playwright/test`) · Skill: `playwright-cli`
 **Done when**:
-- [ ] `pnpm test:e2e` passes headless; the flow reaches "block in the backlog"
-- [ ] `pnpm check && pnpm build && pnpm test:e2e` all green
-**Tests**: e2e · **Gate**: full
+- [x] `pnpm test:e2e` passes headless; the flow reaches "block in the backlog"
+- [x] `pnpm check && pnpm build && pnpm test:e2e` all green (356 tests; e2e 1 passed)
+**Tests**: e2e · **Gate**: full — ✅ done, commit `T31`
+
+NOTE: `@playwright/test@1.62.1` (dev) + `pnpm test:e2e` = `playwright test`. `playwright.config.ts`
+boots `pnpm dev --port 5178 --strictPort` with `FACILITATOR_MODE=scripted` +
+`SCRIPTED_FACILITATOR_FILE=e2e/fixtures/facilitator.json` (3 scripted turns, one propose-building-block
+each: "Book borrowed" / "Book returned" / "Member registered"; one opening). Each run gets a fresh
+`os.tmpdir()` data dir via `DATA_DIR` + `EVENTSTORMER_DB`. `host/config.ts` now `mkdirSync`s
+`DATA_DIR` and the db-file dir (recursive, idempotent) so the server boots without a pre-existing
+`data/` — covered by a new `config.test.ts` case. `tsconfig.json` `include` += `e2e/**/*.ts`
+(ESLint projectService, mirrors the `scripts/**` precedent). knip's playwright plugin auto-detects
+`playwright.config.ts` — no knip config change. `test-results/` etc. gitignored.
 
 ### T32: Changeset, version bump, doc obligations
 **What**: A `minor` changeset; `package.json` → `0.2.0`; **update `docs/domain/open-questions.md`

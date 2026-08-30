@@ -1,0 +1,43 @@
+{
+  "openings": [
+    {
+      "questionText": "What business are we mapping in this session?",
+      "scopeStatement": "A public library that lends books to registered members."
+    }
+  ],
+  "turns": [
+    {
+      "interpretation": [
+        {
+          "track": "propose-building-block",
+          "blockKind": "domain-event",
+          "label": "Book borrowed",
+          "bar": "strict"
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "interpretation": [
+        {
+          "track": "propose-building-block",
+          "blockKind": "domain-event",
+          "label": "Book returned",
+          "bar": "strict"
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "interpretation": [
+        {
+          "track": "propose-building-block",
+          "blockKind": "domain-event",
+          "label": "Member registered",
+          "bar": "strict"
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    }
+  ]
+}

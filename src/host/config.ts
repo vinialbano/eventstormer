@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite'
-import { readFileSync } from 'node:fs'
+import { mkdirSync, readFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { type Clock, systemClock } from '~/plumbing/clock.ts'
 import { createSqliteEventStore } from '~/plumbing/event-store/sqlite-adapter.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
@@ -75,6 +76,12 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): HostConfig => 
   const dbPath = env.EVENTSTORMER_DB ?? DEFAULT_DB_PATH
   const dataDir = env.DATA_DIR ?? './data'
   const clock = systemClock
+
+  // `node:sqlite` and the JSONL model-call log both fail if their parent
+  // directory is absent — create it so `pnpm dev` boots without a pre-existing
+  // `data/` (recursive + idempotent, so an existing directory is a no-op).
+  mkdirSync(dataDir, { recursive: true })
+  mkdirSync(dirname(dbPath), { recursive: true })
 
   const store = createSqliteEventStore(dbPath)
   const db = new DatabaseSync(dbPath)

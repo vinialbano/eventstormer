@@ -452,7 +452,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-43 | P1 Proposal (proposer + accepter recorded) | Design | Pending |
 | S1-44 | P1 Proposal (APPLY_FAILED re-editable) | Execute | ✅ T8 (APPLY_FAILED re-editable/re-acceptable) |
 | S1-45 | P1 Proposal (reject leaves nothing) | Execute | ✅ T8 (Reject terminal) |
-| S1-46 | P1 Proposal (backlog-only, eventual consistency) | Execute | ◐ T11 (backlog board read; eventual-consistency UI T27) |
+| S1-46 | P1 Proposal (backlog-only, eventual consistency) | Execute | ✅ T11 + T27 + T31 (backlog board read; eventual-consistency UI; E2E asserts 3 accepted blocks land in the backlog) |
 | S1-47 | P1 Proposal (accept idempotent) | Execute | ✅ T8 (Accept idempotent while ACCEPTED/APPLIED, stored id) |
 | S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ✅ T11 + T26 + T27 + T30 (board-first `CaptureScreen`: full-screen `BoardWall` + floating `FacilitatorDock`; 3 cold-load stores) |
 | S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ✅ T26 + T28 + T30 (`CaptureScreen` refetches the board from a GET on `board-dirty`; never optimistic; `client.ts` is the only fetch seam) |

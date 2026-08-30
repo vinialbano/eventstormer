@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -27,6 +27,18 @@ describe('loadConfig (S1-32)', () => {
     expect(config.facilitator).toBeDefined()
     expect(config.inFlight.sessions().size).toBe(0)
     expect(config.interpretationIntervalMs).toBe(750)
+  })
+
+  it('creates the data directory and db path when they do not exist yet', () => {
+    const nested = join(dir, 'fresh', 'nested')
+    const config = loadConfig({
+      FACILITATOR_MODE: 'scripted',
+      DATA_DIR: nested,
+      EVENTSTORMER_DB: join(nested, 'db', 'e.db'),
+    })
+    expect(config.store).toBeDefined()
+    expect(existsSync(nested)).toBe(true)
+    expect(existsSync(join(nested, 'db'))).toBe(true)
   })
 
   it('honours INTERPRETATION_INTERVAL_MS', () => {
