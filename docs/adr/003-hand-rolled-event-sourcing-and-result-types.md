@@ -80,4 +80,4 @@ retry behaviour; `http.ts` is the sole place mapping to a status code (422 schem
 ## Links
 
 - [ADR-004](004-operation-log-schema-and-versioning.md) — the log schema this replays
-- [ADR-002](002-context-first-layout-and-synchronous-choreography.md) — where these modules live
+- [ADR-002](002-context-first-layout-and-context-integration.md) — where these modules live

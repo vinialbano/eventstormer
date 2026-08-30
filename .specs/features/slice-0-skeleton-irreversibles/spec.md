@@ -1,7 +1,7 @@
 # Slice 0 — Skeleton + Irreversibles Specification
 
 > Source: GitHub issue [#37](https://github.com/vinialbano/eventstormer/issues/37) ·
-> [ADR-002](../../../docs/adr/002-context-first-layout-and-synchronous-choreography.md) ·
+> [ADR-002](../../../docs/adr/002-context-first-layout-and-context-integration.md) ·
 > [ADR-003](../../../docs/adr/003-hand-rolled-event-sourcing-and-result-types.md) ·
 > [ADR-004](../../../docs/adr/004-operation-log-schema-and-versioning.md) ·
 > [ADR-009](../../../docs/adr/009-versioning-and-release.md) ·
