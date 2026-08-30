@@ -408,10 +408,14 @@ rather than re-passing each; the caller (T19) builds it from `readBuildingBlocks
 **Requirement**: S1-01, S1-03
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `testClient` test: valid name → 201 + a nanoid slug; blank name → 400 typed body
-- [ ] a workshop GET (via T11's board route or a session GET) rebuilds identically from the log
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] `testClient` test: valid name → 201 + a 21-char nanoid slug + resumable URL; blank name / >80 / missing → 400 typed body
+- [x] the logged workshop stream replays to the identical `Workshop` write model
+- [x] `pnpm check && pnpm build` green
+**Tests**: integration · **Gate**: build — ✅ done, commit `T15`
+
+NOTE: `infrastructure/streams.ts` added — the shared `session-facilitation` stream-key helpers +
+`storedOps` (version stamp), so capabilities never import one another (AD-024). Only `workshopStream`
+this task; `sessionStream` lands with T17.
 
 ### T16: `capabilities/set-scope/` + `no-cross-slice-imports` re-verify
 **What**: `POST /workshops/:id/scope` — `{ statement }` → **precondition

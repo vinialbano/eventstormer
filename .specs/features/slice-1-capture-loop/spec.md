@@ -409,7 +409,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | --- | --- | --- | --- |
 | S1-01 | P1 Workshop/scope | Execute | ✅ T6 (Workshop.decide Start Workshop) |
 | S1-02 | P1 Workshop/scope (display name) | Execute | ✅ T6 (creatorName recorded, 1–80 non-blank) |
-| S1-03 | P1 Workshop/scope (nanoid URL) | Design | Pending |
+| S1-03 | P1 Workshop/scope (nanoid URL) | Execute | ✅ T15 (POST /workshops → 201 { workshopId, url }; 21-char nanoid slug) |
 | S1-04 | P1 Session lifecycle (one-open-session) | Execute | ✅ T5 (session_index partial unique index) |
 | S1-05 | P1 Session lifecycle (resume) | Design | Pending |
 | S1-06 | P1 Session lifecycle (close mechanic) | Execute | ✅ T7 (Session.decide Close Session — idempotent) |
