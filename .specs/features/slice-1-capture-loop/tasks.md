@@ -198,10 +198,15 @@ an owned price table (`claude-sonnet-5`, `claude-haiku-4-5`) with `estimateCost(
 **Requirement**: S1-31, S1-50
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] one call appends exactly one valid JSON line (tested against a temp dir)
-- [ ] `estimateCost` matches a hand-computed literal for a known token count
-- [ ] `pnpm check` green
-**Tests**: unit · **Gate**: quick
+- [x] one call appends exactly one valid JSON line (temp dir; round-trips + append-not-overwrite + creates missing dir)
+- [x] `estimateCost` matches hand-computed literals (sonnet $2/$10, haiku $1/$5, cache-read 0.1×, realistic turn)
+- [x] `pnpm check && pnpm build` green (140 tests)
+**Tests**: unit · **Gate**: quick — ✅ done, commit `T4`
+
+NOTE: prices from the `claude-api` skill's model table (sonnet-5 $2/$10 per MTok, haiku-4-5
+$1/$5); cache-read at Anthropic's standard 0.1× input. `logModelCall(dataDir, entry)` — dir
+injected (plumbing is a leaf, no config import); the adapter (T13) assembles the entry incl.
+`costEstimateUsd` via `estimateCost`.
 
 ### T5: `session-facilitation/infrastructure/` — migrations + `session-index` + `derived_track`
 **What**: `migrations.ts` extending the Slice-0 set with `session_index(workshop_id, session_id
