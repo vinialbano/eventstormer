@@ -42,11 +42,11 @@ Three event-sourced aggregates, each with pure `decide` / `evolve`:
   - `Fail Interpretation` — emits `Contribution Interpretation Failed` (its **own** event, not a
     flag on `Contribution Interpreted`); also ledgered so interpretation is not retried forever.
   - `Close Session` — idempotent (a second call returns `ok([])`). `Session Closed` carries only
-    `{ unresolvedQuestionIds, closedAt }` — **raw facts, no summary struct** (AD-023). Any
+    `{ unresolvedQuestionIds, closedAt }` — **raw facts, no summary struct**. Any
     summary a reader wants is a read-time projection over the terminal stream.
 - **`Proposal`** — disposition `PROPOSED ⇄ EDITED → ACCEPTED → APPLIED | APPLY_FAILED`;
   `REJECTED` is terminal; `APPLY_FAILED` is re-editable and re-acceptable (acceptance is **not**
-  terminal). A reversible **held** marker (`Proposal Held` / `Proposal Unheld` — AD-020) is
+  terminal). A reversible **held** marker (`Proposal Held` / `Proposal Unheld`) is
   orthogonal to the disposition, never a state and never a boolean field.
   - `Accept Proposal` mints the `buildingBlockId` once, carries it in `Proposal Accepted`, and is
     idempotent while `ACCEPTED` / `APPLIED` (the stored id is reused).
@@ -59,7 +59,7 @@ discriminated union has **no `z.unknown()`**. The Anthropic-shaped `Facilitation
 **not** here — it lives in `infrastructure/` and is mapped to `InterpretedTrack` across an
 anticorruption seam.
 
-Multi-stream steps reconcile, they do not transact (AD-021): one append is the commit point,
+Multi-stream steps reconcile, they do not transact: one append is the commit point,
 every other append is a deterministic idempotent derivation done with `expectedPosition: -1`.
 
 ## Testing

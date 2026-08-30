@@ -113,7 +113,7 @@ All routes are user-facing (the SPA calls them). The facilitator is server-side 
 interpretation scheduler in `host/` (`scheduler.ts`, a recursive `setTimeout`) drives
 `askOpeningQuestion` → `interpretContribution` → `reconcilePendingDerivations` each tick, and the
 SPA short-polls `GET /workshops/:id/session` + `/sessions/:id/proposals` while a contribution is
-still in flight (AD-018 — no message rides back on a mutation response).
+still in flight (no message rides back on a mutation response).
 
 **Writes:** `POST` `/workshops` · `/workshops/:id/scope` · `/workshops/:id/sessions` ·
 `/sessions/:id/contributions` · `/proposals/:id/{accept,edit,reject,hold,unhold}` ·
