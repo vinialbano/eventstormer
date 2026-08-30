@@ -453,7 +453,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-44 | P1 Proposal (APPLY_FAILED re-editable) | Execute | ✅ T8 (APPLY_FAILED re-editable/re-acceptable) |
 | S1-45 | P1 Proposal (reject leaves nothing) | Execute | ✅ T8 (Reject terminal) |
 | S1-46 | P1 Proposal (backlog-only, eventual consistency) | Execute | ✅ T11 + T27 + T31 (backlog board read; eventual-consistency UI; E2E asserts 3 accepted blocks land in the backlog) |
-| S1-47 | P1 Proposal (accept idempotent) | Execute | ✅ T8 (Accept idempotent while ACCEPTED/APPLIED, stored id) |
+| S1-47 | P1 Proposal (accept idempotent) | Execute | ✅ Verified — decider-level idempotency (T8); the accept-chain edge case "SHALL NOT call `applyOperation` again once APPLIED" pinned by a board-read count assertion (`accept.test.ts:144-145`, commit `b0ab862`, kills Verifier mutant M6) |
 | S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ✅ T11 + T26 + T27 + T30 (board-first `CaptureScreen`: full-screen `BoardWall` + floating `FacilitatorDock`; 3 cold-load stores) |
 | S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ✅ T26 + T28 + T30 (`CaptureScreen` refetches the board from a GET on `board-dirty`; never optimistic; `client.ts` is the only fetch seam) |
 | S1-50 | P1 Facilitator (token + cost recording) | Execute | ✅ T4 (plumbing/model-pricing estimateCost) |
@@ -463,7 +463,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-53 | P1 Proposal (`Accept all` cluster + `Accept all remaining` drawer; no reject-all) | Execute | ✅ T28 + T29 (`Accept all` per cluster; `Accept all remaining` in the drawer accepts every non-held pending once; no reject-all anywhere) |
 | S1-54 | P1 Capture screen (inline proposal cards welded to the turn; card-to-sticky flight + receipt) | Execute | ◐ T28 (cards weld to their contribution turn via `contributionId`; transcript receipt on APPLIED; flight T30) |
 | S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Execute | ✅ T28 + T30 (`playwright-cli` sweep: dock controls + composer + board keyboard-reachable, 0 console errors; `useReducedMotion` + global reduced-motion CSS) |
-| S1-56 | P1 Facilitator (interpretation crash-consistency — `Contribution Interpreted` sole commit point; derived streams idempotent; worker reconciles) | Design | Pending |
+| S1-56 | P1 Facilitator (interpretation crash-consistency — `Contribution Interpreted` sole commit point; derived streams idempotent; worker reconciles) | Design | ✅ Verified — sole-commit-point + reconcile-with-zero-extra-model-calls (T20 `reconcile.test.ts`); the `derived_track` per-track skip pinned by `interpret.test.ts:241-271` (commit `a3533cb`, kills Verifier mutant M4) |
 | S1-57 | P1 Session lifecycle (`session_index` projection + `UNIQUE … WHERE status='open'`; enumerates closed sessions) | Execute | ✅ T5 |
 | S1-58 | P1 Workshop/scope (`askOpening` owned by the worker; produced when a provider returns if down at session start) | Design | Pending |
 | S1-59 | P1 Facilitator (`answer-question` track with an unknown `questionId` is dropped, logged, no `Question Answered`) | Execute | ✅ T7 (Answer Question rejects unknown/resolved id) |
@@ -478,7 +478,16 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-68 | cross (depcruise re-verification: `no-cross-slice-imports`, `host-imports-only-context-api`, `domain-imports-nothing-above`, `ui-does-not-import-server-code`, `cross-context-only-via-api` — each by a planted violation) | Execute | ✅ T10/T16/T25 (cross-context / no-cross-slice / host) + T26 (new `no-cross-store-imports`) + T30 (`ui-does-not-import-server-code` planted `src/app/` → capability `http.ts`, reverted) |
 | S1-69 | cross (`session-facilitation/domain/AGENTS.md` path-scoped file; `WorkshopId` promoted to canonical `plumbing/ids.ts`) | Execute | ✅ T1 + T2 |
 
-**Coverage:** 70 requirement IDs (S1-01…S1-69 + S1-51a/b), 0 mapped to tasks yet, 0 unmapped.
+**Coverage:** 70 requirement IDs (S1-01…S1-69 + S1-51a/b), 0 unmapped.
+
+**Verification (2026-08-30, independent Verifier — `validation.md`):** verdict **PASS ✅**
+(iteration 2). Iteration 1 was FAIL for test-strengthening only (no behaviour defect):
+Verifier mutants M4 + M6 survived — missing assertions over redundant idempotency guards.
+Commits `a3533cb` (M4 / S1-56) and `b0ab862` (M6 / S1-47) added the pinning assertions;
+the sensor re-run kills both. Build gate fully green (357 unit tests + 1 e2e, from a 99
+baseline); all architecture rules depcruise-enforced. Every `Pending`/`◐` row above is
+re-derived as ✅ Verified. S1-21/S1-22/S1-24 judgment-quality remains deferred to the
+Slice-5 eval per the confirmed "facilitator seam for testing" decision.
 
 ---
 

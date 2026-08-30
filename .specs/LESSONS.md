@@ -26,6 +26,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: S0-11 AC4 (plumbing/event-store)
 - last seen: 2026-08-29T21:53:44Z
 
+### L-003 — When idempotency has a dedicated ledger/marker AND redundant downstream no-op guards, add a test that removes the marker and asserts the effect re-derives — otherwise a regression that drops the marker check passes CI.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `session-facilitation/capabilities;idempotency;tests` · harmful: 0
+- features: slice-1-capture-loop
+- evidence: src/session-facilitation/capabilities/interpret-contribution/interpret.ts:89 (session-facilitation/capabilities;idempotency;tests)
+- last seen: 2026-08-30T22:37:18Z
+
+### L-004 — For a 'SHALL NOT call X again' idempotency edge case, spy on X and assert call-count == 1 across retries; asserting only the end-state (one entity, reused id) passes even when the guard is removed.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `cross-context;accept-chain;tests` · harmful: 0
+- features: slice-1-capture-loop
+- evidence: src/session-facilitation/capabilities/review-proposal/accept.ts:75 (cross-context;accept-chain;tests)
+- last seen: 2026-08-30T22:37:18Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

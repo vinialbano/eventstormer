@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 3,
+  "next_id": 5,
   "lessons": [
     {
       "id": "L-001",
@@ -40,6 +40,42 @@
       ],
       "created": "2026-08-29T21:53:44Z",
       "last_seen": "2026-08-29T21:53:44Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::when idempotency has a dedicated ledger marker and redundant downstream no op guards add a test that removes the marker and asserts the effect re derives otherwise a regression that drops the marker check passes ci",
+      "text": "When idempotency has a dedicated ledger/marker AND redundant downstream no-op guards, add a test that removes the marker and asserts the effect re-derives — otherwise a regression that drops the marker check passes CI.",
+      "signal": "surviving_mutant",
+      "scope": "session-facilitation/capabilities;idempotency;tests",
+      "status": "candidate",
+      "features": [
+        "slice-1-capture-loop"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/session-facilitation/capabilities/interpret-contribution/interpret.ts:89 (session-facilitation/capabilities;idempotency;tests)"
+      ],
+      "created": "2026-08-30T22:37:18Z",
+      "last_seen": "2026-08-30T22:37:18Z"
+    },
+    {
+      "id": "L-004",
+      "key": "surviving_mutant::for a shall not call x again idempotency edge case spy on x and assert call count 1 across retries asserting only the end state one entity reused id passes even when the guard is removed",
+      "text": "For a 'SHALL NOT call X again' idempotency edge case, spy on X and assert call-count == 1 across retries; asserting only the end-state (one entity, reused id) passes even when the guard is removed.",
+      "signal": "surviving_mutant",
+      "scope": "cross-context;accept-chain;tests",
+      "status": "candidate",
+      "features": [
+        "slice-1-capture-loop"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/session-facilitation/capabilities/review-proposal/accept.ts:75 (cross-context;accept-chain;tests)"
+      ],
+      "created": "2026-08-30T22:37:18Z",
+      "last_seen": "2026-08-30T22:37:18Z"
     }
   ]
 }
