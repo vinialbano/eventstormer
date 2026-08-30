@@ -345,10 +345,14 @@ askQuestionId? }` that maps + mints per-track ids.
 **Requirement**: S1-19, S1-40, S1-62
 **Tools**: MCP: `context7` (AI SDK `Output` API) · Skill: NONE
 **Done when**:
-- [ ] a test counts optional parameters ≤ 24 and asserts `z.toJSONSchema(FacilitationTurnSchema)` has no empty (`{}`) subschema
-- [ ] `mapTurn` over a canned multi-track turn → the expected `InterpretedTrack[]` with stable minted ids; a 13-track turn is rejected by the schema
-- [ ] `pnpm check` green
-**Tests**: unit · **Gate**: quick
+- [x] a test counts optional parameters ≤ 24 and asserts `z.toJSONSchema(FacilitationTurnSchema)` has no empty (`{}`) subschema
+- [x] `mapTurn` over a canned multi-track turn → the expected `InterpretedTrack[]` with stable minted ids; a 13-track turn is rejected by the schema
+- [x] `pnpm check` green (235 tests)
+**Tests**: unit · **Gate**: quick — ✅ done, commit `T12`
+
+NOTE: `FacilitationTrack` is the model-output projection (no minted ids); `mapTurn(turn, mint)`
+takes an injected id mint for stable test ids. `OpeningQuestionSchema` deferred to T13 (its consumer
+is `askOpening`).
 
 ### T13: The `Facilitator` port + Anthropic adapter
 **What**: `Facilitator` port (`interpret`, `askOpening`) + its adapter: `generateText` +

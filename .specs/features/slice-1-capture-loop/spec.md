@@ -425,7 +425,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-16 | P1 Facilitator (always-async; short-poll transport) | Design | Pending |
 | S1-17 | P1 Facilitator (one merged call/turn) | Design | Pending |
 | S1-18 | P1 Facilitator (model + SDK config) | Design | Pending |
-| S1-19 | P1 Facilitator (hand-shaped projection schema, AD-015) | Design | Pending |
+| S1-19 | P1 Facilitator (hand-shaped projection schema, AD-015) | Execute | ✅ T12 (FacilitationTurnSchema — ≤24 optionals, no empty subschema; ACL map) |
 | S1-20 | P1 Facilitator (re-inflated op validates against SSOT) | Execute | ◐ T10 (applyOperation → decide; re-inflation .parse T22) |
 | S1-21 | P1 Facilitator (past-tense domain event) | Design | Pending — translation-layer test here; **judgment quality verified by the Slice-5 eval** |
 | S1-22 | P1 Facilitator (kept phrasing + bar + evidenceSpan) | Design | Pending — `bar`/`evidenceSpan` plumbing tested here; **kept-phrasing judgment = Slice-5 eval** |
@@ -469,7 +469,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-59 | P1 Facilitator (`answer-question` track with an unknown `questionId` is dropped, logged, no `Question Answered`) | Execute | ✅ T7 (Answer Question rejects unknown/resolved id) |
 | S1-60 | P1 Session lifecycle (`sessionSummary` — read-time projection, no model call, no struct in the event) | Execute | ✅ T7 (Session Closed carries no summary struct) |
 | S1-61 | P1 Capture screen (scope shown as an accept/edit/reject card in the dock — no separate screen) | Design | Pending |
-| S1-62 | P1 Facilitator (hard `.max(12)` tracks/turn + `.max(200)` label — the real "not unbounded" bound) | Design | Pending |
+| S1-62 | P1 Facilitator (hard `.max(12)` tracks/turn + `.max(200)` label — the real "not unbounded" bound) | Execute | ✅ T12 (schema `.max(12)` / `.max(200)`; 13-track + long-label rejection tested) |
 | S1-63 | P1 Facilitator (`nextMove.ask` → `Question Asked {kind:'free'}` with a minted `questionId` — the follow-up question gets a lifecycle) | Design | Pending |
 | S1-64 | P1 Facilitator (`Contribution Interpretation Failed` is a distinct event, not a flag) | Execute | ✅ T3 (own event in the Session SSOT) |
 | S1-65 | P1 Facilitator (model-call at-most-once window on a pre-ledger crash — accepted + documented) | Design | Pending |
