@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { type BoardAccessDeps, boardAccessRoutes } from '../domain-model-capture/api.ts'
 import { healthRoutes } from './health.ts'
 
 /**
@@ -6,4 +7,5 @@ import { healthRoutes } from './health.ts'
  * this file chooses their prefixes — there is no filesystem routing anywhere in
  * this project, and adding some would remove the only place the API is legible.
  */
-export const routes = new Hono().route('/api', healthRoutes)
+export const createRoutes = (deps: BoardAccessDeps) =>
+  new Hono().route('/api', healthRoutes).route('/api', boardAccessRoutes(deps))

@@ -312,11 +312,11 @@ import.**
 **Requirement**: S1-20, S1-42, S1-47, S1-66, S1-68
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] apply happy path; `duplicate-id` and `unknown-target` → merits `Rejection`
-- [ ] a **genuine two-accept race** (two `applyOperation` calls, same board stream) → both apply, no `APPLY_FAILED` (internal retry)
-- [ ] planted cross-context import fails `pnpm depcruise`; reverted
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit + integration · **Gate**: build
+- [x] apply happy path; `duplicate-id` and `unknown-target` → merits `Rejection`
+- [x] a **genuine two-accept race** (two `applyOperation` calls, same board stream) → both apply, no `APPLY_FAILED` (internal retry)
+- [x] planted cross-context import fails `pnpm depcruise` (`cross-context-only-via-api` + `domain-imports-nothing-above`); reverted
+- [x] `pnpm check && pnpm build` green (221 tests)
+**Tests**: unit + integration · **Gate**: build — ✅ done, commit `T10`
 
 ### T11: `GET /workshops/:id/board` route + `EventStore` contract-test additions
 **What**: A chained Hono router for `GET /workshops/:id/board` (returns `BoardSnapshot`); mount in

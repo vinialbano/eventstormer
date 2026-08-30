@@ -53,6 +53,31 @@ export const eventStoreContract = (name: string, makeStore: () => EventStore): v
       expect(store.read(stream)).toHaveLength(2) // no partial write, no duplicate position
     })
 
+    it('rejects append(stream, -1, ops) on an existing stream with stale-position and writes nothing', () => {
+      const store = makeStore()
+      store.append(stream, -1, [op(0), op(1)]) // stream now at position 1
+
+      const result = store.append(stream, -1, [op(2)]) // caller thinks the stream is new
+
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error).toEqual({
+          kind: 'stale-position',
+          actual: 1,
+          classification: 'transient',
+        })
+      }
+      expect(store.read(stream)).toHaveLength(2)
+    })
+
+    it('throws on an empty batch and leaves the stream untouched', () => {
+      const store = makeStore()
+      store.append(stream, -1, [op(0)])
+
+      expect(() => store.append(stream, 0, [])).toThrow(RangeError)
+      expect(store.read(stream)).toHaveLength(1)
+    })
+
     it('leaves the stream at its pre-batch length when an op in the batch fails mid-insert', () => {
       const store = makeStore()
       store.append(stream, -1, [op(0)]) // pre-batch length 1
