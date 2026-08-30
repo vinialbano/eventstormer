@@ -605,10 +605,16 @@ wires `EventStore`, `Clock`, the `Facilitator` adapter (or a scripted double whe
 **Requirement**: S1-32
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: missing `ANTHROPIC_API_KEY` → `config` throws with a one-line fix message
-- [ ] `knip` clean (every `api.ts` export consumed by `host/`)
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit · **Gate**: build
+- [x] test: missing `ANTHROPIC_API_KEY` → `config` throws with a one-line fix message; scripted mode bypasses it; `INTERPRETATION_INTERVAL_MS` honoured
+- [x] `knip` clean (api.ts is a knip entry; the routers/tick fns are wired into `host/` in T25)
+- [x] `pnpm check && pnpm build` green (307 tests)
+**Tests**: unit · **Gate**: build — ✅ done, commit `T24`
+
+NOTE: `session-facilitation` projection tables get a second `DatabaseSync` on the shared SQLite
+file (the op-log adapter encapsulates its own handle) — the two contexts still never share a
+transaction (AD-016). `FACILITATOR_MODE=scripted` wires `scriptedFacilitator` reading an optional
+`SCRIPTED_FACILITATOR_FILE` (`{ turns, openings }`); T31 supplies the fixture. `newProposalId` /
+`newQuestionId` added to `plumbing/ids.ts` for the real `mint`.
 
 ### T25: `host/scheduler.ts` + route mounting + `host-imports-only-context-api` re-verify
 **What**: `scheduler.ts` — recursive `setTimeout` (default 750 ms); each cycle **awaits in
