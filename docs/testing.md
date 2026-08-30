@@ -6,6 +6,13 @@
   helpers.
 - Domain tests need no DOM — plain Vitest, `environment: 'node'`. If a domain test starts
   needing `jsdom`, the domain layer has grown a dependency it must not have.
+- **Assert against an independently-stated expectation, not against another projection.** A
+  replay test that only checks `replay(log)` equals an incremental `project` fold is
+  self-referential — both sides move together under a regression and the test still passes. Pin
+  the projected value to a literal the test spells out.
+- **A cross-layer integration test lives in the context that consumes the seam**, not in
+  `plumbing/`. Placing it in `plumbing/` forces a back-import that only an architecture-rule
+  carve-out allows — relocate the test instead.
 
 ## Verifying UI changes
 

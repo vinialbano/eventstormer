@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { OP_SCHEMA_VERSION } from '../../domain/schema-version.ts'
+import { OP_SCHEMA_VERSION } from '../domain-model-capture/api.ts'
 
 /**
  * Routes MUST stay chained — `new Hono().get(...).post(...)`. Breaking the chain

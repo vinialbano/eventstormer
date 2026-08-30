@@ -1,0 +1,1148 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`anthropicOperationSchema (compatibility sensor) > matches the derived shape snapshot 1`] = `
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "id": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "capture-domain-event",
+          "type": "string",
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "id",
+        "label",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "id": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "identify-actor",
+          "type": "string",
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "id",
+        "label",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "id": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "identify-system",
+          "type": "string",
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "id",
+        "label",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "reword",
+          "type": "string",
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+        "label",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "withdraw",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "reinstate",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "id": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "raise-hot-spot",
+          "type": "string",
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "modelAffecting": {
+          "default": true,
+          "type": "boolean",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "id",
+        "label",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "place",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "unplace",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "sequence",
+          "type": "string",
+        },
+        "predecessor": {
+          "type": "string",
+        },
+        "successor": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "predecessor",
+        "successor",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "unsequence",
+          "type": "string",
+        },
+        "predecessor": {
+          "type": "string",
+        },
+        "successor": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "predecessor",
+        "successor",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "inserted": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "insert-between",
+          "type": "string",
+        },
+        "predecessor": {
+          "type": "string",
+        },
+        "successor": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "predecessor",
+        "inserted",
+        "successor",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "cause": {
+          "type": "string",
+        },
+        "effect": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "link-cause",
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "cause",
+        "effect",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "cause": {
+          "type": "string",
+        },
+        "effect": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "unlink-cause",
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "cause",
+        "effect",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "hotSpot": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "annotate",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "hotSpot",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "hotSpot": {
+          "type": "string",
+        },
+        "kind": {
+          "const": "unannotate",
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "hotSpot",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "mark-pivotal",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "unmark-pivotal",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "resolve",
+          "type": "string",
+        },
+        "reference": {},
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+        "reference",
+      ],
+      "type": "object",
+    },
+    {
+      "properties": {
+        "author": {
+          "properties": {
+            "accepter": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+            "proposer": {
+              "properties": {
+                "name": {
+                  "minLength": 1,
+                  "type": "string",
+                },
+              },
+              "required": [
+                "name",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "accepter",
+          ],
+          "type": "object",
+        },
+        "kind": {
+          "const": "reopen",
+          "type": "string",
+        },
+        "target": {
+          "type": "string",
+        },
+        "v": {
+          "const": 1,
+          "default": 1,
+          "type": "number",
+        },
+      },
+      "required": [
+        "author",
+        "kind",
+        "target",
+      ],
+      "type": "object",
+    },
+  ],
+}
+`;

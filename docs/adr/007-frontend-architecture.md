@@ -31,9 +31,10 @@ must not invent state.
 
 - Every mutation is `POST /api/<capability>` → `{ opLogPosition, ... }` or a typed error →
   affected store(s) refetch → re-render. **No optimistic updates.**
-- The **accept-proposal handler runs the whole apply chain synchronously** and returns the final
-  state (per [ADR-002](002-context-first-layout-and-synchronous-choreography.md)). No polling,
-  no SSE. The PRD's "shows up a moment later" gap collapses to normal request latency.
+- The **accept-proposal handler runs the whole apply chain synchronously** — a direct in-process
+  call into `domain-model-capture`, each context committing its own stream (per
+  [ADR-002](002-context-first-layout-and-context-integration.md)). No polling, no SSE. The
+  PRD's "shows up a moment later" gap collapses to normal request latency.
 - Mutation responses return the new operation-log position, so a later SSE broadcast for F14 is
   purely additive. **The stream is not built in v1.**
 
@@ -69,10 +70,12 @@ in-process. `ask-question` was removed (the facilitator is reactive). The full r
 
 - **Positive:** determinism is enforced by the architecture — the client can only render server
   state; every store survives a refresh; the F14 seam is drawn without paying for it.
-- **Negative:** a synchronous accept handler is more orchestration-shaped than pure choreography
-  — accepted as a v1 simplification, contained behind the handler.
+- **Negative:** a synchronous accept handler is a cross-context command, not choreography —
+  accepted as a v1 simplification, contained behind the handler, with ADR-002's
+  per-context-transaction rule as the guardrail.
 
 ## Links
 
-- [ADR-002](002-context-first-layout-and-synchronous-choreography.md) — the sync-vs-bus rule
+- [ADR-002](002-context-first-layout-and-context-integration.md) — in-process context
+  integration: direct calls vs the fire-and-forget bus, and the transaction boundary
 - [ADR-006](006-graph-timeline-rendering.md) — the board renderer

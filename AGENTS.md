@@ -23,28 +23,37 @@ the pre-push hook run exactly this; they must never be able to disagree about wh
 
 ## The one rule that is not negotiable
 
-`src/domain/` imports nothing from a framework. Full detail — including all domain invariants —
-is in `src/domain/AGENTS.md`, auto-loaded whenever a file in that directory is open.
+Any `**/domain/**` directory imports nothing from a framework or a Node builtin. Full detail —
+including all domain invariants — is in each context's `domain/AGENTS.md` (currently
+`src/domain-model-capture/domain/AGENTS.md`), auto-loaded whenever a file in that directory is open.
 
 ## Layout
 
+Organised by bounded context first, capability second — never by technical layer (ADR-002).
+
 ```
-src/domain/            model, reducer, replay, invariants, graph ranking. Framework-free.
-src/capabilities/      one folder per use-case slice; each owns its http.ts, logic, and data
-src/plumbing/          result types, ids, errors — extracted on the Rule of Three, not before
-src/app/               Vue UI
+src/domain-model-capture/       Core   — the Board: operation log + graph projection
+src/session-facilitation/       Core   — Workshop / Session / Proposal / Resolution; the facilitator
+src/derived-artifact-generation/ Supporting — deterministic template renders
+src/host/                       composition root: Hono app, route mounting, wiring
+src/plumbing/                   Result, branded ids, synchronous EventStore port + adapter, clock (bus: Slice 1)
+src/app/                        Vue SPA — talks to capabilities over HTTP only
 ```
 
-Every arrow here is enforced by dependency-cruiser, and each rule was verified by planting a
-violation and watching it fail — not by reading the config:
+Each context folder holds its own `domain/`, `capabilities/<slice>/`, `infrastructure/`, and a
+single `api.ts` — added only when earned. Every arrow is enforced by dependency-cruiser, and each
+rule was verified by planting a violation and watching it fail — not by reading the config:
 
-- `domain` may not import a framework, a Node builtin, or anything above it.
-- `plumbing` is a leaf; it may not reach back into `domain`, `capabilities`, or `app`.
-- Capability slices may not import each other. Share through `domain` or `plumbing`.
-- `app` talks to capabilities over HTTP, never by importing their `http.ts` or `data.ts`.
+- `**/domain/**` may not import a framework, a Node builtin, or anything above it.
+- `plumbing/` is a leaf; it may not reach back into a context, `host/`, or `app/`.
+- Cross-context imports go only through the other context's `api.ts` — never its `domain/`,
+  `capabilities/`, or `infrastructure/`. `host/` may import a context's `api.ts` only.
+- Capability slices within a context may not import each other. Share through that context's
+  `domain/` or through `plumbing/`.
+- `app/` talks to capabilities over HTTP, never by importing their `http.ts` or `data.ts`.
 
-Routes are composed, not discovered. A slice exports its routes from `http.ts`; one composition
-file mounts them all. There is no filesystem routing anywhere in this project.
+Routes are composed, not discovered. A slice exports its Hono router; `src/host/routes.ts` mounts
+them all. There is no filesystem routing anywhere in this project.
 
 ## Read on demand
 
@@ -52,8 +61,8 @@ file mounts them all. There is no filesystem routing anywhere in this project.
   surface; the index to `docs/adr/`. Read before designing a slice or touching a cross-cutting
   concern.
 - `docs/domain/README.md` — the confirmed subdomain catalog, bounded-context canvases, and context
-  map. Read before naming a domain concept, designing a new capability slice, or touching
-  `src/domain/`'s public vocabulary.
+  map. Read before naming a domain concept, designing a new capability slice, or touching a
+  context's `domain/` public vocabulary.
 - `docs/tooling-gotchas.md` — TypeScript/ESLint/dependency-cruiser/CI facts. Read before touching
   any of those configs.
 - `docs/framework-gotchas.md` — Hono/Vue/Pinia/dagre/`node:sqlite` version facts. Read before
@@ -73,24 +82,38 @@ file mounts them all. There is no filesystem routing anywhere in this project.
 ## Working agreements
 
 - **Hooks enforce what this file only explains.** A `PostToolUse` hook lints every file you edit
-  and returns the errors immediately; a `Stop` hook runs the full gate and refuses to let you
-  finish on a red tree; a `PreToolUse` hook blocks `--no-verify`, force pushes, and writes to
-  `.env`. Do not work around them — fix what they report.
+  and rejects a machine-specific absolute path in it, returning both immediately; a `Stop` hook
+  runs the full gate and refuses to let you finish on a red tree; a `PreToolUse` hook blocks
+  `--no-verify`, force pushes, and writes to `.env`. Do not work around them — fix what they
+  report.
 - Branch before committing; never commit to `main`. Conventional commit prefixes (`feat:`,
   `fix:`, `docs:`, `chore:`).
 - When you finish a task, run the full check before claiming it works. "It should work" is not a
   result; a passing command is.
 - If you cannot make something work, say so and say what you tried. Do not weaken a test, widen a
   type to `any`, or add a lint exemption to get to green — every one of those is a silent
-  regression in the thing this repo exists to enforce.
-- **Write documentation and comments as if the system were built today**: present tense, current
-  state only. Don't narrate transitions — Git and commit messages already own that history.
+  regression in the thing this repo exists to enforce. A cross-layer integration test belongs in
+  the context that consumes the seam, never behind a `.test.ts` carve-out on an architecture rule.
+- **Write comments and docs as if the system were built today**: present tense, current state
+  only. Never narrate a transition ("refactored to X", "moved here from Y", "now returns Z") —
+  Git owns that story, and the note rots the moment the next change makes "now" untrue.
 
   ```
   Bad:  "Refactored to use X instead of the old Y approach."
   Good: "Uses X."
   ```
 
-  Exception: if current behavior is genuinely counter-intuitive and could mislead a reader, say
-  why in one line. If the reasoning is itself a real decision — hard to reverse, surprising, a
-  genuine trade-off — it belongs in an ADR (`docs/adr/`), linked from the comment, not inlined.
+  Exception: when current behavior is genuinely counter-intuitive, say why in one line. If that
+  reasoning is a real decision — hard to reverse, a genuine trade-off — put it in an ADR and link
+  the ADR from the comment rather than inlining the story.
+- **Keep process ids out of code.** Comments, docstrings, and test names must not cite spec task
+  ids, verifier findings, or review tags (`S0-15`, `AD-013`, `M1`) — they point at `.specs/` state
+  a code reader cannot see and rot when the slice closes. Keep the durable reasoning, drop the
+  tag: not `// synchronous (AD-013)` but `// synchronous — node:sqlite has no async API`.
+  Permanent `docs/adr/NNN` and PRD `F01` ids may appear where a comment genuinely needs the
+  cross-link; `docs/`, `.specs/`, and the ADRs themselves reference all of these freely.
+- **No machine-specific absolute paths in committed files** — not `/Users/…`, `/home/…`,
+  `C:\Users\…`. They leak your local layout and resolve wrong for every other reader, CI included.
+  Write repo-relative and say where to stand ("from the repo root"), or discover it
+  (`git rev-parse --show-toplevel`). Absolute paths are fine in throwaway shell commands and
+  scratch files outside the repo.

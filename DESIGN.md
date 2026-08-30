@@ -29,7 +29,7 @@ v1 runs one Big Picture workshop, typed input only.
 ## 2. The shape
 
 Three bounded contexts (`docs/domain/context-map.md`), organised context-first in `src/`
-([ADR-002](docs/adr/002-context-first-layout-and-synchronous-choreography.md)):
+([ADR-002](docs/adr/002-context-first-layout-and-context-integration.md)):
 
 ```
                  ┌─────────────────────────────┐
@@ -69,9 +69,10 @@ Three bounded contexts (`docs/domain/context-map.md`), organised context-first i
 
 Every arrow between contexts crosses only through an `api.ts` surface. Inside `src/`, `**/domain/`
 imports nothing from a framework — one dependency-cruiser glob, build-breaking. The event bus
-carries only fire-and-forget cross-context effects; every other "policy" from the domain model is
-a synchronous call chain inside one HTTP handler in v1, with the seam drawn so real-time
-collaboration (F14) can make it async later.
+carries only fire-and-forget cross-context effects whose loss is tolerable; every other "policy"
+from the domain model is a direct synchronous call between contexts inside one HTTP handler in v1,
+each context committing its own stream in its own transaction, with the seam drawn so real-time
+collaboration (F14) can make it async later ([ADR-002](docs/adr/002-context-first-layout-and-context-integration.md)).
 
 ### Aggregate code shape
 
@@ -86,7 +87,7 @@ not exceptions and not Effect
 | Area | Decision | ADR |
 |---|---|---|
 | Stack | Vite + Vue 3 SPA + Hono + `node:sqlite`, one process | [001](docs/adr/001-adopt-vite-vue-hono-node-sqlite-over-nuxt.md) |
-| Layout | Context-first; `**/domain/** ↛ framework`; synchronous choreography in v1 | [002](docs/adr/002-context-first-layout-and-synchronous-choreography.md) |
+| Layout | Context-first; `**/domain/** ↛ framework`; in-process context integration in v1 (direct sync calls + fire-and-forget bus, each context its own transaction) | [002](docs/adr/002-context-first-layout-and-context-integration.md) |
 | Event sourcing | Hand-rolled `decide`/`evolve` — no library (Emmett, castore rejected) | [003](docs/adr/003-hand-rolled-event-sourcing-and-result-types.md) |
 | Error handling | Hand-rolled `Result<T,E>` — **Effect rejected** (its own runtime vs the framework-free rule) | [003](docs/adr/003-hand-rolled-event-sourcing-and-result-types.md) |
 | Operation log | Catalog = the domain canvas; `op_version` + `v: z.literal(1)` from commit one; replay every load | [004](docs/adr/004-operation-log-schema-and-versioning.md) |

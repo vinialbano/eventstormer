@@ -1,0 +1,36 @@
+name: release
+
+# Maintains a standing "Version Packages" PR on main (ADR-009). Merging that PR
+# performs the release: `changeset version` bumps package.json + regenerates
+# CHANGELOG.md, then the tag + GitHub Release. `publish` is deliberately not
+# wired — EventStormer is an unpublished app.
+
+on:
+  push:
+    branches: [main]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.16.0
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create or update the Version Packages PR
+        uses: changesets/action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

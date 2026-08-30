@@ -18,11 +18,17 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
+    "db:reset": "node --eval \"for (const s of ['', '-wal', '-shm']) require('node:fs').rmSync('data/eventstormer.db' + s, { force: true })\"",
+    "changeset": "changeset",
+    "spike:structured-output": "JITI_TSCONFIG_PATHS=1 jiti scripts/spike-structured-output.ts",
     "knip": "knip",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm depcruise && pnpm knip",
     "prepare": "lefthook install"
   },
   "devDependencies": {
+    "@ai-sdk/anthropic": "4.0.41",
+    "@changesets/changelog-github": "0.5.2",
+    "@changesets/cli": "2.31.1",
     "@commitlint/cli": "21.2.2",
     "@commitlint/config-conventional": "21.2.2",
     "@eslint/js": "^10.0.1",
@@ -31,9 +37,11 @@
     "@types/node": "24",
     "@vitejs/plugin-vue": "6.0.8",
     "@vitest/coverage-v8": "4.1.11",
+    "ai": "7.0.77",
     "dependency-cruiser": "18.2.0",
     "eslint": "10.9.0",
     "eslint-plugin-vue": "10.10.0",
+    "fast-check": "4.9.0",
     "globals": "^17.11.0",
     "jiti": "^2.7.0",
     "jsdom": "^30.0.1",
@@ -50,7 +58,9 @@
   "dependencies": {
     "@vue/devtools-api": "8.2.1",
     "hono": "4.13.4",
+    "nanoid": "6.0.1",
     "pinia": "4.0.3",
-    "vue": "3.5.41"
+    "vue": "3.5.41",
+    "zod": "4.4.3"
   }
 }

@@ -36,3 +36,12 @@ pre-push:
       run: pnpm depcruise
     - name: knip
       run: pnpm knip
+    # Non-blocking nudge — the CI changeset-guard is the real gate (ADR-009).
+    - name: changeset-reminder
+      run: |
+        files="$(git diff --name-only main...HEAD 2>/dev/null || true)"
+        if printf '%s\n' "$files" | grep -qE '^src/' \
+          && ! printf '%s\n' "$files" | grep -E '^\.changeset/[^/]+\.md$' | grep -qv '^\.changeset/README\.md$'; then
+          printf '\n  i  src/ changed on this branch with no changeset. If this branch is a deliverable, run: pnpm changeset\n\n'
+        fi
+        exit 0

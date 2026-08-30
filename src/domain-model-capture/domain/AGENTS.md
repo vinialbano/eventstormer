@@ -1,4 +1,4 @@
-# src/domain/ — path-scoped
+# src/domain-model-capture/domain/ — path-scoped
 
 Loaded automatically when work happens in this directory. Restates and expands the one rule that
 governs everything here; see the root `AGENTS.md` for everything else.
@@ -11,7 +11,11 @@ exemption to make a build pass.
 
 If a type here seems to need a framework, the design is wrong: the dependency points the wrong
 way. Move the framework-facing part into a capability or an adapter. No I/O — persistence lives
-behind a port in a capability slice.
+behind the synchronous `EventStore` port in `src/plumbing/event-store/`.
+
+Branded ids use Zod's `z.$brand` (`z.string().brand<'X'>()` in `schema/`, mirrored as
+`string & z.$brand<'X'>` in `src/plumbing/ids.ts`). Never hand-roll a `{ __brand }` marker — it
+is not assignable to what the schema infers, so every id crossing the plumbing/domain seam breaks.
 
 ## Domain invariants — code must preserve these
 
@@ -47,3 +51,10 @@ behind a port in a capability slice.
 
 Tests run with `environment: 'node'` — no DOM, ever, in this directory. If a test here starts
 needing `jsdom`, the layer has grown a dependency it must not have.
+
+`vite.config.ts` sets `coverage.thresholds.autoUpdate: true` — the ratchet. `pnpm test:coverage`
+rewrites any numeric threshold in that file **upward** only; a change to those numbers is a
+deliberate, committed decision, never regenerate-and-discard, never lowered by hand. No number is
+seeded yet, so nothing is written back today; the hard `**/domain/** ≥ 90%` glob arrives in a
+later slice (ADR-010). CI runs `pnpm test`, not `pnpm test:coverage`, so the ratchet only moves
+locally and on purpose.
