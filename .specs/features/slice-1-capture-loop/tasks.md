@@ -259,10 +259,10 @@ Open|Resolved>` + the interpret-once `Set<ContributionId>`.
 **Requirement**: S1-06, S1-12, S1-13, S1-14, S1-15, S1-26, S1-59
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] G/W/T: contribution on a `CLOSED` session rejected; empty rejected; interpret-once (2nd → `ok([])`); `Answer Question` on an unknown id rejected; `Close Session` twice → 2nd `ok([])`
-- [ ] `Session Closed` payload carries **no** summary struct
-- [ ] `pnpm check` green
-**Tests**: unit · **Gate**: quick
+- [x] G/W/T: contribution on a `CLOSED` session rejected; empty rejected; interpret-once (2nd → `ok([])`); `Answer Question` on an unknown id rejected; `Close Session` twice → 2nd `ok([])`
+- [x] `Session Closed` payload carries **no** summary struct
+- [x] `pnpm check` green (187 tests)
+**Tests**: unit · **Gate**: quick — ✅ done, commit `T7`
 
 ### T8: `session-facilitation/domain/proposal/`
 **What**: `decide`/`evolve` — disposition machine `PROPOSED ⇄ EDITED → ACCEPTED →
