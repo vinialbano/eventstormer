@@ -644,6 +644,19 @@ Pass 3 on Session Facilitation: a narrow resume specifying #27 (above, now resol
     scope change (pass 3 step 6) is dropped as moot — an unlocked workshop has no content to
     carry over. Unowned as a canvas edit; undated.
 
+    **Slice 1 resolution 2026-08-30 (`.specs/features/slice-1-capture-loop/`, S1-51a).** Scope is
+    **revisable until the first building block is *applied*** (a proposed-but-unapplied block does
+    not lock it) — a deliberately more-permissive reading than issue #38's "until the first block
+    is captured". It is enforced as a **`set-scope` handler precondition**
+    (`readBuildingBlocks(workshopId).length === 0` → else `409 scope-locked`), *not* a
+    `Workshop.decide(Set Scope)` argument: a true invariant never delegates its data to another
+    bounded context, so `Set Scope` only validates the statement and is freely repeatable. The
+    scope answer is a **dock turn, not a screen** — the facilitator's first F05 accept/edit/reject
+    card in the capture loop, submitting `POST /workshops/:id/scope`. This **diverges from the
+    Big-Picture canvas** ("scope set exactly once") **and from the capture-loop UX brief** (which
+    assumed scope is set elsewhere, before the loop). Both need reconciling in the Slice-6 domain
+    doc pass (S1-51b); flagged here now, not deferred.
+
 64. **Whether EventStormer implements the Big Picture "pick one problem" exit.** In EventStorming
     the *chosen problem* is a Big Picture workshop's exit deliverable — the one problem picked to
     go deeper on, which becomes the *scope* fed into the next Process Modelling / Design-Level

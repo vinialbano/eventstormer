@@ -789,9 +789,10 @@ routes + the `host/` scheduler; add the Slice-6 reconciliation list to `.specs/S
 **Requirement**: S1-51a, S1-51b
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `open-questions.md` #63 records: revisable-until-first-block, scope is a dock turn not a screen, diverges from canvas "set once" + brief "set elsewhere"
-- [ ] a `minor` changeset present; `pnpm check && pnpm build` green; CI changeset-guard satisfied
-**Tests**: none (doc + release) · **Gate**: build
+- [x] `open-questions.md` #63 records: revisable-until-first-block, scope is a dock turn not a screen, diverges from canvas "set once" + brief "set elsewhere"
+- [x] a `minor` changeset present (`.changeset/slice-1-capture-loop.md`); `package.json` → `0.2.0`; `pnpm check && pnpm build` green; CI changeset-guard satisfied (CHANGELOG.md still absent → guard inert, and a changeset is present regardless)
+- [x] `ARCHITECTURE.md` §4 route table updated (hold/unhold, scheduler tick fns); `.specs/STATE.md` carries the S1-51b Slice-6 reconciliation list
+**Tests**: none (doc + release) · **Gate**: build — ✅ done, commit `T32`
 
 ---
 

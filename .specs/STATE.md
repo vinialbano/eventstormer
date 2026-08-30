@@ -77,7 +77,12 @@ capture.
   unknown workshop only) so the browser console stays clean; (c) new depcruise rule
   `no-cross-store-imports`; (d) `@playwright/test` + `test:e2e` deferred to T31 (its
   `playwright.config.ts` lands atomically there). `@vue/test-utils` added (dev).
-- **B6 (T31–T32) — pending.** Then the mandatory Verifier sub-agent → `validation.md`.
+- **B6 (T31–T32) ✅** — `be0d87b` T31 (the one `@playwright/test` e2e — create → scope → 3
+  contributions → accept → 3 blocks in the backlog, scripted facilitator; `host/config.ts` now
+  `mkdirSync`s `DATA_DIR`) · T32 (this: `minor` changeset, `package.json` → `0.2.0`,
+  open-questions #63 S1-51a resolution, `ARCHITECTURE.md` §4 routes + scheduler, the S1-51b
+  Slice-6 reconciliation list above). 356 tests + e2e green. Then the mandatory Verifier
+  sub-agent → `validation.md`.
 `context7` allowed broadly; `impeccable` mandatory T27–T30; E2E via `FACILITATOR_MODE=scripted`.
 Earlier: DESIGN complete (2 review rounds), AD-017…AD-024.
 **Branch:** create `slice-1-capture-loop` off `main` before T1. `spec.md` (~70 requirement IDs),
@@ -162,6 +167,26 @@ check && pnpm build` green. Deviations:
   `oneOf → anyOf` is handled by the SDK; two Anthropic limits force Slice 1's facilitator to use
   a hand-shaped projection schema (no `z.unknown()`, ≤ 24 optionals so `v` is dropped), not the
   full `Operation` union. Full write-up in `research/research-aisdk.md` "LIVE RESULTS".
+
+**Slice-6 domain-doc / ADR reconciliation list (S1-51b — record only, do NOT make the edits now):**
+- **ADR-005** — "its message rides back on the `start-session` / `contributions` response" is
+  superseded by AD-018 (always-async worker + SPA short-poll). Reword.
+- **ADR-007** — "No polling, no SSE … the stream is not built in v1" is superseded by AD-018 for
+  the interpretation path (the accept→apply chain stays synchronous). Reword; keep the F14 SSE
+  upgrade purely additive.
+- **`session-facilitation` canvas** (`docs/domain/bounded-contexts/session-facilitation/canvas.md`):
+  (a) scope "set exactly once" / immutable → revisable-until-first-applied-block, `Set Scope`
+  repeatable (AD-021 pattern + open-questions #63, done this slice as S1-51a);
+  (b) `Hold` / `Proposal Parked` / `Proposal Unparked` — a 4th proposal action added after the
+  canvas was drawn (AD-020);
+  (c) `Session Closed` carries only `{ unresolvedQuestionIds, closedAt }`; the per-session summary
+  is a read-time projection, not a stored struct (AD-023);
+  (d) the multi-stream interpret step is reconciled, not transactional — one commit-point append,
+  the rest idempotent derivations skipped via `derived_track` (AD-021).
+- **Big-Picture canvas** — scope as `Workshop` state "set once" diverges from the shipped
+  dock-turn / revisable model (open-questions #63).
+- **`docs/domain/` hot-spot "kind"** → `modelAffecting` boolean (AD-014, already listed above).
+- **open-questions #66** — carry into the Slice-6 pass.
 
 **Batch 3 deviations:**
 - T17 `plumbing-is-a-leaf` `.test.ts` carve-out — **rejected & fixed** (`6981768`): the round-trip
