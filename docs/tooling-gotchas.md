@@ -17,6 +17,11 @@ docs for the installed version.
 - **`moduleDetection: "force"` is load-bearing.** Without it, two files that import nothing share
   a global scope and identical top-level `const` names collide with TS2451, pointing at a file
   nobody touched.
+- **One-off `scripts/*.ts` must stay in `tsconfig.json` `include`.** ESLint's `projectService`
+  rejects any `.ts` file that no tsconfig covers, so a script outside `include` fails the lint
+  gate before it runs. Run scripts with `jiti` (`pnpm exec jiti scripts/foo.ts`) — it resolves
+  the `~/` path alias; `node --strip-types` and vite-node do not. `scripts/` sits outside `src/`,
+  so dependency-cruiser never scans it.
 
 ## dependency-cruiser
 
@@ -69,7 +74,6 @@ docs for the installed version.
 - **CI has no `version:` on `pnpm/action-setup`, deliberately.** It reads `packageManager`
   from `package.json` via Corepack, so the pnpm pin has exactly one home. Do not add one back.
 
-## Not installed yet
+## Installed pins
 
-`nanoid@6.0.1` — for node/op ids. Install it in the sitting that adds id generation, at this
-verified pin, so `knip` stays a true signal rather than a wall of false positives.
+`nanoid@6.0.1` — id generation, imported only in `src/plumbing/ids.ts` (one seam).

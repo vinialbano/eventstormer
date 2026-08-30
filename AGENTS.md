@@ -36,7 +36,7 @@ src/domain-model-capture/       Core   — the Board: operation log + graph proj
 src/session-facilitation/       Core   — Workshop / Session / Proposal / Resolution; the facilitator
 src/derived-artifact-generation/ Supporting — deterministic template renders
 src/host/                       composition root: Hono app, route mounting, wiring
-src/plumbing/                   Result, branded ids, EventStore port + adapter, clock (bus: Slice 1)
+src/plumbing/                   Result, branded ids, synchronous EventStore port + adapter, clock (bus: Slice 1)
 src/app/                        Vue SPA — talks to capabilities over HTTP only
 ```
 
@@ -82,24 +82,38 @@ them all. There is no filesystem routing anywhere in this project.
 ## Working agreements
 
 - **Hooks enforce what this file only explains.** A `PostToolUse` hook lints every file you edit
-  and returns the errors immediately; a `Stop` hook runs the full gate and refuses to let you
-  finish on a red tree; a `PreToolUse` hook blocks `--no-verify`, force pushes, and writes to
-  `.env`. Do not work around them — fix what they report.
+  and rejects a machine-specific absolute path in it, returning both immediately; a `Stop` hook
+  runs the full gate and refuses to let you finish on a red tree; a `PreToolUse` hook blocks
+  `--no-verify`, force pushes, and writes to `.env`. Do not work around them — fix what they
+  report.
 - Branch before committing; never commit to `main`. Conventional commit prefixes (`feat:`,
   `fix:`, `docs:`, `chore:`).
 - When you finish a task, run the full check before claiming it works. "It should work" is not a
   result; a passing command is.
 - If you cannot make something work, say so and say what you tried. Do not weaken a test, widen a
   type to `any`, or add a lint exemption to get to green — every one of those is a silent
-  regression in the thing this repo exists to enforce.
-- **Write documentation and comments as if the system were built today**: present tense, current
-  state only. Don't narrate transitions — Git and commit messages already own that history.
+  regression in the thing this repo exists to enforce. A cross-layer integration test belongs in
+  the context that consumes the seam, never behind a `.test.ts` carve-out on an architecture rule.
+- **Write comments and docs as if the system were built today**: present tense, current state
+  only. Never narrate a transition ("refactored to X", "moved here from Y", "now returns Z") —
+  Git owns that story, and the note rots the moment the next change makes "now" untrue.
 
   ```
   Bad:  "Refactored to use X instead of the old Y approach."
   Good: "Uses X."
   ```
 
-  Exception: if current behavior is genuinely counter-intuitive and could mislead a reader, say
-  why in one line. If the reasoning is itself a real decision — hard to reverse, surprising, a
-  genuine trade-off — it belongs in an ADR (`docs/adr/`), linked from the comment, not inlined.
+  Exception: when current behavior is genuinely counter-intuitive, say why in one line. If that
+  reasoning is a real decision — hard to reverse, a genuine trade-off — put it in an ADR and link
+  the ADR from the comment rather than inlining the story.
+- **Keep process ids out of code.** Comments, docstrings, and test names must not cite spec task
+  ids, verifier findings, or review tags (`S0-15`, `AD-013`, `M1`) — they point at `.specs/` state
+  a code reader cannot see and rot when the slice closes. Keep the durable reasoning, drop the
+  tag: not `// synchronous (AD-013)` but `// synchronous — node:sqlite has no async API`.
+  Permanent `docs/adr/NNN` and PRD `F01` ids may appear where a comment genuinely needs the
+  cross-link; `docs/`, `.specs/`, and the ADRs themselves reference all of these freely.
+- **No machine-specific absolute paths in committed files** — not `/Users/…`, `/home/…`,
+  `C:\Users\…`. They leak your local layout and resolve wrong for every other reader, CI included.
+  Write repo-relative and say where to stand ("from the repo root"), or discover it
+  (`git rev-parse --show-toplevel`). Absolute paths are fine in throwaway shell commands and
+  scratch files outside the repo.

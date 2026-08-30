@@ -11,7 +11,11 @@ exemption to make a build pass.
 
 If a type here seems to need a framework, the design is wrong: the dependency points the wrong
 way. Move the framework-facing part into a capability or an adapter. No I/O — persistence lives
-behind the `EventStore` port in `src/plumbing/event-store/`.
+behind the synchronous `EventStore` port in `src/plumbing/event-store/`.
+
+Branded ids use Zod's `z.$brand` (`z.string().brand<'X'>()` in `schema/`, mirrored as
+`string & z.$brand<'X'>` in `src/plumbing/ids.ts`). Never hand-roll a `{ __brand }` marker — it
+is not assignable to what the schema infers, so every id crossing the plumbing/domain seam breaks.
 
 ## Domain invariants — code must preserve these
 
