@@ -17,6 +17,7 @@ const props = defineProps<{
   applyFailedReason?: string | undefined
   accepter?: string | undefined
   busy?: boolean | undefined
+  noHold?: boolean | undefined
 }>()
 
 const emit = defineEmits<{
@@ -110,7 +111,14 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
       >
         Unpark
       </button>
-      <button v-else type="button" class="btn btn--outline" @click="emit('hold')">Hold</button>
+      <button
+        v-else-if="!noHold"
+        type="button"
+        class="btn btn--outline"
+        @click="emit('hold')"
+      >
+        Hold
+      </button>
     </div>
   </div>
 </template>

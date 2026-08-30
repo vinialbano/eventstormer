@@ -69,15 +69,34 @@ export const makeContributionRoutes = (deps: MakeContributionDeps) =>
     })
     .get('/workshops/:id/session', (c) => {
       const workshopId = c.req.param('id') as WorkshopId
+      const workshopEvents = readWorkshop(deps, workshopId)
+      // 404 is reserved for an unknown workshop. A known workshop with no
+      // session yet is a normal state the capture screen shows a "start
+      // session" affordance for — not an error.
+      if (workshopEvents.length === 0) return c.json({ error: 'unknown-workshop' as const }, 404)
+
+      const scopeIsSet = workshopEvents.some((e) => e.type === 'Scope Set')
+      const creatorName = replayWorkshop(workshopEvents).creatorName
       const { open, closed } = sessionIdsFor(deps.db, workshopId)
       const sessionId = open ?? closed.at(-1)
-      if (sessionId === undefined) return c.json({ error: 'no-session' as const }, 404)
 
-      const scopeIsSet = readWorkshop(deps, workshopId).some((e) => e.type === 'Scope Set')
+      const base = { sessionOpen: open !== undefined, creatorName }
+      if (sessionId === undefined) {
+        return c.json({
+          ...base,
+          sessionId: null,
+          scope: { status: scopeIsSet ? ('set' as const) : ('none' as const) },
+          transcript: [],
+          openQuestions: [],
+          contributions: [],
+          fullyDerived: true,
+        })
+      }
+
       const view = sessionView(readSession(deps, sessionId), {
         scopeIsSet,
         ...(deps.inFlight === undefined ? {} : { inFlight: deps.inFlight() }),
         derivedTracks: readDerivedTrackKeys(deps.db),
       })
-      return c.json(view)
+      return c.json({ ...view, ...base, sessionId })
     })

@@ -407,9 +407,9 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 
 | ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| S1-01 | P1 Workshop/scope | Execute | ✅ T6 (Workshop.decide Start Workshop) |
+| S1-01 | P1 Workshop/scope | Execute | ✅ T6 (decider) + T30 (create screen → `POST /workshops` → route to `/workshops/:id`) |
 | S1-02 | P1 Workshop/scope (display name) | Execute | ✅ T6 (creatorName recorded, 1–80 non-blank) |
-| S1-03 | P1 Workshop/scope (nanoid URL) | Execute | ✅ T15 (POST /workshops → 201 { workshopId, url }; 21-char nanoid slug) |
+| S1-03 | P1 Workshop/scope (nanoid URL) | Execute | ✅ T15 (route) + T30 (`vue-router@5` `/workshops/:id` is the resumable URL; wildcard → `/`) |
 | S1-04 | P1 Session lifecycle (one-open-session) | Execute | ✅ T5 (session_index partial unique index) |
 | S1-05 | P1 Session lifecycle (resume) | Execute | ✅ T17 (start-session — reserve → Session Started → 202; new session after close) |
 | S1-06 | P1 Session lifecycle (close mechanic) | Execute | ✅ T7 (Session.decide Close Session — idempotent) |
@@ -422,7 +422,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-13 | P1 Capture (empty/whitespace) | Execute | ✅ T7 + T18 (whitespace-only → 204 no-op, no segment) |
 | S1-14 | P1 Capture (FIFO queue) | Execute | ◐ T7 (decider open/closed; FIFO queue is T19) |
 | S1-15 | P1 Capture (open→succeed, closed→reject) | Execute | ✅ T7 + T18 (closed session → 409) |
-| S1-16 | P1 Facilitator (always-async; short-poll transport) | Execute | ◐ T18 + T26 (`useInterpretationPoll` short-polls session+proposals while any contribution moves toward fully-derived or scope unset; UI wiring T28) |
+| S1-16 | P1 Facilitator (always-async; short-poll transport) | Execute | ✅ T18 + T26 + T30 (`useInterpretationPoll` wired in `CaptureScreen`; refetch after every mutation, board only after an accept) |
 | S1-17 | P1 Facilitator (one merged call/turn) | Execute | ✅ T13 (one merged generateText call; Output.object; outputFormat; effort low; no temperature) |
 | S1-18 | P1 Facilitator (model + SDK config) | Execute | ✅ T13 (claude-sonnet-5 → sonnet → claude-haiku-4-5 ladder; warnings logged) |
 | S1-19 | P1 Facilitator (hand-shaped projection schema, AD-015) | Execute | ✅ T12 (FacilitationTurnSchema — ≤24 optionals, no empty subschema; ACL map) |
@@ -454,15 +454,15 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-45 | P1 Proposal (reject leaves nothing) | Execute | ✅ T8 (Reject terminal) |
 | S1-46 | P1 Proposal (backlog-only, eventual consistency) | Execute | ◐ T11 (backlog board read; eventual-consistency UI T27) |
 | S1-47 | P1 Proposal (accept idempotent) | Execute | ✅ T8 (Accept idempotent while ACCEPTED/APPLIED, stored id) |
-| S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ◐ T11 + T26 (3 Pinia stores each cold-load from one GET, no store imports another; board renderer T27, layout T30) |
-| S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ◐ T26 + T28 (accept emits `board-dirty`; the card collapses to a receipt only after the store refetch confirms `APPLIED` — no optimistic write; screen wiring T30) |
+| S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ✅ T11 + T26 + T27 + T30 (board-first `CaptureScreen`: full-screen `BoardWall` + floating `FacilitatorDock`; 3 cold-load stores) |
+| S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ✅ T26 + T28 + T30 (`CaptureScreen` refetches the board from a GET on `board-dirty`; never optimistic; `client.ts` is the only fetch seam) |
 | S1-50 | P1 Facilitator (token + cost recording) | Execute | ✅ T4 (plumbing/model-pricing estimateCost) |
 | S1-51a | cross — update `docs/domain/open-questions.md` #63 (scope resolution) **this slice** | Design | Pending |
 | S1-51b | cross — Slice-6 doc reconciliation (ADR-005/007 wording, canvas scope + Held + summary + AD-021, #66) | Design | Pending — Slice 6 |
 | S1-52 | P1 Proposal (Hold — `Proposal Held`/`Unheld` events, non-terminal) | Execute | ✅ T8 (Proposal Held/Unheld — reversible marker) |
 | S1-53 | P1 Proposal (`Accept all` cluster + `Accept all remaining` drawer; no reject-all) | Execute | ✅ T28 + T29 (`Accept all` per cluster; `Accept all remaining` in the drawer accepts every non-held pending once; no reject-all anywhere) |
 | S1-54 | P1 Capture screen (inline proposal cards welded to the turn; card-to-sticky flight + receipt) | Execute | ◐ T28 (cards weld to their contribution turn via `contributionId`; transcript receipt on APPLIED; flight T30) |
-| S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Execute | ◐ T28 (composer always enabled + quiet `Catching up…`; `useReducedMotion`; full keyboard sweep T30) |
+| S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Execute | ✅ T28 + T30 (`playwright-cli` sweep: dock controls + composer + board keyboard-reachable, 0 console errors; `useReducedMotion` + global reduced-motion CSS) |
 | S1-56 | P1 Facilitator (interpretation crash-consistency — `Contribution Interpreted` sole commit point; derived streams idempotent; worker reconciles) | Design | Pending |
 | S1-57 | P1 Session lifecycle (`session_index` projection + `UNIQUE … WHERE status='open'`; enumerates closed sessions) | Execute | ✅ T5 |
 | S1-58 | P1 Workshop/scope (`askOpening` owned by the worker; produced when a provider returns if down at session start) | Design | Pending |
@@ -475,7 +475,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-65 | P1 Facilitator (model-call at-most-once window on a pre-ledger crash — accepted + documented) | Design | Pending |
 | S1-66 | P1 Session lifecycle (`applyOperation` owns board concurrency; no `expectedPosition`; internal `stale-position` retry — AD-022) | Execute | ✅ T10 (applyOperation owns concurrency, no expectedPosition) |
 | S1-67 | P1 Session lifecycle (`session_index` stale-`open` row recovery on next `Start Session`) | Execute | ✅ T17 (start-session deletes a stale open row before reserve) |
-| S1-68 | cross (depcruise re-verification: `no-cross-slice-imports`, `host-imports-only-context-api`, `domain-imports-nothing-above`, `ui-does-not-import-server-code`, `cross-context-only-via-api` — each by a planted violation) | Design | Pending |
+| S1-68 | cross (depcruise re-verification: `no-cross-slice-imports`, `host-imports-only-context-api`, `domain-imports-nothing-above`, `ui-does-not-import-server-code`, `cross-context-only-via-api` — each by a planted violation) | Execute | ✅ T10/T16/T25 (cross-context / no-cross-slice / host) + T26 (new `no-cross-store-imports`) + T30 (`ui-does-not-import-server-code` planted `src/app/` → capability `http.ts`, reverted) |
 | S1-69 | cross (`session-facilitation/domain/AGENTS.md` path-scoped file; `WorkshopId` promoted to canonical `plumbing/ids.ts`) | Execute | ✅ T1 + T2 |
 
 **Coverage:** 70 requirement IDs (S1-01…S1-69 + S1-51a/b), 0 mapped to tasks yet, 0 unmapped.

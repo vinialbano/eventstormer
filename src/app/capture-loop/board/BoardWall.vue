@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useReducedMotion } from '../composables/use-reduced-motion.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 
 /**
@@ -26,6 +27,36 @@ onBeforeUnmount(() => {
 })
 
 const layout = computed(() => layoutBoard(props.blocks, viewport.value))
+
+// The focal moment (DESIGN.md §6): a block that has just landed on the wall
+// gets a brief settle + fading highlight, then it is just part of the wall.
+// Reduced motion skips the wash — the sticky simply appears.
+const reduced = useReducedMotion()
+const seen = new Set<string>()
+const fresh = ref(new Set<string>())
+let mounted = false
+
+watch(
+  () => props.blocks.map((b) => b.id),
+  (ids) => {
+    for (const id of ids) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      if (mounted && !reduced.value) {
+        fresh.value = new Set(fresh.value).add(id)
+        window.setTimeout(() => {
+          const next = new Set(fresh.value)
+          next.delete(id)
+          fresh.value = next
+        }, 1000)
+      }
+    }
+  },
+  { immediate: true },
+)
+onMounted(() => {
+  mounted = true
+})
 
 const KIND_LABEL: Record<string, string> = {
   'domain-event': 'event',
@@ -122,7 +153,9 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
         v-for="s in layout.backlog"
         :key="s.id"
         class="sticky"
+        :class="{ 'sticky--fresh': fresh.has(s.id) }"
         :data-kind="s.kind"
+        tabindex="0"
         :aria-label="`${kindWord(s.kind)}: ${s.label}`"
         :style="{
           left: `${s.x}px`,
@@ -213,5 +246,19 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
 .sticky:focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 3px;
+}
+
+.sticky--fresh {
+  animation: sticky-settle 0.9s var(--ease-flight);
+}
+@keyframes sticky-settle {
+  0% {
+    transform: rotate(var(--tilt, 0deg)) scale(1.08);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-event) 55%, transparent), var(--shadow-sticky);
+  }
+  100% {
+    transform: rotate(var(--tilt, 0deg)) scale(1);
+    box-shadow: 0 0 0 0 transparent, var(--shadow-sticky);
+  }
 }
 </style>

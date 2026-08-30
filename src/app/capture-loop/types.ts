@@ -13,7 +13,7 @@ export type InterpretationStatus =
   | 'derived'
   | 'failed'
 
-export interface TranscriptTurn {
+interface TranscriptTurn {
   kind: 'contribution' | 'question' | 'notice'
   speaker: string
   text: string
@@ -24,13 +24,18 @@ export interface TranscriptTurn {
   questionKind?: 'scope' | 'phase' | 'free'
 }
 
-export interface OpenQuestion {
+interface OpenQuestion {
   questionId: string
   kind: 'scope' | 'phase' | 'free'
   text: string
 }
 
 export interface SessionView {
+  /** The session the view is for, and whether it is still open — the read
+   * model folds only the Session stream and knows neither. */
+  sessionId: string | null
+  sessionOpen: boolean
+  creatorName: string
   scope: { status: 'none' | 'proposed' | 'set'; proposedStatement?: string }
   transcript: TranscriptTurn[]
   openQuestions: OpenQuestion[]
@@ -39,8 +44,8 @@ export interface SessionView {
   fullyDerived: boolean
 }
 
-export type BlockKind = 'domain-event' | 'actor' | 'system'
-export type InterpretationBar = 'lenient' | 'strict'
+type BlockKind = 'domain-event' | 'actor' | 'system'
+type InterpretationBar = 'lenient' | 'strict'
 
 export type Disposition =
   | 'PROPOSED'
@@ -64,7 +69,7 @@ export interface ProposalCard {
   buildingBlockId?: string
 }
 
-export interface BoardBlock {
+interface BoardBlock {
   id: string
   kind: string
   label: string

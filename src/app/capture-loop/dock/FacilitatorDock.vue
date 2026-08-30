@@ -183,6 +183,7 @@ const onJump = async (proposalId: string): Promise<void> => {
                   kind-label="SCOPE"
                   :label="scopeState.proposedStatement ?? ''"
                   disposition="PROPOSED"
+                  :no-hold="true"
                   @accept="onScopeAccept"
                   @edit="onScopeEdit"
                   @reject="onScopeReject"

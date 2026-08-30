@@ -13,19 +13,19 @@ export interface BoardBlockInput {
   label: string
 }
 
-export interface LayoutViewport {
+interface LayoutViewport {
   w: number
   h: number
 }
 
-export interface Rect {
+interface Rect {
   x: number
   y: number
   w: number
   h: number
 }
 
-export interface StickyRect extends Rect {
+interface StickyRect extends Rect {
   id: string
   kind: string
   label: string
@@ -33,7 +33,7 @@ export interface StickyRect extends Rect {
   tilt: number
 }
 
-export interface BoardLayout {
+interface BoardLayout {
   canvas: { w: number; h: number }
   frame: Rect & { label: string }
   /** The `time →` guide line, drawn hand-style by the renderer. */

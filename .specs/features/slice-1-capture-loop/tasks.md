@@ -740,10 +740,18 @@ confirm zero console errors/warnings + keyboard reachability.
 **Requirement**: S1-01, S1-03, S1-55, S1-68
 **Tools**: MCP: NONE · Skill: `playwright-cli`, `impeccable`
 **Done when**:
-- [ ] planted UI→server import fails `pnpm depcruise`; reverted
-- [ ] `playwright-cli open http://localhost:5173` → 0 console errors/warnings; the create→scope→contribution flow is keyboard-operable
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit (jsdom) + visual (`playwright-cli`) · **Gate**: build
+- [x] planted `src/app/capture-loop/client.ts` → `session-facilitation/.../start-workshop/http.ts` import fails `pnpm depcruise` (`ui-does-not-import-server-code`); reverted
+- [x] `playwright-cli open http://localhost:5173` (against `FACILITATOR_MODE=scripted pnpm dev`): create → route to `/workshops/:id` → Start session → scope card → contribution — **0 console errors, 0 warnings** at every step; dock controls + composer + board keyboard-reachable with a visible focus ring
+- [x] `pnpm check && pnpm build` green (355 tests)
+**Tests**: unit (jsdom) + visual (`playwright-cli`) · **Gate**: build — ✅ done, commit `T30`
+
+NOTE: `GET /workshops/:id/session` now returns **200 `{ sessionId: null, sessionOpen: false }`** for
+a known workshop with no session (404 reserved for an unknown workshop) — a browser logs every 4xx
+to the console, and the client's "is there a session?" probe must not read as an error. The board
+store is fetched only when the session view already has contributions and after every accept
+(`board.load` on `board-dirty`), never eagerly — no board 404 in the console either. Scope card
+drops the `Hold` action (`no-hold`). The card-to-sticky flight is a settle+wash on the newly
+landed sticky (`useReducedMotion`-gated); the full dock→wall arc is a later refinement.
 
 ### T31: E2E — the one end-to-end flow
 **What**: `@playwright/test` spec: boot `pnpm dev` with `FACILITATOR_MODE=scripted` (canned turns

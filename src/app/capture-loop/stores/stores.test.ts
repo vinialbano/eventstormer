@@ -9,6 +9,9 @@ const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
 const emptySessionView: SessionView = {
+  sessionId: 's1',
+  sessionOpen: true,
+  creatorName: 'Maria',
   scope: { status: 'none' },
   transcript: [],
   openQuestions: [],

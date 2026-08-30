@@ -1,0 +1,148 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import BoardWall from '../board/BoardWall.vue'
+import { postJson } from '../client.ts'
+import { useInterpretationPoll } from '../composables/use-interpretation-poll.ts'
+import FacilitatorDock from '../dock/FacilitatorDock.vue'
+import { useBoardStore } from '../stores/board.ts'
+import { useProposalsStore } from '../stores/proposals.ts'
+import { useSessionStore } from '../stores/session.ts'
+
+/**
+ * The capture screen (brief §1): a full-screen board wall with a floating
+ * facilitator dock over it. The wall re-renders only from a server-confirmed
+ * GET — an accept emits `board-dirty`, every write emits `mutated` and the poll
+ * refetches. Nothing is written optimistically (ADR-007).
+ */
+const props = defineProps<{ id: string }>()
+
+const session = useSessionStore()
+const proposals = useProposalsStore()
+const board = useBoardStore()
+const poll = useInterpretationPoll()
+
+const startingSession = ref(false)
+const loaded = ref(false)
+
+const blocks = computed(() =>
+  board.snapshot.blocks
+    .filter((b) => !b.withdrawn)
+    .map((b) => ({ id: b.id, kind: b.kind, label: b.label })),
+)
+const needsSession = computed(() => loaded.value && !session.sessionOpen)
+
+const loadAll = async (): Promise<void> => {
+  await session.load(props.id)
+  // The board stream 404s until the first operation is applied — fetch it only
+  // when the session view says something has been derived, and after every
+  // accept (AD-018 / brief §3: the wall is fetched post-accept, never eagerly).
+  if ((session.view?.contributions.length ?? 0) > 0) await board.load(props.id)
+  loaded.value = true
+}
+
+watch(
+  () => [session.sessionId, session.sessionOpen] as const,
+  async ([sessionId, open]) => {
+    if (sessionId !== null && open) await proposals.load(sessionId)
+  },
+  { immediate: true },
+)
+
+const startSession = async (): Promise<void> => {
+  if (startingSession.value) return
+  startingSession.value = true
+  try {
+    await postJson(`/api/workshops/${props.id}/sessions`)
+    await loadAll()
+  } finally {
+    startingSession.value = false
+  }
+}
+
+const onMutated = (): Promise<void> => poll.refetchNow()
+const onBoardDirty = (): Promise<void> => board.load(props.id)
+
+onMounted(loadAll)
+</script>
+
+<template>
+  <div class="screen">
+    <BoardWall :blocks="blocks" class="screen__wall" />
+
+    <FacilitatorDock
+      v-if="session.sessionOpen"
+      :workshop-id="id"
+      :session-id="session.sessionId"
+      :accepter="session.creatorName"
+      @mutated="onMutated"
+      @board-dirty="onBoardDirty"
+    />
+
+    <div v-if="needsSession" class="screen__gate">
+      <div class="screen__gatecard">
+        <h2 class="screen__gatetitle">Ready when you are</h2>
+        <p class="screen__gatetext">Start a session to begin describing your business.</p>
+        <button
+          type="button"
+          class="screen__gatego"
+          :disabled="startingSession"
+          @click="startSession"
+        >
+          {{ startingSession ? 'Starting…' : 'Start session' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.screen {
+  position: relative;
+  min-height: 100dvh;
+  overflow: auto;
+}
+.screen__wall {
+  display: block;
+}
+.screen__gate {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background-color: color-mix(in srgb, var(--color-paper) 70%, transparent);
+  backdrop-filter: blur(2px);
+  z-index: 30;
+}
+.screen__gatecard {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+  padding: 28px;
+  max-width: 360px;
+  text-align: center;
+}
+.screen__gatetitle {
+  margin: 0 0 6px;
+  font-family: var(--font-marker);
+  font-size: 1.375rem;
+}
+.screen__gatetext {
+  margin: 0 0 18px;
+  color: var(--color-text-soft);
+  font-size: 0.9375rem;
+}
+.screen__gatego {
+  font: inherit;
+  font-weight: 700;
+  height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-event);
+  color: var(--color-event-ink);
+  cursor: pointer;
+}
+.screen__gatego:disabled {
+  opacity: 0.5;
+}
+</style>

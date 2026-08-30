@@ -15,6 +15,9 @@ export const useSessionStore = defineStore('session', () => {
   const error = ref<string | null>(null)
 
   const scopeStatus = computed(() => view.value?.scope.status ?? 'none')
+  const sessionId = computed(() => view.value?.sessionId ?? null)
+  const sessionOpen = computed(() => view.value?.sessionOpen ?? false)
+  const creatorName = computed(() => view.value?.creatorName ?? '')
 
   const refetch = async (): Promise<void> => {
     if (workshopId.value === null) return
@@ -34,5 +37,16 @@ export const useSessionStore = defineStore('session', () => {
     await refetch()
   }
 
-  return { workshopId, view, loading, error, scopeStatus, load, refetch }
+  return {
+    workshopId,
+    view,
+    loading,
+    error,
+    scopeStatus,
+    sessionId,
+    sessionOpen,
+    creatorName,
+    load,
+    refetch,
+  }
 })

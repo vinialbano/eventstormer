@@ -10,6 +10,9 @@ const viewWith = (
   scope: SessionView['scope']['status'],
   contributions: InterpretationStatus[],
 ): SessionView => ({
+  sessionId: 's1',
+  sessionOpen: true,
+  creatorName: 'Maria',
   scope: { status: scope },
   transcript: [],
   openQuestions: [],

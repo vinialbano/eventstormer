@@ -114,8 +114,22 @@ describe('GET /workshops/:id/session (S1-16)', () => {
     expect(view.fullyDerived).toBe(false)
   })
 
-  it('404s when the workshop has no session', async () => {
+  it('404s when the workshop is unknown', async () => {
     const res = await makeContributionRoutes(deps()).request(`/workshops/w_other/session`)
     expect(res.status).toBe(404)
+  })
+
+  it('200s with sessionId null + sessionOpen false for a known workshop with no session', async () => {
+    store.append(workshopStream('w_2' as WorkshopId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: { v: 1, type: 'Workshop Started', workshopId: 'w_2' as WorkshopId, format: 'big-picture', creatorName: 'Ola', at },
+      },
+    ])
+    const res = await makeContributionRoutes(deps()).request(`/workshops/w_2/session`)
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { sessionId: string | null; sessionOpen: boolean; creatorName: string }
+    expect(body).toMatchObject({ sessionId: null, sessionOpen: false, creatorName: 'Ola' })
   })
 })

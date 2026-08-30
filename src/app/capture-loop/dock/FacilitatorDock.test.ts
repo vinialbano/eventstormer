@@ -1,4 +1,4 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProposalCard, SessionView } from '../types.ts'
@@ -19,6 +19,9 @@ const card = (over: Partial<ProposalCard> = {}): ProposalCard => ({
 })
 
 const view = (over: Partial<SessionView> = {}): SessionView => ({
+  sessionId: 's1',
+  sessionOpen: true,
+  creatorName: 'Maria',
   scope: { status: 'set' },
   transcript: [
     { kind: 'question', speaker: 'facilitator', text: 'What happens first?', at: 't1' },
@@ -39,6 +42,8 @@ const seed = (v: SessionView, cards: ProposalCard[]) => {
   proposals.cards = cards
   return { session, proposals }
 }
+
+enableAutoUnmount(afterEach)
 
 beforeEach(() => {
   setActivePinia(createPinia())
