@@ -675,10 +675,15 @@ the backlog list of building blocks; **pending proposals never render here as gh
 **Requirement**: S1-46, S1-48
 **Tools**: MCP: NONE · Skill: `impeccable` (visual refinement / DESIGN.md)
 **Done when**:
-- [ ] jsdom test: N applied blocks render as N backlog stickies; zero blocks → the empty framed wall
-- [ ] the layout function is pure and unit-tested against a literal
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit (jsdom) · **Gate**: build
+- [x] jsdom test: N applied blocks render as N backlog stickies; zero blocks → the empty framed wall; no pending-proposal ghost ever drawn
+- [x] `board/layout.ts` `layoutBoard` is pure (no Vue/DOM) and unit-tested against literal rects
+- [x] `pnpm check && pnpm build` green (328 tests)
+**Tests**: unit (jsdom) · **Gate**: build — ✅ done, commit `T27`
+
+NOTE: `DESIGN.md` written here (first `src/app/` build) — tokens in `src/app/style.css` `@theme`,
+`Kalam` (marker) + `Nunito` (UI) via Google Fonts `<link>` (self-hosting flagged open in
+DESIGN.md §9). `layoutBoard` returns `placed: []` / `arrows: []` now so the renderer keeps its
+shape when slice 3 fills the timeline. `@vue/test-utils@2.4.6` added (dev).
 
 ### T28: SPA — the facilitator dock + proposal cards
 **What**: The floating dock (conversation column: per-participant avatars, plain-language turns,
