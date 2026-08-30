@@ -1,7 +1,7 @@
 /**
- * R3 structured-output round-trip spike (S0-27 / S0-28) — a one-off probe, NOT
- * shipped code and NOT run in CI. Deliverable: the recorded finding in
- * `.specs/STATE.md` (AD-015) and `research/research-aisdk.md`.
+ * Structured-output round-trip spike — a one-off probe, NOT shipped code and NOT
+ * run in CI. Deliverable: the recorded finding in `.specs/STATE.md` and
+ * `research/research-aisdk.md`.
  *
  * The question it answers: does ADR-005's wrapped discriminated union
  * (`Output.object({ interpretation: z.array(Operation), nextMove })`,

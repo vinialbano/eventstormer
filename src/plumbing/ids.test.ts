@@ -33,7 +33,8 @@ describe('branded ids', () => {
 
   it('accepts a Zod $brand-shaped value where a WorkshopId is required (seam compatibility)', () => {
     // The type `z.string().brand<'WorkshopId'>()` infers in the domain schema
-    // module — assignable here with no cast, which is what T10 relies on.
+    // module — assignable here with no cast, which is what the plumbing/domain
+    // id seam relies on.
     const plain: string = newWorkshopId()
     const fromSchema = plain as string & z.$brand<'WorkshopId'>
     const asWorkshopId: WorkshopId = fromSchema

@@ -112,7 +112,7 @@ const resolve = z.object({
   kind: z.literal('resolve'),
   target: BuildingBlockId,
   // Required: a missing `reference` key fails `.parse`. Shape is
-  // deliberately unconstrained — a recorded value, not a live pointer (#49).
+  // deliberately unconstrained — a recorded value, not a live pointer.
   reference: z.unknown(),
 })
 const reopen = z.object({ ...opBase, kind: z.literal('reopen'), target: BuildingBlockId })
