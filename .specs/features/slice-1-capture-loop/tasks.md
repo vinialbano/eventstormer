@@ -293,10 +293,10 @@ looking blocks — **no stakeholder input**).
 **Requirement**: S1-35, S1-36, S1-37, S1-60
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] every projected value asserted against a **literal** the test spells out (not another projection — `docs/testing.md`)
-- [ ] `sessionSummary` over a canned stream matches a hand-written expected struct
-- [ ] `pnpm check` green
-**Tests**: unit · **Gate**: quick
+- [x] every projected value asserted against a **literal** the test spells out (not another projection — `docs/testing.md`)
+- [x] `sessionSummary` over a canned stream matches a hand-written expected struct
+- [x] `pnpm check && pnpm build` green (216 tests)
+**Tests**: unit · **Gate**: build (last in Phase 2) — ✅ done, commit `T9`
 
 ### T10: `domain-model-capture/capabilities/board-access/` — `applyOperation` + `readBuildingBlocks`
 **What**: `applyOperation(deps, workshopId, operation)` — **no `expectedPosition`**: read current
