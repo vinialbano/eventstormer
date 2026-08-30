@@ -1,0 +1,6 @@
+{
+  "prompt": "Mid-close view of an authentic EventStorming wall, warm off-white paper #f2ede1 with subtle fiber, hand-drawn black frame visible at the top edge, blue hand-lettered 'time' arrow. A left-to-right row of ORANGE SQUARE marker-lettered stickies connected by small hand-drawn black arrows: 'Customer seated' arrow 'Order placed' arrow [the edited one] arrow 'Cooking started'. The middle sticky is now in FULL EDIT MODE: it has become a GHOST - a DASHED border all around and a much LIGHTER, paler washed-out orange fill - and its text is editable, showing the words 'Order confirmed' with a text-insertion caret after them and a faint selection highlight on part of the text. Just below this ghost sticky, two small circular controls sit side by side: a green CHECK (confirm) button and a grey X (cancel) button. A tiny keyboard hint in small grey text near them reads 'Enter to save - Esc to cancel'. The neighbouring stickies stay fully solid opaque orange. Warm palette, EventStorming orange #f08c2e, dark ink #2b2b2b, marker hand-lettering. No logos, no invented numbers.",
+  "createdAt": "2026-08-30T16:17:10.060Z",
+  "tool": "generate-image.mjs",
+  "model": "gpt-image-2"
+}

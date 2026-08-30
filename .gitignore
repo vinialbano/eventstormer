@@ -28,3 +28,16 @@ logs/
 
 # playwright-cli session artifacts (snapshots, console logs, traces)
 .playwright-cli/
+
+# impeccable design skill. Vendored copy lives at .claude/skills/impeccable/;
+# the per-harness mirrors and per-user state are local only. The committed
+# reference comps under .impeccable/mocks/ are force-added; everything else here
+# is local (regenerate with the skill).
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+.impeccable/questions/
+.impeccable/mocks/
+.github/skills/
+.github/agents/
+.github/hooks/

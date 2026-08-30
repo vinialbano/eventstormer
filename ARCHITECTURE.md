@@ -1,4 +1,4 @@
-# EventStormer — Design
+# EventStormer — Architecture
 
 A living domain model built by conversation with an AI facilitator, so engineering consumes a
 **derived projection** of the model instead of a hand-written copy that drifts.
