@@ -422,7 +422,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-13 | P1 Capture (empty/whitespace) | Execute | ✅ T7 + T18 (whitespace-only → 204 no-op, no segment) |
 | S1-14 | P1 Capture (FIFO queue) | Execute | ◐ T7 (decider open/closed; FIFO queue is T19) |
 | S1-15 | P1 Capture (open→succeed, closed→reject) | Execute | ✅ T7 + T18 (closed session → 409) |
-| S1-16 | P1 Facilitator (always-async; short-poll transport) | Execute | ◐ T18 (POST → 202 async; GET /workshops/:id/session read model — poll client is T26) |
+| S1-16 | P1 Facilitator (always-async; short-poll transport) | Execute | ◐ T18 + T26 (`useInterpretationPoll` short-polls session+proposals while any contribution moves toward fully-derived or scope unset; UI wiring T28) |
 | S1-17 | P1 Facilitator (one merged call/turn) | Execute | ✅ T13 (one merged generateText call; Output.object; outputFormat; effort low; no temperature) |
 | S1-18 | P1 Facilitator (model + SDK config) | Execute | ✅ T13 (claude-sonnet-5 → sonnet → claude-haiku-4-5 ladder; warnings logged) |
 | S1-19 | P1 Facilitator (hand-shaped projection schema, AD-015) | Execute | ✅ T12 (FacilitationTurnSchema — ≤24 optionals, no empty subschema; ACL map) |
@@ -454,8 +454,8 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-45 | P1 Proposal (reject leaves nothing) | Execute | ✅ T8 (Reject terminal) |
 | S1-46 | P1 Proposal (backlog-only, eventual consistency) | Execute | ◐ T11 (backlog board read; eventual-consistency UI T27) |
 | S1-47 | P1 Proposal (accept idempotent) | Execute | ✅ T8 (Accept idempotent while ACCEPTED/APPLIED, stored id) |
-| S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ◐ T11 (board snapshot route; Pinia stores T26) |
-| S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Design | Pending |
+| S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ◐ T11 + T26 (3 Pinia stores each cold-load from one GET, no store imports another; board renderer T27, layout T30) |
+| S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ◐ T26 (`client.ts` fetch-only; `board` store refetches only on demand — never on the poll timer; card→sticky wiring T28) |
 | S1-50 | P1 Facilitator (token + cost recording) | Execute | ✅ T4 (plumbing/model-pricing estimateCost) |
 | S1-51a | cross — update `docs/domain/open-questions.md` #63 (scope resolution) **this slice** | Design | Pending |
 | S1-51b | cross — Slice-6 doc reconciliation (ADR-005/007 wording, canvas scope + Held + summary + AD-021, #66) | Design | Pending — Slice 6 |

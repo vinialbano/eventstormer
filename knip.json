@@ -6,5 +6,12 @@
   ],
   "project": [
     "src/**/*.{ts,vue,css}"
+  ],
+  "ignore": [
+    "src/app/capture-loop/**"
+  ],
+  "ignoreDependencies": [
+    "reka-ui",
+    "vue-router"
   ]
 }

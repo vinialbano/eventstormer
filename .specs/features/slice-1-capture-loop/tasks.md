@@ -652,10 +652,18 @@ otherwise; refetches after any POST; `board` refetches only after an accept.
 **Requirement**: S1-16, S1-48, S1-49
 **Tools**: MCP: `context7` (`vue-router` v5, `reka-ui`) · Skill: NONE
 **Done when**:
-- [ ] jsdom tests: each store hydrates from one mocked GET; `useInterpretationPoll` starts on `interpreting`, **keeps polling on `interpreted`-not-`derived`**, stops when fully derived
-- [ ] no store imports another (lint/depcruise)
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit (jsdom) · **Gate**: build
+- [x] jsdom tests: each store hydrates from one mocked GET; `useInterpretationPoll` starts on `interpreting`, **keeps polling on `interpreted`-not-`derived`**, stops when fully derived
+- [x] no store imports another — new depcruise rule `no-cross-store-imports`, proven by a planted `board`→`session` import, reverted
+- [x] `pnpm check && pnpm build` green (321 tests)
+**Tests**: unit (jsdom) · **Gate**: build — ✅ done, commit `T26`
+
+DEVIATION: `vue-router` + `reka-ui` installed at pins `5.2.0` / `2.10.4` but not yet consumed
+(reka-ui first used T28, vue-router T30) — added to `knip.json` `ignoreDependencies`, lifted in
+those tasks. `src/app/capture-loop/**` added to `knip.json` `ignore` (files are wired incrementally
+across T27–T30; the glob is removed in T30). `@playwright/test` + the `test:e2e` script deferred to
+T31 (its `playwright.config.ts` lands atomically there — an unused devDep would otherwise flag knip
+for five tasks). The HTTP helper is `client.ts`, not `http.ts` (that name matches
+`ui-does-not-import-server-code`).
 
 ### T27: SPA — the board wall renderer + backlog
 **What**: A framework-free board renderer module (layout is a pure function, swappable per
