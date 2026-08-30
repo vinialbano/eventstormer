@@ -276,10 +276,10 @@ no `overflow` field on `Building Block Proposed`.
 **Requirement**: S1-38, S1-39, S1-44, S1-45, S1-47, S1-52
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `fast-check` property: no command sequence reaches an illegal transition
-- [ ] G/W/T: accept twice → one `Proposal Accepted`, same `buildingBlockId`; edit after `REJECTED` rejected; hold/unhold reversible; lapse on `APPLIED` → `ok([])`
-- [ ] `pnpm check` green
-**Tests**: unit (+ fast-check properties) · **Gate**: quick
+- [x] `fast-check` property: no command sequence reaches an illegal transition
+- [x] G/W/T: accept twice → one `Proposal Accepted`, same `buildingBlockId`; edit after `REJECTED` rejected; hold/unhold reversible; lapse on `APPLIED` → `ok([])`
+- [x] `pnpm check` green (199 tests)
+**Tests**: unit (+ fast-check properties) · **Gate**: quick — ✅ done, commit `T8`
 
 ### T9: `session-facilitation/domain/read-models/`
 **What**: pure functions — `sessionView` (transcript, open questions, scope status, per-contribution
