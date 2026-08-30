@@ -15,6 +15,14 @@ language, and the context map are DDD strategic-design output, confirmed with th
 not a guess. If code or a comment uses a term the domain docs mark superseded (e.g. "Node" or
 "Element" instead of the confirmed "Building Block"), the domain doc wins; fix the code.
 
+**Design truth is in `PRODUCT.md`, `DESIGN.md`, and `.impeccable/surfaces/`.** `PRODUCT.md` is the
+design-facing digest of the product — primary users, positioning, operating context, and the
+binding brand and visual commitments — derived from the PRD and subordinate to it: if the two
+disagree, the PRD wins. `DESIGN.md` is the visual design system (tokens, palette, type,
+components); it is written at the first `src/app/` build and is absent until then. A confirmed
+per-surface UX/UI brief lives in `.impeccable/surfaces/<surface>.md` — `src-app-capture-loop.md`
+is the first.
+
 ## Commands
 
 `pnpm check` = typecheck → lint → test → depcruise → knip, in that order, failing fast. CI and
@@ -57,12 +65,15 @@ them all. There is no filesystem routing anywhere in this project.
 
 ## Read on demand
 
-- `DESIGN.md` — the system's shape (three bounded contexts), the decision table, and the `/api`
-  surface; the index to `docs/adr/`. Read before designing a slice or touching a cross-cutting
-  concern.
+- `ARCHITECTURE.md` — the system's shape (three bounded contexts), the decision table, and the
+  `/api` surface; the index to `docs/adr/`. Read before designing a slice or touching a
+  cross-cutting concern.
 - `docs/domain/README.md` — the confirmed subdomain catalog, bounded-context canvases, and context
   map. Read before naming a domain concept, designing a new capability slice, or touching a
   context's `domain/` public vocabulary.
+- `PRODUCT.md` and `.impeccable/surfaces/<surface>.md` — the design-facing product digest and the
+  confirmed UX/UI brief for a surface. Read before building or restyling anything under `src/app/`.
+- `DESIGN.md` — the visual design system, once it exists (written at the first `src/app/` build).
 - `docs/tooling-gotchas.md` — TypeScript/ESLint/dependency-cruiser/CI facts. Read before touching
   any of those configs.
 - `docs/framework-gotchas.md` — Hono/Vue/Pinia/dagre/`node:sqlite` version facts. Read before
@@ -88,6 +99,11 @@ them all. There is no filesystem routing anywhere in this project.
   report.
 - Branch before committing; never commit to `main`. Conventional commit prefixes (`feat:`,
   `fix:`, `docs:`, `chore:`).
+- **Visual and UX work goes through the `impeccable` skill** (`.claude/skills/impeccable/`). It
+  owns the visual world, the per-surface briefs in `.impeccable/surfaces/`, and `DESIGN.md`. For a
+  new or reworked `src/app/` surface, run it (`/impeccable shape <surface>`, then build) rather
+  than improvising a look. The capture-loop brief is settled at
+  `.impeccable/surfaces/src-app-capture-loop.md`; build slice 1 from it.
 - When you finish a task, run the full check before claiming it works. "It should work" is not a
   result; a passing command is.
 - If you cannot make something work, say so and say what you tried. Do not weaken a test, widen a
