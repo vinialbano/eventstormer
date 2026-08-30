@@ -242,9 +242,9 @@ creatorName }`.
 **Requirement**: S1-01, S1-02, S1-09
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] G/W/T tests: blank name rejected; 3 successive `Set Scope` all emit `Scope Set`; over-length rejected
-- [ ] `pnpm check` green
-**Tests**: unit · **Gate**: quick
+- [x] G/W/T tests: blank name rejected; 3 successive `Set Scope` all emit `Scope Set`; over-length rejected
+- [x] `pnpm check` green (169 tests)
+**Tests**: unit · **Gate**: quick — ✅ done, commit `T6`
 
 ### T7: `session-facilitation/domain/session/`
 **What**: `decide`/`evolve` for `Make Contribution` (reject if `CLOSED`; trimmed non-empty;
