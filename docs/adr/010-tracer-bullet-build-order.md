@@ -36,7 +36,7 @@ visuals and reaches that substance late.
 | **3 — relations + board** | F01 `sequence`/`insert between`/`place`/`link cause` + cascades + `fast-check` properties; `computeTimelineLayout` + Vue Flow/dagre board (reflow spike first, grid fallback ready); facilitator proposes relations; reword-hold-back gate; F07 pivotal. | F01 rest · F02 · F06 rest · F07 | 1d |
 | **4 — hot spots + close** | `annotate`/`raise hot spot`/`resolve`/`reopen` + the `kind` field; Resolution lifecycle + `review-resolution`; F09 stakeholder-check + chosen-problem; `close-session` (atomic snapshot + summary freeze) + the close sweep. | F08 F09 F18 close | 1d |
 | **5 — artifacts + eval + demo** | `export-model` (JSON, round-trips) + `export-summary`; `export-transcript`; the eval suite + fixtures + `pnpm eval --report`; `pnpm seed` + the recording. | F10 rest · F19 · F11 | 1d |
-| **6 — harden** | remaining ADRs, `DESIGN.md`, README, `.node-version`, the coverage glob threshold. | — | ½d |
+| **6 — harden** | remaining ADRs, `ARCHITECTURE.md`, README, `.node-version`, the coverage glob threshold. | — | ½d |
 
 ### Deliberate deviations from the wave graph
 
@@ -63,5 +63,5 @@ of their slice.
 
 ## Links
 
-- [DESIGN.md](../../DESIGN.md) — the narrative version of this plan
+- [ARCHITECTURE.md](../../ARCHITECTURE.md) — the narrative version of this plan
 - all other ADRs — each slice consumes several

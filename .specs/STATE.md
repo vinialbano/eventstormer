@@ -3,7 +3,7 @@
 Project memory for spec-driven-development. Decisions log (durable) + Handoff snapshot (in-flight).
 
 The strategic record lives elsewhere and outranks this file: `docs/product/PRD.md` (product
-truth), `docs/domain/` (confirmed domain language), `DESIGN.md` + `docs/adr/001–011`
+truth), `docs/domain/` (confirmed domain language), `ARCHITECTURE.md` + `docs/adr/001–011`
 (architecture). This file holds only decisions made *during implementation* that those don't
 capture.
 
@@ -101,7 +101,7 @@ spec traceability 27 ✅ / 3 ⚠️ (non-blocking, Slice 6) / 0 ❌.
   verified the rule still catches real production→devDep imports. Revisit at Verifier / cleanup.
 - T8 `applyMigrations` takes a structural `MigrationDb` so `migrations.ts` imports no `node:sqlite`
   (adapter is T9 — still the only intended importer).
-- README stale layout → Slice 6 (per DESIGN.md).
+- README stale layout → Slice 6 (per ARCHITECTURE.md).
 
 **Mid-execute corrections (artifacts updated):**
 - **AD-013** — `EventStore` port is **synchronous** (no `Promise`); every impl is sync,
@@ -138,5 +138,5 @@ compile-time sensor (AD-010); `OperationId` omitted (AD-011); `at` from Clock in
 - The current scaffold's `src/domain/`, `src/capabilities/health/`, `src/server.ts` all move;
   `.dependency-cruiser.cjs`, `vite.config.ts` (vitest globs), `knip.json`, `src/domain/AGENTS.md`
   path scope all change with them.
-- `DECISIONS-PENDING.md` is gitignored local scratch, superseded by ADRs 001–011 + DESIGN.md —
+- `DECISIONS-PENDING.md` is gitignored local scratch, superseded by ADRs 001–011 + ARCHITECTURE.md —
   do not treat it as authoritative; do not commit it.

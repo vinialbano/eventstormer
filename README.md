@@ -7,7 +7,7 @@ model itself, a typed graph with stable identities, and every artifact engineeri
 afterwards is derived from it rather than transcribed from it.
 
 Product definition: [`docs/product/PRD.md`](docs/product/PRD.md). Architecture and the decisions
-behind it: [`DESIGN.md`](DESIGN.md) and [`docs/adr/`](docs/adr/).
+behind it: [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/adr/`](docs/adr/).
 
 > **Status: scaffold.** The harness, the model and the board are not built yet. What runs today
 > is the toolchain, the architecture gates, and a health endpoint. See

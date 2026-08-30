@@ -64,7 +64,7 @@ pending proposal cards, capture field at the bottom; (3) a toggleable readable-a
 ~16 routes, all user-facing and verified line-by-line against the PRD. The facilitator, the
 apply-operation Boundary Command, and `raise`/`resolve-hot-spot` have **no route** — they are
 in-process. `ask-question` was removed (the facilitator is reactive). The full route table is in
-[DESIGN.md](../../DESIGN.md).
+[ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 ## Consequences
 
