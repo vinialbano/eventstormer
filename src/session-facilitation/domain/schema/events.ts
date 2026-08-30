@@ -66,6 +66,9 @@ const ContributionInterpreted = z.object({
   tracks: z.array(InterpretedTrack),
   /** Minted when the turn's `nextMove` is `ask` — the follow-up question's id. */
   askQuestionId: QuestionId.optional(),
+  /** The follow-up question's text — carried with `askQuestionId` so the derived
+   * `Question Asked {kind:'free'}` is a pure derivation of this event (AD-021). */
+  askQuestionText: z.string().min(1).optional(),
 })
 
 const ContributionInterpretationFailed = z.object({

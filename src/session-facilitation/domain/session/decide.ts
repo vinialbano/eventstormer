@@ -91,6 +91,7 @@ export const decide = (
           contributionId: cmd.contributionId,
           tracks: cmd.tracks,
           ...(cmd.askQuestionId === undefined ? {} : { askQuestionId: cmd.askQuestionId }),
+          ...(cmd.askQuestionText === undefined ? {} : { askQuestionText: cmd.askQuestionText }),
           at: cmd.at,
         },
       ])

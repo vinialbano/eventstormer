@@ -1,4 +1,4 @@
-import type { SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type { ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import type { StoredOperationInput } from '~/plumbing/event-store/port.ts'
 
 /**
@@ -18,6 +18,12 @@ export const workshopStream = (id: WorkshopId) => ({
 export const sessionStream = (id: SessionId) => ({
   context: 'session-facilitation',
   aggregate: 'session',
+  id,
+})
+
+export const proposalStream = (id: ProposalId) => ({
+  context: 'session-facilitation',
+  aggregate: 'proposal',
   id,
 })
 

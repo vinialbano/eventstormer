@@ -488,11 +488,17 @@ point, minted ids) → `deriveTracks`; on `provider-down` leave it; on `schema-i
 **Requirement**: S1-14, S1-23, S1-24, S1-25, S1-29, S1-59, S1-63, S1-64
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] scripted-double tests: each track kind → the right events/proposals; multi-track turn; `nextMove.ask` → `Question Asked{free}`; unknown `questionId` dropped; `bar`/`evidenceSpan` persisted
-- [ ] FIFO by stream position (two contributions, order asserted); one in flight per session
-- [ ] `provider-down` → no `Contribution Interpreted`; `schema-invalid` → `Contribution Interpretation Failed`
-- [ ] `pnpm check` green
-**Tests**: integration · **Gate**: quick
+- [x] scripted-double tests: each track kind → the right events/proposals; multi-track turn; `nextMove.ask` → `Question Asked{free}`; unknown `questionId` dropped; `bar`/`evidenceSpan` persisted
+- [x] FIFO by stream position (two contributions, order asserted); one in flight per session
+- [x] `provider-down` → no `Contribution Interpreted`; `schema-invalid` → `Contribution Interpretation Failed`
+- [x] `pnpm check` green (276 tests)
+**Tests**: integration · **Gate**: quick — ✅ done, commit `T19`
+
+NOTE: `Contribution Interpreted` / `Interpret Contribution` command gained an additive
+`askQuestionText?` field so the derived free `Question Asked` is a pure derivation of the ledger
+event (design line 104 said `text: nextMove.questionText` but the earlier task did not carry it).
+`deriveTracks` + `assembleFacilitationContext` are module-private in `interpret.ts` (knip); T20's
+tick fns land in the same file. In-flight guard factory `createInFlightGuard` in `in-flight.ts`.
 
 ### T20: `capabilities/interpret-contribution/` — `askOpeningQuestion` + `reconcilePendingDerivations` + crash-consistency
 **What**: `askOpeningQuestion(deps)` — open session with no `Question Asked{scope}` (or a rejected,

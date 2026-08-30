@@ -23,3 +23,14 @@ export const readDerivedTrackKeys = (db: DerivedTrackDb): Set<string> => {
   const rows = db.prepare('SELECT contribution_id, track_index FROM derived_track').all() as Row[]
   return new Set(rows.map((r) => `${r.contribution_id}::${String(r.track_index)}`))
 }
+
+/** Mark one interpreted track derived (AD-021). Idempotent — a repeat is a no-op. */
+export const markDerivedTrack = (
+  db: DerivedTrackDb,
+  contributionId: string,
+  trackIndex: number,
+): void => {
+  db.prepare(
+    'INSERT OR IGNORE INTO derived_track (contribution_id, track_index) VALUES (?, ?)',
+  ).run(contributionId, trackIndex)
+}

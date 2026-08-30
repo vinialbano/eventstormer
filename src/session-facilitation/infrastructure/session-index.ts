@@ -91,6 +91,19 @@ export function sessionIdsFor(
   return open === undefined ? { closed } : { open, closed }
 }
 
+/** Every currently-open session across all workshops, oldest first — the worker's scan list. */
+export function openSessions(db: SessionIndexDb): { workshopId: WorkshopId; sessionId: SessionId }[] {
+  const rows = db
+    .prepare(
+      `SELECT workshop_id, session_id FROM session_index WHERE status = 'open' ORDER BY started_at`,
+    )
+    .all() as { workshop_id: string; session_id: string }[]
+  return rows.map((r) => ({
+    workshopId: r.workshop_id as WorkshopId,
+    sessionId: r.session_id as SessionId,
+  }))
+}
+
 /**
  * The session id of an `open` row whose session stream never got a
  * `Session Started` event — a crash between `reserve` and the aggregate append.

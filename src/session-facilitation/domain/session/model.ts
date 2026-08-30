@@ -62,6 +62,7 @@ export type SessionCommand =
       contributionId: ContributionId
       tracks: InterpretedTrack[]
       askQuestionId?: QuestionId
+      askQuestionText?: string
       at: string
     }
   | {
