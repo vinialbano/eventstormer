@@ -1,17 +1,23 @@
 import { nanoid } from 'nanoid'
-import type { z } from 'zod'
+import { z } from 'zod'
 
 /**
  * Branded id types and their generators. The id *types* live here so `plumbing/`
  * stays a true leaf (an `EventStore` signature can name a `WorkshopId` without
- * importing a context); the Zod *schemas* that validate a string into one of
- * these live in `domain-model-capture/domain/schema/`.
+ * importing a context).
  *
- * One brand mechanism, Zod's: `string & z.$brand<'X'>` is exactly what
- * `z.string().brand<'X'>()` infers, so a value parsed by the schema is
- * assignable here with no cast at the seam (design Risks / Tech Decisions).
+ * `WorkshopId` is **canonical here** — as a Zod brand — because it spans both
+ * bounded contexts (an id brand is plumbing). `domain-model-capture` and
+ * `session-facilitation` both re-export this one definition rather than each
+ * declaring their own. `z.infer<typeof WorkshopId>` is `string &
+ * z.$brand<'WorkshopId'>`, so a value parsed by the schema is assignable here
+ * with no cast at the seam.
+ *
+ * The remaining brands are type-only mirrors of the schemas their owning context
+ * defines (`BuildingBlockId` in `domain-model-capture/domain/schema/`).
  */
-export type WorkshopId = string & z.$brand<'WorkshopId'>
+export const WorkshopId = z.string().brand<'WorkshopId'>()
+export type WorkshopId = z.infer<typeof WorkshopId>
 export type SessionId = string & z.$brand<'SessionId'>
 export type BuildingBlockId = string & z.$brand<'BuildingBlockId'>
 

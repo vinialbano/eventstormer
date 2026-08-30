@@ -137,10 +137,10 @@ the aggregate workers cold-start against a settled schema.
 **Requirement**: S1-69
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `WorkshopId` is defined once (in `plumbing/ids.ts`), re-exported by `domain-model-capture`
-- [ ] `Author` schema verified to accept `{ proposer?: string, accepter: string }` (test or a comment citing the line)
-- [ ] `pnpm check && pnpm build` green; existing test count unchanged (99) or higher
-**Tests**: unit (brand type-link) · **Gate**: build
+- [x] `WorkshopId` is defined once (in `plumbing/ids.ts`), re-exported by `domain-model-capture`
+- [x] `Author` schema verified — SPEC_DEVIATION: parties are `{ name }` refs, not plain strings; the frozen Slice-0 schema is unchanged, accept path wraps names (`author.test.ts` + `author.ts` comment)
+- [x] `pnpm check && pnpm build` green; test count 101 (≥ 99)
+**Tests**: unit (brand type-link) · **Gate**: build — ✅ done, commit `T1`
 
 ### T2: `session-facilitation` context skeleton + framework-free rule
 **What**: Create `src/session-facilitation/{domain,capabilities,infrastructure}/`, a path-scoped

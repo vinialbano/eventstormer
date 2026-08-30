@@ -26,7 +26,6 @@ export {
   OP_SCHEMA_VERSION,
   Operation,
   REPLAYABLE_OP_SCHEMA_VERSIONS,
-  SessionId,
   WorkshopId,
 } from './domain/schema/index.ts'
 export type { OperationKind } from './domain/schema/index.ts'

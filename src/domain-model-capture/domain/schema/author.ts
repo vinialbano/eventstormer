@@ -10,6 +10,10 @@ const PartyRef = z.object({
  * (F06) has an `accepter` only; a facilitator-originated operation records both
  * the `proposer` (who suggested it) and the `accepter` (the human who accepted
  * it) — F01.
+ *
+ * Each party is a `{ name }` ref, not a bare string: the `session-facilitation`
+ * accept path builds `author: { proposer: { name: 'facilitator' }, accepter: {
+ * name: creatorName } }`. Verified by `author.test.ts`.
  */
 export const Author = z.object({
   proposer: PartyRef.optional(),
