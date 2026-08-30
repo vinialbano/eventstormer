@@ -8,6 +8,7 @@ import type { ProposalCommand } from '../../domain/proposal/model.ts'
 import { replay } from '../../domain/proposal/replay.ts'
 import { ProposalEvent, SessionEvent } from '../../domain/schema/events.ts'
 import { proposalStream, sessionStream, storedOps } from '../../infrastructure/streams.ts'
+import { acceptRoutes } from './accept.ts'
 import type { ReviewProposalDeps } from './deps.ts'
 
 const EditBody = z.object({ label: z.string() })
@@ -69,6 +70,7 @@ export const reviewProposalRoutes = (deps: ReviewProposalDeps) =>
       const r = act(deps, id, { type: 'Unhold Proposal', proposalId: id, at: deps.clock() })
       return r.error === undefined ? c.json({ ok: true as const }, 200) : c.json({ error: r.error }, r.status)
     })
+    .route('/', acceptRoutes(deps))
     .get('/sessions/:id/proposals', (c) => {
       const sessionId = c.req.param('id') as SessionId
       const sessionEvents = deps.store

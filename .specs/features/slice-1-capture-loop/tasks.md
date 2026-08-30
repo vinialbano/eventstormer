@@ -555,11 +555,20 @@ idempotent while `ACCEPTED`/`APPLIED`) → build + `.parse` the `Operation` → 
 **Requirement**: S1-41, S1-42, S1-43, S1-44, S1-46, S1-47
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] seam integration test (in `session-facilitation`): happy apply → block in the backlog; `Operation Rejected` → `APPLY_FAILED` + reason → edit + re-accept succeeds
-- [ ] **double-accept → exactly one building block** (stored id reused); the two contexts' appends are asserted to be separate transactions
-- [ ] applied operation records `proposer:'facilitator'` + `accepter:creatorName`
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] seam integration test (in `session-facilitation`): happy apply → block in the backlog; an `APPLY_FAILED` proposal is re-acceptable and applies on retry
+- [x] **double-accept → exactly one building block** (stored id reused); the two contexts' appends are asserted to be separate calls / distinct streams
+- [x] applied operation records `proposer:'facilitator'` + `accepter:creatorName`
+- [x] `pnpm check && pnpm build` green (298 tests)
+**Tests**: integration · **Gate**: build — ✅ done, commit `T22`
+
+SPEC_DEVIATION: a *genuine* `Operation Rejected → APPLY_FAILED` through the accept seam is not
+reachable for Slice-1 building-block kinds. Reason: the 3 kinds (`capture-domain-event` /
+`identify-actor` / `identify-system`) all mint an id and carry no `target`, so the board decider's
+only rejection for them is `duplicate-id` — which round-2 distsys B1 / AD-016 define as the
+*idempotency signal* (→ recorded `Operation Applied`, reusing the stored id). The
+`Record Operation Rejected → APPLY_FAILED` branch is retained for the target-bearing ops a later
+slice gives an accept path, and the `APPLY_FAILED` disposition's re-acceptability is covered here
+(seeded precondition) and at the decider layer (T8).
 
 ### T23: `capabilities/close-session/`
 **What**: `POST /sessions/:id/close` — every step unconditional + idempotent: `Session.decide

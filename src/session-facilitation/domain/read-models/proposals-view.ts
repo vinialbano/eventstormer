@@ -27,6 +27,39 @@ interface ProposalCard {
   buildingBlockId?: BuildingBlockId
 }
 
+const birthOf = (
+  events: ProposalEvent[],
+): Extract<ProposalEvent, { type: 'Building Block Proposed' }> | undefined =>
+  events.find(
+    (e): e is Extract<ProposalEvent, { type: 'Building Block Proposed' }> =>
+      e.type === 'Building Block Proposed',
+  )
+
+/** Project one `Proposal` stream to its card. `overflow` is caller-supplied
+ * (it needs the sibling count, which only `proposalsView` has). Returns
+ * `undefined` for a stream with no birth event. */
+export const proposalCard = (events: ProposalEvent[], overflow = false): ProposalCard | undefined => {
+  const birth = birthOf(events)
+  if (birth === undefined) return undefined
+
+  const wm = replay(events)
+  const lastEdit = [...events].reverse().find((e) => e.type === 'Proposal Edited')
+  const rejected = [...events].reverse().find((e) => e.type === 'Operation Rejected')
+
+  return {
+    proposalId: birth.proposalId,
+    contributionId: birth.contributionId,
+    blockKind: birth.blockKind,
+    label: lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label,
+    bar: birth.bar,
+    disposition: wm.disposition,
+    held: wm.held,
+    overflow,
+    ...(rejected?.type === 'Operation Rejected' ? { applyFailedReason: rejected.reason } : {}),
+    ...(wm.buildingBlockId === undefined ? {} : { buildingBlockId: wm.buildingBlockId }),
+  }
+}
+
 export const proposalsView = (
   sessionEvents: SessionEvent[],
   streams: { proposalId: ProposalId; events: ProposalEvent[] }[],
@@ -37,28 +70,12 @@ export const proposalsView = (
 
   for (const proposalId of sessionProposalIds(sessionEvents)) {
     const events = byId.get(proposalId) ?? []
-    const birth = events.find((e) => e.type === 'Building Block Proposed')
-    if (birth?.type !== 'Building Block Proposed') continue
+    const contributionId = birthOf(events)?.contributionId ?? ''
+    const index = seenPerContribution.get(contributionId) ?? 0
+    seenPerContribution.set(contributionId, index + 1)
 
-    const wm = replay(events)
-    const lastEdit = [...events].reverse().find((e) => e.type === 'Proposal Edited')
-    const rejected = [...events].reverse().find((e) => e.type === 'Operation Rejected')
-
-    const index = seenPerContribution.get(birth.contributionId) ?? 0
-    seenPerContribution.set(birth.contributionId, index + 1)
-
-    cards.push({
-      proposalId,
-      contributionId: birth.contributionId,
-      blockKind: birth.blockKind,
-      label: lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label,
-      bar: birth.bar,
-      disposition: wm.disposition,
-      held: wm.held,
-      overflow: index >= DISPLAY_CAP,
-      ...(rejected?.type === 'Operation Rejected' ? { applyFailedReason: rejected.reason } : {}),
-      ...(wm.buildingBlockId === undefined ? {} : { buildingBlockId: wm.buildingBlockId }),
-    })
+    const card = proposalCard(events, index >= DISPLAY_CAP)
+    if (card !== undefined) cards.push(card)
   }
 
   return cards
