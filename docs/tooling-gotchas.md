@@ -85,6 +85,11 @@ published docs for the installed version.
   "GitHub Actions is not permitted to create or approve pull requests" after a successful push.
   Default workflow permissions stay `read`; this workflow widens only what it needs. PRs opened
   with `GITHUB_TOKEN` do not trigger `pull_request` workflows — expected, not a missing check.
+- **`pnpm check` runs `check:process-ids` first** (`scripts/check-process-ids.sh`): `git ls-files`
+  of `src/` and `e2e/` then grep for `AD-`/`S<n>-<n>`/`M<n>-<n>` ids, exit 1 on a hit. It is the
+  cheap fail-fast step, mirrored by the `PostToolUse` hook and by the first CI `check` job step.
+  Editing the pattern means editing both, and planting a violation to confirm each still fails —
+  same rule as the dependency-cruiser globs.
 
 ## Installed pins
 
