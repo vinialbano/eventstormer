@@ -15,9 +15,16 @@ const boardStream: StreamKey = { context: 'domain-model-capture', aggregate: 'bo
 
 let store: EventStore
 let appendStreams: StreamKey[]
+let boardReads: number
+
+const isBoard = (stream: StreamKey): boolean =>
+  stream.context === 'domain-model-capture' && stream.aggregate === 'board'
 
 const recording = (inner: EventStore): EventStore => ({
-  read: (stream) => inner.read(stream),
+  read: (stream) => {
+    if (isBoard(stream)) boardReads += 1
+    return inner.read(stream)
+  },
   append: (stream, expected, ops) => {
     appendStreams.push(stream)
     return inner.append(stream, expected, ops)
@@ -75,6 +82,7 @@ const accept = async (id: string): Promise<Response> =>
 
 beforeEach(() => {
   appendStreams = []
+  boardReads = 0
   store = recording(createMemoryEventStore())
   seedWorkshopAndSession()
 })
@@ -119,14 +127,22 @@ describe('POST /proposals/:id/accept — the synchronous apply chain (S1-41…S1
     expect(new Set(appendStreams.map((k) => `${k.context}/${k.aggregate}/${k.id}`)).size).toBeGreaterThanOrEqual(2)
   })
 
-  it('double-accept produces exactly one building block, reusing the stored id', async () => {
+  it('double-accept produces exactly one building block, reusing the stored id, without re-applying', async () => {
     seedProposal('p_1')
     const first = (await (await accept('p_1')).json()) as { proposal: { buildingBlockId?: string } }
+    const boardReadsAfterFirst = boardReads
     const second = (await (await accept('p_1')).json()) as { proposal: { buildingBlockId?: string; disposition: string } }
+    const boardReadsAfterSecond = boardReads
 
     expect(second.proposal.disposition).toBe('APPLIED')
     expect(second.proposal.buildingBlockId).toBe(first.proposal.buildingBlockId)
     expect(readBuildingBlocks(deps(), w)).toHaveLength(1)
+
+    // S1-47: once APPLIED, the second accept returns the stored id and does NOT run
+    // the apply chain again. applyOperation is the only reader of the board stream on
+    // this path, so its read count must not move across the second accept.
+    expect(boardReadsAfterFirst).toBeGreaterThan(0)
+    expect(boardReadsAfterSecond).toBe(boardReadsAfterFirst)
   })
 
   it('an APPLY_FAILED proposal is re-acceptable and applies on retry', async () => {
