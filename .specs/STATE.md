@@ -43,12 +43,17 @@ capture.
 ## Handoff
 
 **Active feature:** `slice-1-capture-loop` (GitHub issue #38)
-**Branch:** TBD — `slice-1-capture-loop` off `main` (Slice 0 merged as of `d55351c`).
-**Phase:** **TASKS approved — ready for EXECUTE.** `tasks.md` = 32 tasks, 9 phases, all 3
-pre-approval tables ✅. Batch plan confirmed: **B1** P1 (5) · **B2** P2+P3 (6) · **B3** P4+P5 (7) ·
-**B4** P6+P7 (7) · **B5** P8 (5) · **B6** P9 (2) — ~6 workers → sub-agent delegation offer at
-Execute. `context7` allowed broadly; `impeccable` mandatory T27–T30; E2E via
-`FACILITATOR_MODE=scripted`. Earlier: DESIGN complete (2 review rounds), AD-017…AD-024.
+**Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
+**Phase:** **EXECUTE in progress via sub-agent batches.** Batch plan: **B1** P1 (5) · **B2** P2+P3
+(6) · **B3** P4+P5 (7) · **B4** P6+P7 (7) · **B5** P8 (5) · **B6** P9 (2).
+- **B1 (T1–T5) ✅** — commit `264f1b3`. 159 tests.
+- **B2 (T6–T11) ✅** — through `0898d86` (+ `c57eb0f` docs). 227 tests.
+- **B3 (T12–T18) ✅** — through `8ae7152`. 267 tests. `pnpm check && pnpm build` green.
+- **B4 (T19–T25) — NOT STARTED.** First dispatch aborted on an account session rate-limit (HTTP
+  429) before any commit; working tree clean at `8ae7152`. **Resume: re-dispatch B4 from T19.**
+- **B5 (T26–T30), B6 (T31–T32) — pending.** Then the mandatory Verifier sub-agent → `validation.md`.
+`context7` allowed broadly; `impeccable` mandatory T27–T30; E2E via `FACILITATOR_MODE=scripted`.
+Earlier: DESIGN complete (2 review rounds), AD-017…AD-024.
 **Branch:** create `slice-1-capture-loop` off `main` before T1. `spec.md` (~70 requirement IDs),
 `context.md`, `design.md` written and revised twice. Round 1: stress-test + 4 architecture lenses →
 T1–T5. Round 2: 4 subagent reviews (distributed-systems, domain-modeling, code-architecture,
@@ -82,6 +87,35 @@ check && pnpm build` green. Deviations:
   every event.
 - T5: `applyMigrations` gained two additive default params (`migrations`, `trackingTable`) so
   `session-facilitation` tracks its own id sequence in `_sf_migrations` — backward compatible.
+
+**Slice 1 execution — Batch 2 (Phases 2–3, T6–T11) COMPLETE:** 227 tests. Notes:
+- `sessionView(...)` takes caller-supplied `scopeIsSet` / `inFlight` / `derivedTracks` (the Session
+  stream can't know those); `facilitationContext` / `priorSessionHistory` are pure assembly fns
+  over pre-fetched per-session data — the capability/tick code does the I/O and passes it in.
+- Session decider gained an `Attribute Contribution` command (for `Contribution Attributed…`).
+- `facilitationAgenda` phase-name heuristic pinned: ≤ 3 words, no `-ed`/`-ing` word.
+- T10 `applyOperation(deps, workshopId, operation)` — no `expectedPosition`, returns
+  `{ resultingBuildingBlockId, nextPosition }` | merits `Rejection`; internal stale-position retry.
+- T11 `GET /workshops/:id/board` mounted via `createRoutes(deps)`; **404s on an empty board
+  stream** (no workshop registry in this context — client fetches board only post-accept).
+
+**Slice 1 execution — Batch 3 (Phases 4–5, T12–T18) COMPLETE:** 267 tests. Notes:
+- T12 `FacilitationTurnSchema` = Anthropic-shaped projection (AD-015): no `z.unknown()`, ≤ 24
+  optionals (schema-walk test), `interpretation.max(12)`, `label.max(200)`, constraints mirrored
+  into `.describe()`. `mapTurn` mints per-track ids from an injected mint fn.
+- T13 `Facilitator` port (`interpret`, `askOpening`) + Anthropic adapter: ladder
+  `claude-sonnet-5 → sonnet → claude-haiku-4-5`, one schema-retry total across the ladder then
+  terminal `schema-invalid`; `provider-down` = 5xx/timeout. `generate` + `sleep` injected seams —
+  no real HTTP in tests. Promoted `ai` + `@ai-sdk/anthropic` to `dependencies`, added
+  `@ai-sdk/otel@1.0.77` (registered lazily inside the real generate path so knip stays clean).
+- `OpeningQuestionSchema` lives with the adapter (T13), not T12.
+- T15 added `infrastructure/streams.ts` (stream-key + version-stamp helpers); nanoid slug is 21 chars.
+- T16 `set-scope` revision window is a handler precondition: `readBuildingBlocks().length > 0` →
+  409 `scope-locked`. `no-cross-slice-imports` re-verified (first real catch — ≥ 2 caps now).
+- T18 added `infrastructure/derived-track.ts` (`readDerivedTrackKeys`); whitespace contribution
+  → 204 no-op, closed → 409, over-length → 400, otherwise 202.
+- Capability `deps` carry a `SessionIndexDb` / `inFlight` guard placeholder — **T24 wires the real
+  SQLite file + host guard; T25 the scheduler.**
 
 **Lessons recorded (candidates, `.specs/LESSONS.md`):**
 - L-001 (`domain/fold-tests`) — assert a fold that sets a field against a value distinct from the
