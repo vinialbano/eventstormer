@@ -63,7 +63,7 @@ describe('sessionView — transcript interleaving', () => {
   it('interleaves questions and contributions in stream order', () => {
     expect(sessionView(base).transcript).toEqual([
       { kind: 'question', speaker: 'facilitator', text: 'What business are you mapping?', at },
-      { kind: 'contribution', speaker: 'Dana', text: 'A member borrowed a book.', at },
+      { kind: 'contribution', speaker: 'Dana', text: 'A member borrowed a book.', at, contributionId: 'c_1' },
     ])
   })
 })

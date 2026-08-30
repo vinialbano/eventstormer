@@ -18,6 +18,8 @@ export interface TranscriptTurn {
   speaker: string
   text: string
   at: string
+  /** Present on `contribution` turns — proposal cards weld to the turn that produced them. */
+  contributionId?: string
 }
 
 export interface OpenQuestion {

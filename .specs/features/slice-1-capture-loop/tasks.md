@@ -697,9 +697,16 @@ the card-to-sticky flight + one-line transcript receipt; the quiet "catching up"
 **Requirement**: S1-52, S1-53, S1-54, S1-55
 **Tools**: MCP: `context7` (`reka-ui`) · Skill: `impeccable`
 **Done when**:
-- [ ] jsdom tests: accept → card collapses to a receipt + the board refetches (server-confirmed, no optimistic write); reject → `✕ Dismissed`; hold → moves to `Parked by you`; a question renders as a message; `prefers-reduced-motion` respected
-- [ ] `pnpm check && pnpm build` green
-**Tests**: unit (jsdom) · **Gate**: build
+- [x] jsdom tests: accept → `board-dirty` emit, no optimistic collapse; card collapses to the receipt only once the store confirms `APPLIED`; reject → `✕ Dismissed`; hold → `parked` chip + Unpark + ribbon; a question turn renders `role="status"` (message, not error); `prefers-reduced-motion` honoured via `useReducedMotion` + a global CSS block
+- [x] `pnpm check && pnpm build` green (341 tests)
+**Tests**: unit (jsdom) · **Gate**: build — ✅ done, commit `T28`
+
+NOTE: `reka-ui` `CollapsibleRoot`/`Trigger`/`Content` back the dock collapse. `ProposalCard.vue`
+is presentational (emits intent; the dock does POST + refetch) so it also serves the T29 scope
+card. `sessionView` transcript `contribution` turns gained an additive `contributionId` so cards
+weld to their turn (small T18 read-model extension; `session-view.test.ts` updated). The
+card-to-sticky **flight** animation lands in T30 where board + dock share a coordinate space; the
+one-line receipt is here.
 
 ### T29: SPA — the pending drawer + the scope card
 **What**: The in-dock pending drawer (slides right; `Parked by you` / `Awaiting review` groups;

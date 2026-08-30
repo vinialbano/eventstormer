@@ -455,14 +455,14 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-46 | P1 Proposal (backlog-only, eventual consistency) | Execute | ◐ T11 (backlog board read; eventual-consistency UI T27) |
 | S1-47 | P1 Proposal (accept idempotent) | Execute | ✅ T8 (Accept idempotent while ACCEPTED/APPLIED, stored id) |
 | S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Execute | ◐ T11 + T26 (3 Pinia stores each cold-load from one GET, no store imports another; board renderer T27, layout T30) |
-| S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ◐ T26 (`client.ts` fetch-only; `board` store refetches only on demand — never on the poll timer; card→sticky wiring T28) |
+| S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Execute | ◐ T26 + T28 (accept emits `board-dirty`; the card collapses to a receipt only after the store refetch confirms `APPLIED` — no optimistic write; screen wiring T30) |
 | S1-50 | P1 Facilitator (token + cost recording) | Execute | ✅ T4 (plumbing/model-pricing estimateCost) |
 | S1-51a | cross — update `docs/domain/open-questions.md` #63 (scope resolution) **this slice** | Design | Pending |
 | S1-51b | cross — Slice-6 doc reconciliation (ADR-005/007 wording, canvas scope + Held + summary + AD-021, #66) | Design | Pending — Slice 6 |
 | S1-52 | P1 Proposal (Hold — `Proposal Held`/`Unheld` events, non-terminal) | Execute | ✅ T8 (Proposal Held/Unheld — reversible marker) |
-| S1-53 | P1 Proposal (`Accept all` cluster + `Accept all remaining` drawer; no reject-all) | Design | Pending |
-| S1-54 | P1 Capture screen (inline proposal cards welded to the turn; card-to-sticky flight + receipt) | Design | Pending |
-| S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Design | Pending |
+| S1-53 | P1 Proposal (`Accept all` cluster + `Accept all remaining` drawer; no reject-all) | Execute | ◐ T28 (`Accept all` per cluster when >1 acceptable; drawer `Accept all remaining` T29) |
+| S1-54 | P1 Capture screen (inline proposal cards welded to the turn; card-to-sticky flight + receipt) | Execute | ◐ T28 (cards weld to their contribution turn via `contributionId`; transcript receipt on APPLIED; flight T30) |
+| S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Execute | ◐ T28 (composer always enabled + quiet `Catching up…`; `useReducedMotion`; full keyboard sweep T30) |
 | S1-56 | P1 Facilitator (interpretation crash-consistency — `Contribution Interpreted` sole commit point; derived streams idempotent; worker reconciles) | Design | Pending |
 | S1-57 | P1 Session lifecycle (`session_index` projection + `UNIQUE … WHERE status='open'`; enumerates closed sessions) | Execute | ✅ T5 |
 | S1-58 | P1 Workshop/scope (`askOpening` owned by the worker; produced when a provider returns if down at session start) | Design | Pending |

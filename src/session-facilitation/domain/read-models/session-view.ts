@@ -20,6 +20,9 @@ interface TranscriptTurn {
   speaker: string
   text: string
   at: string
+  /** Present on `contribution` turns — the client welds proposal cards to the
+   * turn that produced them. */
+  contributionId?: ContributionId
 }
 
 interface OpenQuestion {
@@ -65,7 +68,13 @@ export const sessionView = (
     switch (e.type) {
       case 'Contribution Made':
         madeOrder.push(e.contributionId)
-        transcript.push({ kind: 'contribution', speaker: e.speaker, text: e.body, at: e.at })
+        transcript.push({
+          kind: 'contribution',
+          speaker: e.speaker,
+          text: e.body,
+          at: e.at,
+          contributionId: e.contributionId,
+        })
         break
       case 'Question Asked':
         questions.set(e.questionId, {
