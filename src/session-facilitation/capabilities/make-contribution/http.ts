@@ -76,7 +76,7 @@ export const makeContributionRoutes = (deps: MakeContributionDeps) =>
       const scopeIsSet = readWorkshop(deps, workshopId).some((e) => e.type === 'Scope Set')
       const view = sessionView(readSession(deps, sessionId), {
         scopeIsSet,
-        ...(deps.inFlight === undefined ? {} : { inFlight: deps.inFlight }),
+        ...(deps.inFlight === undefined ? {} : { inFlight: deps.inFlight() }),
         derivedTracks: readDerivedTrackKeys(deps.db),
       })
       return c.json(view)

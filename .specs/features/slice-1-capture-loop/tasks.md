@@ -629,10 +629,16 @@ import.**
 **Requirement**: S1-27, S1-29, S1-68
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: a throwing tick fn does not stop the loop (next cycle still fires)
-- [ ] planted `host` → context-`domain` import fails `pnpm depcruise`; reverted
-- [ ] `pnpm check && pnpm build` green; `pnpm dev` boots and serves `/api/*`
-**Tests**: unit · **Gate**: build
+- [x] test: a throwing tick fn does not stop the loop (`runCycle` runs all three; `startScheduler` keeps rescheduling; `stop()` halts it)
+- [x] planted `host/scheduler.ts` → `session-facilitation/domain` import fails `pnpm depcruise` (`host-imports-only-context-api`); reverted
+- [x] `pnpm check && pnpm build` green (315 tests); `createRoutes(loadConfig(scripted))` serves `/api/health` + `POST /api/workshops` (routes.test.ts)
+**Tests**: unit · **Gate**: build — ✅ done, commit `T25`
+
+NOTE: `createRoutes` now takes the whole `HostConfig` and mounts every `session-facilitation`
+router (+ board-access) under `/api` via `api.ts`. `MakeContributionDeps.inFlight` became a
+`() => ReadonlySet<ContributionId>` accessor (a plain function, no sibling import) so the read
+model sees the live in-flight set. `host/index.ts` calls `loadConfig()` (fail-fast) and starts the
+scheduler; not exercised in tests.
 
 ### T26: SPA — deps, 3 Pinia stores, `useInterpretationPoll`
 **What**: Install `vue-router@5.2.0`, `reka-ui` (verify pin), `@playwright/test` (dev); add the

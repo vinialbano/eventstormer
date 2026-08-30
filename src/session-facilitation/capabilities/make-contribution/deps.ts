@@ -9,6 +9,7 @@ export interface MakeContributionDeps {
   store: EventStore
   db: SessionIndexDb & DerivedTrackDb
   clock: Clock
-  /** The in-flight interpretation guard (injected by `host/` — T24). Empty in isolation. */
-  inFlight?: ReadonlySet<ContributionId>
+  /** A live view of the in-flight interpretation set (injected by `host/`). A
+   * plain accessor, not the guard object — capabilities never import a sibling. */
+  inFlight?: () => ReadonlySet<ContributionId>
 }
