@@ -391,9 +391,13 @@ menu + output-contract prose + **5–6 few-shot examples in the library-lending 
 **Requirement**: S1-35 (assembly), few-shot
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] a test asserts the assembled input contains the scope, the block list, the prior summaries, and the new segment in order; few-shot domain ≠ restaurant/kitchen
-- [ ] `pnpm check` green
-**Tests**: unit · **Gate**: quick
+- [x] a test asserts the assembled input contains the scope, the block list, the prior summaries, and the new segment in order; few-shot domain = library lending, not restaurant/kitchen
+- [x] `pnpm check` green (248 tests)
+**Tests**: unit · **Gate**: quick — ✅ done, commit `T14`
+
+NOTE: `buildTurnInput(context: FacilitationContext, segment)` — the assembled `facilitationContext`
+already carries scope / blocks / priors / open questions / transcript, so it is the single input
+rather than re-passing each; the caller (T19) builds it from `readBuildingBlocks`.
 
 ### T15: `capabilities/start-workshop/`
 **What**: `POST /workshops` — Zod-parse `{ creatorName }` → `Workshop.decide(Start Workshop)` →
