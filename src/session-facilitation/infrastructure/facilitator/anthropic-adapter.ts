@@ -21,7 +21,7 @@ import { FacilitationTurnSchema, OpeningQuestionSchema } from './turn-schema.ts'
  * - One `model-call-log` JSONL line per call, carrying `result.warnings`.
  *
  * `generate` and `sleep` are injected seams — every test mocks `generate` at the
- * `ai` boundary, so no test makes a real HTTP call (S1-30).
+ * `ai` boundary, so no test makes a real HTTP call.
  */
 
 interface FacilitatorGenerateArgs {

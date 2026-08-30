@@ -16,7 +16,7 @@ const depsFor = (store: EventStore): BoardAccessDeps => ({ store, clock })
 const captureOp = (id: string, label: string): Operation =>
   Operation.parse({ author, kind: 'capture-domain-event', id, label })
 
-describe('applyOperation — happy path (S1-42)', () => {
+describe('applyOperation — happy path', () => {
   it('appends the operation and returns the resulting building-block id + next position', () => {
     const deps = depsFor(createMemoryEventStore())
     const result = applyOperation(deps, w, captureOp('b_1', 'Loan recorded'))
@@ -54,7 +54,7 @@ describe('applyOperation — merits rejections bubble to the caller', () => {
   })
 })
 
-describe('applyOperation — a genuine two-accept race (AD-022)', () => {
+describe('applyOperation — a genuine two-accept race', () => {
   it('both operations apply with no APPLY_FAILED — the stale-position retry is internal', () => {
     const base = createMemoryEventStore()
     let reads = 0

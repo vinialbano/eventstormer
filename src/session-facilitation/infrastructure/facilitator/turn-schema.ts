@@ -3,7 +3,7 @@ import { InterpretationBar, InterpretedBlockKind } from '../../domain/schema/int
 
 /**
  * The **Anthropic-shaped** output schema the facilitator passes to
- * `Output.object` (AD-015). It is a hand-shaped projection, NOT `z.array(Operation)`
+ * `Output.object`. It is a hand-shaped projection, NOT `z.array(Operation)`
  * and NOT the stored `InterpretedTrack` union:
  *
  * - only the strands the model actually produces — `v` / `author` / minted ids
@@ -12,8 +12,8 @@ import { InterpretationBar, InterpretedBlockKind } from '../../domain/schema/int
  *   never emits an empty `{}` subschema (Anthropic HTTP 400 "Empty schema");
  * - ≤ 24 optional parameters across the whole schema (Anthropic's grammar limit);
  * - `interpretation` is `z.array(Track).max(12)` — the hard "not an unbounded
- *   queue" ceiling (S1-62 / issue #38 AC14), not the display cap of 7;
- * - `label` is `.max(200)` (S1-62).
+ *   queue" ceiling (issue #38 AC14), not the display cap of 7;
+ * - `label` is `.max(200)`.
  *
  * Every constraint is mirrored into `.describe()` — Anthropic's sanitiser strips
  * `min`/`max`/`.refine()` from the schema the model sees (docs/ai-harness-gotchas.md).
@@ -95,7 +95,7 @@ export type FacilitationTurn = z.infer<typeof FacilitationTurnSchema>
 
 /**
  * The `askOpening` output — the scope question plus a first-draft scope statement
- * the expert reviews with the F05 accept/edit/reject card (S1-08).
+ * the expert reviews with the F05 accept/edit/reject card.
  */
 export const OpeningQuestionSchema = z.object({
   questionText: z.string().min(1).describe('The scope question to put to the expert.'),

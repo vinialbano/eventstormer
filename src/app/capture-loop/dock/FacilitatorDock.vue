@@ -22,7 +22,7 @@ import {
  * The floating facilitator dock (brief §3). Conversation column with inline
  * proposal cards welded to the contribution that produced them; an in-dock
  * pending drawer that widens the dock rightward; the scope question rendered as
- * the first F05 accept/edit/reject card (no separate screen — S1-08/S1-61).
+ * the first F05 accept/edit/reject card (no separate screen).
  * Collapses to a `Facilitator · n` pill (parked dot when anything is held).
  *
  * Every action is a POST then a `mutated` emit — the parent refetches the

@@ -4,7 +4,7 @@ import { BuildingBlockId } from './ids.ts'
 
 /**
  * The frozen `v:1` operation union — every command in the domain-model-capture
- * canvas Commands table (ADR-004). The `Board` decider handles only 6
+ * canvas Commands table (docs/adr/004). The `Board` decider handles only 6
  * kinds in Slice 0 — the 3 captures, reword, withdraw, reinstate; the other 14
  * variants are defined and frozen here so `switch-exhaustiveness-check` forces
  * every later slice to handle its new operations.

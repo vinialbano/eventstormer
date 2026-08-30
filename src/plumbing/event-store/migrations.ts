@@ -1,5 +1,5 @@
 /**
- * Additive-only schema evolution for the operation log (ADR-004). A migration is
+ * Additive-only schema evolution for the operation log (docs/adr/004). A migration is
  * an id + a forward-only `up` statement; there is no `down`. "Additive-only" is a
  * review rule, not mechanically enforced — a test asserts no `up` string drops or
  * removes a column.

@@ -51,7 +51,7 @@ const contributions = (): Extract<SessionEvent, { type: 'Contribution Made' }>[]
     .map((r) => SessionEvent.parse(r.operation))
     .filter((e): e is Extract<SessionEvent, { type: 'Contribution Made' }> => e.type === 'Contribution Made')
 
-describe('POST /sessions/:id/contributions (S1-12, S1-13, S1-15, S1-16)', () => {
+describe('POST /sessions/:id/contributions', () => {
   it('captures a non-empty contribution — 202, and a trimmed segment with session id / speaker / source / at', async () => {
     const res = await postContribution('  A member borrowed a book.  ')
     expect(res.status).toBe(202)
@@ -94,7 +94,7 @@ describe('POST /sessions/:id/contributions (S1-12, S1-13, S1-15, S1-16)', () => 
   })
 })
 
-describe('GET /workshops/:id/session (S1-16)', () => {
+describe('GET /workshops/:id/session', () => {
   it('reflects a fresh contribution with interpretation status "pending" and scope status "none"', async () => {
     await postContribution('A member borrowed a book.')
     const { contributionId } = (await (await postContribution('and returned it')).json()) as {

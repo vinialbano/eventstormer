@@ -1,5 +1,5 @@
 /**
- * The sole cross-context surface for session-facilitation (ADR-002). `host/`
+ * The sole cross-context surface for session-facilitation (docs/adr/002). `host/`
  * reaches this context only through here — never its `domain/`, `capabilities/`,
  * or `infrastructure/`.
  *

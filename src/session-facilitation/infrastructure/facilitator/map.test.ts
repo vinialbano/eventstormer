@@ -13,7 +13,7 @@ const countingMint = (): TrackIdMint => {
   }
 }
 
-describe('mapTurn — FacilitationTurn → InterpretedTrack[] with minted ids (S1-19, S1-40)', () => {
+describe('mapTurn — FacilitationTurn → InterpretedTrack[] with minted ids', () => {
   it('maps a multi-track turn to the expected InterpretedTrack[] with stable minted ids', () => {
     const turn: FacilitationTurn = {
       interpretation: [

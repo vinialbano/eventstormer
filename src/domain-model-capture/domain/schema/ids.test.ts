@@ -20,7 +20,7 @@ describe('branded id schemas', () => {
     expect(typeof bad).toBe('string')
   })
 
-  it('re-exports the one canonical WorkshopId from plumbing (S1-69)', () => {
+  it('re-exports the one canonical WorkshopId from plumbing', () => {
     expect(WorkshopId).toBe(PlumbingWorkshopId)
   })
 

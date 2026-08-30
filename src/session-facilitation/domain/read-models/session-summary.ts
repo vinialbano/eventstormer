@@ -2,8 +2,8 @@ import type { ProposalId } from '~/plumbing/ids.ts'
 import type { SessionEvent } from '../schema/events.ts'
 
 /**
- * Read-time projections over a `Session` stream (AD-023 — no summary is ever
- * frozen into an event). `blocksAdded` is supplied by the caller: it is the
+ * Read-time projections over a `Session` stream — no summary is ever frozen
+ * into an event. `blocksAdded` is supplied by the caller: it is the
  * count of `Operation Applied` events across this session's `Proposal` streams
  * (operations carry no `sessionId`, so the count comes from the facilitation
  * side).

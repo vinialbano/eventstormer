@@ -37,7 +37,7 @@ const birth = (proposalId: ProposalId, label = `Block ${proposalId}`): ProposalE
   bar: 'strict',
 })
 
-describe('proposalsView (S1-40, S1-52, S1-53)', () => {
+describe('proposalsView', () => {
   it('projects a freshly born proposal: PROPOSED, not held, not overflow, birth label', () => {
     const cards = proposalsView(interpretedWith([pid('p_1')]), [{ proposalId: pid('p_1'), events: [birth(pid('p_1'))] }])
     expect(cards).toEqual([

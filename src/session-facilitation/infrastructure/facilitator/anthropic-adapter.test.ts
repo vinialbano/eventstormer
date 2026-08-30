@@ -71,7 +71,7 @@ const depsWith = (generate: FacilitatorGenerate, extra: Partial<AnthropicFacilit
   return { facilitator: createAnthropicFacilitator(deps), slept }
 }
 
-describe('anthropic adapter — happy path (S1-17, S1-30, S1-31, S1-50)', () => {
+describe('anthropic adapter — happy path', () => {
   it('returns the parsed turn and writes one JSONL line with usage + a cost estimate', async () => {
     const { generate, models } = scripted([result(VALID_TURN)])
     const { facilitator } = depsWith(generate)
@@ -101,7 +101,7 @@ describe('anthropic adapter — happy path (S1-17, S1-30, S1-31, S1-50)', () => 
   })
 })
 
-describe('anthropic adapter — the model ladder on provider-down (S1-27)', () => {
+describe('anthropic adapter — the model ladder on provider-down', () => {
   it('walks claude-sonnet-5 → claude-sonnet-5 → claude-haiku-4-5, backing off between rungs', async () => {
     const { generate, models } = scripted([
       { throw: Object.assign(new Error('bad gateway'), { statusCode: 503 }) },
@@ -130,7 +130,7 @@ describe('anthropic adapter — the model ladder on provider-down (S1-27)', () =
   })
 })
 
-describe('anthropic adapter — schema-invalid: one retry total, then terminal (S1-28)', () => {
+describe('anthropic adapter — schema-invalid: one retry total, then terminal', () => {
   it('retries once with the error fed back, then returns schema-invalid — never laddering', async () => {
     const { generate, models } = scripted([result({ not: 'a turn' })])
     const { facilitator } = depsWith(generate)

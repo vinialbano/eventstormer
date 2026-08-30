@@ -5,7 +5,7 @@ import { layoutBoard, type BoardBlockInput } from './layout.ts'
 
 /**
  * The board wall — a full-screen EventStorming surface. Slice 1 renders the
- * backlog area only (ADR-006: the layout is the pure `layoutBoard`; this file is
+ * backlog area only (docs/adr/006: the layout is the pure `layoutBoard`; this file is
  * the swappable renderer). A pending proposal is NEVER drawn here — no ghost
  * sticky (that treatment is reword-only, slice 3).
  */

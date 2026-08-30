@@ -6,7 +6,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('scheduler (S1-27)', () => {
+describe('scheduler', () => {
   it('runs every tick in a cycle even when an earlier one throws', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const calls: string[] = []

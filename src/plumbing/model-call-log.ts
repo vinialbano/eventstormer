@@ -5,7 +5,7 @@ import type { ModelName, TokenUsage } from './model-pricing.ts'
 /**
  * One JSONL line per model call — request, response, Zod parse result, the AI
  * SDK `result.warnings`, token counts, and a cost estimate from the owned price
- * table (ADR-008 / S1-31 / S1-50). Append-only; each call writes exactly one
+ * table (docs/adr/008). Append-only; each call writes exactly one
  * line to `<dataDir>/model-calls.jsonl`.
  */
 export interface ModelCallEntry {

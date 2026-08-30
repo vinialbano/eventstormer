@@ -40,7 +40,7 @@ const act = (deps: ReviewProposalDeps, id: ProposalId, cmd: Reviewed) => {
 /**
  * `POST /proposals/:id/{edit,reject,hold,unhold}` — one `Proposal.decide` each,
  * appended only when `decide` emits (an idempotent no-op skips the append). Hold
- * / Unhold are a reversible marker orthogonal to the disposition (AD-020).
+ * / Unhold are a reversible marker orthogonal to the disposition.
  *
  * `GET /sessions/:id/proposals` — this session's pending + terminal proposals
  * with disposition, held flag, `APPLY_FAILED` reason, and the ">7 among this

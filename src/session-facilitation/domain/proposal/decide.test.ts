@@ -47,7 +47,7 @@ describe('Proposal.decide — birth', () => {
   })
 })
 
-describe('Proposal.decide — accept idempotency (S1-47)', () => {
+describe('Proposal.decide — accept idempotency', () => {
   it('accept twice emits exactly one Proposal Accepted with the same buildingBlockId', () => {
     const first = decide(replay([proposed]), accept)
     expect(isOk(first)).toBe(true)
@@ -74,7 +74,7 @@ describe('Proposal.decide — accept idempotency (S1-47)', () => {
   })
 })
 
-describe('Proposal.decide — disposition machine (S1-39, S1-44, S1-45)', () => {
+describe('Proposal.decide — disposition machine', () => {
   it('APPLY_FAILED is re-editable and re-acceptable', () => {
     const failed = replay([
       proposed,
@@ -113,7 +113,7 @@ describe('Proposal.decide — disposition machine (S1-39, S1-44, S1-45)', () => 
   })
 })
 
-describe('Proposal.decide — Hold marker (S1-52)', () => {
+describe('Proposal.decide — Hold marker', () => {
   it('hold then unhold is reversible and orthogonal to the disposition', () => {
     const held = decide(replay([proposed]), { type: 'Hold Proposal', proposalId: p, at })
     expect(isOk(held) && held.value[0]).toMatchObject({ type: 'Proposal Held' })
@@ -130,7 +130,7 @@ describe('Proposal.decide — Hold marker (S1-52)', () => {
   })
 })
 
-describe('Proposal.decide — Lapse (S1-38 close behaviour)', () => {
+describe('Proposal.decide — Lapse (close behaviour)', () => {
   it('lapses a PROPOSED / held proposal', () => {
     const result = decide(replay([proposed]), {
       type: 'Lapse Proposal',

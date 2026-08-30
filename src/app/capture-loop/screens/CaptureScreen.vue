@@ -12,7 +12,7 @@ import { useSessionStore } from '../stores/session.ts'
  * The capture screen (brief §1): a full-screen board wall with a floating
  * facilitator dock over it. The wall re-renders only from a server-confirmed
  * GET — an accept emits `board-dirty`, every write emits `mutated` and the poll
- * refetches. Nothing is written optimistically (ADR-007).
+ * refetches. Nothing is written optimistically (docs/adr/007).
  */
 const props = defineProps<{ id: string }>()
 
@@ -35,7 +35,7 @@ const loadAll = async (): Promise<void> => {
   await session.load(props.id)
   // The board stream 404s until the first operation is applied — fetch it only
   // when the session view says something has been derived, and after every
-  // accept (AD-018 / brief §3: the wall is fetched post-accept, never eagerly).
+  // accept (brief §3: the wall is fetched post-accept, never eagerly).
   if ((session.view?.contributions.length ?? 0) > 0) await board.load(props.id)
   loaded.value = true
 }

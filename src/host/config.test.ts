@@ -13,7 +13,7 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
 })
 
-describe('loadConfig (S1-32)', () => {
+describe('loadConfig', () => {
   it('fails fast with a one-line fix message when ANTHROPIC_API_KEY is unset', () => {
     expect(() => loadConfig({})).toThrow(/ANTHROPIC_API_KEY is not set/)
   })

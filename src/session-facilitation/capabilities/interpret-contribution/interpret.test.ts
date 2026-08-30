@@ -141,7 +141,7 @@ const turn = (
   nextMove: FacilitationTurn['nextMove'] = { move: 'acknowledge' },
 ): FacilitationTurn => ({ interpretation, nextMove })
 
-describe('interpretContribution — the commit point + derivation (S1-14, S1-23, S1-24, S1-25, S1-63, S1-64)', () => {
+describe('interpretContribution — the commit point + derivation', () => {
   it('proposes a building block per propose-building-block track, persisting bar and evidenceSpan', async () => {
     seedSession()
     contribute('a member borrowed a book', 'c_1')
@@ -238,7 +238,7 @@ describe('interpretContribution — the commit point + derivation (S1-14, S1-23,
   })
 })
 
-describe('reconcilePendingDerivations — the derived_track skip is per-track (AD-021, S1-56)', () => {
+describe('reconcilePendingDerivations — the derived_track skip is per-track', () => {
   it('re-derives only the track whose marker row was lost, skipping the already-marked ones', async () => {
     seedSession()
     contribute('a member borrowed a book and returned another', 'c_1')
@@ -269,7 +269,7 @@ describe('reconcilePendingDerivations — the derived_track skip is per-track (A
   })
 })
 
-describe('interpretContribution — FIFO and one-in-flight (S1-14, S1-29)', () => {
+describe('interpretContribution — FIFO and one-in-flight', () => {
   it('interprets contributions oldest-first by stream position, one per call', async () => {
     seedSession()
     contribute('first', 'c_1')
@@ -301,7 +301,7 @@ describe('interpretContribution — FIFO and one-in-flight (S1-14, S1-29)', () =
   })
 })
 
-describe('interpretContribution — a later session sees prior summaries (S1-35, S1-37)', () => {
+describe('interpretContribution — a later session sees prior summaries', () => {
   it('assembles prior closed sessions into the facilitation prompt', async () => {
     // two closed sessions, each with one contribution
     for (const [id, body] of [['s_a', 'first session line'], ['s_b', 'second session line']] as const) {
@@ -334,7 +334,7 @@ describe('interpretContribution — a later session sees prior summaries (S1-35,
   })
 })
 
-describe('interpretContribution — failure classes (S1-27, S1-64)', () => {
+describe('interpretContribution — failure classes', () => {
   it('leaves a contribution un-interpreted on provider-down', async () => {
     seedSession()
     contribute('a member borrowed a book', 'c_1')

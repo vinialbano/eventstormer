@@ -10,7 +10,7 @@ import type { CloseSessionDeps } from './deps.ts'
 /**
  * `POST /sessions/:id/close` — every step unconditional and idempotent (design
  * "close"): `Session.decide(Close Session)` appends `Session Closed` with raw
- * facts only (AD-023), then `finishClose` flips the `session_index` row and
+ * facts only, then `finishClose` flips the `session_index` row and
  * lapses the session's non-terminal proposals. A re-run is a clean no-op; a
  * crash mid-close self-heals via `reconcilePendingDerivations`.
  */

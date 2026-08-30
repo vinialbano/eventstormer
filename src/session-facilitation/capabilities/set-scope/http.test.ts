@@ -36,7 +36,7 @@ const scopeSet = (store: EventStore): { statement: string }[] =>
     .map((r) => WorkshopEvent.parse(r.operation))
     .filter((e): e is Extract<WorkshopEvent, { type: 'Scope Set' }> => e.type === 'Scope Set')
 
-describe('POST /workshops/:id/scope (S1-09, S1-10)', () => {
+describe('POST /workshops/:id/scope', () => {
   it('replaces the scope on every call while the model has zero applied blocks', async () => {
     const store = seededStore()
     for (const statement of ['first scope', 'second scope', 'third scope']) {

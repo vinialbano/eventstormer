@@ -25,7 +25,7 @@ beforeEach(() => {
 const startSession = async (): Promise<Response> =>
   startSessionRoutes({ store, db, clock }).request(`/workshops/${w}/sessions`, { method: 'POST' })
 
-describe('POST /workshops/:id/sessions (S1-04, S1-05, S1-67)', () => {
+describe('POST /workshops/:id/sessions', () => {
   it('starts a session — 202 with the session id, a Session Started event, and an open index row', async () => {
     const res = await startSession()
     expect(res.status).toBe(202)

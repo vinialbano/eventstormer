@@ -3,9 +3,9 @@ import { z } from 'zod'
 import { FacilitationTrack, FacilitationTurnSchema } from './turn-schema.ts'
 
 /**
- * AD-015: the facilitator schema must clear two hard Anthropic limits —
+ * The facilitator schema must clear two hard Anthropic limits —
  * ≤ 24 optional parameters, and no empty (`{}`) subschema — and enforce the hard
- * proposals-per-turn ceiling of 12 (S1-62).
+ * proposals-per-turn ceiling of 12.
  */
 
 interface JsonSchema {
@@ -40,7 +40,7 @@ const walk = (node: JsonSchema | boolean | undefined, visit: (n: JsonSchema) => 
 
 const jsonSchema = z.toJSONSchema(FacilitationTurnSchema, { io: 'input' }) as JsonSchema
 
-describe('FacilitationTurnSchema — Anthropic structured-output limits (S1-19, AD-015)', () => {
+describe('FacilitationTurnSchema — Anthropic structured-output limits', () => {
   it('has 24 or fewer optional parameters across the whole schema', () => {
     let optionalCount = 0
     walk(jsonSchema, (n) => {
@@ -61,7 +61,7 @@ describe('FacilitationTurnSchema — Anthropic structured-output limits (S1-19, 
   })
 })
 
-describe('FacilitationTurnSchema — the hard ceilings (S1-62)', () => {
+describe('FacilitationTurnSchema — the hard ceilings', () => {
   const proposeTrack = {
     track: 'propose-building-block' as const,
     blockKind: 'domain-event' as const,

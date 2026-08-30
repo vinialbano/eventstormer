@@ -99,7 +99,7 @@ beforeEach(() => {
   ])
 })
 
-describe('POST /sessions/:id/close (S1-06, S1-07, S1-37)', () => {
+describe('POST /sessions/:id/close', () => {
   it('appends Session Closed with raw facts only, frees the index slot, lapses non-terminal proposals', async () => {
     const res = await close()
     expect(res.status).toBe(200)

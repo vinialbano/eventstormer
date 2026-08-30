@@ -10,7 +10,7 @@ import { startWorkshopRoutes } from './http.ts'
 const clock = () => '2026-08-30T12:00:00.000Z'
 const depsFor = () => ({ store: createMemoryEventStore(), clock })
 
-describe('POST /workshops (S1-01, S1-02, S1-03)', () => {
+describe('POST /workshops', () => {
   it('starts a workshop and returns 201 with a nanoid slug id and its resumable URL', async () => {
     const deps = depsFor()
     const res = await testClient(startWorkshopRoutes(deps)).workshops.$post({

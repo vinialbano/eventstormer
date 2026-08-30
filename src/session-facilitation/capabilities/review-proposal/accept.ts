@@ -33,8 +33,7 @@ const appendProposal = (deps: ReviewProposalDeps, id: ProposalId, events: Propos
 }
 
 /**
- * `POST /proposals/:id/accept` — the synchronous cross-context apply chain
- * (AD-016 / AD-017 / AD-022):
+ * `POST /proposals/:id/accept` — the synchronous cross-context apply chain:
  *
  * 1. `Proposal.decide(Accept Proposal)` mints + stores the `BuildingBlockId`
  *    once; a re-accept reuses the stored one (idempotent while `ACCEPTED` /

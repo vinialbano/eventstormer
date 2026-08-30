@@ -49,7 +49,7 @@ beforeEach(() => {
   store = createMemoryEventStore()
 })
 
-describe('POST /proposals/:id/{edit,reject,hold,unhold} (S1-40, S1-45, S1-52)', () => {
+describe('POST /proposals/:id/{edit,reject,hold,unhold}', () => {
   it('edit → 200 and a Proposal Edited event with the new label', async () => {
     seedProposal('p_1')
     const res = await post('/proposals/p_1/edit', { label: 'Loan recorded' })
@@ -88,7 +88,7 @@ describe('POST /proposals/:id/{edit,reject,hold,unhold} (S1-40, S1-45, S1-52)', 
   })
 })
 
-describe('GET /sessions/:id/proposals (S1-40, S1-53)', () => {
+describe('GET /sessions/:id/proposals', () => {
   it('returns the session proposals with overflow grouping past the 7th', async () => {
     const ids = Array.from({ length: 8 }, (_, i) => `p_${String(i + 1)}`)
     store.append(sessionStream(s), -1, [

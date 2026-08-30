@@ -18,7 +18,7 @@ const started: WorkshopEvent = {
   creatorName: 'Dana',
 }
 
-describe('Workshop.decide — Start Workshop (S1-01, S1-02)', () => {
+describe('Workshop.decide — Start Workshop', () => {
   it('emits Workshop Started bound to big-picture with the creator name', () => {
     const result = decide(emptyWorkshop(), {
       type: 'Start Workshop',
@@ -74,7 +74,7 @@ describe('Workshop.decide — Start Workshop (S1-01, S1-02)', () => {
   })
 })
 
-describe('Workshop.decide — Set Scope (S1-09)', () => {
+describe('Workshop.decide — Set Scope', () => {
   it('rejects Set Scope before the workshop is started', () => {
     const result = decide(emptyWorkshop(), {
       type: 'Set Scope',

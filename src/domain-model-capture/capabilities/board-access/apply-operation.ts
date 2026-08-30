@@ -14,7 +14,7 @@ export interface ApplyResult {
 }
 
 /**
- * The sole writer of a workshop's board stream (AD-022). It takes **no**
+ * The sole writer of a workshop's board stream. It takes **no**
  * `expectedPosition` — it reads the current position itself, `decide`s, appends,
  * and retries internally on `stale-position` (a transient two-accepts race).
  * Only a merits `Rejection` (`duplicate-id`, `unknown-target`, cycle) reaches the

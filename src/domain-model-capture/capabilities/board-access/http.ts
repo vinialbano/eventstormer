@@ -6,7 +6,7 @@ import { type BoardAccessDeps, boardStream } from './deps.ts'
 
 /**
  * `GET /workshops/:id/board` — the full board snapshot for the client `board`
- * store, rebuilt from the operation log (F01 / S1-07). A `Map` is not JSON, so
+ * store, rebuilt from the operation log (F01). A `Map` is not JSON, so
  * `blocks` is serialised as an array carrying each block's id.
  *
  * Chained router (Hono RPC / `testClient` type inference depends on it).

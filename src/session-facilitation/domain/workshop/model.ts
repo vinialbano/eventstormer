@@ -16,7 +16,7 @@ export const emptyWorkshop = (): WorkshopWriteModel => ({ started: false })
 
 /**
  * Why a `Workshop` command was rejected. Every reason is *systemic* — a human
- * fixes the input, it is never auto-retried (AD-008).
+ * fixes the input, it is never auto-retried.
  */
 export type WorkshopRejection =
   | { kind: 'already-started'; classification: 'systemic' }

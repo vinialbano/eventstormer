@@ -12,10 +12,10 @@ import type { StartSessionDeps } from './deps.ts'
  *
  * 1. recover a stale slot — a `session_index` row `open` but whose session
  *    stream never got `Session Started` (a crash between reserve and append):
- *    delete it (S1-67).
+ *    delete it.
  * 2. `reserve` — the partial unique index `UNIQUE(workshop_id) WHERE status='open'`
  *    is the one-open-session guard; a genuine concurrent open loses the INSERT →
- *    409 (S1-04).
+ *    409.
  * 3. `Session.decide(Start Session)` → append `Session Started`.
  */
 export const startSessionRoutes = (deps: StartSessionDeps) =>

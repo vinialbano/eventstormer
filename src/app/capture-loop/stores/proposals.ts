@@ -4,7 +4,7 @@ import { getJson } from '../client.ts'
 import type { ProposalCard } from '../types.ts'
 
 /**
- * The `proposals` store — cold-loads from `/sessions/:id/proposals` (ADR-007).
+ * The `proposals` store — cold-loads from `/sessions/:id/proposals` (docs/adr/007).
  * Keyed by the open session id. No import of the `session` or `board` store.
  */
 export const useProposalsStore = defineStore('proposals', () => {

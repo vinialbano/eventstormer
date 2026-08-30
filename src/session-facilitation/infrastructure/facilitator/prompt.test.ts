@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { FacilitationContext } from '../../domain/read-models/facilitation.ts'
 import { buildInstructions, buildTurnInput } from './prompt.ts'
 
-describe('buildInstructions — the system prompt (ADR-005)', () => {
+describe('buildInstructions — the system prompt', () => {
   const instructions = buildInstructions().toLowerCase()
 
   it('states the role, the asymmetric bar, the Big-Picture legend, the phase rule, and the move menu', () => {
@@ -33,7 +33,7 @@ describe('buildInstructions — the system prompt (ADR-005)', () => {
   })
 })
 
-describe('buildTurnInput — per-turn assembly (S1-35)', () => {
+describe('buildTurnInput — per-turn assembly', () => {
   const context: FacilitationContext = {
     recentTranscript: ['Dana: a member joined', 'facilitator: what happens next?'],
     openQuestions: ['What happens after a member joins?'],

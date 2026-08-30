@@ -1,6 +1,6 @@
 /**
  * An owned price table — the AI SDK reports token counts but never cost
- * (ADR-008: "cost is `tokens × an owned price table`"). List prices in USD per
+ * (docs/adr/008: "cost is `tokens × an owned price table`"). List prices in USD per
  * million tokens; `cacheRead` is Anthropic's standard 0.1× the input rate.
  * Update by hand when Anthropic's pricing changes.
  */

@@ -3,7 +3,7 @@ import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
 
 /**
- * Short-poll transport for facilitator output (AD-018 — no SSE). While any
+ * Short-poll transport for facilitator output (no SSE). While any
  * contribution is still moving toward a fully-derived turn, or the scope is not
  * yet set, refetch `session` + `proposals` on a fixed interval; go idle once
  * everything has landed. A slow / partial `deriveTracks` leaves a contribution

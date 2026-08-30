@@ -57,7 +57,7 @@ const command = (bbId: string): fc.Arbitrary<ProposalCommand> =>
     fc.constant<ProposalCommand>({ type: 'Lapse Proposal', proposalId: p, cause: 'undisposed', at }),
   )
 
-describe('Proposal disposition machine — property (S1-39)', () => {
+describe('Proposal disposition machine — property', () => {
   it('no command sequence reaches an illegal transition', () => {
     fc.assert(
       fc.property(fc.array(command('b_1'), { maxLength: 40 }), (cmds) => {

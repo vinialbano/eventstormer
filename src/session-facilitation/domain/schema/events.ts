@@ -11,7 +11,7 @@ import { InterpretedBlockKind, InterpretationBar, InterpretedTrack } from './int
 
 /**
  * The frozen per-aggregate event SSOTs for `session-facilitation`. One
- * framework-free definition (ADR-004 discipline). Every event carries
+ * framework-free definition (docs/adr/004 discipline). Every event carries
  * `v: z.literal(1)` — a future shape change adds `z.literal(2)` variants beside
  * these, never mutates one. `at` is an ISO-8601 UTC string stamped from the
  * `Clock` in the application layer.
@@ -67,7 +67,7 @@ const ContributionInterpreted = z.object({
   /** Minted when the turn's `nextMove` is `ask` — the follow-up question's id. */
   askQuestionId: QuestionId.optional(),
   /** The follow-up question's text — carried with `askQuestionId` so the derived
-   * `Question Asked {kind:'free'}` is a pure derivation of this event (AD-021). */
+   * `Question Asked {kind:'free'}` is a pure derivation of this event. */
   askQuestionText: z.string().min(1).optional(),
 })
 

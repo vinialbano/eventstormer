@@ -34,7 +34,7 @@ beforeEach(() => {
   db = raw
 })
 
-describe('reserve / close — the one-open-session slot (S1-04)', () => {
+describe('reserve / close — the one-open-session slot', () => {
   it('reserves the slot once; a second reserve for the same workshop is rejected', () => {
     expect(reserve(db, w('w1'), s('s1'), 't0')).toEqual({ ok: true, value: undefined })
     expect(reserve(db, w('w1'), s('s2'), 't1')).toEqual({
@@ -61,7 +61,7 @@ describe('reserve / close — the one-open-session slot (S1-04)', () => {
   })
 })
 
-describe('sessionIdsFor — enumeration (S1-57)', () => {
+describe('sessionIdsFor — enumeration', () => {
   it('splits a workshop’s sessions into the one open and the closed list, oldest first', () => {
     reserve(db, w('w1'), s('s1'), 't0')
     close(db, s('s1'), 't1')
@@ -94,7 +94,7 @@ const stores: [string, () => EventStore][] = [
   ['sqlite store', sqliteStore],
 ]
 
-describe.each(stores)('staleOpenRow — crash between reserve and the aggregate append (S1-67), %s', (_name, makeStore) => {
+describe.each(stores)('staleOpenRow — crash between reserve and the aggregate append, %s', (_name, makeStore) => {
   it('returns the id of an open row whose session stream never got Session Started', () => {
     const store = makeStore()
     reserve(db, w('w1'), s('s1'), 't0')

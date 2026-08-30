@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { estimateCost } from './model-pricing.ts'
 
-describe('estimateCost — tokens × the owned price table (ADR-008)', () => {
+describe('estimateCost — tokens × the owned price table', () => {
   it('claude-sonnet-5: $2/1M input + $10/1M output', () => {
     expect(estimateCost('claude-sonnet-5', { inputTokens: 1_000_000, outputTokens: 1_000_000 })).toBe(
       12,

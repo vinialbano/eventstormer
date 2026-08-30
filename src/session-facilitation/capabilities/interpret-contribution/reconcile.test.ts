@@ -78,7 +78,7 @@ beforeEach(() => {
   reserve(db, w, s, at)
 })
 
-describe('askOpeningQuestion (S1-08, S1-33, S1-58)', () => {
+describe('askOpeningQuestion', () => {
   it('produces the scope question + proposed statement on a fresh session', async () => {
     await askOpeningQuestion(
       deps([{ questionText: 'What business are you mapping?', scopeStatement: 'Library lending across branches.' }]),
@@ -106,14 +106,14 @@ describe('askOpeningQuestion (S1-08, S1-33, S1-58)', () => {
   })
 })
 
-describe('reconcilePendingDerivations — crash-consistency (S1-56, S1-65)', () => {
+describe('reconcilePendingDerivations — crash-consistency', () => {
   // Post-ledger crash (Contribution Interpreted written, deriveTracks not run) is
   // repaired here with NO second model call. The PRE-ledger window — a crash
   // after facilitator.interpret returns but before the Contribution Interpreted
   // append — re-selects the contribution next tick and calls the model again
   // (a second billable call, possibly different proposals). That window is an
   // ACCEPTED risk for v1 (spec Assumptions row "Interpretation model-call
-  // at-most-once" / S1-65): single-user, ~cents, no proposal applies without a
+  // at-most-once"): single-user, ~cents, no proposal applies without a
   // human accept. It is not covered by a reconcile test because there is nothing
   // to reconcile — no ledger event was written.
 

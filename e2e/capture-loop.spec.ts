@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * The one end-to-end flow (spec Success Criteria; S1-46): a person creates a
+ * The one end-to-end flow (spec Success Criteria): a person creates a
  * workshop, accepts the scripted facilitator's scope card, narrates three
  * contributions, accepts each proposed building block, and sees all three land
  * in the board backlog. The facilitator is the `FACILITATOR_MODE=scripted`

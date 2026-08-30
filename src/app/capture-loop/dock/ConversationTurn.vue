@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 /**
  * One line of the dock conversation. Facilitator questions and out-of-format
- * notices are `role="status"` messages — never error states (S1-55, brief §5).
+ * notices are `role="status"` messages — never error states (brief §5).
  */
 const props = defineProps<{
   kind: 'contribution' | 'question' | 'notice'

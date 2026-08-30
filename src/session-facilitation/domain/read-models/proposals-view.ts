@@ -8,8 +8,8 @@ import { sessionProposalIds } from './session-summary.ts'
 /**
  * `proposalsView` — the read model behind `GET /sessions/:id/proposals`. Pure:
  * the caller supplies each proposal's stream. `overflow` is the ">7 among this
- * contribution's proposals" display grouping (S1-40) — a read-model computation,
- * never an event field (AD-020). Order follows `sessionProposalIds` (stream
+ * contribution's proposals" display grouping — a read-model computation,
+ * never an event field. Order follows `sessionProposalIds` (stream
  * order), so a contribution's proposals are contiguous.
  */
 const DISPLAY_CAP = 7

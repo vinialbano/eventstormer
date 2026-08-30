@@ -8,14 +8,14 @@ import { ProposalId, QuestionId } from './ids.ts'
  * `infrastructure/` and is mapped onto this union across an anticorruption seam,
  * minting the per-track `proposalId` / `questionId` here.
  *
- * No `z.unknown()` anywhere — every field is a concrete type (AD-015).
+ * No `z.unknown()` anywhere — every field is a concrete type.
  */
 
-/** Events / actors / systems only this slice (ADR-010). */
+/** Events / actors / systems only this slice (docs/adr/010). */
 export const InterpretedBlockKind = z.enum(['domain-event', 'actor', 'system'])
 export type InterpretedBlockKind = z.infer<typeof InterpretedBlockKind>
 
-/** How strictly the facilitator held the naming bar for this track (S1-22). */
+/** How strictly the facilitator held the naming bar for this track. */
 export const InterpretationBar = z.enum(['lenient', 'strict'])
 export type InterpretationBar = z.infer<typeof InterpretationBar>
 

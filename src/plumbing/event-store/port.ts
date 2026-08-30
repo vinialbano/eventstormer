@@ -1,7 +1,7 @@
 import type { Result } from '../result.ts'
 
 /**
- * A log stream, namespaced per bounded context + aggregate (ADR-003). No
+ * A log stream, namespaced per bounded context + aggregate (docs/adr/003). No
  * context reads another's streams. Slice 0 uses
  * `domain-model-capture` / `board` / `<workshopId>`.
  */

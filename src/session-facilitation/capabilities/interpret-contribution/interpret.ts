@@ -78,7 +78,7 @@ const assembleFacilitationContext = (
 }
 
 /**
- * Derive every stream implied by a `Contribution Interpreted` event (AD-021).
+ * Derive every stream implied by a `Contribution Interpreted` event.
  * Idempotent: a track already marked in `derived_track` is skipped, and each
  * `decide` is a no-op once its effect exists. Runs with no model call.
  */
@@ -233,7 +233,7 @@ const runInterpretation = async (
 }
 
 /**
- * Ask the forced opening scope question (S1-08, S1-33, S1-58) — one unit of work.
+ * Ask the forced opening scope question — one unit of work.
  * An open session with no `Question Asked {kind:'scope'}` and no `Scope Set` gets
  * `facilitator.askOpening`; the proposed statement rides back as `scopeStatement`
  * on a `Question Asked {kind:'scope'}`. Provider-down leaves it for the next tick.
@@ -272,7 +272,7 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
 }
 
 /**
- * The reconciliation pass (AD-021) — every scheduler cycle, for each open
+ * The reconciliation pass — every scheduler cycle, for each open
  * session: re-run `deriveTracks` over every `Contribution Interpreted` (a track
  * already marked in `derived_track` is skipped, so this is a no-op once whole),
  * and sweep the half-closed case (`Session Closed` in the stream but the

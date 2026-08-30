@@ -24,11 +24,11 @@ const workshopIdOf = (events: SessionEvent[]): WorkshopId | undefined =>
   events.find((e) => e.type === 'Session Started')?.workshopId
 
 /**
- * `POST /sessions/:id/contributions` — capture the expert's words (S1-12…S1-16).
+ * `POST /sessions/:id/contributions` — capture the expert's words.
  * Trim; a whitespace-only body is a no-op (no segment, no facilitator call, 204).
  * `Session.decide(Make Contribution)` rejects a closed session (409). The speaker
  * is the workshop's `creatorName` and `source` is always `typed`. Always `202` —
- * interpretation is async (AD-018).
+ * interpretation is async.
  *
  * `GET /workshops/:id/session` — the `sessionView` read model behind the poll.
  */

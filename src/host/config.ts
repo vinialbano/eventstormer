@@ -19,8 +19,8 @@ import {
 
 /**
  * The composition root's configuration. `pnpm dev` calls `loadConfig()`; it
- * **fails fast** with a one-line fix message when `ANTHROPIC_API_KEY` is unset
- * (S1-32), unless `FACILITATOR_MODE=scripted` wires a canned `Facilitator`
+ * **fails fast** with a one-line fix message when `ANTHROPIC_API_KEY` is unset,
+ * unless `FACILITATOR_MODE=scripted` wires a canned `Facilitator`
  * double instead (the same seam `pnpm seed` and the E2E spec reuse — real
  * server, real DB, fake model).
  */

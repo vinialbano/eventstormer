@@ -9,7 +9,7 @@ import type { StartWorkshopDeps } from './deps.ts'
 const Body = z.object({ creatorName: z.string() })
 
 /**
- * `POST /workshops` — start a Big Picture `Workshop` (AD-009 thin handler:
+ * `POST /workshops` — start a Big Picture `Workshop` (thin handler:
  * parse → `decide` → `append`). The workshop id is a nanoid slug; the resumable
  * URL is `/workshops/:id`.
  */

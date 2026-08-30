@@ -20,7 +20,7 @@ describe('session-facilitation branded id schemas', () => {
     expect(() => SessionId.parse(1)).toThrow()
   })
 
-  it('re-exports the one canonical WorkshopId from plumbing (S1-69)', () => {
+  it('re-exports the one canonical WorkshopId from plumbing', () => {
     expect(WorkshopId).toBe(PlumbingWorkshopId)
   })
 

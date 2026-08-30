@@ -4,7 +4,7 @@ import { ref } from 'vue'
 /**
  * The contribution composer. Always enabled — during a provider outage it still
  * accepts contributions and shows a quiet "catching up" line, never an error
- * state (S1-55). Enter sends; Shift+Enter is a newline.
+ * state. Enter sends; Shift+Enter is a newline.
  */
 const props = defineProps<{ catchingUp?: boolean; sending?: boolean }>()
 const emit = defineEmits<{ submit: [text: string] }>()

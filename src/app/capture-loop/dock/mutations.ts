@@ -1,7 +1,7 @@
 import { postJson } from '../client.ts'
 
 /**
- * Every capture-screen write is a plain POST (ADR-007). No response carries
+ * Every capture-screen write is a plain POST (docs/adr/007). No response carries
  * model state back — the caller refetches the cold-loadable stores afterwards
  * (server-confirmed, no optimistic updates).
  */

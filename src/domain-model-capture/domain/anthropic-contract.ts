@@ -3,7 +3,7 @@ import { Operation } from './schema/index.ts'
 
 /**
  * A compile-time compatibility sensor, NOT the facilitator's runtime
- * schema. Per ADR-005 the facilitator passes the Zod `Operation` union straight
+ * schema. Per docs/adr/005 the facilitator passes the Zod `Operation` union straight
  * to `Output.object`, and `@ai-sdk/anthropic` runs its own `oneOf → anyOf`
  * sanitiser on the `outputFormat` path. This derivation catches a schema edit
  * that would make the union un-sendable to Anthropic — Zod emits `oneOf` for a

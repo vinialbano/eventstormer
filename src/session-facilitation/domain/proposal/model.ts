@@ -8,7 +8,7 @@ import type { InterpretedBlockKind, InterpretationBar } from '../schema/interpre
  *   REJECTED / LAPSED terminal
  *   APPLY_FAILED is re-editable and re-acceptable (acceptance is not terminal)
  *
- * `held` is a reversible marker orthogonal to the disposition (AD-020) — never a
+ * `held` is a reversible marker orthogonal to the disposition — never a
  * state, never persisted as a boolean event field.
  */
 export type Disposition =

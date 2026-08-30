@@ -24,7 +24,7 @@ const track: InterpretedTrack = {
   bar: 'strict',
 }
 
-describe('Session.decide — Make Contribution (S1-12, S1-13, S1-15)', () => {
+describe('Session.decide — Make Contribution', () => {
   it('emits Contribution Made carrying session id, speaker, source "typed" and the timestamp', () => {
     const result = decide(replay(startedStream), {
       type: 'Make Contribution',
@@ -95,7 +95,7 @@ describe('Session.decide — Make Contribution (S1-12, S1-13, S1-15)', () => {
   })
 })
 
-describe('Session.decide — Interpret / Fail (S1-26, interpret-once ledger)', () => {
+describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('emits Contribution Interpreted the first time, ok([]) the second', () => {
     const first = decide(replay(startedStream), {
       type: 'Interpret Contribution',
@@ -161,7 +161,7 @@ describe('Session.decide — Interpret / Fail (S1-26, interpret-once ledger)', (
   })
 })
 
-describe('Session.decide — Answer Question (S1-59)', () => {
+describe('Session.decide — Answer Question', () => {
   const asked = replay([
     ...startedStream,
     { v: 1, at, type: 'Question Asked', sessionId: s, questionId: q('q_1'), kind: 'phase', text: 'phase?' },
@@ -248,7 +248,7 @@ describe('Session.decide — Ask Question idempotency', () => {
   })
 })
 
-describe('Session.decide — Close Session (S1-06, S1-60)', () => {
+describe('Session.decide — Close Session', () => {
   it('emits Session Closed carrying only the unresolved open questions and no summary struct', () => {
     const stream = replay([
       ...startedStream,

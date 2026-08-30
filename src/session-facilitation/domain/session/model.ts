@@ -20,7 +20,7 @@ export const emptySession = (): SessionWriteModel => ({
   interpreted: new Set(),
 })
 
-/** Why a `Session` command was rejected — every reason is *systemic* (AD-008). */
+/** Why a `Session` command was rejected — every reason is *systemic*. */
 export type SessionRejection =
   | { kind: 'not-started'; classification: 'systemic' }
   | { kind: 'already-started'; classification: 'systemic' }

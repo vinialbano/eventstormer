@@ -60,7 +60,7 @@ describe('InterpretedTrack — the stored discriminated union', () => {
     expect(() => InterpretedTrack.parse({ track: 'summarise' })).toThrow()
   })
 
-  it('has no empty ({}) subschema — every field is concretely typed, no z.unknown() (AD-015)', () => {
+  it('has no empty ({}) subschema — every field is concretely typed, no z.unknown()', () => {
     const json = JSON.stringify(z.toJSONSchema(InterpretedTrack))
     expect(json).not.toContain('{}')
   })

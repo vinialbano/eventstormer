@@ -19,7 +19,7 @@ const app = () =>
     loadConfig({ FACILITATOR_MODE: 'scripted', EVENTSTORMER_DB: join(dir, 'e.db'), DATA_DIR: dir }),
   )
 
-describe('createRoutes — the mounted /api surface (S1-27, S1-29)', () => {
+describe('createRoutes — the mounted /api surface', () => {
   it('serves health under /api', async () => {
     const res = await app().request('/api/health')
     expect(res.status).toBe(200)

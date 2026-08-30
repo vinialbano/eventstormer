@@ -107,7 +107,7 @@ export function openSessions(db: SessionIndexDb): { workshopId: WorkshopId; sess
 /**
  * The session id of an `open` row whose session stream never got a
  * `Session Started` event — a crash between `reserve` and the aggregate append.
- * `start-session` deletes it before its own reserve (S1-67). `undefined` when
+ * `start-session` deletes it before its own reserve. `undefined` when
  * the open row is sound, or when there is no open row.
  */
 export function staleOpenRow(

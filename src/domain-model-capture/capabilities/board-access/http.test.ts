@@ -11,7 +11,7 @@ const w = 'w_1' as WorkshopId
 const author = { accepter: { name: 'Dana' } }
 const clock = () => '2026-08-30T12:00:00.000Z'
 
-describe('GET /workshops/:id/board (S1-07, S1-48)', () => {
+describe('GET /workshops/:id/board', () => {
   it('returns the snapshot rebuilt from the log', async () => {
     const deps: BoardAccessDeps = { store: createMemoryEventStore(), clock }
     applyOperation(deps, w, Operation.parse({ author, kind: 'capture-domain-event', id: 'b_1', label: 'Loan recorded' }))

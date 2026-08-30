@@ -1,6 +1,6 @@
 /**
  * The `derived_track` marker table — a `(contribution_id, track_index)` row means
- * that interpreted track has been derived (AD-021), so `reconcile` skips it and
+ * that interpreted track has been derived, so `reconcile` skips it and
  * `sessionView` can tell `interpreted` from `derived`.
  *
  * The DB handle is structural so this module never imports `node:sqlite`.
@@ -24,7 +24,7 @@ export const readDerivedTrackKeys = (db: DerivedTrackDb): Set<string> => {
   return new Set(rows.map((r) => `${r.contribution_id}::${String(r.track_index)}`))
 }
 
-/** Mark one interpreted track derived (AD-021). Idempotent — a repeat is a no-op. */
+/** Mark one interpreted track derived. Idempotent — a repeat is a no-op. */
 export const markDerivedTrack = (
   db: DerivedTrackDb,
   contributionId: string,

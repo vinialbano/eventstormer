@@ -87,7 +87,7 @@ beforeEach(() => {
   seedWorkshopAndSession()
 })
 
-describe('POST /proposals/:id/accept — the synchronous apply chain (S1-41…S1-47)', () => {
+describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
   it('applies the operation and the building block lands in the backlog', async () => {
     seedProposal('p_1')
     const res = await accept('p_1')
@@ -138,7 +138,7 @@ describe('POST /proposals/:id/accept — the synchronous apply chain (S1-41…S1
     expect(second.proposal.buildingBlockId).toBe(first.proposal.buildingBlockId)
     expect(readBuildingBlocks(deps(), w)).toHaveLength(1)
 
-    // S1-47: once APPLIED, the second accept returns the stored id and does NOT run
+    // once APPLIED, the second accept returns the stored id and does NOT run
     // the apply chain again. applyOperation is the only reader of the board stream on
     // this path, so its read count must not move across the second accept.
     expect(boardReadsAfterFirst).toBeGreaterThan(0)
