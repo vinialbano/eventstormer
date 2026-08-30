@@ -3,7 +3,7 @@ import { Operation } from '../schema/index.ts'
 import type { BoardWriteModel, Rejection } from './model.ts'
 
 /**
- * The pure guard (AD-009). Reads ONLY the slim write model (AD-005) — never
+ * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
  * `err(rejection)`. No mutation, no I/O.
  *
@@ -11,7 +11,7 @@ import type { BoardWriteModel, Rejection } from './model.ts'
  * later slices append cascade operations here (canvas Policies).
  *
  * The `switch` is exhaustive over the frozen union — the 14 not-yet-implemented
- * kinds are rejected explicitly, never silently ignored (S0-18b).
+ * kinds are rejected explicitly, never silently ignored.
  */
 export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], Rejection> => {
   // Belt-and-suspenders re-parse: the append path parses before `decide`, but a

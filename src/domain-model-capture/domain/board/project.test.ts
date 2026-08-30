@@ -9,7 +9,7 @@ const op = (raw: Record<string, unknown>): Operation => Operation.parse({ author
 const bid = (value: string): BuildingBlockId => value as BuildingBlockId
 
 describe('project (read-model fold)', () => {
-  it('adds a captured block to the backlog with its label and provenance (S0-14)', () => {
+  it('adds a captured block to the backlog with its label and provenance', () => {
     const cases = [
       ['capture-domain-event', 'domain-event'],
       ['identify-actor', 'actor'],
@@ -27,7 +27,7 @@ describe('project (read-model fold)', () => {
     }
   })
 
-  it('preserves both proposer and accepter in per-block provenance (S0-18 / AC12)', () => {
+  it('preserves both proposer and accepter in per-block provenance', () => {
     const snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
     expect(snap.blocks.get(bid('e1'))?.provenance).toEqual({
       proposer: { name: 'facilitator' },
@@ -35,7 +35,7 @@ describe('project (read-model fold)', () => {
     })
   })
 
-  it('reword changes the label but not the id, and never dedupes (S0-15)', () => {
+  it('reword changes the label but not the id, and never dedupes', () => {
     let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'first' }))
     snap = project(snap, op({ kind: 'capture-domain-event', id: 'e2', label: 'first' }))
     snap = project(snap, op({ kind: 'reword', target: 'e1', label: 'reworded' }))

@@ -11,7 +11,7 @@ const CAPTURE_BLOCK_KIND: Record<
 }
 
 /**
- * The read-model fold (AD-009) — pure, returns a new snapshot, never mutates its
+ * The read-model fold — pure, returns a new snapshot, never mutates its
  * argument. Folds capture (adds a backlog block with its label and provenance),
  * reword (new label, same id, no dedup), withdraw / reinstate (flip `withdrawn`).
  * Every operation advances `position` by one, whatever its kind.

@@ -7,7 +7,7 @@ describe('Board model', () => {
     expect(emptyWriteModel().size).toBe(0)
   })
 
-  it('emptySnapshot has no blocks and position -1 (S0-13)', () => {
+  it('emptySnapshot has no blocks and position -1', () => {
     const snapshot = emptySnapshot()
     expect(snapshot.blocks.size).toBe(0)
     expect(snapshot.position).toBe(-1)
@@ -18,7 +18,7 @@ describe('Board model', () => {
     expect(emptySnapshot()).not.toBe(emptySnapshot())
   })
 
-  it('a Rejection is a valid Result error and carries a systemic classification (S0-17)', () => {
+  it('a Rejection is a valid Result error and carries a systemic classification', () => {
     const rejection: Rejection = {
       kind: 'unknown-target',
       classification: 'systemic',

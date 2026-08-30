@@ -8,7 +8,7 @@ import { emptySnapshot, Operation, OP_SCHEMA_VERSION, replay } from './api.ts'
 
 /**
  * The end-to-end proof that a workshop's model survives a process restart
- * (F01, S0-20). Under Approach A there is no repository yet — this test wires
+ * (F01). Under Approach A there is no repository yet — this test wires
  * `store.read → replay` directly, the way Slice 2's F06 handler eventually will.
  */
 
@@ -39,7 +39,7 @@ const asInput = (op: Operation): StoredOperationInput => ({
 })
 
 describe('persistence round-trip', () => {
-  it('a workshop replays to the same snapshot after a simulated process restart (S0-20)', () => {
+  it('a workshop replays to the same snapshot after a simulated process restart', () => {
     const path = freshDbPath()
 
     const first = createSqliteEventStore(path)
@@ -52,7 +52,7 @@ describe('persistence round-trip', () => {
     expect(fromDisk).toEqual(replay(ops))
   })
 
-  it('a never-written stream reads back empty and replays to the empty snapshot (S0-20)', () => {
+  it('a never-written stream reads back empty and replays to the empty snapshot', () => {
     const store = createSqliteEventStore(freshDbPath())
     expect(store.read(stream)).toEqual([])
     expect(replay(store.read(stream).map((r) => Operation.parse(r.operation)))).toEqual(
@@ -60,7 +60,7 @@ describe('persistence round-trip', () => {
     )
   })
 
-  it('every persisted row carries a non-null op_version equal to OP_SCHEMA_VERSION (S0-19)', () => {
+  it('every persisted row carries a non-null op_version equal to OP_SCHEMA_VERSION', () => {
     const store = createSqliteEventStore(freshDbPath())
     store.append(stream, -1, ops.map(asInput))
 
@@ -69,7 +69,7 @@ describe('persistence round-trip', () => {
     expect(versions).toEqual(ops.map(() => OP_SCHEMA_VERSION))
   })
 
-  it('pointing a fresh store at a non-existent path auto-creates and migrates it (S0-19)', () => {
+  it('pointing a fresh store at a non-existent path auto-creates and migrates it', () => {
     // If the schema were not migrated, `read` would throw "no such table".
     const store = createSqliteEventStore(freshDbPath())
     expect(store.read(stream)).toEqual([])

@@ -21,7 +21,7 @@ const POOL: Operation[] = [
 ]
 
 describe('replay', () => {
-  it('an empty log replays to the empty snapshot (S0-20)', () => {
+  it('an empty log replays to the empty snapshot', () => {
     expect(replay([])).toEqual(emptySnapshot())
   })
 

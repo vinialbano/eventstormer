@@ -3,7 +3,7 @@ import { Operation, type OperationKind } from './operations.ts'
 
 const author = { accepter: { name: 'Dana' } }
 
-/** One valid instance of every one of the 20 frozen variants (S0-05). */
+/** One valid instance of every one of the 20 frozen variants. */
 const samples: Record<OperationKind, Record<string, unknown>> = {
   'capture-domain-event': { kind: 'capture-domain-event', author, id: 'e1', label: 'order placed' },
   'identify-actor': { kind: 'identify-actor', author, id: 'a1', label: 'server' },
@@ -38,7 +38,7 @@ describe('Operation schema union (frozen v:1)', () => {
     for (const [kind, sample] of Object.entries(samples)) {
       const parsed = Operation.parse(sample)
       expect(parsed.kind).toBe(kind)
-      expect(parsed.v).toBe(1) // S0-06: v absent -> 1
+      expect(parsed.v).toBe(1) // v absent -> 1
     }
   })
 
@@ -46,11 +46,11 @@ describe('Operation schema union (frozen v:1)', () => {
     expect(Operation.parse({ ...samples.withdraw, v: 1 }).v).toBe(1)
   })
 
-  it('rejects v: 2 (S0-06)', () => {
+  it('rejects v: 2', () => {
     expect(() => Operation.parse({ ...samples.withdraw, v: 2 })).toThrow()
   })
 
-  it('requires resolve.reference — a missing key fails parse (S0-07)', () => {
+  it('requires resolve.reference — a missing key fails parse', () => {
     expect(() => Operation.parse({ kind: 'resolve', author, target: 'h1' })).toThrow()
   })
 
@@ -68,12 +68,12 @@ describe('Operation schema union (frozen v:1)', () => {
     expect(() => Operation.parse({ kind: 'withdraw', target: 'e1' })).toThrow()
   })
 
-  it('defaults raise-hot-spot.modelAffecting to true (AD-014)', () => {
+  it('defaults raise-hot-spot.modelAffecting to true', () => {
     const parsed = Operation.parse(samples['raise-hot-spot'])
     expect(parsed).toMatchObject({ kind: 'raise-hot-spot', modelAffecting: true })
   })
 
-  // S0-05 / AD-003: `switch (op.kind)` is exhaustive over the frozen union.
+  // `switch (op.kind)` is exhaustive over the frozen union.
   // A deliberately missing branch makes this function fail to type-check
   // ("not all code paths return") — the compile-time exhaustiveness proof.
   it('exposes an exhaustive discriminant — every kind has a switch branch', () => {

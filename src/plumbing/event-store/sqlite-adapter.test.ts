@@ -18,7 +18,7 @@ afterAll(() => {
   for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true })
 })
 
-// The same behavioural contract the in-memory impl passes (S0-11b).
+// The same behavioural contract the in-memory impl passes.
 eventStoreContract('node:sqlite', makeStore)
 
 describe('createSqliteEventStore', () => {

@@ -2,10 +2,10 @@
  * Additive-only schema evolution for the operation log (ADR-004). A migration is
  * an id + a forward-only `up` statement; there is no `down`. "Additive-only" is a
  * review rule, not mechanically enforced — a test asserts no `up` string drops or
- * removes a column (S0-19).
+ * removes a column.
  *
  * The DB handle is structural so this module never imports `node:sqlite` — every
- * real `node:sqlite` call lives in `sqlite-adapter.ts` (S0-11).
+ * real `node:sqlite` call lives in `sqlite-adapter.ts`.
  */
 
 type SqlValue = string | number | bigint | null | Uint8Array

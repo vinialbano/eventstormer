@@ -11,8 +11,8 @@ const op = (n: number): StoredOperationInput => ({
 })
 
 /**
- * One behavioural contract, run against every `EventStore` implementation
- * (S0-11b). `makeStore` returns a fresh, empty store per call.
+ * One behavioural contract, run against every `EventStore` implementation.
+ * `makeStore` returns a fresh, empty store per call.
  */
 export const eventStoreContract = (name: string, makeStore: () => EventStore): void => {
   describe(`EventStore contract: ${name}`, () => {

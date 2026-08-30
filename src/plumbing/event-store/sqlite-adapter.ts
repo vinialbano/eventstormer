@@ -4,9 +4,9 @@ import { applyMigrations } from './migrations.ts'
 import type { AppendConflict, EventStore, StoredOperation, StreamKey } from './port.ts'
 
 /**
- * The one module that touches `node:sqlite` (S0-11) — every other layer sees
+ * The one module that touches `node:sqlite` — every other layer sees
  * only the `EventStore` port. `DatabaseSync` is synchronous, so this whole
- * adapter is synchronous (AD-013): no `async`, no `Promise`.
+ * adapter is synchronous: no `async`, no `Promise`.
  *
  * `node:sqlite` has no `db.transaction(fn)` wrapper, so a batch append is driven
  * by `BEGIN IMMEDIATE` / `COMMIT` / `ROLLBACK` directly. Rows come back as

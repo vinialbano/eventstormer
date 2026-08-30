@@ -29,7 +29,7 @@ const NOT_IMPLEMENTED: OperationKind[] = [
   'reopen',
 ]
 
-describe('decide — capture (S0-14)', () => {
+describe('decide — capture', () => {
   it('emits the capture operation for each kind-specific variant', () => {
     for (const kind of ['capture-domain-event', 'identify-actor', 'identify-system'] as const) {
       const result = decide(emptyWriteModel(), op({ kind, id: 'b1', label: 'order placed' }))
@@ -51,7 +51,7 @@ describe('decide — capture (S0-14)', () => {
   })
 })
 
-describe('decide — reword (S0-15)', () => {
+describe('decide — reword', () => {
   it('rewords a present target', () => {
     const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
     const result = decide(wm, op({ kind: 'reword', target: 'e1', label: 'order was placed' }))
@@ -71,7 +71,7 @@ describe('decide — reword (S0-15)', () => {
     }
   })
 
-  it('rejects a whitespace-only label (S0-15) — the schema catches an empty string first', () => {
+  it('rejects a whitespace-only label — the schema catches an empty string first', () => {
     const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
     const result = decide(wm, op({ kind: 'reword', target: 'e1', label: '   ' }))
     expect(isErr(result)).toBe(true)
@@ -93,7 +93,7 @@ describe('decide — reword (S0-15)', () => {
   })
 })
 
-describe('decide — withdraw / reinstate (S0-16)', () => {
+describe('decide — withdraw / reinstate', () => {
   it('withdraws a present target', () => {
     const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
     expect(isOk(decide(wm, op({ kind: 'withdraw', target: 'e1' })))).toBe(true)
@@ -137,7 +137,7 @@ describe('decide — withdraw / reinstate (S0-16)', () => {
   })
 })
 
-describe('decide — schema and not-implemented rejections (S0-17, S0-18b)', () => {
+describe('decide — schema and not-implemented rejections', () => {
   it('rejects an operation that fails schema validation, emitting nothing', () => {
     const result = decide(emptyWriteModel(), { kind: 'withdraw', author } as unknown as Operation)
     expect(isErr(result)).toBe(true)
@@ -148,7 +148,7 @@ describe('decide — schema and not-implemented rejections (S0-17, S0-18b)', () 
     }
   })
 
-  it('rejects every not-yet-implemented kind explicitly, never silently (S0-18b)', () => {
+  it('rejects every not-yet-implemented kind explicitly, never silently', () => {
     for (const kind of NOT_IMPLEMENTED) {
       const result = decide(emptyWriteModel(), op(sampleFor(kind)))
       expect(isErr(result)).toBe(true)

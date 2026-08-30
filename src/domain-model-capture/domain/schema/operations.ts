@@ -4,7 +4,7 @@ import { BuildingBlockId } from './ids.ts'
 
 /**
  * The frozen `v:1` operation union — every command in the domain-model-capture
- * canvas Commands table (ADR-004, AD-003). The `Board` decider handles only 6
+ * canvas Commands table (ADR-004). The `Board` decider handles only 6
  * kinds in Slice 0 — the 3 captures, reword, withdraw, reinstate; the other 14
  * variants are defined and frozen here so `switch-exhaustiveness-check` forces
  * every later slice to handle its new operations.
@@ -14,8 +14,8 @@ import { BuildingBlockId } from './ids.ts'
  * future change adds `z.literal(2)` variants beside these.
  *
  * `at` (timestamp) is NOT here — the application layer stamps it on append from
- * an injected Clock (AD-012). `author` IS here — it is part of the log contract.
- * `OperationId` is omitted from v:1 (AD-011).
+ * an injected Clock. `author` IS here — it is part of the log contract.
+ * `OperationId` is omitted from v:1.
  */
 const opBase = { v: z.literal(1).default(1), author: Author }
 
@@ -111,7 +111,7 @@ const resolve = z.object({
   ...opBase,
   kind: z.literal('resolve'),
   target: BuildingBlockId,
-  // Required (S0-07): a missing `reference` key fails `.parse`. Shape is
+  // Required: a missing `reference` key fails `.parse`. Shape is
   // deliberately unconstrained — a recorded value, not a live pointer (#49).
   reference: z.unknown(),
 })

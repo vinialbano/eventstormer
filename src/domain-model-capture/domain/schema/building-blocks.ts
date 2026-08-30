@@ -6,9 +6,8 @@ import { BuildingBlockId } from './ids.ts'
  * (domain invariant — each kind permits different relations and markers).
  *
  * A hot spot's informational/model-affecting split is a boolean, not an enum:
- * the distinction is binary and about whether a resolution is required (F08,
- * AD-014). `true` = model-affecting (the default, ADR-004 #32); `false` =
- * informational.
+ * the distinction is binary and about whether a resolution is required (F08).
+ * `true` = model-affecting (the default, ADR-004 #32); `false` = informational.
  */
 const shared = { id: BuildingBlockId, label: z.string() }
 

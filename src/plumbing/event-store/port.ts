@@ -13,8 +13,8 @@ export interface StreamKey {
 
 /**
  * What the application layer hands `append`: the operation payload, the schema
- * version it was written under, and the `at` timestamp stamped from the Clock
- * (AD-012). The store assigns `position`.
+ * version it was written under, and the `at` timestamp stamped from the Clock.
+ * The store assigns `position`.
  */
 export interface StoredOperationInput {
   at: string
@@ -28,8 +28,7 @@ export interface StoredOperation extends StoredOperationInput {
 
 /**
  * Optimistic-concurrency failure: the stream advanced past the position this
- * caller last saw. Transient — the handler reloads, re-decides, re-appends
- * (AD-008).
+ * caller last saw. Transient — the handler reloads, re-decides, re-appends.
  */
 export interface AppendConflict {
   kind: 'stale-position'
@@ -38,7 +37,7 @@ export interface AppendConflict {
 }
 
 /**
- * Synchronous (AD-013): every implementation is synchronous — `node:sqlite`'s
+ * Synchronous: every implementation is synchronous — `node:sqlite`'s
  * `DatabaseSync`, the `better-sqlite3` escape hatch, and the in-memory impl.
  * Slice 2+ handlers call it fine from inside async Hono routes.
  */

@@ -11,7 +11,7 @@ describe('anthropicOperationSchema (compatibility sensor)', () => {
   const schema = anthropicOperationSchema()
   const json = JSON.stringify(schema)
 
-  it('contains no "oneOf" key at any depth (S0-22)', () => {
+  it('contains no "oneOf" key at any depth', () => {
     expect(json).not.toContain('"oneOf"')
   })
 

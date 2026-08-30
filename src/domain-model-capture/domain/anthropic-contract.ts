@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { Operation } from './schema/index.ts'
 
 /**
- * A compile-time compatibility sensor (AD-010), NOT the facilitator's runtime
+ * A compile-time compatibility sensor, NOT the facilitator's runtime
  * schema. Per ADR-005 the facilitator passes the Zod `Operation` union straight
  * to `Output.object`, and `@ai-sdk/anthropic` runs its own `oneOf → anyOf`
  * sanitiser on the `outputFormat` path. This derivation catches a schema edit

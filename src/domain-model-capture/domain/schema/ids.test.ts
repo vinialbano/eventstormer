@@ -4,7 +4,7 @@ import type { WorkshopId as PlumbingWorkshopId } from '~/plumbing/ids.ts'
 import { BuildingBlockId, SessionId, WorkshopId } from './ids.ts'
 
 describe('branded id schemas', () => {
-  it('parses a string into the brand, leaving the value unchanged (S0-05)', () => {
+  it('parses a string into the brand, leaving the value unchanged', () => {
     expect(WorkshopId.parse('w_abc')).toBe('w_abc')
     expect(SessionId.parse('s_abc')).toBe('s_abc')
     expect(BuildingBlockId.parse('b_abc')).toBe('b_abc')

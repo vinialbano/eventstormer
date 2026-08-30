@@ -2,7 +2,7 @@ import type { Operation } from '../schema/index.ts'
 import type { BoardWriteModel } from './model.ts'
 
 /**
- * The write-model fold (AD-009) — pure, returns a new map, never mutates its
+ * The write-model fold — pure, returns a new map, never mutates its
  * argument. Slice 0's write model only tracks `{ kind, withdrawn }`, so only
  * capture / withdraw / reinstate change it; `reword` and the 14 not-yet-handled
  * operations leave it untouched. Slices 3–4 fold `follows` / `causedBy` here.

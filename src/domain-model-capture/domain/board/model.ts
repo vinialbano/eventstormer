@@ -12,7 +12,7 @@ export type BuildingBlockKind = z.infer<typeof BuildingBlockSchema>['kind']
 export type Author = z.infer<typeof AuthorSchema>
 
 /**
- * The slim write model `decide` guards on (AD-005): only what an invariant
+ * The slim write model `decide` guards on: only what an invariant
  * reads. Slices 3–4 add `follows` / `causedBy` adjacency and hot-spot state.
  */
 export type BoardWriteModel = Map<BuildingBlockId, { kind: BuildingBlockKind; withdrawn: boolean }>
@@ -42,7 +42,7 @@ export const emptySnapshot = (): BoardSnapshot => ({ blocks: new Map(), position
 
 /**
  * Why an operation was rejected. Every Slice 0 rejection is *systemic* — a human
- * fixes the input, it is never auto-retried (AD-008). Transient failures (a
+ * fixes the input, it is never auto-retried. Transient failures (a
  * stale expected position) live on the EventStore's `AppendConflict`, not here.
  */
 export type Rejection =
