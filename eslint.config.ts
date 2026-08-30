@@ -9,7 +9,9 @@ import globals from 'globals'
 // while the top level of defineConfig([...]) does not.
 export default defineConfig([
   // node_modules and .git are already in ESLint's defaults.
-  globalIgnores(['dist/**', 'coverage/**', '*.svg']),
+  // `.claude/` holds vendored agent tooling (skill bundles, hook scripts), not
+  // project source — outside every gate in `pnpm check`.
+  globalIgnores(['dist/**', 'coverage/**', '*.svg', '.claude/**']),
 
   {
     extends: [
