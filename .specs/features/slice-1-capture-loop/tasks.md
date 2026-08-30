@@ -535,9 +535,14 @@ grouping (read-model computed).
 **Requirement**: S1-40, S1-45, S1-52, S1-53
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: edit → `EDITED`; reject → `REJECTED` + nothing else; hold/unhold reversible; `GET /proposals` groups the 8th+ proposal under overflow
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] test: edit → `EDITED`; reject → `REJECTED` + nothing else; hold/unhold reversible; `GET /proposals` groups the 8th+ proposal under overflow
+- [x] `pnpm check && pnpm build` green (293 tests)
+**Tests**: integration · **Gate**: build — ✅ done, commit `T21`
+
+NOTE: `proposalsView` read model in `domain/read-models/proposals-view.ts` — `overflow` is the
+">7 among this contribution" grouping (index ≥ 7), computed, never an event field. `bad-transition`
+→ 409, `label-too-long` → 400, unknown proposal → 404. The `accept` route joins the chained router
+in T22.
 
 ### T22: `capabilities/review-proposal/` — the synchronous accept chain + seam test
 **What**: `POST /proposals/:id/accept` → `Proposal.decide(Accept)` (mint+store `buildingBlockId`;
