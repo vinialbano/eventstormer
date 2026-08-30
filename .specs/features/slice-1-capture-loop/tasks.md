@@ -512,11 +512,17 @@ present, `session_index` still `open`".
 **Requirement**: S1-08, S1-11, S1-33, S1-56, S1-58, S1-65
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: opening scope question produced on a fresh session, and after a `provider-down` window
-- [ ] **crash-consistency**: kill after the ledger append (skip `deriveTracks`) → `reconcile` restores every proposal with **zero** extra `facilitator.interpret` calls (asserted by a call counter)
-- [ ] at-most-once pre-ledger-crash window documented in a test comment citing the accepted-risk spec row
-- [ ] `pnpm check` green
-**Tests**: integration · **Gate**: quick
+- [x] test: opening scope question produced on a fresh session, and after a `provider-down` window
+- [x] **crash-consistency**: kill after the ledger append (skip `deriveTracks`) → `reconcile` restores every proposal with **zero** extra `facilitator.interpret` calls (asserted by a call counter)
+- [x] at-most-once pre-ledger-crash window documented in a test comment citing the accepted-risk spec row
+- [x] `pnpm check` green (283 tests)
+**Tests**: integration · **Gate**: quick — ✅ done, commit `T20`
+
+NOTE: half-closed sweep in `reconcilePendingDerivations` flips the `session_index` row only;
+T23 extends it (via a shared infra helper) to also lapse the session's non-terminal proposals.
+`askOpeningQuestion` re-asks only while no `Question Asked{scope}` and no `Scope Set` exist (the
+"rejected, not re-asked" case has no signal in Slice 1 — a rejected scope card simply is not POSTed
+and the question stays open for another edit/accept).
 
 ### T21: `capabilities/review-proposal/` — edit / reject / hold / unhold + `GET /sessions/:id/proposals`
 **What**: `POST /proposals/:id/{edit,reject,hold,unhold}` → the matching `Proposal.decide` →

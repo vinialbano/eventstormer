@@ -11,7 +11,7 @@ import { replay as replaySession } from '../../domain/session/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
-import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
+import { close as closeSessionIndexRow, openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
 import { proposalStream, sessionStream, storedOps, workshopStream } from '../../infrastructure/streams.ts'
 import type { InterpretContributionDeps } from './deps.ts'
 
@@ -228,6 +228,63 @@ const runInterpretation = async (
     if (interpreted?.type === 'Contribution Interpreted') deriveTracks(deps, interpreted)
   } finally {
     deps.inFlight.clear(sessionId)
+  }
+}
+
+/**
+ * Ask the forced opening scope question (S1-08, S1-33, S1-58) — one unit of work.
+ * An open session with no `Question Asked {kind:'scope'}` and no `Scope Set` gets
+ * `facilitator.askOpening`; the proposed statement rides back as `scopeStatement`
+ * on a `Question Asked {kind:'scope'}`. Provider-down leaves it for the next tick.
+ */
+export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promise<void> => {
+  for (const { workshopId, sessionId } of openSessions(deps.db)) {
+    const events = readSession(deps, sessionId)
+    const wm = replaySession(events)
+    if (wm.closed) continue
+
+    const hasScopeQuestion = events.some((e) => e.type === 'Question Asked' && e.kind === 'scope')
+    const scopeSet = readWorkshop(deps, workshopId).some((e) => e.type === 'Scope Set')
+    if (hasScopeQuestion || scopeSet) continue
+
+    const opening = await deps.facilitator.askOpening({
+      instructions: buildInstructions(),
+      prompt:
+        'A new Big Picture EventStorming session is starting. Propose the scope question to put ' +
+        'to the domain expert and a first-draft one-sentence statement of the business being ' +
+        'mapped, for them to accept or edit.',
+    })
+    if (!opening.ok) return
+
+    const decided = decideSession(wm, {
+      type: 'Ask Question',
+      sessionId,
+      questionId: deps.mint.questionId(),
+      kind: 'scope',
+      text: opening.value.questionText,
+      scopeStatement: opening.value.scopeStatement,
+      at: deps.clock(),
+    })
+    if (decided.ok) appendSession(deps, sessionId, decided.value)
+    return
+  }
+}
+
+/**
+ * The reconciliation pass (AD-021) — every scheduler cycle, for each open
+ * session: re-run `deriveTracks` over every `Contribution Interpreted` (a track
+ * already marked in `derived_track` is skipped, so this is a no-op once whole),
+ * and sweep the half-closed case (`Session Closed` in the stream but the
+ * `session_index` row still `open`). No model call.
+ */
+export const reconcilePendingDerivations = (deps: InterpretContributionDeps): void => {
+  for (const { sessionId } of openSessions(deps.db)) {
+    const events = readSession(deps, sessionId)
+    for (const e of events) {
+      if (e.type === 'Contribution Interpreted') deriveTracks(deps, e)
+    }
+    const closed = events.find((e) => e.type === 'Session Closed')
+    if (closed !== undefined) closeSessionIndexRow(deps.db, sessionId, closed.at)
   }
 }
 
