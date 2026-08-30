@@ -418,11 +418,11 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-09 | P1 Workshop/scope (Set Scope, no log op) | Execute | ✅ T6 (Set Scope validates statement, repeatable) |
 | S1-10 | P1 Workshop/scope (revision window + lock) | Execute | ✅ T16 (set-scope handler precondition — readBuildingBlocks().length === 0 else 409) |
 | S1-11 | P1 Workshop/scope (F05 review shape) | Design | Pending |
-| S1-12 | P1 Capture (segment fields) | Execute | ✅ T7 (Contribution Made segment fields) |
-| S1-13 | P1 Capture (empty/whitespace) | Execute | ✅ T7 (empty/whitespace rejected pre-decide) |
+| S1-12 | P1 Capture (segment fields) | Execute | ✅ T7 + T18 (POST /contributions → 202; segment carries session id / speaker / at / source:typed) |
+| S1-13 | P1 Capture (empty/whitespace) | Execute | ✅ T7 + T18 (whitespace-only → 204 no-op, no segment) |
 | S1-14 | P1 Capture (FIFO queue) | Execute | ◐ T7 (decider open/closed; FIFO queue is T19) |
-| S1-15 | P1 Capture (open→succeed, closed→reject) | Execute | ✅ T7 (open→succeed, closed→reject) |
-| S1-16 | P1 Facilitator (always-async; short-poll transport) | Design | Pending |
+| S1-15 | P1 Capture (open→succeed, closed→reject) | Execute | ✅ T7 + T18 (closed session → 409) |
+| S1-16 | P1 Facilitator (always-async; short-poll transport) | Execute | ◐ T18 (POST → 202 async; GET /workshops/:id/session read model — poll client is T26) |
 | S1-17 | P1 Facilitator (one merged call/turn) | Execute | ✅ T13 (one merged generateText call; Output.object; outputFormat; effort low; no temperature) |
 | S1-18 | P1 Facilitator (model + SDK config) | Execute | ✅ T13 (claude-sonnet-5 → sonnet → claude-haiku-4-5 ladder; warnings logged) |
 | S1-19 | P1 Facilitator (hand-shaped projection schema, AD-015) | Execute | ✅ T12 (FacilitationTurnSchema — ≤24 optionals, no empty subschema; ACL map) |

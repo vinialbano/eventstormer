@@ -462,10 +462,15 @@ on the same SQLite file).
 **Requirement**: S1-12, S1-13, S1-14, S1-15, S1-16
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: non-empty → 202 + segment carries session id / speaker / `at` / `source:'typed'`; `"   "` → no segment, 200/204 no-op; closed session → 409
-- [ ] `GET /session` reflects the contribution with status `pending`
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] test: non-empty → 202 + segment carries session id / speaker (workshop `creatorName`) / `at` / `source:'typed'` / trimmed body; `"   "` → 204 no-op, no segment; closed session → 409; over-length → 400
+- [x] `GET /workshops/:id/session` reflects the contribution with status `pending`, scope `none`, `fullyDerived: false`
+- [x] `pnpm check && pnpm build` green (267 tests)
+**Tests**: integration · **Gate**: build — ✅ done, commit `T18`
+
+NOTE: speaker is derived server-side (session stream → `workshopId` → workshop `creatorName`), not
+client-supplied. `infrastructure/derived-track.ts` added (`readDerivedTrackKeys`) so `sessionView`
+can tell `interpreted` from `derived`; the marker writer lands with T19. `inFlight` guard is an
+optional dep (T24 injects it).
 
 ### T19: `capabilities/interpret-contribution/` — `interpretContribution` + `deriveTracks`
 **What**: `interpretContribution(deps)` — select the oldest un-interpreted `Contribution Made`

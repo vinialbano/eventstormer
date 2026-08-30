@@ -32,6 +32,7 @@ export type QuestionId = string & z.$brand<'QuestionId'>
 export const newWorkshopId = (): WorkshopId => nanoid() as unknown as WorkshopId
 export const newSessionId = (): SessionId => nanoid() as unknown as SessionId
 export const newBuildingBlockId = (): BuildingBlockId => nanoid() as unknown as BuildingBlockId
+export const newContributionId = (): ContributionId => nanoid() as unknown as ContributionId
 
 /** The resumable-workshop URL slug is the id itself — already URL-safe. */
 export const workshopUrlSlug = (id: WorkshopId): string => id
