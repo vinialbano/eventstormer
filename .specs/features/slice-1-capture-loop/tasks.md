@@ -178,10 +178,15 @@ including `Contribution Interpretation Failed` as its **own** event and `Questio
 **Requirement**: event SSOT; S1-64
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] every event schema has `v: z.literal(1)`; `InterpretedTrack` has no `z.unknown()`
-- [ ] `Question Asked` `.refine` rejects a `scope` event with no `scopeStatement` and a `phase` event with one — tested
-- [ ] `pnpm check` green
-**Tests**: unit (schema parse/refine branches) · **Gate**: build
+- [x] every event schema has `v: z.literal(1)`; `InterpretedTrack` has no `z.unknown()` (toJSONSchema `{}` sensor + per-field rejection)
+- [x] `Question Asked` `.refine` rejects a `scope` event with no `scopeStatement` and a `phase`/`free` event with one — tested (5 cases)
+- [x] `pnpm check && pnpm build` green (131 tests)
+**Tests**: unit (schema parse/refine branches) · **Gate**: build — ✅ done, commit `T3`
+
+NOTE: no `schema/index.ts` barrel yet (knip flags an unimported barrel) — consumers import
+`./events.ts` / `./interpreted-track.ts` / `./ids.ts` directly; add the barrel when it earns a
+consumer. Id generators (`newContributionId` etc.) deferred to the tasks that mint. `at` is an
+`z.iso.datetime()` field on every event (design), stamped from the Clock by the app layer.
 
 ### T4: `plumbing/model-call-log.ts` + `plumbing/model-pricing.ts`
 **What**: A JSONL appender (`logModelCall(entry)` → `${DATA_DIR}/model-calls.jsonl`) writing

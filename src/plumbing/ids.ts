@@ -20,6 +20,9 @@ export const WorkshopId = z.string().brand<'WorkshopId'>()
 export type WorkshopId = z.infer<typeof WorkshopId>
 export type SessionId = string & z.$brand<'SessionId'>
 export type BuildingBlockId = string & z.$brand<'BuildingBlockId'>
+export type ContributionId = string & z.$brand<'ContributionId'>
+export type ProposalId = string & z.$brand<'ProposalId'>
+export type QuestionId = string & z.$brand<'QuestionId'>
 
 /**
  * `nanoid()` is a 21-char id over the URL-safe alphabet `A-Za-z0-9_-` — no `/`
