@@ -42,24 +42,33 @@ export const MIGRATIONS: Migration[] = [
 ]
 
 /**
- * Apply every migration whose id is not yet in `_migrations`, in id order, in one
- * `BEGIN IMMEDIATE` transaction. Idempotent: a second call is a no-op.
+ * Apply every migration whose id is not yet in the tracking table, in id order,
+ * in one `BEGIN IMMEDIATE` transaction. Idempotent: a second call is a no-op.
+ *
+ * `migrations` / `trackingTable` default to the operation-log set. A context that
+ * owns projection tables in the same SQLite file (Slice 1: `session-facilitation`)
+ * passes its own set and its own tracking table so the two id sequences never
+ * collide. `trackingTable` is an internal constant, never caller input.
  */
-export const applyMigrations = (db: MigrationDb): void => {
+export const applyMigrations = (
+  db: MigrationDb,
+  migrations: readonly Migration[] = MIGRATIONS,
+  trackingTable = '_migrations',
+): void => {
   db.exec('BEGIN IMMEDIATE')
   try {
     db.exec(
-      'CREATE TABLE IF NOT EXISTS _migrations (id INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)',
+      `CREATE TABLE IF NOT EXISTS ${trackingTable} (id INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)`,
     )
 
     const applied = new Set(
-      (db.prepare('SELECT id FROM _migrations').all() as { id: number }[]).map((row) => row.id),
+      (db.prepare(`SELECT id FROM ${trackingTable}`).all() as { id: number }[]).map((row) => row.id),
     )
 
-    for (const migration of [...MIGRATIONS].sort((a, b) => a.id - b.id)) {
+    for (const migration of [...migrations].sort((a, b) => a.id - b.id)) {
       if (applied.has(migration.id)) continue
       db.exec(migration.up)
-      db.prepare('INSERT INTO _migrations (id, applied_at) VALUES (?, ?)').run(
+      db.prepare(`INSERT INTO ${trackingTable} (id, applied_at) VALUES (?, ?)`).run(
         migration.id,
         new Date().toISOString(),
       )

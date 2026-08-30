@@ -410,7 +410,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-01 | P1 Workshop/scope | Design | Pending |
 | S1-02 | P1 Workshop/scope (display name) | Design | Pending |
 | S1-03 | P1 Workshop/scope (nanoid URL) | Design | Pending |
-| S1-04 | P1 Session lifecycle (one-open-session) | Design | Pending |
+| S1-04 | P1 Session lifecycle (one-open-session) | Execute | ✅ T5 (session_index partial unique index) |
 | S1-05 | P1 Session lifecycle (resume) | Design | Pending |
 | S1-06 | P1 Session lifecycle (close mechanic) | Design | Pending |
 | S1-07 | P1 Session lifecycle (rebuild from log) | Design | Pending |
@@ -437,7 +437,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-28 | P1 Facilitator (schema-fail: one retry then terminal) | Design | Pending |
 | S1-29 | P1 Facilitator (one in flight/session; queue is a projection) | Design | Pending |
 | S1-30 | P1 Facilitator (Anthropic mocked in tests) | Design | Pending |
-| S1-31 | P1 Facilitator (JSONL model-call logger) | Design | Pending |
+| S1-31 | P1 Facilitator (JSONL model-call logger) | Execute | ✅ T4 (plumbing/model-call-log) |
 | S1-32 | P1 Facilitator (fail fast on missing key) | Design | Pending |
 | S1-33 | P1/P2 Control flow (forced opening bookend) | Design | Pending |
 | S1-34 | P2 Interview loop (question↔answer correlation) | Design | Pending |
@@ -456,7 +456,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-47 | P1 Proposal (accept idempotent) | Design | Pending |
 | S1-48 | P1 Capture screen (board-first layout per brief; Pinia stores cold-loadable) | Design | Pending |
 | S1-49 | P1 Capture screen (server-confirmed, no optimistic board updates; HTTP-only) | Design | Pending |
-| S1-50 | P1 Facilitator (token + cost recording) | Design | Pending |
+| S1-50 | P1 Facilitator (token + cost recording) | Execute | ✅ T4 (plumbing/model-pricing estimateCost) |
 | S1-51a | cross — update `docs/domain/open-questions.md` #63 (scope resolution) **this slice** | Design | Pending |
 | S1-51b | cross — Slice-6 doc reconciliation (ADR-005/007 wording, canvas scope + Held + summary + AD-021, #66) | Design | Pending — Slice 6 |
 | S1-52 | P1 Proposal (Hold — `Proposal Held`/`Unheld` events, non-terminal) | Design | Pending |
@@ -464,19 +464,19 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-54 | P1 Capture screen (inline proposal cards welded to the turn; card-to-sticky flight + receipt) | Design | Pending |
 | S1-55 | P1 Capture screen ("catching up" provider-unavailable state; keyboard-operable, reduced-motion) | Design | Pending |
 | S1-56 | P1 Facilitator (interpretation crash-consistency — `Contribution Interpreted` sole commit point; derived streams idempotent; worker reconciles) | Design | Pending |
-| S1-57 | P1 Session lifecycle (`session_index` projection + `UNIQUE … WHERE status='open'`; enumerates closed sessions) | Design | Pending |
+| S1-57 | P1 Session lifecycle (`session_index` projection + `UNIQUE … WHERE status='open'`; enumerates closed sessions) | Execute | ✅ T5 |
 | S1-58 | P1 Workshop/scope (`askOpening` owned by the worker; produced when a provider returns if down at session start) | Design | Pending |
 | S1-59 | P1 Facilitator (`answer-question` track with an unknown `questionId` is dropped, logged, no `Question Answered`) | Design | Pending |
 | S1-60 | P1 Session lifecycle (`sessionSummary` — read-time projection, no model call, no struct in the event) | Design | Pending |
 | S1-61 | P1 Capture screen (scope shown as an accept/edit/reject card in the dock — no separate screen) | Design | Pending |
 | S1-62 | P1 Facilitator (hard `.max(12)` tracks/turn + `.max(200)` label — the real "not unbounded" bound) | Design | Pending |
 | S1-63 | P1 Facilitator (`nextMove.ask` → `Question Asked {kind:'free'}` with a minted `questionId` — the follow-up question gets a lifecycle) | Design | Pending |
-| S1-64 | P1 Facilitator (`Contribution Interpretation Failed` is a distinct event, not a flag) | Design | Pending |
+| S1-64 | P1 Facilitator (`Contribution Interpretation Failed` is a distinct event, not a flag) | Execute | ✅ T3 (own event in the Session SSOT) |
 | S1-65 | P1 Facilitator (model-call at-most-once window on a pre-ledger crash — accepted + documented) | Design | Pending |
 | S1-66 | P1 Session lifecycle (`applyOperation` owns board concurrency; no `expectedPosition`; internal `stale-position` retry — AD-022) | Design | Pending |
-| S1-67 | P1 Session lifecycle (`session_index` stale-`open` row recovery on next `Start Session`) | Design | Pending |
+| S1-67 | P1 Session lifecycle (`session_index` stale-`open` row recovery on next `Start Session`) | Execute | ◐ T5 (`staleOpenRow`/`deleteRow`; wired in T17) |
 | S1-68 | cross (depcruise re-verification: `no-cross-slice-imports`, `host-imports-only-context-api`, `domain-imports-nothing-above`, `ui-does-not-import-server-code`, `cross-context-only-via-api` — each by a planted violation) | Design | Pending |
-| S1-69 | cross (`session-facilitation/domain/AGENTS.md` path-scoped file; `WorkshopId` promoted to canonical `plumbing/ids.ts`) | Design | Pending |
+| S1-69 | cross (`session-facilitation/domain/AGENTS.md` path-scoped file; `WorkshopId` promoted to canonical `plumbing/ids.ts`) | Execute | ✅ T1 + T2 |
 
 **Coverage:** 70 requirement IDs (S1-01…S1-69 + S1-51a/b), 0 mapped to tasks yet, 0 unmapped.
 

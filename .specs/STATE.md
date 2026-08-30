@@ -68,6 +68,21 @@ delegation offer at Execute.
 Slice 0 `slice-0-skeleton-irreversibles` (#37) — **PASS**, merged. 22 tasks, 99 tests. See
 `.specs/features/slice-0-skeleton-irreversibles/validation.md`.
 
+**Slice 1 execution — Batch 1 (Phase 1, T1–T5) COMPLETE** (`0120e22`…`HEAD`): 159 tests, `pnpm
+check && pnpm build` green. Deviations:
+- T1: design's `author: { proposer: 'facilitator', accepter: creatorName }` shorthand does not
+  match the frozen Slice-0 `Author` schema (parties are `{ name }` refs). Schema left unchanged
+  (append-only replayability); the accept path (T22) wraps names. `SessionId` dropped from
+  `domain-model-capture` (session-facilitation's own brand).
+- T2: the framework-free depcruise rule + the `CONTEXTS` const already covered `session-facilitation`
+  — no glob extension needed; only a `no-orphans` `pathNot` for `src/*/api.ts` was added.
+  `session-facilitation/api.ts` is a placeholder until T24.
+- T3: no `schema/index.ts` barrel yet (knip flags an unimported barrel) — consumers import the
+  specific files; id generators deferred to minting tasks. `at` is an `z.iso.datetime()` field on
+  every event.
+- T5: `applyMigrations` gained two additive default params (`migrations`, `trackingTable`) so
+  `session-facilitation` tracks its own id sequence in `_sf_migrations` — backward compatible.
+
 **Lessons recorded (candidates, `.specs/LESSONS.md`):**
 - L-001 (`domain/fold-tests`) — assert a fold that sets a field against a value distinct from the
   prior state; a reword-to-the-same-label test + replay-vs-`project`-incremental comparison both

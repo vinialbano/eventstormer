@@ -221,10 +221,16 @@ PK, status, started_at, closed_at)` + `UNIQUE(workshop_id) WHERE status='open'` 
 **Requirement**: S1-04, S1-57, S1-67
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `reserve` twice for one workshop → the 2nd returns `session-already-open`
-- [ ] `close` frees the slot; `staleOpenRow` returns the id when the stream lacks `Session Started`, `undefined` otherwise — tested against the in-memory + sqlite stores
-- [ ] `pnpm check` green
-**Tests**: unit + integration · **Gate**: build
+- [x] `reserve` twice for one workshop → the 2nd returns `session-already-open` (partial unique index is the guard)
+- [x] `close` frees the slot; `staleOpenRow` returns the id when the stream lacks `Session Started`, `undefined` otherwise — `describe.each` over the in-memory + sqlite stores; `deleteRow` clears a stale slot
+- [x] `pnpm check && pnpm build` green (159 tests)
+**Tests**: unit + integration · **Gate**: build — ✅ done, commit `T5`
+
+DEVIATION: `applyMigrations` (plumbing) gained two additive default params
+(`migrations`, `trackingTable`) so `session-facilitation` runs its own id sequence in
+`_sf_migrations` without duplicating the transactional loop and without putting its projection
+tables in `plumbing/event-store`. Backward compatible — the Slice-0 call and its tests are
+unchanged. `derived_track` table is created here; its marker helpers land with T19.
 
 ### T6: `session-facilitation/domain/workshop/`
 **What**: `decide`/`evolve` for `Start Workshop` (name 1–80, non-blank) and `Set Scope`
