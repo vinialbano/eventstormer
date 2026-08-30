@@ -428,10 +428,10 @@ a `set-scope` → `start-workshop` import** (first time `session-facilitation` h
 **Requirement**: S1-09, S1-10, S1-68
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: 0 blocks → scope replaced (3× in a row); ≥ 1 applied block → 409, scope unchanged
-- [ ] planted cross-slice import fails `pnpm depcruise`; reverted
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] test: 0 blocks → scope replaced (3× in a row); ≥ 1 applied block → 409 `scope-locked`, no `Scope Set` appended
+- [x] planted `set-scope` → `start-workshop` import fails `pnpm depcruise` (`no-cross-slice-imports` — first real catch, session-facilitation now has ≥2 caps); reverted
+- [x] `pnpm check && pnpm build` green
+**Tests**: integration · **Gate**: build — ✅ done, commit `T16`
 
 ### T17: `capabilities/start-session/`
 **What**: `POST /workshops/:id/sessions` — `staleOpenRow` → `DELETE` if stale → `sessionIndex.reserve`

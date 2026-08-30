@@ -416,7 +416,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-07 | P1 Session lifecycle (rebuild from log) | Execute | ◐ T11 (GET /board rebuilds from log; close/reopen T23) |
 | S1-08 | P1 Workshop/scope (forced scope question) | Design | Pending |
 | S1-09 | P1 Workshop/scope (Set Scope, no log op) | Execute | ✅ T6 (Set Scope validates statement, repeatable) |
-| S1-10 | P1 Workshop/scope (revision window + lock) | Design | Pending |
+| S1-10 | P1 Workshop/scope (revision window + lock) | Execute | ✅ T16 (set-scope handler precondition — readBuildingBlocks().length === 0 else 409) |
 | S1-11 | P1 Workshop/scope (F05 review shape) | Design | Pending |
 | S1-12 | P1 Capture (segment fields) | Execute | ✅ T7 (Contribution Made segment fields) |
 | S1-13 | P1 Capture (empty/whitespace) | Execute | ✅ T7 (empty/whitespace rejected pre-decide) |
