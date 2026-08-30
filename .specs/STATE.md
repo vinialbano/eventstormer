@@ -49,8 +49,21 @@ capture.
 - **B1 (T1–T5) ✅** — commit `264f1b3`. 159 tests.
 - **B2 (T6–T11) ✅** — through `0898d86` (+ `c57eb0f` docs). 227 tests.
 - **B3 (T12–T18) ✅** — through `8ae7152`. 267 tests. `pnpm check && pnpm build` green.
-- **B4 (T19–T25) — NOT STARTED.** First dispatch aborted on an account session rate-limit (HTTP
-  429) before any commit; working tree clean at `8ae7152`. **Resume: re-dispatch B4 from T19.**
+- **B4 (T19–T25) ✅** — through `308f5f8` (`8ff119c` T19 · `3631974` T20 · `cda7a53` T21 ·
+  `77e7f58` T22 · `4fe3493` T23 · `00b5293` T24 · `ac9ea2c` T25). 312 tests. `pnpm check && pnpm
+  build` green. Deviations: (a) T19 added additive `askQuestionText?` to `Contribution
+  Interpreted` / `Interpret Contribution` so the derived free `Question Asked` is a pure
+  derivation; (b) T22 SPEC_DEVIATION — a *genuine* `APPLY_FAILED` through the accept seam is not
+  reachable for Slice-1 building-block kinds (all id-minting, no `target`; the only board
+  rejection is `duplicate-id` = the idempotency signal per round-2 distsys B1); the
+  `Record Operation Rejected` branch is retained for target-bearing ops; (c) T23 close tail
+  (`finishClose`) lives in `infrastructure/session-close.ts`, shared by `close-session` and
+  `reconcilePendingDerivations`; (d) T25 `MakeContributionDeps.inFlight` is now a
+  `() => ReadonlySet<ContributionId>` accessor. New: `interpret-contribution` capability
+  (`interpret.ts` tick fns + `in-flight.ts` guard), `review-proposal` capability
+  (`http.ts` + `accept.ts`), `close-session` capability, `domain/read-models/proposals-view.ts`,
+  `infrastructure/session-close.ts`, `host/{config,scheduler}.ts`, `session-facilitation/api.ts`
+  fully populated, `plumbing/ids.ts` `newProposalId`/`newQuestionId`.
 - **B5 (T26–T30), B6 (T31–T32) — pending.** Then the mandatory Verifier sub-agent → `validation.md`.
 `context7` allowed broadly; `impeccable` mandatory T27–T30; E2E via `FACILITATOR_MODE=scripted`.
 Earlier: DESIGN complete (2 review rounds), AD-017…AD-024.
