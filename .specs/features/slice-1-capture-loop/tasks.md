@@ -631,7 +631,7 @@ import.**
 **Done when**:
 - [x] test: a throwing tick fn does not stop the loop (`runCycle` runs all three; `startScheduler` keeps rescheduling; `stop()` halts it)
 - [x] planted `host/scheduler.ts` → `session-facilitation/domain` import fails `pnpm depcruise` (`host-imports-only-context-api`); reverted
-- [x] `pnpm check && pnpm build` green (315 tests); `createRoutes(loadConfig(scripted))` serves `/api/health` + `POST /api/workshops` (routes.test.ts)
+- [x] `pnpm check && pnpm build` green (312 tests); `createRoutes(loadConfig(scripted))` serves `/api/health` + `POST /api/workshops` (routes.test.ts)
 **Tests**: unit · **Gate**: build — ✅ done, commit `T25`
 
 NOTE: `createRoutes` now takes the whole `HostConfig` and mounts every `session-facilitation`
