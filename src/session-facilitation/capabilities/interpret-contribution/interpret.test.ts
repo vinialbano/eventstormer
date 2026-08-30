@@ -5,7 +5,7 @@ import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { ContributionId, ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
-import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
+import { type DerivedTrackDb, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { close as closeIndexRow, reserve, type SessionIndexDb } from '../../infrastructure/session-index.ts'
 import { sessionStream, workshopStream } from '../../infrastructure/streams.ts'
 import { ProposalEvent, SessionEvent } from '../../domain/schema/events.ts'
@@ -13,7 +13,7 @@ import type { Facilitator, FacilitatorFailure } from '../../infrastructure/facil
 import type { FacilitationTurn } from '../../infrastructure/facilitator/turn-schema.ts'
 import type { TrackIdMint } from '../../infrastructure/facilitator/map.ts'
 import { createInFlightGuard } from './in-flight.ts'
-import { interpretContribution } from './interpret.ts'
+import { interpretContribution, reconcilePendingDerivations } from './interpret.ts'
 import type { InterpretContributionDeps } from './deps.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
@@ -24,6 +24,16 @@ const s = 's_1' as SessionId
 let store: EventStore
 let db: SessionIndexDb & DerivedTrackDb
 let interpretCalls: number
+let markDerivedTrackRuns: number
+
+/** Wrap the DB handle to count `markDerivedTrack` calls — one `prepare` of the
+ * derived-track insert per derived track per turn. */
+const countingDb = (inner: SessionIndexDb & DerivedTrackDb): SessionIndexDb & DerivedTrackDb => ({
+  prepare: (sql: string) => {
+    if (sql.includes('INSERT OR IGNORE INTO derived_track')) markDerivedTrackRuns += 1
+    return inner.prepare(sql)
+  },
+})
 
 const countingMint = (): TrackIdMint => {
   let p = 0
@@ -101,9 +111,10 @@ const proposalEvents = (id: string): ProposalEvent[] =>
 beforeEach(() => {
   const raw = new DatabaseSync(':memory:')
   applySessionFacilitationMigrations(raw)
-  db = raw
+  db = countingDb(raw)
   store = createMemoryEventStore()
   interpretCalls = 0
+  markDerivedTrackRuns = 0
   store.append(workshopStream(w), -1, [
     {
       at,
@@ -224,6 +235,37 @@ describe('interpretContribution — the commit point + derivation (S1-14, S1-23,
     expect(q).toHaveLength(1)
     expect(q[0]?.kind).toBe('free')
     expect(q[0]?.text).toBe('What happens right after a member joins?')
+  })
+})
+
+describe('reconcilePendingDerivations — the derived_track skip is per-track (AD-021, S1-56)', () => {
+  it('re-derives only the track whose marker row was lost, skipping the already-marked ones', async () => {
+    seedSession()
+    contribute('a member borrowed a book and returned another', 'c_1')
+
+    await interpretContribution(
+      deps([turn([propose('domain-event', 'Book borrowed'), propose('domain-event', 'Book returned')])]),
+    )
+
+    expect(proposalEvents('p_1').map((e) => e.type)).toEqual(['Building Block Proposed'])
+    expect(proposalEvents('p_2').map((e) => e.type)).toEqual(['Building Block Proposed'])
+    expect(readDerivedTrackKeys(db)).toEqual(new Set(['c_1::0', 'c_1::1']))
+
+    // a crash drops exactly one track's marker row
+    db.prepare('DELETE FROM derived_track WHERE contribution_id = ? AND track_index = ?').run('c_1', 1)
+
+    interpretCalls = 0
+    markDerivedTrackRuns = 0
+    reconcilePendingDerivations(deps([]))
+
+    // only track 1 is re-derived + re-marked; track 0 is skipped outright
+    expect(markDerivedTrackRuns).toBe(1)
+    expect(readDerivedTrackKeys(db)).toEqual(new Set(['c_1::0', 'c_1::1']))
+    // no second model call, no duplicate proposal births / question events
+    expect(interpretCalls).toBe(0)
+    expect(proposalEvents('p_1').map((e) => e.type)).toEqual(['Building Block Proposed'])
+    expect(proposalEvents('p_2').map((e) => e.type)).toEqual(['Building Block Proposed'])
+    expect(only('Contribution Interpreted')).toHaveLength(1)
   })
 })
 
