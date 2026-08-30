@@ -443,9 +443,14 @@ a `set-scope` → `start-workshop` import** (first time `session-facilitation` h
 **Requirement**: S1-04, S1-05, S1-67
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] test: 2nd start while one open → 409; after `close`, a new session starts; a stale `open` row (no `Session Started`) is recovered and the start succeeds
-- [ ] `pnpm check && pnpm build` green
-**Tests**: integration · **Gate**: build
+- [x] test: 2nd start while one open → 409; after `close`, a new session starts; a stale `open` row (no `Session Started`) is recovered and the start succeeds
+- [x] `pnpm check && pnpm build` green
+**Tests**: integration · **Gate**: build — ✅ done, commit `T17`
+
+NOTE: `reserve` IS the `session_index` INSERT (the partial unique index guards it), done before the
+`Session Started` append — a crash between leaves the stale row `staleOpenRow` recovers next start.
+`sessionStream` added to `streams.ts`. deps carry a `SessionIndexDb` handle (T24 wires the real one
+on the same SQLite file).
 
 ### T18: `capabilities/make-contribution/` + `GET /workshops/:id/session`
 **What**: `POST /sessions/:id/contributions` — trim; reject empty pre-`decide`; `Session.decide

@@ -411,7 +411,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-02 | P1 Workshop/scope (display name) | Execute | ✅ T6 (creatorName recorded, 1–80 non-blank) |
 | S1-03 | P1 Workshop/scope (nanoid URL) | Execute | ✅ T15 (POST /workshops → 201 { workshopId, url }; 21-char nanoid slug) |
 | S1-04 | P1 Session lifecycle (one-open-session) | Execute | ✅ T5 (session_index partial unique index) |
-| S1-05 | P1 Session lifecycle (resume) | Design | Pending |
+| S1-05 | P1 Session lifecycle (resume) | Execute | ✅ T17 (start-session — reserve → Session Started → 202; new session after close) |
 | S1-06 | P1 Session lifecycle (close mechanic) | Execute | ✅ T7 (Session.decide Close Session — idempotent) |
 | S1-07 | P1 Session lifecycle (rebuild from log) | Execute | ◐ T11 (GET /board rebuilds from log; close/reopen T23) |
 | S1-08 | P1 Workshop/scope (forced scope question) | Design | Pending |
@@ -474,7 +474,7 @@ the assembled context inputs, the agenda contents, and the question-resolution t
 | S1-64 | P1 Facilitator (`Contribution Interpretation Failed` is a distinct event, not a flag) | Execute | ✅ T3 (own event in the Session SSOT) |
 | S1-65 | P1 Facilitator (model-call at-most-once window on a pre-ledger crash — accepted + documented) | Design | Pending |
 | S1-66 | P1 Session lifecycle (`applyOperation` owns board concurrency; no `expectedPosition`; internal `stale-position` retry — AD-022) | Execute | ✅ T10 (applyOperation owns concurrency, no expectedPosition) |
-| S1-67 | P1 Session lifecycle (`session_index` stale-`open` row recovery on next `Start Session`) | Execute | ◐ T5 (`staleOpenRow`/`deleteRow`; wired in T17) |
+| S1-67 | P1 Session lifecycle (`session_index` stale-`open` row recovery on next `Start Session`) | Execute | ✅ T17 (start-session deletes a stale open row before reserve) |
 | S1-68 | cross (depcruise re-verification: `no-cross-slice-imports`, `host-imports-only-context-api`, `domain-imports-nothing-above`, `ui-does-not-import-server-code`, `cross-context-only-via-api` — each by a planted violation) | Design | Pending |
 | S1-69 | cross (`session-facilitation/domain/AGENTS.md` path-scoped file; `WorkshopId` promoted to canonical `plumbing/ids.ts`) | Execute | ✅ T1 + T2 |
 
