@@ -155,10 +155,16 @@ with a planted `import { Hono }` violation**.
 **Requirement**: S1-68, S1-69
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `session-facilitation/domain/AGENTS.md` present, path-scoped
-- [ ] planted framework import in `session-facilitation/domain/` fails `pnpm depcruise`; reverted
-- [ ] `pnpm check && pnpm build` green
-**Tests**: none (build gate) · **Gate**: build
+- [x] `session-facilitation/domain/AGENTS.md` present, path-scoped
+- [x] planted `import { Hono }` in `session-facilitation/domain/` fails `pnpm depcruise` (`domain-imports-no-framework`); reverted
+- [x] `pnpm check && pnpm build` green
+**Tests**: none (build gate) · **Gate**: build — ✅ done, commit `T2`
+
+DEVIATION: the generic `domain-imports-no-framework` rule (`^src/[^/]+/domain/`) and the
+`CONTEXTS` const already covered `session-facilitation` — no glob extension needed. vite.config
+`src/**/*.test.ts` and knip `src/*/api.ts` already cover the new context. Only change to
+`.dependency-cruiser.cjs`: a `no-orphans` `pathNot` for `src/*/api.ts` (an entry-by-design public
+surface, unimported until T24/T25). `api.ts` is a placeholder (`export {}`) until T24.
 
 ### T3: `session-facilitation/domain/schema/` — ids, `InterpretedTrack`, event SSOTs
 **What**: Branded ids (`SessionId`, `ContributionId`, `ProposalId`, `QuestionId`) + their

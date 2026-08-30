@@ -132,6 +132,10 @@ module.exports = {
           '\\.d\\.ts$',
           '(^|/)tsconfig\\.json$',
           '(^|/)(?:package|package-lock)\\.json$',
+          // A context's api.ts is its public surface — an entry point by design
+          // (knip treats it the same). It is legitimately unimported until
+          // another context or host/ wires it.
+          '^src/[^/]+/api\\.ts$',
         ],
       },
       to: {},
