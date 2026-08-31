@@ -96,9 +96,9 @@ const feed = computed<FeedItem[]>(() => {
     }
     // No proposals for this contribution. Give the facilitator a visible reply
     // so a turn never looks dropped — unless it already answered with a
-    // question or a notice (the next transcript turn).
+    // question or a notice (the next transcript turn), which stands on its own.
+    if (turns[i + 1]?.kind === 'question' || turns[i + 1]?.kind === 'notice') return
     const status = contribStatus.value.get(turn.contributionId)
-    const answered = turns[i + 1]?.kind === 'question' || turns[i + 1]?.kind === 'notice'
     if (status === 'failed') {
       items.push({
         type: 'turn',
@@ -107,7 +107,7 @@ const feed = computed<FeedItem[]>(() => {
         speaker: 'facilitator',
         text: "I couldn't make sense of that one — try rephrasing it.",
       })
-    } else if (status === 'derived' && !answered) {
+    } else if (status === 'derived') {
       items.push({
         type: 'turn',
         key: `k${turn.contributionId}`,

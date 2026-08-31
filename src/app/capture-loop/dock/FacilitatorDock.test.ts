@@ -224,6 +224,23 @@ describe('FacilitatorDock', () => {
     expect(wrapper.text()).toContain('try rephrasing')
   })
 
+  it('does not add a rephrase hint when a failed contribution was answered with a question', () => {
+    seed(
+      view({
+        transcript: [
+          { kind: 'contribution', speaker: 'Maria', text: 'zzz', at: 't1', contributionId: 'c1' },
+          { kind: 'question', speaker: 'facilitator', text: 'Could you say that another way?', at: 't2', questionKind: 'free' },
+        ],
+        contributions: [{ contributionId: 'c1', status: 'failed' }],
+      }),
+      [],
+    )
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).not.toContain('try rephrasing')
+    expect(wrapper.text()).toContain('Could you say that another way?')
+  })
+
   it('does not add a "noted" reply when the facilitator answered with a question', () => {
     seed(
       view({
