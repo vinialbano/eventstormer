@@ -295,8 +295,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Two cases as spec P2
-- [ ] Gate: `pnpm test`
+- [x] Two cases as spec P2
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick

@@ -243,7 +243,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-21 | P1: eval not in CI | Tasks T12, T19 | In Tasks |
 | TSH-22 | P1: eval oracles in pnpm test | Tasks T17 | In Tasks |
 | TSH-23 | P1: README eval markers | Tasks T15, T20 | In Tasks |
-| TSH-24 | P2: askOpening ladder | Tasks T10 | In Tasks |
+| TSH-24 | P2: askOpening ladder | Tasks T10 | Done |
 
 **Coverage:** 24 total, 24 mapped to tasks, 0 unmapped.
 
