@@ -36,9 +36,11 @@ model calls need to be observable enough to debug and to feed the eval.
 - **Coverage:** v8, `thresholds.autoUpdate: true` ratchet, no global number. Once the domain
   deciders exist, a glob threshold pins `**/domain/**` to ≥ 90%.
 
-### Eval — plain Vitest + a hand-rolled reporter
+### Eval — `jiti` CLI + a hand-rolled reporter
 
-A third `test.projects` entry (`name: 'eval'`, node env), run as `pnpm eval`, **out of CI**.
+Live eval is `pnpm eval` (`jiti eval/run.ts`), **out of CI**. A third `test.projects` entry
+(`name: 'eval'`, node env) hosts reporter unit tests only; `pnpm test` is
+`vitest run --project domain --project app` so that project never joins the merge gate.
 promptfoo / evalite / the AI SDK's own helpers all have the wrong shape for per-assertion,
 N-runs-passed reporting — you write the bespoke reducer regardless.
 

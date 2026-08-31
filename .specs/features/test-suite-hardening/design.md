@@ -103,7 +103,11 @@ flowchart LR
 - **Purpose**: N=5 live `interpret` calls per fixture; reduce to k/N rows; optional README splice.
 - **Location**: `eval/run.ts`, `eval/fixtures/*.json`, `eval/report.ts`
 - **Interfaces**:
-  - `pnpm eval` → `jiti eval/run.ts` (or vitest project `name: 'eval'` with `include: ['eval/**/*.eval.ts']` — pick **plain node script + vitest only for oracles in src**, not a third vitest project, if knip/vite include globs fight. **Decision:** third Vitest project `eval` as ADR-008, `include: ['eval/**/*.test.ts']`, `fileParallelism: false`, `testTimeout: 120_000`. `pnpm eval` = `vitest run --project eval`. Domain/app projects must **not** include `eval/`.)
+  - `pnpm eval` → `jiti eval/run.ts` (CLI so `--report` is on `argv`). A Vitest project
+    `name: 'eval'` (`include: ['eval/**/*.test.ts']`, `fileParallelism: false`,
+    `testTimeout: 120_000`) hosts `eval/report.test.ts` only — not the live loop.
+    `pnpm test` is `--project domain --project app`. Domain/app projects must **not** include
+    `eval/`.
   - `pnpm eval --report` = same run then splice README
 - **Dependencies**: `createAnthropicFacilitator` with the real `generate` used in production (`host/config.ts` live branch). Load `.env.local` then `.env` the same way `host/index.ts` does.
 - **Reuses**: `buildInstructions`, `buildTurnInput`, empty-ish `FacilitationContext` per fixture (`scopeStatement` = restaurant kitchen service).
@@ -182,7 +186,7 @@ No `passed/runs` rolled into a single suite %.
 | Decision | Choice | Rationale |
 | --- | --- | --- |
 | E2E vs `pnpm check` | CI job only | Maintainer; keeps Stop/pre-push fast. **AD-027** |
-| Eval runner | Third Vitest project `eval`, not promptfoo | ADR-008 |
+| Eval runner | `jiti eval/run.ts`; Vitest `eval` project hosts reporter tests only | ADR-008 |
 | Oracles in `src/` | Yes, unit-tested under `pnpm test` | Iron Law 2: deterministic graders belong on the merge gate |
 | Past-tense oracle | Suffix `ed` on last word | Cheap, fixture-controlled; Slice 5 may replace with a word list |
 | Content words | Tokens length > 2, lowercased | Matches PRD “content words in the segment” |

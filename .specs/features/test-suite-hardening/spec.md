@@ -251,7 +251,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 
 ## Success Criteria
 
-- [ ] CI on this branch shows `check` and `e2e` both required; `pnpm check` locally does not boot Playwright.
+- [ ] CI `check` and `e2e` both run on push/PR; a failure in either fails the workflow. `pnpm check` locally does not boot Playwright.
 - [ ] `pnpm test` fails if `replay` ignores withdraw, or if Start Session / Attribute / closed Ask / Reject / Applied / Rejected regressions land.
 - [ ] `pnpm eval` without a key is red; with a key it prints four `k/5` rows and never a single % score.
 - [ ] README and `docs/testing.md` describe the capture loop and the eval command as they exist after this feature.
