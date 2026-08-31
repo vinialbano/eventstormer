@@ -226,7 +226,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-04 | P1: Persistence literal oracle | Tasks T2 | Done |
 | TSH-05 | P1: Start Session | Tasks T3 | Done |
 | TSH-06 | P1: Attribute Contribution | Tasks T4 | Done |
-| TSH-07 | P1: Ask Question closed | Tasks T5 | In Tasks |
+| TSH-07 | P1: Ask Question closed | Tasks T5 | Done |
 | TSH-08 | P1: Reject Proposal | Tasks T6 | In Tasks |
 | TSH-09 | P1: Record Operation Applied | Tasks T6 | In Tasks |
 | TSH-10 | P1: Record Operation Rejected | Tasks T6 | In Tasks |

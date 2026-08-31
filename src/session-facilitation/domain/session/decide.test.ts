@@ -337,6 +337,27 @@ describe('Session.decide — Ask Question idempotency', () => {
   })
 })
 
+describe('Session.decide — Ask Question', () => {
+  it('rejects Ask Question on a closed session', () => {
+    const closed = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [] },
+    ])
+    const result = decide(closed, {
+      type: 'Ask Question',
+      sessionId,
+      questionId: toQuestionId('q_closed'),
+      kind: 'phase',
+      text: 'phase?',
+      at,
+    })
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'session-closed', classification: 'systemic' })
+    }
+  })
+})
+
 describe('Session.decide — Close Session', () => {
   it('emits Session Closed carrying only the unresolved open questions and no summary struct', () => {
     const stream = replay([

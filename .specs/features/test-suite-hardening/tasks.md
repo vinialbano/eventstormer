@@ -186,8 +186,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `isErr` and `error.kind === 'session-closed'`
-- [ ] Gate: `pnpm test`
+- [x] `isErr` and `error.kind === 'session-closed'`
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick
