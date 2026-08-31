@@ -337,9 +337,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Job does not `continue-on-error`
-- [ ] Empty `ANTHROPIC_API_KEY` still comes from playwright.config (not CI secrets)
-- [ ] Gate: `pnpm check && pnpm build` (workflow YAML is not typechecked; `pnpm test:e2e` locally)
+- [x] Job does not `continue-on-error`
+- [x] Empty `ANTHROPIC_API_KEY` still comes from playwright.config (not CI secrets)
+- [x] Gate: `pnpm check && pnpm build` (workflow YAML is not typechecked; `pnpm test:e2e` locally)
 
 **Tests**: none
 **Gate**: build
