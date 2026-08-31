@@ -111,7 +111,7 @@ corrected (it was never in `package.json` / the lockfile on `main`); the "the br
 
 | Req | Tasks | Status |
 | --- | ----- | ------ |
-| R1  | T1    | ✅ Verified — `e0ee294` (AC1.2 ⚠️ spec-precision gap: redundant guard `format`/`note` clauses undiscriminated — minor, non-blocking) |
+| R1  | T1    | ✅ Verified — `e0ee294`; AC1.2 gap closed by follow-up test `6eef50e` (guard `format`/`note` clauses now pinned) |
 | R2  | T2    | ✅ Verified — `5987432` |
 | R3  | T3    | ✅ Verified — `8191a00` |
 | R4  | T4    | ✅ Verified — `ad96906` |

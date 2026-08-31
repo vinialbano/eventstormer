@@ -44,7 +44,20 @@ capture.
 
 ## Handoff
 
-**Active feature:** `slice-1-capture-loop` (GitHub issue #38)
+**Active feature:** `pr-49-review-fixes` — the PR #49 automated-review fix batch (spec +
+validation in `.specs/features/pr-49-review-fixes/`). **Status: EXECUTE complete + Verifier PASS.**
+Branch `refactor/explicit-names`, 8 commits `1bc864e..6eef50e`, pushed. `pnpm check` green (381
+tests). Closed: the BLOCK (shadowed-`event` self-compare tautology in `interpret.ts` that dropped
+a `Contribution Attributed To Another Format` event — `e0ee294` + regression tests
+`e0ee294`/`6eef50e`), lint guard `no-self-compare` + `@typescript-eslint/no-shadow` at error
+(`5987432`), `wm` → `writeModel` repo-wide (`8191a00`, 20 files), NOTE renames (`ad96906`),
+**AD-026** recorded, PR #49 body corrected. Verifier gap AC1.2 (guard `format`/`note` clauses
+undiscriminated) closed by `6eef50e`. **PR #49 still needs restacking onto `main` once its base
+lands** (unchanged from below).
+
+---
+
+**Prior feature:** `slice-1-capture-loop` (GitHub issue #38)
 **Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
 **Phase:** slice-1 EXECUTE complete + Verifier PASS. **Follow-up: `slice-1-review-fixes`** —
 the PR #46 automated-review fix batch (spec + validation in

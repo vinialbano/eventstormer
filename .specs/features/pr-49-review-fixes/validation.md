@@ -107,6 +107,7 @@ Deliberate NOTE: `interpret.ts` comment style — the guard fix carries no proce
 - **Root cause**: the `already` idempotency guard in `interpret.ts` `case 'attribute-to-other-format'` matches on `contributionId` **and** `format` **and** `note`. Only the `contributionId` clause is exercised (mutation a killed). Flipping `note ===` to `!==` (mutation c) survives — no test re-derives the same contribution's track with a changed `note`.
 - **Fix task**: add one unit test in `interpret.test.ts` — one contribution interpreted twice, second turn's `attribute-to-other-format` has the **same `format` but a different `note`** → assert **two** `Contribution Attributed To Another Format` events for that one `contributionId`. (Or, if the domain intent is "one attribution per contribution regardless of note", tighten the guard to key on `contributionId` only and assert the single-event outcome — a Design-time clarification.)
 - **Priority**: Minor. Does not block merge — the shipped BLOCK regression (B1) is fully covered.
+- **Resolved** — `6eef50e`: added `it('keeps a distinct out-of-format notice per note, and suppresses an exact repeat')` — one turn, two distinct-note `policy` notices + an exact repeat. Kills the `===`→`!==` mutation on both the `format` and `note` clauses (re-checked by hand). Guard kept keying on all three fields (exact-duplicate idempotency key; the `derived_track` ledger is the primary protection). Gate now 381 tests.
 
 ---
 
