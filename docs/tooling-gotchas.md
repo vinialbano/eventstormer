@@ -79,6 +79,12 @@ published docs for the installed version.
   runs `prepare` → lefthook install, and the action's `git commit` / `git push` would otherwise
   fire those hooks. Do not bump `package.json` `version` in a slice PR — that is the version PR's
   job; a pre-bump plus a `minor` changeset ships the next slice's number.
+- **The repo must allow Actions to open PRs.** YAML `permissions: pull-requests: write` is not
+  enough. Settings → Actions → General → "Allow GitHub Actions to create and approve pull
+  requests" (`can_approve_pull_request_reviews`) must be on, or `changesets/action` fails with
+  "GitHub Actions is not permitted to create or approve pull requests" after a successful push.
+  Default workflow permissions stay `read`; this workflow widens only what it needs. PRs opened
+  with `GITHUB_TOKEN` do not trigger `pull_request` workflows — expected, not a missing check.
 
 ## Installed pins
 
