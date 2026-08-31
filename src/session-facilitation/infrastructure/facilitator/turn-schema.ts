@@ -81,7 +81,9 @@ const NextMove = z.object({
     .min(1)
     .max(400)
     .optional()
-    .describe('Required when move is "ask": the follow-up question to put to the expert.'),
+    .describe(
+      'Required when move is "ask": the follow-up question to put to the expert, at most 400 characters.',
+    ),
 })
 
 export const FacilitationTurnSchema = z.object({
