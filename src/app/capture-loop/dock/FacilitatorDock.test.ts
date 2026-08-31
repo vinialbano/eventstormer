@@ -35,10 +35,10 @@ const view = (over: Partial<SessionView> = {}): SessionView => ({
 
 let fetchMock: ReturnType<typeof vi.fn>
 
-const seed = (v: SessionView, cards: ProposalCard[]) => {
+const seed = (sessionView: SessionView, cards: ProposalCard[]) => {
   const session = useSessionStore()
   const proposals = useProposalsStore()
-  session.view = v
+  session.view = sessionView
   proposals.cards = cards
   return { session, proposals }
 }
@@ -59,7 +59,7 @@ describe('FacilitatorDock', () => {
     seed(view(), [card(), card({ proposalId: 'p2', label: 'Order confirmed' })])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
-    const question = wrapper.findAll('.turn').find((t) => t.text().includes('What happens first?'))
+    const question = wrapper.findAll('.turn').find((turn) => turn.text().includes('What happens first?'))
     expect(question?.attributes('role')).toBe('status')
 
     expect(wrapper.findAll('.dock__cluster')).toHaveLength(1)
@@ -127,7 +127,7 @@ describe('FacilitatorDock', () => {
     expect(scopeCard.text()).toContain('SCOPE')
     expect(scopeCard.text()).toContain('Restaurant service, from seating to payment.')
     // the raw scope question is folded into the card, not also shown as a plain message
-    expect(wrapper.findAll('.turn').filter((t) => t.text().includes('What are we mapping?'))).toHaveLength(0)
+    expect(wrapper.findAll('.turn').filter((turn) => turn.text().includes('What are we mapping?'))).toHaveLength(0)
     expect(wrapper.findAll('.dock__scope')).toHaveLength(1)
 
     await wrapper.get('.dock__scope .btn--primary').trigger('click')
@@ -176,9 +176,9 @@ describe('FacilitatorDock', () => {
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
     expect(wrapper.text()).toContain('describe the first thing that happens')
-    const turns = wrapper.findAll('.turn').map((t) => t.text())
+    const turns = wrapper.findAll('.turn').map((turn) => turn.text())
     expect(turns[0]).toContain('describe the first thing that happens')
-    expect(turns.some((t) => t.includes('A customer places an order.'))).toBe(true)
+    expect(turns.some((turn) => turn.includes('A customer places an order.'))).toBe(true)
   })
 
   it('labels a proposal card by its building-block kind, not always EVENT', () => {
@@ -189,7 +189,7 @@ describe('FacilitatorDock', () => {
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
     const pills = wrapper.findAll('.pc__pill')
-    expect(pills.map((p) => p.text())).toEqual(['ACTOR', 'SYSTEM'])
+    expect(pills.map((pill) => pill.text())).toEqual(['ACTOR', 'SYSTEM'])
     expect(pills[0]?.classes()).toContain('pc__pill--actor')
     expect(pills[1]?.classes()).toContain('pc__pill--system')
   })
@@ -293,7 +293,7 @@ describe('FacilitatorDock', () => {
     await wrapper.get('.drawer__acceptall').trigger('click')
     await flushPromises()
 
-    const urls = fetchMock.mock.calls.map((c) => String(c[0])).filter((u) => u.endsWith('/accept'))
+    const urls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.endsWith('/accept'))
     expect(urls).toEqual(['/api/proposals/p1/accept', '/api/proposals/p2/accept'])
     expect(wrapper.emitted('board-dirty')).toHaveLength(1)
   })

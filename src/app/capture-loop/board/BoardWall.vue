@@ -37,7 +37,7 @@ const fresh = ref(new Set<string>())
 let mounted = false
 
 watch(
-  () => props.blocks.map((b) => b.id),
+  () => props.blocks.map((block) => block.id),
   (ids) => {
     for (const id of ids) {
       if (seen.has(id)) continue

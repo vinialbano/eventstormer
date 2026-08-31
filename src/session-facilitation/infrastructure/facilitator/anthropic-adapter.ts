@@ -24,7 +24,7 @@ import { FacilitationTurnSchema, OpeningQuestionSchema } from './turn-schema.ts'
  * `ai` boundary, so no test makes a real HTTP call.
  */
 
-interface FacilitatorGenerateArgs {
+interface FacilitatorGenerateArguments {
   model: ModelName
   schema: ZodType
   instructions: string
@@ -38,7 +38,7 @@ export interface FacilitatorGenerateResult {
   usage: TokenUsage
 }
 
-export type FacilitatorGenerate = (args: FacilitatorGenerateArgs) => Promise<FacilitatorGenerateResult>
+export type FacilitatorGenerate = (args: FacilitatorGenerateArguments) => Promise<FacilitatorGenerateResult>
 
 interface LadderRung {
   model: ModelName
@@ -57,7 +57,7 @@ const buildLadder = (primary: ModelName): readonly LadderRung[] => [
 ]
 
 export interface AnthropicFacilitatorDeps {
-  dataDir: string
+  dataDirectory: string
   clock: Clock
   /** Primary model for the ladder. Unset → `claude-sonnet-5`. */
   model?: ModelName
@@ -114,19 +114,19 @@ const makeDefaultGenerate =
 // of terminally failing the contribution.
 const RETRYABLE_STATUS = new Set([408, 409, 425, 429])
 
-const classifyThrown = (e: unknown): FacilitatorFailure['kind'] => {
-  if (NoObjectGeneratedError.isInstance(e)) return 'schema-invalid'
+const classifyThrown = (error: unknown): FacilitatorFailure['kind'] => {
+  if (NoObjectGeneratedError.isInstance(error)) return 'schema-invalid'
   // The AI SDK's `APICallError` already computes a retryable flag (408/409/429/5xx,
   // plus anything a provider marks transient) — trust it before guessing from the status.
-  if ((e as { isRetryable?: unknown }).isRetryable === true) return 'provider-down'
-  const status = (e as { statusCode?: unknown }).statusCode
+  if ((error as { isRetryable?: unknown }).isRetryable === true) return 'provider-down'
+  const status = (error as { statusCode?: unknown }).statusCode
   if (typeof status === 'number' && RETRYABLE_STATUS.has(status)) return 'provider-down'
   if (typeof status === 'number' && status >= 400 && status < 500) return 'schema-invalid'
   return 'provider-down'
 }
 
-const messageOf = (e: unknown): string =>
-  e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e)
+const messageOf = (error: unknown): string =>
+  error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error)
 
 type StepOutcome<T> =
   | { ok: true; value: T }
@@ -136,7 +136,7 @@ type StepOutcome<T> =
 export const createAnthropicFacilitator = (deps: AnthropicFacilitatorDeps): Facilitator => {
   const generate =
     deps.generate ?? makeDefaultGenerate(deps.attemptTimeoutMs ?? DEFAULT_ATTEMPT_TIMEOUT_MS)
-  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)))
+  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
   const ladder = deps.ladder ?? buildLadder(deps.model ?? 'claude-sonnet-5')
 
   const runStep = async <T>(
@@ -148,32 +148,32 @@ export const createAnthropicFacilitator = (deps: AnthropicFacilitatorDeps): Faci
     let raw: FacilitatorGenerateResult
     try {
       raw = await generate({ model, schema, instructions, prompt })
-    } catch (e) {
-      const kind = classifyThrown(e)
+    } catch (error) {
+      const kind = classifyThrown(error)
       // usage 0 on a throw: a client-side abort (or a transport error) fires
       // after the request reached the provider, which may still bill it — the
       // JSONL ledger under-accounts a timed-out attempt. Acceptable for a
       // best-effort cost estimate; revisit if spend tracking needs to be exact.
-      logModelCall(deps.dataDir, {
+      logModelCall(deps.dataDirectory, {
         at: deps.clock(),
         model,
         requestMessages: { instructions, prompt },
         responseText: '',
-        parseResult: { error: messageOf(e) },
+        parseResult: { error: messageOf(error) },
         warnings: undefined,
         usage: { inputTokens: 0, outputTokens: 0 },
         costEstimateUsd: 0,
       })
       return kind === 'schema-invalid'
-        ? { ok: false, kind, detail: messageOf(e) }
+        ? { ok: false, kind, detail: messageOf(error) }
         : { ok: false, kind }
     }
 
     const parsed = schema.safeParse(raw.output)
     const detail = parsed.success
       ? ''
-      : parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
-    logModelCall(deps.dataDir, {
+      : parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ')
+    logModelCall(deps.dataDirectory, {
       at: deps.clock(),
       model,
       requestMessages: { instructions, prompt },

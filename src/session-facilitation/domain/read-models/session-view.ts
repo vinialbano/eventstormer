@@ -67,47 +67,47 @@ export const sessionView = (
   const failed = new Set<ContributionId>()
   let scopeStatement: string | undefined
 
-  for (const e of events) {
-    switch (e.type) {
+  for (const event of events) {
+    switch (event.type) {
       case 'Contribution Made':
-        madeOrder.push(e.contributionId)
+        madeOrder.push(event.contributionId)
         transcript.push({
           kind: 'contribution',
-          speaker: e.speaker,
-          text: e.body,
-          at: e.at,
-          contributionId: e.contributionId,
+          speaker: event.speaker,
+          text: event.body,
+          at: event.at,
+          contributionId: event.contributionId,
         })
         break
       case 'Question Asked':
-        questions.set(e.questionId, {
-          questionId: e.questionId,
-          kind: e.kind,
-          text: e.text,
+        questions.set(event.questionId, {
+          questionId: event.questionId,
+          kind: event.kind,
+          text: event.text,
           resolved: false,
         })
-        if (e.kind === 'scope') scopeStatement = e.scopeStatement
+        if (event.kind === 'scope') scopeStatement = event.scopeStatement
         transcript.push({
           kind: 'question',
           speaker: 'facilitator',
-          text: e.text,
-          at: e.at,
-          questionKind: e.kind,
+          text: event.text,
+          at: event.at,
+          questionKind: event.kind,
         })
         break
       case 'Question Answered': {
-        const q = questions.get(e.questionId)
-        if (q) q.resolved = true
+        const question = questions.get(event.questionId)
+        if (question) question.resolved = true
         break
       }
       case 'Contribution Attributed To Another Format':
-        transcript.push({ kind: 'notice', speaker: 'facilitator', text: e.note, at: e.at })
+        transcript.push({ kind: 'notice', speaker: 'facilitator', text: event.note, at: event.at })
         break
       case 'Contribution Interpreted':
-        interpreted.set(e.contributionId, e.tracks.length)
+        interpreted.set(event.contributionId, event.tracks.length)
         break
       case 'Contribution Interpretation Failed':
-        failed.add(e.contributionId)
+        failed.add(event.contributionId)
         break
       case 'Session Started':
       case 'Session Closed':
@@ -119,8 +119,8 @@ export const sessionView = (
     if (failed.has(contributionId)) return 'failed'
     const trackCount = interpreted.get(contributionId)
     if (trackCount !== undefined) {
-      for (let i = 0; i < trackCount; i += 1) {
-        if (!derivedTracks.has(trackKey(contributionId, i))) return 'interpreted'
+      for (let index = 0; index < trackCount; index += 1) {
+        if (!derivedTracks.has(trackKey(contributionId, index))) return 'interpreted'
       }
       return 'derived'
     }
@@ -147,9 +147,9 @@ export const sessionView = (
     },
     transcript,
     openQuestions: [...questions.values()]
-      .filter((q) => !q.resolved)
+      .filter((question) => !question.resolved)
       .map(({ questionId, kind, text }) => ({ questionId, kind, text })),
     contributions,
-    fullyDerived: contributions.every((c) => c.status === 'derived' || c.status === 'failed'),
+    fullyDerived: contributions.every((contribution) => contribution.status === 'derived' || contribution.status === 'failed'),
   }
 }

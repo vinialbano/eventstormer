@@ -7,8 +7,8 @@ import { OP_SCHEMA_VERSION } from '../domain-model-capture/api.ts'
  * that Hono RPC and `testClient` infer from, and nothing fails until a caller
  * loses its types. This slice is the worked example; copy its shape.
  */
-export const healthRoutes = new Hono().get('/health', (c) =>
-  c.json({
+export const healthRoutes = new Hono().get('/health', (context) =>
+  context.json({
     status: 'ok' as const,
     opSchemaVersion: OP_SCHEMA_VERSION,
   }),

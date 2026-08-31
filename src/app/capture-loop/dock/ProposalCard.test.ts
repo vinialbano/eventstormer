@@ -7,7 +7,7 @@ const base = { kindLabel: 'EVENT', label: 'Order placed', accepter: 'Maria' } as
 describe('ProposalCard', () => {
   it('offers Accept / Edit / Reject / Hold on a fresh proposal', () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED' } })
-    const labels = wrapper.findAll('button').map((b) => b.text())
+    const labels = wrapper.findAll('button').map((button) => button.text())
     expect(labels).toEqual(['Accept', 'Edit', 'Reject', 'Hold'])
     void wrapper.get('.btn--primary').trigger('click')
     expect(wrapper.emitted('accept')).toHaveLength(1)
@@ -42,7 +42,7 @@ describe('ProposalCard', () => {
   it('shows a parked chip and an Unpark action when held', () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED', held: true } })
     expect(wrapper.text()).toContain('parked')
-    const labels = wrapper.findAll('button').map((b) => b.text())
+    const labels = wrapper.findAll('button').map((button) => button.text())
     expect(labels).toContain('Unpark')
     expect(labels).not.toContain('Hold')
     void wrapper.get('.pc__ribbon')

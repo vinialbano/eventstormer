@@ -50,6 +50,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: .specs/features/slice-1-review-fixes-2/validation.md (spec-driven/verifier)
 - last seen: 2026-08-31T11:19:44Z
 
+### L-007 — When an idempotency/no-op guard ANDs several equality clauses (id AND field-a AND field-b), add a test that varies each non-id clause independently; a test that only varies the id leaves the other clauses undiscriminated and flipping their `===` to `!==` survives.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `session-facilitation/capabilities;idempotency;tests` · harmful: 0
+- features: pr-49-review-fixes
+- evidence: src/session-facilitation/capabilities/interpret-contribution/interpret.ts:132 — mutant c (`priorEvent.note === track.note` → `!==`) survived
+- last seen: 2026-08-31T12:00:00Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

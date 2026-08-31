@@ -51,8 +51,8 @@ const scriptedFacilitator = (file: string | undefined): Facilitator => {
       : (JSON.parse(readFileSync(file, 'utf8')) as { turns?: FacilitationTurn[]; openings?: OpeningQuestion[] })
   const turns = parsed.turns ?? []
   const openings = parsed.openings ?? []
-  let t = 0
-  let o = 0
+  let turnIndex = 0
+  let openingIndex = 0
 
   const acknowledge: FacilitationTurn = { interpretation: [], nextMove: { move: 'acknowledge' } }
   const scopeQuestion: OpeningQuestion = {
@@ -61,8 +61,8 @@ const scriptedFacilitator = (file: string | undefined): Facilitator => {
   }
 
   return {
-    interpret: () => Promise.resolve(ok(turns[Math.min(t++, turns.length - 1)] ?? acknowledge)),
-    askOpening: () => Promise.resolve(ok(openings[Math.min(o++, openings.length - 1)] ?? scopeQuestion)),
+    interpret: () => Promise.resolve(ok(turns[Math.min(turnIndex++, turns.length - 1)] ?? acknowledge)),
+    askOpening: () => Promise.resolve(ok(openings[Math.min(openingIndex++, openings.length - 1)] ?? scopeQuestion)),
   }
 }
 
@@ -75,13 +75,13 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): HostConfig => 
   }
 
   const dbPath = env.EVENTSTORMER_DB ?? DEFAULT_DB_PATH
-  const dataDir = env.DATA_DIR ?? './data'
+  const dataDirectory = env.DATA_DIR ?? './data'
   const clock = systemClock
 
   // `node:sqlite` and the JSONL model-call log both fail if their parent
   // directory is absent — create it so `pnpm dev` boots without a pre-existing
   // `data/` (recursive + idempotent, so an existing directory is a no-op).
-  mkdirSync(dataDir, { recursive: true })
+  mkdirSync(dataDirectory, { recursive: true })
   mkdirSync(dirname(dbPath), { recursive: true })
 
   const store = createSqliteEventStore(dbPath)
@@ -100,7 +100,7 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): HostConfig => 
 
   const facilitator = scripted
     ? scriptedFacilitator(env.SCRIPTED_FACILITATOR_FILE)
-    : createAnthropicFacilitator({ dataDir, clock, ...(model === undefined ? {} : { model }) })
+    : createAnthropicFacilitator({ dataDirectory, clock, ...(model === undefined ? {} : { model }) })
 
   return {
     store,

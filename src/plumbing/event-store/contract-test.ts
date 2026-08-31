@@ -4,10 +4,10 @@ import type { EventStore, StoredOperationInput, StreamKey } from './port.ts'
 
 const stream: StreamKey = { context: 'domain-model-capture', aggregate: 'board', id: 'w1' }
 
-const op = (n: number): StoredOperationInput => ({
+const op = (count: number): StoredOperationInput => ({
   at: '2020-01-01T00:00:00.000Z',
   opVersion: 1,
-  operation: { n },
+  operation: { count },
 })
 
 /**
@@ -22,7 +22,7 @@ export const eventStoreContract = (name: string, makeStore: () => EventStore): v
       const result = store.append(stream, -1, [op(0), op(1), op(2)])
 
       expect(result).toEqual({ ok: true, value: { nextPosition: 2 } })
-      expect(store.read(stream).map((r) => r.position)).toEqual([0, 1, 2])
+      expect(store.read(stream).map((row) => row.position)).toEqual([0, 1, 2])
     })
 
     it('returns operations in log order across multiple appends', () => {
@@ -32,8 +32,8 @@ export const eventStoreContract = (name: string, makeStore: () => EventStore): v
       store.append(stream, 1, [op(12)])
 
       const rows = store.read(stream)
-      expect(rows.map((r) => (r.operation as { n: number }).n)).toEqual([10, 11, 12])
-      expect(rows.map((r) => r.position)).toEqual([0, 1, 2])
+      expect(rows.map((row) => (row.operation as { count: number }).count)).toEqual([10, 11, 12])
+      expect(rows.map((row) => row.position)).toEqual([0, 1, 2])
     })
 
     it('rejects a stale expectedPosition with a transient error and writes nothing', () => {
@@ -94,7 +94,7 @@ export const eventStoreContract = (name: string, makeStore: () => EventStore): v
 
       const rows = store.read(stream)
       expect(rows).toHaveLength(1)
-      expect(rows.map((r) => r.position)).toEqual([0])
+      expect(rows.map((row) => row.position)).toEqual([0])
     })
   })
 }

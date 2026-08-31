@@ -14,8 +14,8 @@ export const useReducedMotion = () => {
   const reduced = ref(query?.matches ?? false)
 
   if (query !== null) {
-    const onChange = (e: MediaQueryListEvent): void => {
-      reduced.value = e.matches
+    const onChange = (error: MediaQueryListEvent): void => {
+      reduced.value = error.matches
     }
     query.addEventListener('change', onChange)
     onScopeDispose(() => {

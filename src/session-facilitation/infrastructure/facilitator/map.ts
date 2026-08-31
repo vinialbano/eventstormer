@@ -23,27 +23,27 @@ export interface MappedTurn {
 }
 
 export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn => {
-  const tracks: InterpretedTrack[] = turn.interpretation.map((t): InterpretedTrack => {
-    switch (t.track) {
+  const tracks: InterpretedTrack[] = turn.interpretation.map((track): InterpretedTrack => {
+    switch (track.track) {
       case 'propose-building-block':
         return {
           track: 'propose-building-block',
           proposalId: mint.proposalId(),
-          blockKind: t.blockKind,
-          label: t.label,
-          bar: t.bar,
-          ...(t.evidenceSpan === undefined ? {} : { evidenceSpan: t.evidenceSpan }),
+          blockKind: track.blockKind,
+          label: track.label,
+          bar: track.bar,
+          ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
         }
       case 'flag-phase':
         return {
           track: 'flag-phase',
           questionId: mint.questionId(),
-          questionText: t.questionText,
+          questionText: track.questionText,
         }
       case 'attribute-to-other-format':
-        return { track: 'attribute-to-other-format', format: t.format, note: t.note }
+        return { track: 'attribute-to-other-format', format: track.format, note: track.note }
       case 'answer-question':
-        return { track: 'answer-question', questionId: QuestionIdSchema.parse(t.questionId) }
+        return { track: 'answer-question', questionId: QuestionIdSchema.parse(track.questionId) }
     }
   })
 

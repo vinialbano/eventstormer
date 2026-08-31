@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /** The minimal reference to a party acting on an operation. */
-const PartyRef = z.object({
+const PartyReference = z.object({
   name: z.string().min(1),
 })
 
@@ -16,6 +16,6 @@ const PartyRef = z.object({
  * name: creatorName } }`. Verified by `author.test.ts`.
  */
 export const Author = z.object({
-  proposer: PartyRef.optional(),
-  accepter: PartyRef,
+  proposer: PartyReference.optional(),
+  accepter: PartyReference,
 })

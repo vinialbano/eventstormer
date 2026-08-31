@@ -7,8 +7,8 @@ import type { BoardWriteModel } from './model.ts'
  * capture / withdraw / reinstate change it; `reword` and the 14 not-yet-handled
  * operations leave it untouched. Slices 3–4 fold `follows` / `causedBy` here.
  */
-export const evolve = (wm: BoardWriteModel, op: Operation): BoardWriteModel => {
-  const next: BoardWriteModel = new Map(wm)
+export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteModel => {
+  const next: BoardWriteModel = new Map(writeModel)
 
   if (op.kind === 'capture-domain-event') {
     next.set(op.id, { kind: 'domain-event', withdrawn: false })

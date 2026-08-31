@@ -19,7 +19,7 @@ export const readBuildingBlocks = (
   deps: BoardAccessDeps,
   workshopId: WorkshopId,
 ): BuildingBlockRow[] => {
-  const log = deps.store.read(boardStream(workshopId)).map((r) => Operation.parse(r.operation))
+  const log = deps.store.read(boardStream(workshopId)).map((row) => Operation.parse(row.operation))
   const snapshot = replay(log)
   return [...snapshot.blocks].map(([id, block]) => ({ id, kind: block.kind, label: block.label }))
 }

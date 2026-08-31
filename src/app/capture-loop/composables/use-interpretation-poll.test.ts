@@ -16,8 +16,8 @@ const viewWith = (
   scope: { status: scope },
   transcript: [],
   openQuestions: [],
-  contributions: contributions.map((status, i) => ({ contributionId: `c${String(i)}`, status })),
-  fullyDerived: contributions.every((s) => s === 'derived' || s === 'failed'),
+  contributions: contributions.map((status, index) => ({ contributionId: `c${String(index)}`, status })),
+  fullyDerived: contributions.every((status) => status === 'derived' || status === 'failed'),
 })
 
 let current: SessionView
@@ -115,7 +115,7 @@ it('refetchNow refreshes both polled stores', async () => {
 
   await poll.refetchNow()
 
-  const urls = fetchMock.mock.calls.map((c) => c[0] as string)
+  const urls = fetchMock.mock.calls.map((call) => call[0] as string)
   expect(urls).toContain('/api/workshops/w1/session')
   expect(urls).toContain('/api/sessions/s1/proposals')
   scope.stop()

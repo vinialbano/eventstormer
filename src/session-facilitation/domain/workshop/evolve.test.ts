@@ -5,13 +5,13 @@ import { evolve } from './evolve.ts'
 import { emptyWorkshop } from './model.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
-const w = 'w_1' as WorkshopId
+const workshopId = 'w_1' as WorkshopId
 
 const started: WorkshopEvent = {
   v: 1,
   at,
   type: 'Workshop Started',
-  workshopId: w,
+  workshopId,
   format: 'big-picture',
   creatorName: 'Dana',
 }
@@ -31,7 +31,7 @@ describe('Workshop.evolve', () => {
       v: 1,
       at,
       type: 'Scope Set',
-      workshopId: w,
+      workshopId,
       statement: 'Library lending across branches.',
     }
     expect(evolve(afterStart, scopeSet)).toBe(afterStart)

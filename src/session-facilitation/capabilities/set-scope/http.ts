@@ -21,26 +21,26 @@ const Body = z.object({ statement: z.string() })
  * repeatable.
  */
 export const setScopeRoutes = (deps: SetScopeDeps) =>
-  new Hono().post('/workshops/:id/scope', async (c) => {
-    const workshopId = c.req.param('id') as WorkshopId
-    const body = Body.safeParse(await c.req.json().catch(() => null))
-    if (!body.success) return c.json({ error: 'invalid-body' as const }, 400)
+  new Hono().post('/workshops/:id/scope', async (context) => {
+    const workshopId = context.req.param('id') as WorkshopId
+    const body = Body.safeParse(await context.req.json().catch(() => null))
+    if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
 
     if (readBuildingBlocks(deps, workshopId).length > 0) {
-      return c.json({ error: 'scope-locked' as const }, 409)
+      return context.json({ error: 'scope-locked' as const }, 409)
     }
 
     const rows = deps.store.read(workshopStream(workshopId))
-    const wm = replay(rows.map((r) => WorkshopEvent.parse(r.operation)))
+    const writeModel = replay(rows.map((row) => WorkshopEvent.parse(row.operation)))
 
-    const decided = decide(wm, {
+    const decided = decide(writeModel, {
       type: 'Set Scope',
       workshopId,
       statement: body.data.statement,
       at: deps.clock(),
     })
-    if (!decided.ok) return c.json({ error: decided.error.kind }, 400)
+    if (!decided.ok) return context.json({ error: decided.error.kind }, 400)
 
     deps.store.append(workshopStream(workshopId), rows.length - 1, storedOps(decided.value))
-    return c.json({ ok: true as const }, 200)
+    return context.json({ ok: true as const }, 200)
   })

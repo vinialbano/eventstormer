@@ -25,10 +25,10 @@ describe('session-facilitation branded id schemas', () => {
   })
 
   it('each schema infers the plumbing type mirror — assignable with no cast', () => {
-    const s: SessionIdMirror = SessionId.parse('s_1')
-    const c: ContributionIdMirror = ContributionId.parse('c_1')
-    const p: ProposalIdMirror = ProposalId.parse('p_1')
-    const q: QuestionIdMirror = QuestionId.parse('q_1')
-    expect([s, c, p, q]).toEqual(['s_1', 'c_1', 'p_1', 'q_1'])
+    const session: SessionIdMirror = SessionId.parse('s_1')
+    const contribution: ContributionIdMirror = ContributionId.parse('c_1')
+    const proposal: ProposalIdMirror = ProposalId.parse('p_1')
+    const question: QuestionIdMirror = QuestionId.parse('q_1')
+    expect([session, contribution, proposal, question]).toEqual(['s_1', 'c_1', 'p_1', 'q_1'])
   })
 })

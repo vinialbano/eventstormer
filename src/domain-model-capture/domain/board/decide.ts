@@ -13,47 +13,47 @@ import type { BoardWriteModel, Rejection } from './model.ts'
  * The `switch` is exhaustive over the frozen union — the 14 not-yet-implemented
  * kinds are rejected explicitly, never silently ignored.
  */
-export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], Rejection> => {
+export const decide = (writeModel: BoardWriteModel, op: Operation): Result<Operation[], Rejection> => {
   // Belt-and-suspenders re-parse: the append path parses before `decide`, but a
   // schema failure here is cheap to map and keeps `decide` self-contained.
   const parsed = Operation.safeParse(op)
   if (!parsed.success) {
     return err({ kind: 'schema', classification: 'systemic', issues: parsed.error.issues })
   }
-  const o = parsed.data
+  const operation = parsed.data
 
-  switch (o.kind) {
+  switch (operation.kind) {
     case 'capture-domain-event':
     case 'identify-actor':
     case 'identify-system':
-      return wm.has(o.id)
-        ? err({ kind: 'duplicate-id', classification: 'systemic', id: o.id })
-        : ok([o])
+      return writeModel.has(operation.id)
+        ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
+        : ok([operation])
 
     case 'reword': {
-      if (!wm.has(o.target)) {
-        return err({ kind: 'unknown-target', classification: 'systemic', target: o.target })
+      if (!writeModel.has(operation.target)) {
+        return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
       }
-      if (o.label.trim().length === 0) {
-        return err({ kind: 'empty-label', classification: 'systemic', target: o.target })
+      if (operation.label.trim().length === 0) {
+        return err({ kind: 'empty-label', classification: 'systemic', target: operation.target })
       }
-      return ok([o])
+      return ok([operation])
     }
 
     case 'withdraw':
-      return wm.has(o.target)
-        ? ok([o])
-        : err({ kind: 'unknown-target', classification: 'systemic', target: o.target })
+      return writeModel.has(operation.target)
+        ? ok([operation])
+        : err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
 
     case 'reinstate': {
-      const block = wm.get(o.target)
+      const block = writeModel.get(operation.target)
       if (!block) {
-        return err({ kind: 'unknown-target', classification: 'systemic', target: o.target })
+        return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
       }
       if (!block.withdrawn) {
-        return err({ kind: 'not-withdrawn', classification: 'systemic', target: o.target })
+        return err({ kind: 'not-withdrawn', classification: 'systemic', target: operation.target })
       }
-      return ok([o])
+      return ok([operation])
     }
 
     case 'raise-hot-spot':
@@ -70,6 +70,6 @@ export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], 
     case 'unmark-pivotal':
     case 'resolve':
     case 'reopen':
-      return err({ kind: 'not-implemented-in-slice', classification: 'systemic', operation: o.kind })
+      return err({ kind: 'not-implemented-in-slice', classification: 'systemic', operation: operation.kind })
   }
 }

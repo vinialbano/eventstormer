@@ -29,7 +29,7 @@ export const applyOperation = (
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
     const rows = deps.store.read(stream)
-    const log = rows.map((r) => Operation.parse(r.operation))
+    const log = rows.map((row) => Operation.parse(row.operation))
     const position = rows.length - 1
 
     const decided = decide(replayWriteModel(log), operation)

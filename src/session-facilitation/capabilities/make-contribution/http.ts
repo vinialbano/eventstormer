@@ -15,13 +15,13 @@ import type { MakeContributionDeps } from './deps.ts'
 const Body = z.object({ text: z.string() })
 
 const readSession = (deps: MakeContributionDeps, id: SessionId): SessionEvent[] =>
-  deps.store.read(sessionStream(id)).map((r) => SessionEvent.parse(r.operation))
+  deps.store.read(sessionStream(id)).map((row) => SessionEvent.parse(row.operation))
 
 const readWorkshop = (deps: MakeContributionDeps, id: WorkshopId): WorkshopEvent[] =>
-  deps.store.read(workshopStream(id)).map((r) => WorkshopEvent.parse(r.operation))
+  deps.store.read(workshopStream(id)).map((row) => WorkshopEvent.parse(row.operation))
 
 const workshopIdOf = (events: SessionEvent[]): WorkshopId | undefined =>
-  events.find((e) => e.type === 'Session Started')?.workshopId
+  events.find((event) => event.type === 'Session Started')?.workshopId
 
 /**
  * `POST /sessions/:id/contributions` — capture the expert's words.
@@ -34,16 +34,16 @@ const workshopIdOf = (events: SessionEvent[]): WorkshopId | undefined =>
  */
 export const makeContributionRoutes = (deps: MakeContributionDeps) =>
   new Hono()
-    .post('/sessions/:id/contributions', async (c) => {
-      const sessionId = c.req.param('id') as SessionId
-      const body = Body.safeParse(await c.req.json().catch(() => null))
-      if (!body.success) return c.json({ error: 'invalid-body' as const }, 400)
+    .post('/sessions/:id/contributions', async (context) => {
+      const sessionId = context.req.param('id') as SessionId
+      const body = Body.safeParse(await context.req.json().catch(() => null))
+      if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
 
       const text = body.data.text.trim()
-      if (text.length === 0) return c.body(null, 204)
+      if (text.length === 0) return context.body(null, 204)
 
       const events = readSession(deps, sessionId)
-      if (events.length === 0) return c.json({ error: 'unknown-session' as const }, 404)
+      if (events.length === 0) return context.json({ error: 'unknown-session' as const }, 404)
 
       const workshopId = workshopIdOf(events)
       const speaker =
@@ -61,28 +61,28 @@ export const makeContributionRoutes = (deps: MakeContributionDeps) =>
       })
       if (!decided.ok) {
         const status = decided.error.kind === 'session-closed' ? 409 : 400
-        return c.json({ error: decided.error.kind }, status)
+        return context.json({ error: decided.error.kind }, status)
       }
 
       deps.store.append(sessionStream(sessionId), events.length - 1, storedOps(decided.value))
-      return c.json({ contributionId }, 202)
+      return context.json({ contributionId }, 202)
     })
-    .get('/workshops/:id/session', (c) => {
-      const workshopId = c.req.param('id') as WorkshopId
+    .get('/workshops/:id/session', (context) => {
+      const workshopId = context.req.param('id') as WorkshopId
       const workshopEvents = readWorkshop(deps, workshopId)
       // 404 is reserved for an unknown workshop. A known workshop with no
       // session yet is a normal state the capture screen shows a "start
       // session" affordance for — not an error.
-      if (workshopEvents.length === 0) return c.json({ error: 'unknown-workshop' as const }, 404)
+      if (workshopEvents.length === 0) return context.json({ error: 'unknown-workshop' as const }, 404)
 
-      const scopeIsSet = workshopEvents.some((e) => e.type === 'Scope Set')
+      const scopeIsSet = workshopEvents.some((event) => event.type === 'Scope Set')
       const creatorName = replayWorkshop(workshopEvents).creatorName
       const { open, closed } = sessionIdsFor(deps.db, workshopId)
       const sessionId = open ?? closed.at(-1)
 
       const base = { sessionOpen: open !== undefined, creatorName }
       if (sessionId === undefined) {
-        return c.json({
+        return context.json({
           ...base,
           sessionId: null,
           scope: { status: scopeIsSet ? ('set' as const) : ('none' as const) },
@@ -98,5 +98,5 @@ export const makeContributionRoutes = (deps: MakeContributionDeps) =>
         ...(deps.inFlight === undefined ? {} : { inFlight: deps.inFlight() }),
         derivedTracks: readDerivedTrackKeys(deps.db),
       })
-      return c.json({ ...view, ...base, sessionId })
+      return context.json({ ...view, ...base, sessionId })
     })

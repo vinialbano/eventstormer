@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
+import pluginUnicorn from 'eslint-plugin-unicorn'
 import globals from 'globals'
 
 // `tseslint.config()` is deprecated in favour of ESLint core's `defineConfig()`.
@@ -51,7 +52,48 @@ export default defineConfig([
   },
 
   {
+    plugins: { unicorn: pluginUnicorn },
     rules: {
+      // Identifiers are spelled out in full — terse single-letter and abbreviated
+      // names are rejected so the derived model reads like prose.
+      'id-length': ['error', { min: 2, properties: 'never', exceptions: ['_'] }],
+      'unicorn/name-replacements': [
+        'error',
+        {
+          checkFilenames: false,
+          checkProperties: false,
+          allowList: {
+            deps: true,
+            Deps: true,
+            db: true,
+            Db: true,
+            props: true,
+            Props: true,
+            ref: true,
+            refs: true,
+            params: true,
+            env: true,
+            args: true,
+            fn: true,
+            ok: true,
+            err: true,
+            isOk: true,
+            isErr: true,
+          },
+        },
+      ],
+
+      // A shadowed inner binding can turn an identity check into an `x === x`
+      // tautology that still type-checks; these two rules make that class a lint
+      // error rather than a shippable regression.
+      'no-shadow': 'off',
+      '@typescript-eslint/no-shadow': 'error',
+      'no-self-compare': 'error',
+
+      // `{ sessionId: sessionId }` is a spelled-out name pretending to be a
+      // rename; shorthand is what it would be written as by hand.
+      'object-shorthand': ['error', 'properties'],
+
       // Formatting is not this tool's job and the noise trains agents to ignore it.
       'vue/singleline-html-element-content-newline': 'off',
       'vue/max-attributes-per-line': 'off',

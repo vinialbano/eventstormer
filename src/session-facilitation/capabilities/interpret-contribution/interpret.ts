@@ -19,13 +19,13 @@ import type { InterpretContributionDeps } from './deps.ts'
 type Interpreted = Extract<SessionEvent, { type: 'Contribution Interpreted' }>
 
 const readSession = (deps: InterpretContributionDeps, id: SessionId): SessionEvent[] =>
-  deps.store.read(sessionStream(id)).map((r) => SessionEvent.parse(r.operation))
+  deps.store.read(sessionStream(id)).map((row) => SessionEvent.parse(row.operation))
 
 const readProposal = (deps: InterpretContributionDeps, id: ProposalId): ProposalEvent[] =>
-  deps.store.read(proposalStream(id)).map((r) => ProposalEvent.parse(r.operation))
+  deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
 
 const readWorkshop = (deps: InterpretContributionDeps, id: WorkshopId): WorkshopEvent[] =>
-  deps.store.read(workshopStream(id)).map((r) => WorkshopEvent.parse(r.operation))
+  deps.store.read(workshopStream(id)).map((row) => WorkshopEvent.parse(row.operation))
 
 /** Append decided `Session` events at the stream's current head. */
 const appendSession = (
@@ -50,10 +50,10 @@ const assembleFacilitationContext = (
 ) => {
   const scopeStatement = [...readWorkshop(deps, workshopId)]
     .reverse()
-    .find((e) => e.type === 'Scope Set')?.statement
+    .find((event) => event.type === 'Scope Set')?.statement
 
   const buildingBlocks = readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId).map(
-    (b) => ({ kind: b.kind, label: b.label }),
+    (block) => ({ kind: block.kind, label: block.label }),
   )
 
   const view = sessionView(events)
@@ -62,15 +62,15 @@ const assembleFacilitationContext = (
   const priors = closed.map((id) => {
     const closedEvents = readSession(deps, id)
     const blocksAdded = sessionProposalIds(closedEvents).reduce(
-      (n, pid) => n + readProposal(deps, pid).filter((e) => e.type === 'Operation Applied').length,
+      (count, pid) => count + readProposal(deps, pid).filter((event) => event.type === 'Operation Applied').length,
       0,
     )
     return { events: closedEvents, blocksAdded }
   })
 
   return facilitationContext({
-    recentTranscript: view.transcript.map((t) => `${t.speaker}: ${t.text}`),
-    openQuestions: view.openQuestions.map((q) => q.text),
+    recentTranscript: view.transcript.map((entry) => `${entry.speaker}: ${entry.text}`),
+    openQuestions: view.openQuestions.map((question) => question.text),
     ...(scopeStatement === undefined ? {} : { scopeStatement }),
     priorSummaries: priorSessionHistory(priors),
     buildingBlocks,
@@ -123,13 +123,17 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
         break
       }
       case 'attribute-to-other-format': {
+        // `Attribute Contribution` is not self-idempotent in the session decider,
+        // so re-deriving this track (a different track on the same contribution
+        // hitting `derived_track`, or a replay) would append a duplicate notice.
+        // Skip when an identical (contribution, format, note) notice already exists.
         const events = readSession(deps, event.sessionId)
         const already = events.some(
-          (e) =>
-            e.type === 'Contribution Attributed To Another Format' &&
-            e.contributionId === event.contributionId &&
-            e.format === track.format &&
-            e.note === track.note,
+          (priorEvent) =>
+            priorEvent.type === 'Contribution Attributed To Another Format' &&
+            priorEvent.contributionId === event.contributionId &&
+            priorEvent.format === track.format &&
+            priorEvent.note === track.note,
         )
         if (!already) {
           const decided = decideSession(replaySession(events), {
@@ -185,8 +189,8 @@ const runInterpretation = async (
   try {
     const events = readSession(deps, sessionId)
     const segment = events.find(
-      (e): e is Extract<SessionEvent, { type: 'Contribution Made' }> =>
-        e.type === 'Contribution Made' && e.contributionId === contributionId,
+      (event): event is Extract<SessionEvent, { type: 'Contribution Made' }> =>
+        event.type === 'Contribution Made' && event.contributionId === contributionId,
     )
     if (segment === undefined) return
 
@@ -245,11 +249,11 @@ const runInterpretation = async (
 export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promise<void> => {
   for (const { workshopId, sessionId } of openSessions(deps.db)) {
     const events = readSession(deps, sessionId)
-    const wm = replaySession(events)
-    if (wm.closed) continue
+    const writeModel = replaySession(events)
+    if (writeModel.closed) continue
 
-    const hasScopeQuestion = events.some((e) => e.type === 'Question Asked' && e.kind === 'scope')
-    const scopeSet = readWorkshop(deps, workshopId).some((e) => e.type === 'Scope Set')
+    const hasScopeQuestion = events.some((event) => event.type === 'Question Asked' && event.kind === 'scope')
+    const scopeSet = readWorkshop(deps, workshopId).some((event) => event.type === 'Scope Set')
     if (hasScopeQuestion || scopeSet) continue
 
     const opening = await deps.facilitator.askOpening({
@@ -261,7 +265,7 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
     })
     if (!opening.ok) return
 
-    const decided = decideSession(wm, {
+    const decided = decideSession(writeModel, {
       type: 'Ask Question',
       sessionId,
       questionId: deps.mint.questionId(),
@@ -292,10 +296,10 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
 export const reconcilePendingDerivations = (deps: InterpretContributionDeps): void => {
   for (const { sessionId } of openSessions(deps.db)) {
     const events = readSession(deps, sessionId)
-    for (const e of events) {
-      if (e.type === 'Contribution Interpreted') deriveTracks(deps, e)
+    for (const event of events) {
+      if (event.type === 'Contribution Interpreted') deriveTracks(deps, event)
     }
-    if (events.some((e) => e.type === 'Session Closed')) finishClose(deps, sessionId)
+    if (events.some((event) => event.type === 'Session Closed')) finishClose(deps, sessionId)
   }
 }
 
@@ -310,12 +314,12 @@ export const interpretContribution = async (deps: InterpretContributionDeps): Pr
   for (const { workshopId, sessionId } of openSessions(deps.db)) {
     if (deps.inFlight.sessions().has(sessionId)) continue
     const events = readSession(deps, sessionId)
-    const wm = replaySession(events)
-    if (wm.closed) continue
+    const writeModel = replaySession(events)
+    if (writeModel.closed) continue
 
     const pending = events.find(
-      (e): e is Extract<SessionEvent, { type: 'Contribution Made' }> =>
-        e.type === 'Contribution Made' && !wm.interpreted.has(e.contributionId),
+      (event): event is Extract<SessionEvent, { type: 'Contribution Made' }> =>
+        event.type === 'Contribution Made' && !writeModel.interpreted.has(event.contributionId),
     )
     if (pending === undefined) continue
 

@@ -13,7 +13,7 @@ const summary: SessionSummary = {
 
 describe('facilitationContext — assembly', () => {
   it('passes scope, prior summaries, questions and blocks through and trims the transcript to the last 20', () => {
-    const transcript = Array.from({ length: 25 }, (_, i) => `line ${String(i)}`)
+    const transcript = Array.from({ length: 25 }, (_, index) => `line ${String(index)}`)
     const context = facilitationContext({
       recentTranscript: transcript,
       openQuestions: ['Is fulfilment a phase?'],

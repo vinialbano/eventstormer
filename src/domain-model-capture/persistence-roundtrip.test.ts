@@ -12,15 +12,15 @@ import { emptySnapshot, Operation, OP_SCHEMA_VERSION, replay } from './api.ts'
  * `store.read → replay` directly, the way Slice 2's F06 handler eventually will.
  */
 
-const tempDirs: string[] = []
+const temporaryDirectories: string[] = []
 const freshDbPath = (): string => {
-  const dir = mkdtempSync(join(tmpdir(), 'eventstormer-roundtrip-'))
-  tempDirs.push(dir)
-  return join(dir, 'workshop.db')
+  const directory = mkdtempSync(join(tmpdir(), 'eventstormer-roundtrip-'))
+  temporaryDirectories.push(directory)
+  return join(directory, 'workshop.db')
 }
 
 afterAll(() => {
-  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true })
+  for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true })
 })
 
 const stream: StreamKey = { context: 'domain-model-capture', aggregate: 'board', id: 'w1' }
@@ -47,7 +47,7 @@ describe('persistence round-trip', () => {
     // process ends — drop the reference (Approach A: no dispose API yet)
 
     const second = createSqliteEventStore(path)
-    const fromDisk = replay(second.read(stream).map((r) => Operation.parse(r.operation)))
+    const fromDisk = replay(second.read(stream).map((row) => Operation.parse(row.operation)))
 
     expect(fromDisk).toEqual(replay(ops))
   })
@@ -55,7 +55,7 @@ describe('persistence round-trip', () => {
   it('a never-written stream reads back empty and replays to the empty snapshot', () => {
     const store = createSqliteEventStore(freshDbPath())
     expect(store.read(stream)).toEqual([])
-    expect(replay(store.read(stream).map((r) => Operation.parse(r.operation)))).toEqual(
+    expect(replay(store.read(stream).map((row) => Operation.parse(row.operation)))).toEqual(
       emptySnapshot(),
     )
   })
@@ -64,7 +64,7 @@ describe('persistence round-trip', () => {
     const store = createSqliteEventStore(freshDbPath())
     store.append(stream, -1, ops.map(asInput))
 
-    const versions = store.read(stream).map((r) => r.opVersion)
+    const versions = store.read(stream).map((row) => row.opVersion)
     expect(versions).toHaveLength(ops.length)
     expect(versions).toEqual(ops.map(() => OP_SCHEMA_VERSION))
   })

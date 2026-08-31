@@ -18,8 +18,8 @@ export const anthropicOperationSchema = (): Record<string, unknown> =>
     unrepresentable: 'throw',
     // A mutating void callback — Zod 4's contract. Runs at every node, so a
     // `oneOf` at any depth (nested discriminated unions included) is rewritten.
-    override: (ctx) => {
-      const schema = ctx.jsonSchema
+    override: (context) => {
+      const schema = context.jsonSchema
       if (Array.isArray(schema.oneOf)) {
         schema.anyOf = schema.oneOf
         delete schema.oneOf

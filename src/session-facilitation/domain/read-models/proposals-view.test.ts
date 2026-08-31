@@ -4,16 +4,16 @@ import type { ProposalEvent, SessionEvent } from '../schema/events.ts'
 import { proposalsView } from './proposals-view.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
-const s = 's_1' as SessionId
+const sessionId = 's_1' as SessionId
 const c1 = 'c_1' as ContributionId
-const pid = (n: string): ProposalId => n as ProposalId
+const pid = (value: string): ProposalId => value as ProposalId
 
 const interpretedWith = (proposalIds: ProposalId[]): SessionEvent[] => [
   {
     v: 1,
     at,
     type: 'Contribution Interpreted',
-    sessionId: s,
+    sessionId,
     contributionId: c1,
     tracks: proposalIds.map((proposalId) => ({
       track: 'propose-building-block',
@@ -30,7 +30,7 @@ const birth = (proposalId: ProposalId, label = `Block ${proposalId}`): ProposalE
   at,
   type: 'Building Block Proposed',
   proposalId,
-  sessionId: s,
+  sessionId,
   contributionId: c1,
   blockKind: 'domain-event',
   label,
@@ -85,11 +85,11 @@ describe('proposalsView', () => {
   })
 
   it('groups the 8th+ proposal of one contribution as overflow (display cap of 7)', () => {
-    const ids = Array.from({ length: 9 }, (_, i) => pid(`p_${String(i + 1)}`))
+    const ids = Array.from({ length: 9 }, (_, index) => pid(`p_${String(index + 1)}`))
     const cards = proposalsView(
       interpretedWith(ids),
       ids.map((proposalId) => ({ proposalId, events: [birth(proposalId)] })),
     )
-    expect(cards.map((c) => c.overflow)).toEqual([false, false, false, false, false, false, false, true, true])
+    expect(cards.map((card) => card.overflow)).toEqual([false, false, false, false, false, false, false, true, true])
   })
 })

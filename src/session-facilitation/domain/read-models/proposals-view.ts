@@ -31,8 +31,8 @@ const birthOf = (
   events: ProposalEvent[],
 ): Extract<ProposalEvent, { type: 'Building Block Proposed' }> | undefined =>
   events.find(
-    (e): e is Extract<ProposalEvent, { type: 'Building Block Proposed' }> =>
-      e.type === 'Building Block Proposed',
+    (event): event is Extract<ProposalEvent, { type: 'Building Block Proposed' }> =>
+      event.type === 'Building Block Proposed',
   )
 
 /** Project one `Proposal` stream to its card. `overflow` is caller-supplied
@@ -42,9 +42,9 @@ export const proposalCard = (events: ProposalEvent[], overflow = false): Proposa
   const birth = birthOf(events)
   if (birth === undefined) return undefined
 
-  const wm = replay(events)
-  const lastEdit = [...events].reverse().find((e) => e.type === 'Proposal Edited')
-  const rejected = [...events].reverse().find((e) => e.type === 'Operation Rejected')
+  const writeModel = replay(events)
+  const lastEdit = [...events].reverse().find((event) => event.type === 'Proposal Edited')
+  const rejected = [...events].reverse().find((event) => event.type === 'Operation Rejected')
 
   return {
     proposalId: birth.proposalId,
@@ -52,11 +52,11 @@ export const proposalCard = (events: ProposalEvent[], overflow = false): Proposa
     blockKind: birth.blockKind,
     label: lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label,
     bar: birth.bar,
-    disposition: wm.disposition,
-    held: wm.held,
+    disposition: writeModel.disposition,
+    held: writeModel.held,
     overflow,
     ...(rejected?.type === 'Operation Rejected' ? { applyFailedReason: rejected.reason } : {}),
-    ...(wm.buildingBlockId === undefined ? {} : { buildingBlockId: wm.buildingBlockId }),
+    ...(writeModel.buildingBlockId === undefined ? {} : { buildingBlockId: writeModel.buildingBlockId }),
   }
 }
 
@@ -64,7 +64,7 @@ export const proposalsView = (
   sessionEvents: SessionEvent[],
   streams: { proposalId: ProposalId; events: ProposalEvent[] }[],
 ): ProposalCard[] => {
-  const byId = new Map(streams.map((s) => [s.proposalId, s.events]))
+  const byId = new Map(streams.map((stream) => [stream.proposalId, stream.events]))
   const seenPerContribution = new Map<string, number>()
   const cards: ProposalCard[] = []
 

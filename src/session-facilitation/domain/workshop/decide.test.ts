@@ -7,13 +7,13 @@ import { emptyWorkshop } from './model.ts'
 import { replay } from './replay.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
-const w = 'w_1' as WorkshopId
+const workshopId = 'w_1' as WorkshopId
 
 const started: WorkshopEvent = {
   v: 1,
   at,
   type: 'Workshop Started',
-  workshopId: w,
+  workshopId,
   format: 'big-picture',
   creatorName: 'Dana',
 }
@@ -22,14 +22,14 @@ describe('Workshop.decide — Start Workshop', () => {
   it('emits Workshop Started bound to big-picture with the creator name', () => {
     const result = decide(emptyWorkshop(), {
       type: 'Start Workshop',
-      workshopId: w,
+      workshopId,
       creatorName: 'Dana',
       at,
     })
     expect(isOk(result)).toBe(true)
     if (isOk(result)) {
       expect(result.value).toEqual([
-        { v: 1, at, type: 'Workshop Started', workshopId: w, format: 'big-picture', creatorName: 'Dana' },
+        { v: 1, at, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana' },
       ])
     }
   })
@@ -37,7 +37,7 @@ describe('Workshop.decide — Start Workshop', () => {
   it('rejects a blank / whitespace-only name', () => {
     const result = decide(emptyWorkshop(), {
       type: 'Start Workshop',
-      workshopId: w,
+      workshopId,
       creatorName: '   ',
       at,
     })
@@ -50,7 +50,7 @@ describe('Workshop.decide — Start Workshop', () => {
   it('rejects a name longer than 80 characters', () => {
     const result = decide(emptyWorkshop(), {
       type: 'Start Workshop',
-      workshopId: w,
+      workshopId,
       creatorName: 'x'.repeat(81),
       at,
     })
@@ -63,7 +63,7 @@ describe('Workshop.decide — Start Workshop', () => {
   it('rejects a second Start Workshop', () => {
     const result = decide(replay([started]), {
       type: 'Start Workshop',
-      workshopId: w,
+      workshopId,
       creatorName: 'Dana',
       at,
     })
@@ -78,7 +78,7 @@ describe('Workshop.decide — Set Scope', () => {
   it('rejects Set Scope before the workshop is started', () => {
     const result = decide(emptyWorkshop(), {
       type: 'Set Scope',
-      workshopId: w,
+      workshopId,
       statement: 'Library lending.',
       at,
     })
@@ -89,12 +89,12 @@ describe('Workshop.decide — Set Scope', () => {
   })
 
   it('is repeatable — 3 successive Set Scope all emit Scope Set', () => {
-    const wm = replay([started])
+    const writeModel = replay([started])
     for (const statement of ['first scope', 'second scope', 'third scope']) {
-      const result = decide(wm, { type: 'Set Scope', workshopId: w, statement, at })
+      const result = decide(writeModel, { type: 'Set Scope', workshopId, statement, at })
       expect(isOk(result)).toBe(true)
       if (isOk(result)) {
-        expect(result.value).toEqual([{ v: 1, at, type: 'Scope Set', workshopId: w, statement }])
+        expect(result.value).toEqual([{ v: 1, at, type: 'Scope Set', workshopId, statement }])
       }
     }
   })
@@ -102,7 +102,7 @@ describe('Workshop.decide — Set Scope', () => {
   it('rejects an empty statement', () => {
     const result = decide(replay([started]), {
       type: 'Set Scope',
-      workshopId: w,
+      workshopId,
       statement: '   ',
       at,
     })
@@ -115,7 +115,7 @@ describe('Workshop.decide — Set Scope', () => {
   it('rejects a statement longer than 10 000 characters', () => {
     const result = decide(replay([started]), {
       type: 'Set Scope',
-      workshopId: w,
+      workshopId,
       statement: 'x'.repeat(10_001),
       at,
     })

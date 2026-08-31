@@ -11,8 +11,8 @@ describe('op schema version', () => {
   })
 
   it('never drops a version it once supported', () => {
-    for (let v = 1; v <= OP_SCHEMA_VERSION; v++) {
-      expect(REPLAYABLE_OP_SCHEMA_VERSIONS).toContain(v)
+    for (let version = 1; version <= OP_SCHEMA_VERSION; version++) {
+      expect(REPLAYABLE_OP_SCHEMA_VERSIONS).toContain(version)
     }
   })
 })

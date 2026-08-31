@@ -14,7 +14,7 @@ import type { ReviewProposalDeps } from './deps.ts'
 const EditBody = z.object({ label: z.string() })
 
 const readProposal = (deps: ReviewProposalDeps, id: ProposalId): ProposalEvent[] =>
-  deps.store.read(proposalStream(id)).map((r) => ProposalEvent.parse(r.operation))
+  deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
 
 type Reviewed = Extract<
   ProposalCommand,
@@ -24,11 +24,11 @@ type Reviewed = Extract<
 const statusFor = (kind: string): 400 | 404 | 409 =>
   kind === 'not-born' ? 404 : kind === 'label-too-long' ? 400 : 409
 
-const act = (deps: ReviewProposalDeps, id: ProposalId, cmd: Reviewed) => {
+const act = (deps: ReviewProposalDeps, id: ProposalId, command: Reviewed) => {
   const rows = deps.store.read(proposalStream(id))
   if (rows.length === 0) return { status: 404 as const, error: 'unknown-proposal' as const }
 
-  const decided = decide(replay(rows.map((r) => ProposalEvent.parse(r.operation))), cmd)
+  const decided = decide(replay(rows.map((row) => ProposalEvent.parse(row.operation))), command)
   if (!decided.ok) return { status: statusFor(decided.error.kind), error: decided.error.kind }
 
   if (decided.value.length > 0) {
@@ -48,37 +48,37 @@ const act = (deps: ReviewProposalDeps, id: ProposalId, cmd: Reviewed) => {
  */
 export const reviewProposalRoutes = (deps: ReviewProposalDeps) =>
   new Hono()
-    .post('/proposals/:id/edit', async (c) => {
-      const id = c.req.param('id') as ProposalId
-      const body = EditBody.safeParse(await c.req.json().catch(() => null))
-      if (!body.success) return c.json({ error: 'invalid-body' as const }, 400)
-      const r = act(deps, id, { type: 'Edit Proposal', proposalId: id, label: body.data.label, at: deps.clock() })
-      return r.error === undefined ? c.json({ ok: true as const }, 200) : c.json({ error: r.error }, r.status)
+    .post('/proposals/:id/edit', async (context) => {
+      const id = context.req.param('id') as ProposalId
+      const body = EditBody.safeParse(await context.req.json().catch(() => null))
+      if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
+      const outcome = act(deps, id, { type: 'Edit Proposal', proposalId: id, label: body.data.label, at: deps.clock() })
+      return outcome.error === undefined ? context.json({ ok: true as const }, 200) : context.json({ error: outcome.error }, outcome.status)
     })
-    .post('/proposals/:id/reject', (c) => {
-      const id = c.req.param('id') as ProposalId
-      const r = act(deps, id, { type: 'Reject Proposal', proposalId: id, at: deps.clock() })
-      return r.error === undefined ? c.json({ ok: true as const }, 200) : c.json({ error: r.error }, r.status)
+    .post('/proposals/:id/reject', (context) => {
+      const id = context.req.param('id') as ProposalId
+      const outcome = act(deps, id, { type: 'Reject Proposal', proposalId: id, at: deps.clock() })
+      return outcome.error === undefined ? context.json({ ok: true as const }, 200) : context.json({ error: outcome.error }, outcome.status)
     })
-    .post('/proposals/:id/hold', (c) => {
-      const id = c.req.param('id') as ProposalId
-      const r = act(deps, id, { type: 'Hold Proposal', proposalId: id, at: deps.clock() })
-      return r.error === undefined ? c.json({ ok: true as const }, 200) : c.json({ error: r.error }, r.status)
+    .post('/proposals/:id/hold', (context) => {
+      const id = context.req.param('id') as ProposalId
+      const outcome = act(deps, id, { type: 'Hold Proposal', proposalId: id, at: deps.clock() })
+      return outcome.error === undefined ? context.json({ ok: true as const }, 200) : context.json({ error: outcome.error }, outcome.status)
     })
-    .post('/proposals/:id/unhold', (c) => {
-      const id = c.req.param('id') as ProposalId
-      const r = act(deps, id, { type: 'Unhold Proposal', proposalId: id, at: deps.clock() })
-      return r.error === undefined ? c.json({ ok: true as const }, 200) : c.json({ error: r.error }, r.status)
+    .post('/proposals/:id/unhold', (context) => {
+      const id = context.req.param('id') as ProposalId
+      const outcome = act(deps, id, { type: 'Unhold Proposal', proposalId: id, at: deps.clock() })
+      return outcome.error === undefined ? context.json({ ok: true as const }, 200) : context.json({ error: outcome.error }, outcome.status)
     })
     .route('/', acceptRoutes(deps))
-    .get('/sessions/:id/proposals', (c) => {
-      const sessionId = c.req.param('id') as SessionId
+    .get('/sessions/:id/proposals', (context) => {
+      const sessionId = context.req.param('id') as SessionId
       const sessionEvents = deps.store
         .read(sessionStream(sessionId))
-        .map((r) => SessionEvent.parse(r.operation))
+        .map((row) => SessionEvent.parse(row.operation))
       const streams = sessionProposalIds(sessionEvents).map((proposalId) => ({
         proposalId,
         events: readProposal(deps, proposalId),
       }))
-      return c.json({ proposals: proposalsView(sessionEvents, streams) })
+      return context.json({ proposals: proposalsView(sessionEvents, streams) })
     })

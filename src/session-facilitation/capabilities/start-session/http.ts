@@ -19,15 +19,15 @@ import type { StartSessionDeps } from './deps.ts'
  * 3. `Session.decide(Start Session)` → append `Session Started`.
  */
 export const startSessionRoutes = (deps: StartSessionDeps) =>
-  new Hono().post('/workshops/:id/sessions', (c) => {
-    const workshopId = c.req.param('id') as WorkshopId
+  new Hono().post('/workshops/:id/sessions', (context) => {
+    const workshopId = context.req.param('id') as WorkshopId
 
     const stale = staleOpenRow(deps.db, deps.store, workshopId)
     if (stale !== undefined) deleteRow(deps.db, stale)
 
     const sessionId = newSessionId()
     const reserved = reserve(deps.db, workshopId, sessionId, deps.clock())
-    if (!reserved.ok) return c.json({ error: 'session-already-open' as const }, 409)
+    if (!reserved.ok) return context.json({ error: 'session-already-open' as const }, 409)
 
     const decided = decide(emptySession(), {
       type: 'Start Session',
@@ -37,9 +37,9 @@ export const startSessionRoutes = (deps: StartSessionDeps) =>
     })
     if (!decided.ok) {
       deleteRow(deps.db, sessionId)
-      return c.json({ error: decided.error.kind }, 400)
+      return context.json({ error: decided.error.kind }, 400)
     }
 
     deps.store.append(sessionStream(sessionId), -1, storedOps(decided.value))
-    return c.json({ sessionId }, 202)
+    return context.json({ sessionId }, 202)
   })

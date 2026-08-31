@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { isOk } from '~/plumbing/result.ts'
 import { loadConfig } from './config.ts'
 
-let dir: string
+let directory: string
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'eventstormer-config-'))
+  directory = mkdtempSync(join(tmpdir(), 'eventstormer-config-'))
 })
 afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
+  rmSync(directory, { recursive: true, force: true })
 })
 
 describe('loadConfig', () => {
@@ -22,8 +22,8 @@ describe('loadConfig', () => {
   it('does not require the key in scripted mode and wires a facilitator + defaults', () => {
     const config = loadConfig({
       FACILITATOR_MODE: 'scripted',
-      EVENTSTORMER_DB: join(dir, 'e.db'),
-      DATA_DIR: dir,
+      EVENTSTORMER_DB: join(directory, 'e.db'),
+      DATA_DIR: directory,
     })
     expect(config.facilitator).toBeDefined()
     expect(config.inFlight.sessions().size).toBe(0)
@@ -31,7 +31,7 @@ describe('loadConfig', () => {
   })
 
   it('creates the data directory and db path when they do not exist yet', () => {
-    const nested = join(dir, 'fresh', 'nested')
+    const nested = join(directory, 'fresh', 'nested')
     const config = loadConfig({
       FACILITATOR_MODE: 'scripted',
       DATA_DIR: nested,
@@ -46,8 +46,8 @@ describe('loadConfig', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const config = loadConfig({
       ANTHROPIC_API_KEY: 'sk-test',
-      EVENTSTORMER_DB: join(dir, 'e.db'),
-      DATA_DIR: dir,
+      EVENTSTORMER_DB: join(directory, 'e.db'),
+      DATA_DIR: directory,
       FACILITATOR_MODEL: 'claude-opus-5',
     })
     expect(config.facilitator).toBeDefined()
@@ -59,8 +59,8 @@ describe('loadConfig', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const config = loadConfig({
       ANTHROPIC_API_KEY: 'sk-test',
-      EVENTSTORMER_DB: join(dir, 'e.db'),
-      DATA_DIR: dir,
+      EVENTSTORMER_DB: join(directory, 'e.db'),
+      DATA_DIR: directory,
       FACILITATOR_MODEL: 'claude-haiku-4-5',
     })
     expect(config.facilitator).toBeDefined()
@@ -72,8 +72,8 @@ describe('loadConfig', () => {
     const config = loadConfig({
       FACILITATOR_MODE: 'scripted',
       SCRIPTED_FACILITATOR_FILE: resolve('facilitator.example.json'),
-      EVENTSTORMER_DB: join(dir, 'e.db'),
-      DATA_DIR: dir,
+      EVENTSTORMER_DB: join(directory, 'e.db'),
+      DATA_DIR: directory,
     })
 
     const opening = await config.facilitator.askOpening({ instructions: '', prompt: '' })
@@ -87,8 +87,8 @@ describe('loadConfig', () => {
   it('honours INTERPRETATION_INTERVAL_MS', () => {
     const config = loadConfig({
       ANTHROPIC_API_KEY: 'sk-test',
-      EVENTSTORMER_DB: join(dir, 'e.db'),
-      DATA_DIR: dir,
+      EVENTSTORMER_DB: join(directory, 'e.db'),
+      DATA_DIR: directory,
       INTERPRETATION_INTERVAL_MS: '250',
     })
     expect(config.interpretationIntervalMs).toBe(250)

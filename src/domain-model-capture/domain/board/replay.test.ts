@@ -63,11 +63,11 @@ describe('replay', () => {
   })
 
   it('replayWriteModel folds the log into the slim write model', () => {
-    const wm = replayWriteModel([
+    const writeModel = replayWriteModel([
       op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }),
       op({ kind: 'withdraw', target: 'e1' }),
     ])
-    expect(wm.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+    expect(writeModel.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
   })
 
   // ADR-008 property #3 (required): incremental-replay consistency for `project`.

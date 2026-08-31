@@ -16,10 +16,10 @@ describe('layoutBoard', () => {
   })
 
   it('places N blocks as N stickies flowed 3-per-row inside the frame', () => {
-    const blocks = Array.from({ length: 4 }, (_, i) => ({
-      id: `b${String(i)}`,
+    const blocks = Array.from({ length: 4 }, (_, index) => ({
+      id: `b${String(index)}`,
       kind: 'domain-event',
-      label: `Event ${String(i)}`,
+      label: `Event ${String(index)}`,
     }))
     const layout = layoutBoard(blocks, VIEWPORT)
 
@@ -35,7 +35,7 @@ describe('layoutBoard', () => {
   })
 
   it('grows the canvas past the viewport when the backlog frame overflows it', () => {
-    const blocks = Array.from({ length: 30 }, (_, i) => ({ id: `b${String(i)}`, kind: 'domain-event', label: 'x' }))
+    const blocks = Array.from({ length: 30 }, (_, index) => ({ id: `b${String(index)}`, kind: 'domain-event', label: 'x' }))
     const layout = layoutBoard(blocks, { w: 400, h: 300 })
     expect(layout.canvas.w).toBeGreaterThan(400)
     expect(layout.canvas.h).toBeGreaterThan(300)
@@ -44,9 +44,9 @@ describe('layoutBoard', () => {
   it('tilt is deterministic per id and within −1.4°…1.1°', () => {
     expect(tiltFor('b0')).toBe(tiltFor('b0'))
     for (const id of ['a', 'order-placed', 'xyz123', '']) {
-      const t = tiltFor(id)
-      expect(t).toBeGreaterThanOrEqual(-1.4)
-      expect(t).toBeLessThanOrEqual(1.1)
+      const tilt = tiltFor(id)
+      expect(tilt).toBeGreaterThanOrEqual(-1.4)
+      expect(tilt).toBeLessThanOrEqual(1.1)
     }
   })
 })

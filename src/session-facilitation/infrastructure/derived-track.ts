@@ -21,7 +21,7 @@ interface Row {
 /** Every derived-track marker as a `${contributionId}::${trackIndex}` key set. */
 export const readDerivedTrackKeys = (db: DerivedTrackDb): Set<string> => {
   const rows = db.prepare('SELECT contribution_id, track_index FROM derived_track').all() as Row[]
-  return new Set(rows.map((r) => `${r.contribution_id}::${String(r.track_index)}`))
+  return new Set(rows.map((row) => `${row.contribution_id}::${String(row.track_index)}`))
 }
 
 /** Mark one interpreted track derived. Idempotent — a repeat is a no-op. */

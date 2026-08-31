@@ -38,12 +38,26 @@ capture.
 | AD-023 | **Derived state is never frozen into a domain event.** An event carries the raw facts of what happened; any summary, count, or rollup a reader wants is a **read-time projection** over the (immutable) stream. Slice 1: `Session Closed` carries only `{ unresolvedQuestionIds, closedAt }`; the per-session facilitation summary (`blocksAdded`, question counts, recent turns) is `sessionSummary(...)` computed on demand from the terminal `Session` stream + that session's `Operation Applied` events. "Frozen-ness" is already guaranteed — a `CLOSED` stream cannot change. Storing the computed struct is the "payload carries derived state" anti-pattern: change the formula and the past is retroactively wrong (plan-review round 2, domain MAJOR 2/3). | domain-modeling antipatterns-and-review ("state obsession"). Also removes a needless coupling of the summary read model to `domain-model-capture`'s snapshot shape — and operations carry no `sessionId`, so `blocksAdded` *must* come from the `session-facilitation` side anyway. | 2026-08-30 | Slice 1; all event design |
 | AD-025 | **A closed `Session` rejects `Interpret Contribution` / `Fail Interpretation` — the decider returns `ok([])`.** The interpretation worker marks a contribution in flight, then `await`s the model for seconds; if the human closes the session in that window, the model call still returns and would commit `Contribution Interpreted` + derive a live `Building Block Proposed` onto the now-closed session. `finishClose` has already lapsed the proposals that existed at close time, and `reconcilePendingDerivations` only sweeps open sessions, so that proposal is un-lapsable and still acceptable onto the board. Guarding in the decider (where the interpret-once ledger already lives) is the fix: a late turn writes nothing. | PR #46 review W1. Consistent with AD-021 (idempotency/guards live in `decide`, not the caller) and the `Close Session` disposition's "lapse every non-terminal `Proposal`" guarantee. | 2026-08-31 | Slice 1 |
 | AD-024 | **Slice 1 `session-facilitation` capabilities are per-action, not one `capture-loop` slice:** `start-workshop`, `set-scope`, `start-session`, `make-contribution`, `review-proposal` (accept/edit/reject/hold/unhold — one use case), `close-session`, and `interpret-contribution` (tick-invoked). Each owns its Hono router (or, for `interpret-contribution`, its tick functions), all mounted/exposed through `session-facilitation/api.ts`. They share only `session-facilitation/domain/` (the 3 aggregates, the event SSOT, the read models incl. `sessionProposalIds`, the `InterpretedTrack` schema) and `session-facilitation/infrastructure/` (`session-index`, the `Facilitator` port). | ADR-010's slice-1 row already names them separately (`start-workshop`, `make-contribution`, `review-proposal`); Slice 2 adds `edit-model` as a new slice. A single mega-slice makes `no-cross-slice-imports` guard nothing and leaves the cross-context accept path un-isolated (plan-review round 2, arch M1). | 2026-08-30 | Slice 1 |
+| AD-026 | **Identifiers are spelled out in full, project abbreviations included — `wm` is `writeModel`.** The `id-length` (`min: 2`) + `unicorn/name-replacements` rules from PR #49 under-enforce this: a 2-character project shorthand that isn't an English abbreviation the plugin knows (`wm`, `op`, `bid`) passes both. So the convention is carried by review and this precedent, not only by lint. `@typescript-eslint/no-shadow` + `no-self-compare` are also `error` (PR #49 review) — a shadowed inner binding once turned an identity check into an `x === x` tautology that dropped a domain event. | 2026-08-31 | PR #49 + all later code |
 
 ---
 
 ## Handoff
 
-**Active feature:** `slice-1-capture-loop` (GitHub issue #38)
+**Active feature:** `pr-49-review-fixes` — the PR #49 automated-review fix batch (spec +
+validation in `.specs/features/pr-49-review-fixes/`). **Status: EXECUTE complete + Verifier PASS.**
+Branch `refactor/explicit-names`, 8 commits `1bc864e..6eef50e`, pushed. `pnpm check` green (381
+tests). Closed: the BLOCK (shadowed-`event` self-compare tautology in `interpret.ts` that dropped
+a `Contribution Attributed To Another Format` event — `e0ee294` + regression tests
+`e0ee294`/`6eef50e`), lint guard `no-self-compare` + `@typescript-eslint/no-shadow` at error
+(`5987432`), `wm` → `writeModel` repo-wide (`8191a00`, 20 files), NOTE renames (`ad96906`),
+**AD-026** recorded, PR #49 body corrected. Verifier gap AC1.2 (guard `format`/`note` clauses
+undiscriminated) closed by `6eef50e`. **PR #49 targets `main` directly and is mergeable**;
+coordinate merge order with #47 (both edit `package.json` / the lockfile).
+
+---
+
+**Prior feature:** `slice-1-capture-loop` (GitHub issue #38)
 **Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
 **Phase:** slice-1 EXECUTE complete + Verifier PASS. **Follow-up: `slice-1-review-fixes`** —
 the PR #46 automated-review fix batch (spec + validation in
@@ -51,8 +65,8 @@ the PR #46 automated-review fix batch (spec + validation in
 dock issues found in manual testing (empty feed after scope accept; first prompt must persist
 chat-style) and `.env.local` / e2e key-isolation. 13 commits `8b444b7..HEAD` on
 `slice-1-capture-loop`. `pnpm check` (369 tests) + e2e green. AD-025 added. Deferred (per the
-review): NOTE 1, NOTE 6, QW1 (→ PR #47), QW2. **PR #49 is stacked on this branch — restack after
-these land.**
+review): NOTE 1, NOTE 6, QW1 (→ PR #47), QW2. (Slice 1 landed as #46; PR #49 was rebased onto
+`main` and is no longer stacked.)
 
 slice-1 batch plan (historical): **B1** P1 (5) · **B2** P2+P3
 (6) · **B3** P4+P5 (7) · **B4** P6+P7 (7) · **B5** P8 (5) · **B6** P9 (2).

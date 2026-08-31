@@ -36,14 +36,14 @@ const emit = defineEmits<{
 
 const editing = ref(false)
 const draft = ref('')
-const inputEl = ref<HTMLInputElement | null>(null)
+const inputElement = ref<HTMLInputElement | null>(null)
 
 const startEdit = async (): Promise<void> => {
   draft.value = props.label
   editing.value = true
   await nextTick()
-  inputEl.value?.focus()
-  inputEl.value?.select()
+  inputElement.value?.focus()
+  inputElement.value?.select()
 }
 const saveEdit = (): void => {
   const next = draft.value.trim()
@@ -84,7 +84,7 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
     <label v-if="editing" class="pc__editwrap">
       <span class="sr-only">Edit label</span>
       <input
-        ref="inputEl"
+        ref="inputElement"
         v-model="draft"
         class="pc__input"
         type="text"
