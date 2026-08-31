@@ -1,9 +1,9 @@
 # Tooling gotchas — TypeScript, ESLint, dependency-cruiser, CI
 
 Read this before touching `tsconfig.json`, `eslint.config.ts`, `.dependency-cruiser.cjs`,
-`vite.config.ts`, `.npmrc`, `package.json`, or `.github/workflows/ci.yml`. Every fact here was
-found by breaking it first, not by reading documentation — several contradicted the published
-docs for the installed version.
+`vite.config.ts`, `.npmrc`, `package.json`, or `.github/workflows/{ci,release}.yml`. Every fact
+here was found by breaking it first, not by reading documentation — several contradicted the
+published docs for the installed version.
 
 ## TypeScript
 
@@ -73,6 +73,12 @@ docs for the installed version.
   `node:sqlite` runtime failure. Don't remove either half.
 - **CI has no `version:` on `pnpm/action-setup`, deliberately.** It reads `packageManager`
   from `package.json` via Corepack, so the pnpm pin has exactly one home. Do not add one back.
+- **The release workflow's commit and title must be conventional (`chore: version packages`).**
+  `changesets/action@v1` defaults to `Version Packages`, which fails both commitlint (`type-empty`
+  / `subject-empty`) and the `pr-title` job. The release job also sets `LEFTHOOK=0`: `pnpm install`
+  runs `prepare` → lefthook install, and the action's `git commit` / `git push` would otherwise
+  fire those hooks. Do not bump `package.json` `version` in a slice PR — that is the version PR's
+  job; a pre-bump plus a `minor` changeset ships the next slice's number.
 
 ## Installed pins
 
