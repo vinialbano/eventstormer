@@ -318,14 +318,14 @@ still 200 + exactly one op. Author is the body `author` (`{ accepter }` only). *
 **Requirement**: S2-03, S2-08, S2-09, S2-10, S2-11, S2-20, S2-22, S2-23
 **Tools**: MCP: NONE · Skill: `testing-boss`
 **Done when**:
-- [ ] POST `reword` with a **distinct** new label → 200 `{ position }`; subsequent GET board shows that label; id unchanged; exactly one op appended
-- [ ] POST `reword` with the **same** label as current → 200 + exactly one op (not a no-op)
-- [ ] POST `sequence` (or any non-F06 kind) → 422 `not-implemented-in-slice`, log unchanged
-- [ ] POST `""` and POST `"   "` → 422 `empty-label` (not 400); POST > 10 000 chars → 400; empty stream → 404
-- [ ] POST `reword` of a withdrawn target → 422 `withdrawn-target`; POST `withdraw` of a withdrawn target → 422 `already-withdrawn`; POST `reinstate` of an active target → 422 `not-withdrawn`; unknown target → 422 `unknown-target`
-- [ ] POST `withdraw` then `reinstate` → one op each; id unchanged
-- [ ] planted sibling-slice import fails `pnpm depcruise`; reverted
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] POST `reword` with a **distinct** new label → 200 `{ position }`; subsequent GET board shows that label; id unchanged; exactly one op appended
+- [x] POST `reword` with the **same** label as current → 200 + exactly one op (not a no-op)
+- [x] POST `sequence` (or any non-F06 kind) → 422 `not-implemented-in-slice`, log unchanged
+- [x] POST `""` and POST `"   "` → 422 `empty-label` (not 400); POST > 10 000 chars → 400; empty stream → 404
+- [x] POST `reword` of a withdrawn target → 422 `withdrawn-target`; POST `withdraw` of a withdrawn target → 422 `already-withdrawn`; POST `reinstate` of an active target → 422 `not-withdrawn`; unknown target → 422 `unknown-target`
+- [x] POST `withdraw` then `reinstate` → one op each; id unchanged
+- [x] planted sibling-slice import fails `pnpm depcruise`; reverted
+- [x] Gate check passes: `pnpm test` · 443 passed, 0 failed
 **Tests**: integration · **Gate**: quick
 **Commit**: `feat(capture): accept reword, withdraw, and reinstate on the board`
 
