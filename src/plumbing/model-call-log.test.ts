@@ -17,39 +17,39 @@ const entry = (over: Partial<ModelCallEntry> = {}): ModelCallEntry => ({
 })
 
 describe('logModelCall — one JSONL line per call', () => {
-  let dir: string
+  let directory: string
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'eventstormer-modelcalls-'))
+    directory = mkdtempSync(join(tmpdir(), 'eventstormer-modelcalls-'))
   })
 
-  const rawLines = (at = dir): string[] =>
+  const rawLines = (at = directory): string[] =>
     readFileSync(join(at, 'model-calls.jsonl'), 'utf8').split('\n').filter(Boolean)
-  const entries = (at = dir): ModelCallEntry[] =>
+  const entries = (at = directory): ModelCallEntry[] =>
     rawLines(at).map((line) => JSON.parse(line) as ModelCallEntry)
 
   it('appends exactly one valid JSON line that round-trips the entry', () => {
-    const e = entry()
-    logModelCall(dir, e)
+    const event = entry()
+    logModelCall(directory, event)
     expect(rawLines()).toHaveLength(1)
-    expect(entries()[0]).toStrictEqual(e)
+    expect(entries()[0]).toStrictEqual(event)
   })
 
   it('appends — a second call adds a line, keeps the first', () => {
-    logModelCall(dir, entry({ responseText: 'first' }))
-    logModelCall(dir, entry({ responseText: 'second' }))
-    expect(entries().map((e) => e.responseText)).toStrictEqual(['first', 'second'])
+    logModelCall(directory, entry({ responseText: 'first' }))
+    logModelCall(directory, entry({ responseText: 'second' }))
+    expect(entries().map((event) => event.responseText)).toStrictEqual(['first', 'second'])
   })
 
   it('records a schema-failure parseResult', () => {
-    logModelCall(dir, entry({ parseResult: { error: 'invalid_union at interpretation[0]' } }))
+    logModelCall(directory, entry({ parseResult: { error: 'invalid_union at interpretation[0]' } }))
     expect(entries()[0]?.parseResult).toStrictEqual({
       error: 'invalid_union at interpretation[0]',
     })
   })
 
   it('creates a missing data directory', () => {
-    const nested = join(dir, 'a', 'b')
+    const nested = join(directory, 'a', 'b')
     logModelCall(nested, entry())
     expect(entries(nested)).toHaveLength(1)
   })

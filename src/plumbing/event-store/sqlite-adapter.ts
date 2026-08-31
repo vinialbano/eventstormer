@@ -22,7 +22,7 @@ import type { AppendConflict, EventStore, StoredOperation, StreamKey } from './p
 
 const BUSY_TIMEOUT_MS = 5_000
 
-const dbPathFromEnv = (): string => process.env.EVENTSTORMER_DB ?? './data/eventstormer.db'
+const databasePathFromEnvironment = (): string => process.env.EVENTSTORMER_DB ?? './data/eventstormer.db'
 
 interface MaxPositionRow {
   max: number | null
@@ -35,7 +35,7 @@ interface OperationRow {
   operation: string
 }
 
-export const createSqliteEventStore = (path: string = dbPathFromEnv()): EventStore => {
+export const createSqliteEventStore = (path: string = databasePathFromEnvironment()): EventStore => {
   const db = new DatabaseSync(path, { timeout: BUSY_TIMEOUT_MS })
 
   // Close the handle before any construction error escapes — otherwise it leaks
@@ -93,12 +93,12 @@ export const createSqliteEventStore = (path: string = dbPathFromEnv()): EventSto
           })
         }
 
-        for (const [i, op] of ops.entries()) {
+        for (const [index, op] of ops.entries()) {
           insert.run(
             stream.context,
             stream.aggregate,
             stream.id,
-            expectedPosition + 1 + i,
+            expectedPosition + 1 + index,
             op.opVersion,
             op.at,
             JSON.stringify(op.operation),

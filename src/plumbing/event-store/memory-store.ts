@@ -32,8 +32,8 @@ export const createMemoryEventStore = (): EventStore => {
 
       // Serialize the whole batch before touching the stream: a non-serializable
       // op throws here and the stream stays at its pre-batch length.
-      const rows = ops.map((op, i) =>
-        JSON.stringify({ ...op, position: expectedPosition + 1 + i }),
+      const rows = ops.map((op, index) =>
+        JSON.stringify({ ...op, position: expectedPosition + 1 + index }),
       )
       streams.set(key, [...existing, ...rows])
 

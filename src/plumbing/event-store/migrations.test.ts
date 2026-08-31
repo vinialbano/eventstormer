@@ -46,7 +46,7 @@ describe('MIGRATIONS', () => {
   })
 
   it('migration 001 creates operation_log with the 3-column stream key and op_version', () => {
-    const first = MIGRATIONS.find((m) => m.id === 1)
+    const first = MIGRATIONS.find((migration) => migration.id === 1)
     expect(first).toBeDefined()
     const up = first?.up ?? ''
     expect(up).toMatch(/CREATE TABLE operation_log/)

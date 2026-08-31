@@ -29,14 +29,14 @@ describe('Result', () => {
   })
 
   it('map applies the function to an ok value', () => {
-    expect(map(ok(2), (n) => n * 3)).toEqual({ ok: true, value: 6 })
+    expect(map(ok(2), (value) => value * 3)).toEqual({ ok: true, value: 6 })
   })
 
   it('map leaves an err untouched and does not call the function', () => {
     let called = false
-    const result = map(err<string>('bad') as Result<number, string>, (n) => {
+    const result = map(err<string>('bad') as Result<number, string>, (value) => {
       called = true
-      return n * 3
+      return value * 3
     })
 
     expect(result).toEqual({ ok: false, error: 'bad' })
@@ -44,16 +44,16 @@ describe('Result', () => {
   })
 
   it('andThen chains a fallible step on an ok', () => {
-    const result = andThen(ok(4), (n) => (n > 0 ? ok(n + 1) : err('negative')))
+    const result = andThen(ok(4), (value) => (value > 0 ? ok(value + 1) : err('negative')))
 
     expect(result).toEqual({ ok: true, value: 5 })
   })
 
   it('andThen short-circuits on an err without calling the function', () => {
     let called = false
-    const result = andThen(err<string>('first') as Result<number, string>, (n) => {
+    const result = andThen(err<string>('first') as Result<number, string>, (value) => {
       called = true
-      return ok(n)
+      return ok(value)
     })
 
     expect(result).toEqual({ ok: false, error: 'first' })

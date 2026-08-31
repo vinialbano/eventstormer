@@ -66,7 +66,7 @@ export const applyMigrations = (
       (db.prepare(`SELECT id FROM ${trackingTable}`).all() as { id: number }[]).map((row) => row.id),
     )
 
-    for (const migration of [...migrations].sort((a, b) => a.id - b.id)) {
+    for (const migration of [...migrations].sort((first, second) => first.id - second.id)) {
       if (applied.has(migration.id)) continue
       db.exec(migration.up)
       db.prepare(`INSERT INTO ${trackingTable} (id, applied_at) VALUES (?, ?)`).run(

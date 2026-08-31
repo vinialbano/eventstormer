@@ -6,16 +6,16 @@ import { eventStoreContract } from './contract-test.ts'
 import type { StreamKey } from './port.ts'
 import { createSqliteEventStore } from './sqlite-adapter.ts'
 
-const tempDirs: string[] = []
+const temporaryDirectories: string[] = []
 
 const makeStore = () => {
-  const dir = mkdtempSync(join(tmpdir(), 'eventstormer-sqlite-'))
-  tempDirs.push(dir)
-  return createSqliteEventStore(join(dir, 'test.db'))
+  const directory = mkdtempSync(join(tmpdir(), 'eventstormer-sqlite-'))
+  temporaryDirectories.push(directory)
+  return createSqliteEventStore(join(directory, 'test.db'))
 }
 
 afterAll(() => {
-  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true })
+  for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true })
 })
 
 // The same behavioural contract the in-memory impl passes.
@@ -43,11 +43,11 @@ describe('createSqliteEventStore', () => {
     ])
 
     const rows = store.read(stream)
-    expect(rows.map((r) => r.opVersion)).toEqual([1, 1])
-    expect(rows.map((r) => r.at)).toEqual([
+    expect(rows.map((row) => row.opVersion)).toEqual([1, 1])
+    expect(rows.map((row) => row.at)).toEqual([
       '2021-06-01T12:00:00.000Z',
       '2021-06-01T12:00:01.000Z',
     ])
-    expect(rows.map((r) => r.operation)).toEqual([{ kind: 'x' }, { kind: 'y' }])
+    expect(rows.map((row) => row.operation)).toEqual([{ kind: 'x' }, { kind: 'y' }])
   })
 })

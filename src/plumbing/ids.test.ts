@@ -21,7 +21,7 @@ describe('branded ids', () => {
 
   it('generates mutually distinct ids across 1000 draws', () => {
     const seen = new Set<string>()
-    for (let i = 0; i < 1000; i++) seen.add(newWorkshopId())
+    for (let counter = 0; counter < 1000; counter++) seen.add(newWorkshopId())
     expect(seen.size).toBe(1000)
   })
 
