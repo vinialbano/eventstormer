@@ -86,6 +86,20 @@ it('polls while the scope is unset even with no contributions', async () => {
   scope.stop()
 })
 
+it('keeps polling after a store refetch rejects — the loop is not wedged', async () => {
+  current = viewWith('set', ['interpreting'])
+  const { session, proposals, poll, scope } = await setup()
+  const sessionRefetch = vi.spyOn(session, 'refetch')
+  vi.spyOn(proposals, 'refetch').mockRejectedValue(new Error('network down'))
+
+  await vi.advanceTimersByTimeAsync(60) // one tick: proposals.refetch rejects
+  await vi.advanceTimersByTimeAsync(60) // the loop rescheduled anyway -> another tick
+
+  expect(poll.polling.value).toBe(true)
+  expect(sessionRefetch.mock.calls.length).toBeGreaterThanOrEqual(2)
+  scope.stop()
+})
+
 it('does not poll a settled resumed session', async () => {
   current = viewWith('set', ['derived', 'failed'])
   const { poll, scope } = await setup()

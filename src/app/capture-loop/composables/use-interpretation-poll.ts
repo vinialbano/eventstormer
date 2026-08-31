@@ -52,16 +52,20 @@ export const useInterpretationPoll = (intervalMs = 1000) => {
     }, intervalMs)
   }
 
+  // Always reschedule, even if a refetch rejects — one failed poll must not wedge
+  // the loop on a permanent spinner. The stores swallow their own load errors
+  // today; the catch is the guard if that ever changes.
   const tick = async (): Promise<void> => {
-    await Promise.all([session.refetch(), proposals.refetch()])
+    try {
+      await Promise.all([session.refetch(), proposals.refetch()])
+    } catch {
+      /* transient — the next tick retries */
+    }
     schedule()
   }
 
   /** Refetch the polled stores now — call after every mutation POST. */
-  const refetchNow = async (): Promise<void> => {
-    await Promise.all([session.refetch(), proposals.refetch()])
-    schedule()
-  }
+  const refetchNow = tick
 
   watch(shouldPoll, schedule, { immediate: true })
   onScopeDispose(stop)
