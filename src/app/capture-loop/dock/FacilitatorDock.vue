@@ -120,9 +120,9 @@ const feed = computed<FeedItem[]>(() => {
   return items
 })
 
-// Once the scope is set, the facilitator's opening prompt leads the conversation
-// and stays there — the feed reads as a chat log, messages append below it
-// (brief §5). Before that it is the F05 scope card instead (`showScopeCard`).
+// Once the scope is set, the fixed opening prompt (UI chrome, see the template)
+// leads the feed and stays there — it reads as a chat log, messages append
+// below it (brief §5). Before that it is the F05 scope card (`showScopeCard`).
 const showFirstPrompt = computed(() => scopeState.value.status === 'set')
 
 const actionable = computed(() =>
@@ -224,6 +224,11 @@ const onJump = async (proposalId: string): Promise<void> => {
               </div>
             </div>
 
+            <!--
+              A UI affordance (brief §5), not a facilitator.askOpening turn:
+              fixed copy that leads the feed once the scope is set. The model's
+              only opening turn is the scope question, rendered as the F05 card above.
+            -->
             <ConversationTurn
               v-if="showFirstPrompt"
               kind="question"
