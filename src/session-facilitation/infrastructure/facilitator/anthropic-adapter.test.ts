@@ -144,6 +144,19 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
   })
 
+  it('treats a thrown error with no statusCode (e.g. an attempt-timeout abort) as provider-down', async () => {
+    const { generate, models } = scripted([
+      { throw: Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' }) },
+      result(VALID_TURN),
+    ])
+    const { facilitator } = depsWith(generate)
+
+    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+
+    expect(isOk(r)).toBe(true)
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
+  })
+
   it('returns provider-down once the whole ladder is exhausted', async () => {
     const { generate, models } = scripted([{ throw: Object.assign(new Error('down'), { statusCode: 500 }) }])
     const { facilitator } = depsWith(generate)
@@ -153,6 +166,30 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     expect(isErr(r)).toBe(true)
     if (isErr(r)) expect(r.error).toEqual({ kind: 'provider-down' })
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
+  })
+})
+
+describe('anthropic adapter — FACILITATOR_MODEL primary', () => {
+  it('uses the given model for the first two rungs, keeping claude-haiku-4-5 as the fallback', async () => {
+    const { generate, models } = scripted([
+      { throw: Object.assign(new Error('down'), { statusCode: 503 }) },
+      { throw: Object.assign(new Error('down'), { statusCode: 503 }) },
+      result(VALID_TURN),
+    ])
+    const { facilitator } = depsWith(generate, { model: 'claude-haiku-4-5' })
+
+    await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+
+    expect(models).toEqual(['claude-haiku-4-5', 'claude-haiku-4-5', 'claude-haiku-4-5'])
+  })
+
+  it('defaults the primary to claude-sonnet-5 when no model is given', async () => {
+    const { generate, models } = scripted([result(VALID_TURN)])
+    const { facilitator } = depsWith(generate)
+
+    await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+
+    expect(models).toEqual(['claude-sonnet-5'])
   })
 })
 

@@ -29,8 +29,8 @@ One process. Vite serves the SPA and hands `/api/*` to the Hono app in the same 
 
 | Variable | Required | Notes |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | for the facilitator | Not yet read by anything. `.env` is gitignored. |
-| `FACILITATOR_MODEL` | no | Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)). Model ids take no date suffix. |
+| `ANTHROPIC_API_KEY` | for the facilitator | `pnpm dev` reads it from `.env` and fails fast when it is unset (unless `FACILITATOR_MODE=scripted`). `.env` is gitignored. |
+| `FACILITATOR_MODEL` | no | Primary model for the retry ladder. Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)); the only other supported value is `claude-haiku-4-5`. Model ids take no date suffix. |
 | `PORT` | no | Defaults to 5173. |
 
 ## What is real vs stubbed

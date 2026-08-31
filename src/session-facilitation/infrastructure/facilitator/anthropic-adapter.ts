@@ -45,15 +45,24 @@ interface LadderRung {
   backoffMs: number
 }
 
-const DEFAULT_LADDER: readonly LadderRung[] = [
-  { model: 'claude-sonnet-5', backoffMs: 0 },
-  { model: 'claude-sonnet-5', backoffMs: 2_000 },
+/**
+ * The retry ladder: the primary model twice (immediate, then a 2s backoff),
+ * then `claude-haiku-4-5` as the last resort. `FACILITATOR_MODEL` sets the
+ * primary; unset → `claude-sonnet-5` (ADR-005).
+ */
+const buildLadder = (primary: ModelName): readonly LadderRung[] => [
+  { model: primary, backoffMs: 0 },
+  { model: primary, backoffMs: 2_000 },
   { model: 'claude-haiku-4-5', backoffMs: 4_000 },
 ]
 
 export interface AnthropicFacilitatorDeps {
   dataDir: string
   clock: Clock
+  /** Primary model for the ladder. Unset → `claude-sonnet-5`. */
+  model?: ModelName
+  /** Per-attempt deadline for one `generateText` call. Unset → 30s. */
+  attemptTimeoutMs?: number
   generate?: FacilitatorGenerate
   sleep?: (ms: number) => Promise<void>
   ladder?: readonly LadderRung[]
@@ -66,28 +75,36 @@ const ensureTelemetry = (): void => {
   telemetryRegistered = true
 }
 
-const defaultGenerate: FacilitatorGenerate = async ({ model, schema, instructions, prompt }) => {
-  ensureTelemetry()
-  const { anthropic } = await import('@ai-sdk/anthropic')
-  const result = await generateText({
-    model: anthropic(model),
-    output: Output.object({ schema }),
-    providerOptions: { anthropic: { structuredOutputMode: 'outputFormat', effort: 'low' } },
-    instructions,
-    prompt,
-  })
-  const details = result.usage.inputTokenDetails
-  return {
-    output: result.output,
-    warnings: result.warnings,
-    responseText: JSON.stringify(result.output),
-    usage: {
-      inputTokens: result.usage.inputTokens ?? 0,
-      outputTokens: result.usage.outputTokens ?? 0,
-      ...(details.cacheReadTokens === undefined ? {} : { cacheReadTokens: details.cacheReadTokens }),
-    },
+// A hung provider call must not stall the scheduler cycle (the ticks run in
+// sequence, so a stuck `generateText` blocks reconcile for every workshop). The
+// abort surfaces as a thrown error → `provider-down` → the ladder continues.
+const DEFAULT_ATTEMPT_TIMEOUT_MS = 30_000
+
+const makeDefaultGenerate =
+  (attemptTimeoutMs: number): FacilitatorGenerate =>
+  async ({ model, schema, instructions, prompt }) => {
+    ensureTelemetry()
+    const { anthropic } = await import('@ai-sdk/anthropic')
+    const result = await generateText({
+      model: anthropic(model),
+      output: Output.object({ schema }),
+      providerOptions: { anthropic: { structuredOutputMode: 'outputFormat', effort: 'low' } },
+      instructions,
+      prompt,
+      abortSignal: AbortSignal.timeout(attemptTimeoutMs),
+    })
+    const details = result.usage.inputTokenDetails
+    return {
+      output: result.output,
+      warnings: result.warnings,
+      responseText: JSON.stringify(result.output),
+      usage: {
+        inputTokens: result.usage.inputTokens ?? 0,
+        outputTokens: result.usage.outputTokens ?? 0,
+        ...(details.cacheReadTokens === undefined ? {} : { cacheReadTokens: details.cacheReadTokens }),
+      },
+    }
   }
-}
 
 // 4xx codes that are transient, not a bad request: rate limit, request timeout,
 // conflict, too-early. Classified `provider-down` so the ladder retries instead
@@ -111,9 +128,10 @@ type StepOutcome<T> =
   | { ok: false; kind: 'schema-invalid'; detail: string }
 
 export const createAnthropicFacilitator = (deps: AnthropicFacilitatorDeps): Facilitator => {
-  const generate = deps.generate ?? defaultGenerate
+  const generate =
+    deps.generate ?? makeDefaultGenerate(deps.attemptTimeoutMs ?? DEFAULT_ATTEMPT_TIMEOUT_MS)
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)))
-  const ladder = deps.ladder ?? DEFAULT_LADDER
+  const ladder = deps.ladder ?? buildLadder(deps.model ?? 'claude-sonnet-5')
 
   const runStep = async <T>(
     model: ModelName,

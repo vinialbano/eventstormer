@@ -6,6 +6,12 @@
  */
 export type ModelName = 'claude-sonnet-5' | 'claude-haiku-4-5'
 
+/** The models the price table covers — anything else has no cost estimate. */
+export const MODEL_NAMES: readonly ModelName[] = ['claude-sonnet-5', 'claude-haiku-4-5']
+
+export const isModelName = (value: string): value is ModelName =>
+  (MODEL_NAMES as readonly string[]).includes(value)
+
 export interface TokenUsage {
   inputTokens: number
   outputTokens: number

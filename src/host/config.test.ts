@@ -41,6 +41,27 @@ describe('loadConfig', () => {
     expect(existsSync(join(nested, 'db'))).toBe(true)
   })
 
+  it('fails fast when FACILITATOR_MODEL is not a supported model', () => {
+    expect(() =>
+      loadConfig({
+        ANTHROPIC_API_KEY: 'sk-test',
+        EVENTSTORMER_DB: join(dir, 'e.db'),
+        DATA_DIR: dir,
+        FACILITATOR_MODEL: 'claude-opus-5',
+      }),
+    ).toThrow(/FACILITATOR_MODEL.*not supported/)
+  })
+
+  it('accepts a supported FACILITATOR_MODEL', () => {
+    const config = loadConfig({
+      ANTHROPIC_API_KEY: 'sk-test',
+      EVENTSTORMER_DB: join(dir, 'e.db'),
+      DATA_DIR: dir,
+      FACILITATOR_MODEL: 'claude-haiku-4-5',
+    })
+    expect(config.facilitator).toBeDefined()
+  })
+
   it('honours INTERPRETATION_INTERVAL_MS', () => {
     const config = loadConfig({
       ANTHROPIC_API_KEY: 'sk-test',
