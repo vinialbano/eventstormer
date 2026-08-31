@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
+import pluginUnicorn from 'eslint-plugin-unicorn'
 import globals from 'globals'
 
 // `tseslint.config()` is deprecated in favour of ESLint core's `defineConfig()`.
@@ -51,7 +52,37 @@ export default defineConfig([
   },
 
   {
+    plugins: { unicorn: pluginUnicorn },
     rules: {
+      // Identifiers are spelled out in full — terse single-letter and abbreviated
+      // names are rejected so the derived model reads like prose.
+      'id-length': ['error', { min: 2, properties: 'never', exceptions: ['_'] }],
+      'unicorn/name-replacements': [
+        'error',
+        {
+          checkFilenames: false,
+          checkProperties: false,
+          allowList: {
+            deps: true,
+            Deps: true,
+            db: true,
+            Db: true,
+            props: true,
+            Props: true,
+            ref: true,
+            refs: true,
+            params: true,
+            env: true,
+            args: true,
+            fn: true,
+            ok: true,
+            err: true,
+            isOk: true,
+            isErr: true,
+          },
+        },
+      ],
+
       // Formatting is not this tool's job and the noise trains agents to ignore it.
       'vue/singleline-html-element-content-newline': 'off',
       'vue/max-attributes-per-line': 'off',
