@@ -92,6 +92,13 @@ const feed = computed<FeedItem[]>(() => {
   return items
 })
 
+// Once the scope is set but nothing has been narrated yet, the feed would be
+// empty — accepting the scope card would look like nothing happened. Show the
+// facilitator's first prompt instead (brief §5).
+const showFirstPrompt = computed(
+  () => scopeState.value.status === 'set' && feed.value.length === 0,
+)
+
 const actionable = computed(() =>
   proposals.cards.filter((c) => ACTIONABLE.has(c.disposition)),
 )
@@ -190,6 +197,13 @@ const onJump = async (proposalId: string): Promise<void> => {
                 />
               </div>
             </div>
+
+            <ConversationTurn
+              v-if="showFirstPrompt"
+              kind="question"
+              speaker="facilitator"
+              text="Scope set. Now walk me through it — describe the first thing that happens, one moment at a time."
+            />
 
             <template v-for="item in feed" :key="item.key">
               <ConversationTurn

@@ -154,6 +154,30 @@ describe('FacilitatorDock', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('shows the facilitator first prompt once the scope is set and nothing is narrated yet', () => {
+    seed(
+      view({
+        scope: { status: 'set' },
+        transcript: [
+          { kind: 'question', speaker: 'facilitator', text: 'What are we mapping?', at: 't0', questionKind: 'scope' },
+        ],
+        contributions: [],
+      }),
+      [],
+    )
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).toContain('describe the first thing that happens')
+    expect(wrapper.find('.dock__scope').exists()).toBe(false)
+  })
+
+  it('drops the first prompt once a contribution has been narrated', () => {
+    seed(view(), [])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).not.toContain('describe the first thing that happens')
+  })
+
   it('shows a getting-started placeholder before the scope question exists', () => {
     seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })

@@ -55,8 +55,10 @@ WARN, and the cheap/safe NOTEs.
 8. WHEN `FACILITATOR_MODEL` is set to a supported model id (`claude-sonnet-5` or
    `claude-haiku-4-5`) THEN the Anthropic adapter's ladder SHALL use it as the primary model
    (first two rungs), keeping `claude-haiku-4-5` as the final fallback rung.
-9. WHEN `FACILITATOR_MODEL` is set to an unsupported value THEN `loadConfig` SHALL fail fast with
-   a one-line message naming the accepted values (consistent with the `ANTHROPIC_API_KEY` check).
+9. WHEN `FACILITATOR_MODEL` is set to an unsupported value THEN `loadConfig` SHALL `console.warn`
+   naming the accepted values and fall back to `claude-sonnet-5` — NOT throw. (A bad model name,
+   unlike a missing key, has a safe default; failing the whole boot over it — and over the stale
+   `claude-opus-5` the old `.env.example` shipped — is too aggressive now that B1 loads `.env`.)
 10. WHEN `FACILITATOR_MODEL` is unset THEN behaviour SHALL be unchanged (`claude-sonnet-5`
     primary).
 
@@ -64,6 +66,17 @@ WARN, and the cheap/safe NOTEs.
 11. WHEN a single `generateText` call exceeds a per-attempt deadline (default 30 s) THEN it SHALL
     abort and the failure SHALL classify `provider-down` (ladder continues; the scheduler cycle
     is not blocked past the deadline × ladder rungs + backoffs).
+
+### AC-DOCK — the dock shows a first prompt after scope is set
+
+Reported in manual testing (`FACILITATOR_MODE=scripted`): accepting the scope card empties the
+dock feed and looks like nothing happened.
+
+16. WHEN `scope.status` is `set` AND no contribution has been narrated yet THEN the dock feed
+    SHALL show the facilitator's first prompt (a `question` turn asking the expert to describe
+    the first thing that happens) — matching the `impeccable` brief §5 "dock open with the
+    facilitator's first prompt".
+17. WHEN at least one contribution turn exists THEN that first prompt SHALL NOT render.
 
 ### AC-NOTE — precision fixes
 12. `NextMove.questionText.describe()` SHALL state the 400-character ceiling (Anthropic strips
