@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ProposalCard } from '../types.ts'
+import { kindLabel } from './kind-label.ts'
 
 /**
  * The in-dock pending drawer (brief §3) — an *index*, not a second card. Rows
@@ -12,8 +13,6 @@ defineProps<{
   awaiting: ProposalCard[]
 }>()
 const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
-
-const KIND_LABEL: Record<string, string> = { 'domain-event': 'EVENT', actor: 'ACTOR', system: 'SYSTEM' }
 </script>
 
 <template>
@@ -27,7 +26,7 @@ const KIND_LABEL: Record<string, string> = { 'domain-event': 'EVENT', actor: 'AC
         class="drawer__row"
         @click="emit('jump', card.proposalId)"
       >
-        <span class="drawer__pill">{{ KIND_LABEL[card.blockKind] ?? card.blockKind }}</span>
+        <span class="drawer__pill">{{ kindLabel(card.blockKind) }}</span>
         <span class="drawer__label">{{ card.label }}</span>
         <span class="drawer__chev" aria-hidden="true">›</span>
       </button>
@@ -42,7 +41,7 @@ const KIND_LABEL: Record<string, string> = { 'domain-event': 'EVENT', actor: 'AC
         class="drawer__row"
         @click="emit('jump', card.proposalId)"
       >
-        <span class="drawer__pill">{{ KIND_LABEL[card.blockKind] ?? card.blockKind }}</span>
+        <span class="drawer__pill">{{ kindLabel(card.blockKind) }}</span>
         <span class="drawer__label">{{ card.label }}</span>
         <span class="drawer__chev" aria-hidden="true">›</span>
       </button>

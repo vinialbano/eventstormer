@@ -5,6 +5,7 @@ import type { ProposalCard as ProposalCardData } from '../types.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
 import ConversationTurn from './ConversationTurn.vue'
+import { kindLabel } from './kind-label.ts'
 import DockComposer from './DockComposer.vue'
 import PendingDrawer from './PendingDrawer.vue'
 import ProposalCard from './ProposalCard.vue'
@@ -246,7 +247,7 @@ const onJump = async (proposalId: string): Promise<void> => {
                   :class="{ 'dock__cardslot--pulse': pulsingId === card.proposalId }"
                 >
                   <ProposalCard
-                    kind-label="EVENT"
+                    :kind-label="kindLabel(card.blockKind)"
                     :label="card.label"
                     :disposition="card.disposition"
                     :held="card.held"

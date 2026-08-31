@@ -181,6 +181,19 @@ describe('FacilitatorDock', () => {
     expect(turns.some((t) => t.includes('A customer places an order.'))).toBe(true)
   })
 
+  it('labels a proposal card by its building-block kind, not always EVENT', () => {
+    seed(view(), [
+      card({ proposalId: 'p1', blockKind: 'actor', label: 'Host' }),
+      card({ proposalId: 'p2', blockKind: 'system', label: 'POS terminal' }),
+    ])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    const pills = wrapper.findAll('.pc__pill').map((p) => p.text())
+    expect(pills).toContain('ACTOR')
+    expect(pills).toContain('SYSTEM')
+    expect(pills).not.toContain('EVENT')
+  })
+
   it('shows a "noted" reply when a contribution produced no proposals', () => {
     seed(
       view({

@@ -89,6 +89,10 @@ a follow-up report — the feed should read like a chat where messages persist, 
     short facilitator "noted" reply — a turn must never look dropped.
 19. WHEN a contribution's interpretation `status = failed` THEN the feed SHALL show a facilitator
     "try rephrasing" hint (never an error state — `impeccable` brief §5).
+20. A proposal card's kind pill SHALL reflect the proposal's `blockKind` (`EVENT` / `ACTOR` /
+    `SYSTEM`), not the hard-coded `EVENT` — matching the pending-drawer row (`kindLabel`, now
+    shared). The pill *colour* stays event-orange for every kind until the design system gains
+    actor/system tokens (an `impeccable` follow-up, out of scope here).
 
 ### AC-NOTE — precision fixes
 12. `NextMove.questionText.describe()` SHALL state the 400-character ceiling (Anthropic strips
