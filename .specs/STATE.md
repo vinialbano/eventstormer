@@ -49,10 +49,11 @@ capture.
 ## Handoff
 
 - **Feature**: `slice-2-money-shot` (`.specs/features/slice-2-money-shot/`) — GitHub #39
-- **Phase / Task**: Execute complete (T1–T17). Verifier running.
-- **Completed**: B1 T1–T5; B2 T6–T9; B3 T10–T17 (`3148418` changeset)
-- **In-progress**: feature-level Verifier (author ≠ verifier)
-- **Next step**: Verifier writes `validation.md`. FAIL → fix tasks (max 3 rounds). PASS → ready for UAT/PR if wanted.
+- **Phase / Task**: Execute complete + Verifier **PASS** (`84792ea`)
+- **Completed**: T1–T17; 26/26 ACs verified; 467 tests; 3/3 mutants killed; `minor` changeset;
+  `package.json` still `0.2.0`
+- **In-progress**: none
+- **Next step**: Interactive UAT if wanted; PR when you ask. Branch is local only.
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: `slice-2-money-shot` off `main`
