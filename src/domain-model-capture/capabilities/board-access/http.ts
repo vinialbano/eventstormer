@@ -2,7 +2,8 @@ import { Hono } from 'hono'
 import type { WorkshopId } from '~/plumbing/ids.ts'
 import { replay } from '../../domain/board/replay.ts'
 import { Operation } from '../../domain/schema/index.ts'
-import { type BoardAccessDeps, boardStream } from './deps.ts'
+import { boardStream } from '../../infrastructure/board-stream.ts'
+import type { BoardAccessDeps } from './deps.ts'
 
 /**
  * `GET /workshops/:id/board` — the full board snapshot for the client `board`

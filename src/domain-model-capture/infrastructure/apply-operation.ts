@@ -1,17 +1,28 @@
+import type { Clock } from '~/plumbing/clock.ts'
+import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
 import { ok, type Result } from '~/plumbing/result.ts'
-import { decide } from '../../domain/board/decide.ts'
-import type { Rejection } from '../../domain/board/model.ts'
-import { replayWriteModel } from '../../domain/board/replay.ts'
-import { Operation, OP_SCHEMA_VERSION } from '../../domain/schema/index.ts'
-import { type BoardAccessDeps, boardStream } from './deps.ts'
+import { decide } from '../domain/board/decide.ts'
+import type { Rejection } from '../domain/board/model.ts'
+import { replayWriteModel } from '../domain/board/replay.ts'
+import { Operation, OP_SCHEMA_VERSION } from '../domain/schema/index.ts'
+import { boardStream } from './board-stream.ts'
 
 const MAX_RETRIES = 8
+
+/** Same shape as board-access deps — defined here so infrastructure does not import a capability. */
+export interface ApplyOperationDeps {
+  store: EventStore
+  clock: Clock
+}
 
 export interface ApplyResult {
   resultingBuildingBlockId: BuildingBlockId
   nextPosition: number
 }
+
+const resultingBuildingBlockId = (operation: Operation): BuildingBlockId =>
+  'id' in operation ? operation.id : (operation as { target: BuildingBlockId }).target
 
 /**
  * The sole writer of a workshop's board stream. It takes **no**
@@ -21,7 +32,7 @@ export interface ApplyResult {
  * caller.
  */
 export const applyOperation = (
-  deps: BoardAccessDeps,
+  deps: ApplyOperationDeps,
   workshopId: WorkshopId,
   operation: Operation,
 ): Result<ApplyResult, Rejection> => {
@@ -46,11 +57,10 @@ export const applyOperation = (
     )
 
     if (appended.ok) {
-      const resultingBuildingBlockId = (operation as { id?: BuildingBlockId }).id
-      if (resultingBuildingBlockId === undefined) {
-        throw new Error(`applyOperation: ${operation.kind} produced no building block id`)
-      }
-      return ok({ resultingBuildingBlockId, nextPosition: appended.value.nextPosition })
+      return ok({
+        resultingBuildingBlockId: resultingBuildingBlockId(operation),
+        nextPosition: appended.value.nextPosition,
+      })
     }
   }
 

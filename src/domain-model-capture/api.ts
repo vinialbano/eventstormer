@@ -4,7 +4,7 @@
  * never its `domain/`, `capabilities/`, or `infrastructure/`.
  */
 export { anthropicOperationSchema } from './domain/anthropic-contract.ts'
-export { type ApplyResult, applyOperation } from './capabilities/board-access/apply-operation.ts'
+export { type ApplyResult, applyOperation } from './infrastructure/apply-operation.ts'
 export type { BoardAccessDeps } from './capabilities/board-access/deps.ts'
 export { boardAccessRoutes } from './capabilities/board-access/http.ts'
 export {

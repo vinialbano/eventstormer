@@ -152,11 +152,11 @@ from `api.ts` (or the infra module) — **`http.ts` itself does not import apply
 **Requirement**: S2-21, S2-22
 **Tools**: MCP: NONE · Skill: `testing-boss`
 **Done when**:
-- [ ] `applyOperation(reword)` / `withdraw` / `reinstate` return `resultingBuildingBlockId === target` and do not throw (a test that would have thrown on `main`)
-- [ ] capture kinds still return `operation.id`; two concurrent F06 applies both succeed via internal retry
-- [ ] `session-facilitation` accept path still compiles against `api.ts` (no import-path change for other contexts)
-- [ ] `infrastructure/apply-operation.ts` does not import `capabilities/`
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] `applyOperation(reword)` / `withdraw` / `reinstate` return `resultingBuildingBlockId === target` and do not throw (a test that would have thrown on `main`)
+- [x] capture kinds still return `operation.id`; two concurrent F06 applies both succeed via internal retry
+- [x] `session-facilitation` accept path still compiles against `api.ts` (no import-path change for other contexts)
+- [x] `infrastructure/apply-operation.ts` does not import `capabilities/`
+- [x] Gate check passes: `pnpm check && pnpm build` · 413 passed, 0 failed
 **Tests**: unit + integration · **Gate**: build
 **Commit**: `refactor(capture): lift applyOperation and return target ids`
 

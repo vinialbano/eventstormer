@@ -247,8 +247,8 @@ label; POST `sequence` → 422; unit-test `applyOperation(reword)` does not thro
 | S2-18 | P1 Account (coverage disclosure + honest "not run") | Tasks | Pending |
 | S2-19 | P1 Account (Supporting context; api.ts only; no aggregate) | Tasks | Pending |
 | S2-20 | P2 HTTP (`POST …/board/operations` reword/withdraw/reinstate only) | Tasks | Pending |
-| S2-21 | P2 HTTP (`applyOperation` returns `target`; no throw) | Tasks | Pending |
-| S2-22 | P2 HTTP (stale-position retry stays inside `applyOperation`) | Tasks | Pending |
+| S2-21 | P2 HTTP (`applyOperation` returns `target`; no throw) | Tasks | Execute |
+| S2-22 | P2 HTTP (stale-position retry stays inside `applyOperation`) | Tasks | Execute |
 | S2-23 | cross (`edit-model` capability; 4th Pinia store; `no-cross-store-imports`) | Tasks | Pending |
 | S2-24 | cross (`minor` changeset; do not edit `package.json` version) | Tasks | Pending |
 | S2-25 | cross (`impeccable` shape of drawer + confirm popover on capture-loop surface) | Tasks | Pending |
