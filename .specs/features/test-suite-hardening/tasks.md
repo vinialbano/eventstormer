@@ -250,10 +250,10 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `POST /api/proposals/p1/reject` asserted
-- [ ] `POST /api/proposals/p1/edit` with `{ label }` body asserted
-- [ ] hold then unhold URLs asserted
-- [ ] Gate: `pnpm test`
+- [x] `POST /api/proposals/p1/reject` asserted
+- [x] `POST /api/proposals/p1/edit` with `{ label }` body asserted
+- [x] hold then unhold URLs asserted
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick

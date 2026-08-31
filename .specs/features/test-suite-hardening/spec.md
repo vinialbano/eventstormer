@@ -230,7 +230,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-08 | P1: Reject Proposal | Tasks T6 | Done |
 | TSH-09 | P1: Record Operation Applied | Tasks T6 | Done |
 | TSH-10 | P1: Record Operation Rejected | Tasks T6 | Done |
-| TSH-11 | P1: Dock reject/edit/hold/unhold | Tasks T8 | In Tasks |
+| TSH-11 | P1: Dock reject/edit/hold/unhold | Tasks T8 | Done |
 | TSH-12 | P1: CreateWorkshop alert | Tasks T9 | In Tasks |
 | TSH-13 | P1: Accept 404 | Tasks T7 | Done |
 | TSH-14 | P1: Accept 409 | Tasks T7 | Done |
