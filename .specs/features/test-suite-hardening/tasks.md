@@ -359,9 +359,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Lint is on the pre-push path
-- [ ] No `test:e2e` in lefthook
-- [ ] Gate: `pnpm check`
+- [x] Lint is on the pre-push path
+- [x] No `test:e2e` in lefthook
+- [x] Gate: `pnpm check`
 
 **Tests**: none
 **Gate**: build
