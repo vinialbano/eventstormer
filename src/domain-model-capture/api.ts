@@ -11,6 +11,7 @@ export {
   type BuildingBlockRow,
   readBuildingBlocks,
 } from './capabilities/board-access/read-building-blocks.ts'
+export { readBoardSnapshot } from './capabilities/board-access/read-board-snapshot.ts'
 export { decide } from './domain/board/decide.ts'
 export { evolve } from './domain/board/evolve.ts'
 export {

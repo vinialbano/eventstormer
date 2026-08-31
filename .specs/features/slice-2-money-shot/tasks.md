@@ -177,10 +177,10 @@ on an empty stream.
 **Requirement**: S2-09, S2-13 (snapshot still carries withdrawn ids)
 **Tools**: MCP: NONE · Skill: `testing-boss`
 **Done when**:
-- [ ] empty log → `{ position: -1, blocks: [] }`
-- [ ] a withdrawn block is present in the snapshot with `withdrawn: true` and its id/label
-- [ ] existing `GET /board` 404-on-empty test still passes
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] empty log → `{ position: -1, blocks: [] }`
+- [x] a withdrawn block is present in the snapshot with `withdrawn: true` and its id/label
+- [x] existing `GET /board` 404-on-empty test still passes
+- [x] Gate check passes: `pnpm test` · 415 passed, 0 failed
 **Tests**: unit + integration · **Gate**: quick
 **Commit**: `feat(capture): publish a board snapshot that includes withdrawn blocks`
 

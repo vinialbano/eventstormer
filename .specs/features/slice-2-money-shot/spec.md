@@ -235,11 +235,11 @@ label; POST `sequence` → 422; unit-test `applyOperation(reword)` does not thro
 | S2-06 | P1 Reword (substring label does not clobber the longer id) | Tasks | Pending |
 | S2-07 | P1 Reword (account live-refetch same interaction) | Tasks | Pending |
 | S2-08 | P1 Reword (unknown / withdrawn target rejected) | Tasks | Execute |
-| S2-09 | P1 Withdraw (single op; ghosted sticky; id kept) | Tasks | Pending |
+| S2-09 | P1 Withdraw (single op; ghosted sticky; id kept) | Tasks | Execute |
 | S2-10 | P1 Withdraw (reinstate naked, same id) | Tasks | Pending |
 | S2-11 | P1 Withdraw (illegal transitions rejected) | Tasks | Execute |
 | S2-12 | P1 Withdraw (vacuous cascade: no unlink-cause / hot-spot withdraw) | Tasks | Execute |
-| S2-13 | P1 Withdraw (references still resolve) | Tasks | Pending |
+| S2-13 | P1 Withdraw (references still resolve) | Tasks | Execute |
 | S2-14 | P1 Account (drawer GET; empty state deterministic) | Tasks | Pending |
 | S2-15 | P1 Account (byte-identical replay of same snapshot) | Tasks | Pending |
 | S2-16 | P1 Account (re-render on every applied op; no LLM) | Tasks | Pending |
