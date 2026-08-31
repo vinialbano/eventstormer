@@ -281,6 +281,13 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
  * already marked in `derived_track` is skipped, so this is a no-op once whole),
  * and sweep the half-closed case (`Session Closed` in the stream but the
  * `session_index` row still `open`). No model call.
+ *
+ * Known gap (AD-021 scale): this sweeps open sessions only. If the process
+ * crashes mid-`deriveTracks` — one track marked, the next not — and the session
+ * is then closed, the unmarked track is never derived (a missing proposal card,
+ * no corruption). The crash window is sub-millisecond (`deriveTracks` is
+ * synchronous); widening the sweep to closed sessions is not worth the risk to
+ * the crash-safety net at v1 single-user scale.
  */
 export const reconcilePendingDerivations = (deps: InterpretContributionDeps): void => {
   for (const { sessionId } of openSessions(deps.db)) {
