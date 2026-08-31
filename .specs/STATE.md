@@ -45,7 +45,16 @@ capture.
 
 **Active feature:** `slice-1-capture-loop` (GitHub issue #38)
 **Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
-**Phase:** **EXECUTE in progress via sub-agent batches.** Batch plan: **B1** P1 (5) · **B2** P2+P3
+**Phase:** slice-1 EXECUTE complete + Verifier PASS. **Follow-up: `slice-1-review-fixes`** —
+the PR #46 automated-review fix batch (spec + validation in
+`.specs/features/slice-1-review-fixes/`). All 3 BLOCK + 3 WARN + 4 cheap NOTEs closed, plus two
+dock issues found in manual testing (empty feed after scope accept; first prompt must persist
+chat-style) and `.env.local` / e2e key-isolation. 13 commits `8b444b7..HEAD` on
+`slice-1-capture-loop`. `pnpm check` (369 tests) + e2e green. AD-025 added. Deferred (per the
+review): NOTE 1, NOTE 6, QW1 (→ PR #47), QW2. **PR #49 is stacked on this branch — restack after
+these land.**
+
+slice-1 batch plan (historical): **B1** P1 (5) · **B2** P2+P3
 (6) · **B3** P4+P5 (7) · **B4** P6+P7 (7) · **B5** P8 (5) · **B6** P9 (2).
 - **B1 (T1–T5) ✅** — commit `264f1b3`. 159 tests.
 - **B2 (T6–T11) ✅** — through `0898d86` (+ `c57eb0f` docs). 227 tests.
