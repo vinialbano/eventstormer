@@ -125,11 +125,11 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
       case 'attribute-to-other-format': {
         const events = readSession(deps, event.sessionId)
         const already = events.some(
-          (event) =>
-            event.type === 'Contribution Attributed To Another Format' &&
-            event.contributionId === event.contributionId &&
-            event.format === track.format &&
-            event.note === track.note,
+          (priorEvent) =>
+            priorEvent.type === 'Contribution Attributed To Another Format' &&
+            priorEvent.contributionId === event.contributionId &&
+            priorEvent.format === track.format &&
+            priorEvent.note === track.note,
         )
         if (!already) {
           const decided = decideSession(replaySession(events), {

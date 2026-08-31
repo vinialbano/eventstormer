@@ -188,6 +188,27 @@ describe('interpretContribution — the commit point + derivation', () => {
     expect(only('Contribution Attributed To Another Format').map((event) => event.format)).toEqual(['policy'])
   })
 
+  it('records an out-of-format notice per contribution, even when an earlier contribution had the same format and note', async () => {
+    seedSession()
+    contribute('acquisitions auto-places a hold', 'c_1')
+    contribute('a hold gets placed when we acquire', 'c_2')
+
+    const notice = {
+      track: 'attribute-to-other-format',
+      format: 'policy',
+      note: '"auto-place a hold" is a policy.',
+    } as const
+    const dependencies = deps([turn([notice]), turn([notice])])
+
+    await interpretContribution(dependencies)
+    await interpretContribution(dependencies)
+
+    expect(only('Contribution Attributed To Another Format').map((event) => event.contributionId)).toEqual([
+      'c_1',
+      'c_2',
+    ])
+  })
+
   it('resolves an open question from an answer-question track', async () => {
     seedSession()
     // an open question q_open
