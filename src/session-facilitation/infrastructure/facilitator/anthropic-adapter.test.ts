@@ -118,17 +118,18 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     expect(readLog()).toHaveLength(3)
   })
 
-  it('treats a 429 rate limit as provider-down, not a terminal schema failure', async () => {
+  it('treats a 429 rate limit as provider-down — walks the whole ladder, never the schema retry', async () => {
     const { generate, models } = scripted([
       { throw: Object.assign(new Error('rate limited'), { statusCode: 429 }) },
-      result(VALID_TURN),
     ])
     const { facilitator } = depsWith(generate)
 
     const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isOk(r)).toBe(true)
-    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
+    expect(isErr(r)).toBe(true)
+    if (isErr(r)) expect(r.error).toEqual({ kind: 'provider-down' })
+    // ladder, not a one-shot schema retry: sonnet → sonnet → haiku
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
   })
 
   it('still treats a 400 bad request as schema-invalid — one retry, no laddering', async () => {
