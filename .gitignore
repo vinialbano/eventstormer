@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 *.local
+*.local.json
 
 # Secrets. .env.example is committed; .env never is.
 .env
