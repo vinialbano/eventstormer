@@ -29,16 +29,16 @@ describe('logModelCall — one JSONL line per call', () => {
     rawLines(at).map((line) => JSON.parse(line) as ModelCallEntry)
 
   it('appends exactly one valid JSON line that round-trips the entry', () => {
-    const event = entry()
-    logModelCall(directory, event)
+    const call = entry()
+    logModelCall(directory, call)
     expect(rawLines()).toHaveLength(1)
-    expect(entries()[0]).toStrictEqual(event)
+    expect(entries()[0]).toStrictEqual(call)
   })
 
   it('appends — a second call adds a line, keeps the first', () => {
     logModelCall(directory, entry({ responseText: 'first' }))
     logModelCall(directory, entry({ responseText: 'second' }))
-    expect(entries().map((event) => event.responseText)).toStrictEqual(['first', 'second'])
+    expect(entries().map((call) => call.responseText)).toStrictEqual(['first', 'second'])
   })
 
   it('records a schema-failure parseResult', () => {

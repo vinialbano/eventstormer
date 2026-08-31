@@ -35,10 +35,10 @@ const view = (over: Partial<SessionView> = {}): SessionView => ({
 
 let fetchMock: ReturnType<typeof vi.fn>
 
-const seed = (value: SessionView, cards: ProposalCard[]) => {
+const seed = (sessionView: SessionView, cards: ProposalCard[]) => {
   const session = useSessionStore()
   const proposals = useProposalsStore()
-  session.view = value
+  session.view = sessionView
   proposals.cards = cards
   return { session, proposals }
 }

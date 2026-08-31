@@ -172,7 +172,7 @@ export const createAnthropicFacilitator = (deps: AnthropicFacilitatorDeps): Faci
     const parsed = schema.safeParse(raw.output)
     const detail = parsed.success
       ? ''
-      : parsed.error.issues.map((index) => `${index.path.join('.')}: ${index.message}`).join('; ')
+      : parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ')
     logModelCall(deps.dataDirectory, {
       at: deps.clock(),
       model,
