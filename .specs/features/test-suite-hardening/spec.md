@@ -235,7 +235,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-13 | P1: Accept 404 | Tasks T7 | Done |
 | TSH-14 | P1: Accept 409 | Tasks T7 | Done |
 | TSH-15 | P1: Pre-push = pnpm check | Tasks T13 | Done |
-| TSH-16 | P1: docs/testing.md | Tasks T14 | In Tasks |
+| TSH-16 | P1: docs/testing.md | Tasks T14 | Done |
 | TSH-17 | P1: README real vs stubbed | Tasks T15 | In Tasks |
 | TSH-18 | P1: AGENTS.md gate wording | Tasks T16 | In Tasks |
 | TSH-19 | P1: pnpm eval live 4×5 | Tasks T18–T19 | In Tasks |

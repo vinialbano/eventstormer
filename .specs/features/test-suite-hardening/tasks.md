@@ -381,8 +381,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] No “E2E — decided, not yet built”
-- [ ] Gate: `pnpm check`
+- [x] No “E2E — decided, not yet built”
+- [x] Gate: `pnpm check`
 
 **Tests**: none
 **Gate**: build
