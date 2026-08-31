@@ -3,6 +3,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
 import pluginUnicorn from 'eslint-plugin-unicorn'
+import pluginSonarjs from 'eslint-plugin-sonarjs'
 import globals from 'globals'
 
 // `tseslint.config()` is deprecated in favour of ESLint core's `defineConfig()`.
@@ -52,14 +53,16 @@ export default defineConfig([
   },
 
   {
-    plugins: { unicorn: pluginUnicorn },
+    plugins: { unicorn: pluginUnicorn, sonarjs: pluginSonarjs },
     rules: {
       // Identifiers are spelled out in full — terse single-letter and abbreviated
       // names are rejected so the derived model reads like prose.
       'id-length': ['error', { min: 2, properties: 'never', exceptions: ['_'] }],
-      // Agent-facing sensors — not the unicorn recommended kitchen sink.
+      // Agent-facing sensors — not the unicorn/sonarjs recommended kitchen sinks.
       // Bare eslint-disable, missing `node:`, `throw Error()`, empty Error,
       // forEach, reverse().find, mutating sort, await-in-Promise.all.
+      // Cognitive complexity 15: a switch is +1, not +1 per case, so exhaustive
+      // union folds stay legal; nested spaghetti does not.
       'unicorn/no-abusive-eslint-disable': 'error',
       'unicorn/prefer-node-protocol': 'error',
       'unicorn/throw-new-error': 'error',
@@ -68,6 +71,7 @@ export default defineConfig([
       'unicorn/prefer-array-last-methods': 'error',
       'unicorn/no-array-sort': 'error',
       'unicorn/no-await-in-promise-methods': 'error',
+      'sonarjs/cognitive-complexity': ['error', 15],
       'unicorn/name-replacements': [
         'error',
         {

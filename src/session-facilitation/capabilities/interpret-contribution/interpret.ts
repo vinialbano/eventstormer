@@ -4,6 +4,7 @@ import { facilitationContext } from '../../domain/read-models/facilitation.ts'
 import { priorSessionHistory, sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { sessionView } from '../../domain/read-models/session-view.ts'
 import { ProposalEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import { decide as decideProposal } from '../../domain/proposal/decide.ts'
 import { replay as replayProposal } from '../../domain/proposal/replay.ts'
 import { decide as decideSession } from '../../domain/session/decide.ts'
@@ -77,6 +78,107 @@ const assembleFacilitationContext = (
   })
 }
 
+type ProposeTrack = Extract<InterpretedTrack, { track: 'propose-building-block' }>
+type FlagPhaseTrack = Extract<InterpretedTrack, { track: 'flag-phase' }>
+type AttributeTrack = Extract<InterpretedTrack, { track: 'attribute-to-other-format' }>
+type AnswerTrack = Extract<InterpretedTrack, { track: 'answer-question' }>
+
+const deriveProposeBuildingBlock = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: ProposeTrack,
+): void => {
+  const decided = decideProposal(replayProposal(readProposal(deps, track.proposalId)), {
+    type: 'Propose Building Block',
+    proposalId: track.proposalId,
+    sessionId: event.sessionId,
+    contributionId: event.contributionId,
+    blockKind: track.blockKind,
+    label: track.label,
+    bar: track.bar,
+    ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
+    at: event.at,
+  })
+  if (decided.ok && decided.value.length > 0) {
+    deps.store.append(proposalStream(track.proposalId), -1, storedOps(decided.value))
+  }
+}
+
+const deriveFlagPhase = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: FlagPhaseTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Ask Question',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    kind: 'phase',
+    text: track.questionText,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
+const deriveAttributeToOtherFormat = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: AttributeTrack,
+): void => {
+  // `Attribute Contribution` is not self-idempotent in the session decider,
+  // so re-deriving this track (a different track on the same contribution
+  // hitting `derived_track`, or a replay) would append a duplicate notice.
+  // Skip when an identical (contribution, format, note) notice already exists.
+  const events = readSession(deps, event.sessionId)
+  const already = events.some(
+    (priorEvent) =>
+      priorEvent.type === 'Contribution Attributed To Another Format' &&
+      priorEvent.contributionId === event.contributionId &&
+      priorEvent.format === track.format &&
+      priorEvent.note === track.note,
+  )
+  if (!already) {
+    const decided = decideSession(replaySession(events), {
+      type: 'Attribute Contribution',
+      sessionId: event.sessionId,
+      contributionId: event.contributionId,
+      format: track.format,
+      note: track.note,
+      at: event.at,
+    })
+    if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+  }
+}
+
+const deriveAnswerQuestion = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: AnswerTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Answer Question',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+  else console.warn(`answer-question: dropped unknown/resolved questionId ${track.questionId}`)
+}
+
+const deriveFreeFollowUp = (deps: InterpretContributionDeps, event: Interpreted): void => {
+  if (event.askQuestionId === undefined || event.askQuestionText === undefined) return
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Ask Question',
+    sessionId: event.sessionId,
+    questionId: event.askQuestionId,
+    kind: 'free',
+    text: event.askQuestionText,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
 /**
  * Derive every stream implied by a `Contribution Interpreted` event.
  * Idempotent from two guards: a track already in `derived_track` is skipped, and
@@ -93,90 +195,24 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
     if (derived.has(`${event.contributionId}::${String(index)}`)) continue
 
     switch (track.track) {
-      case 'propose-building-block': {
-        const decided = decideProposal(replayProposal(readProposal(deps, track.proposalId)), {
-          type: 'Propose Building Block',
-          proposalId: track.proposalId,
-          sessionId: event.sessionId,
-          contributionId: event.contributionId,
-          blockKind: track.blockKind,
-          label: track.label,
-          bar: track.bar,
-          ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
-          at: event.at,
-        })
-        if (decided.ok && decided.value.length > 0) {
-          deps.store.append(proposalStream(track.proposalId), -1, storedOps(decided.value))
-        }
+      case 'propose-building-block':
+        deriveProposeBuildingBlock(deps, event, track)
         break
-      }
-      case 'flag-phase': {
-        const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
-          type: 'Ask Question',
-          sessionId: event.sessionId,
-          questionId: track.questionId,
-          kind: 'phase',
-          text: track.questionText,
-          at: event.at,
-        })
-        if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+      case 'flag-phase':
+        deriveFlagPhase(deps, event, track)
         break
-      }
-      case 'attribute-to-other-format': {
-        // `Attribute Contribution` is not self-idempotent in the session decider,
-        // so re-deriving this track (a different track on the same contribution
-        // hitting `derived_track`, or a replay) would append a duplicate notice.
-        // Skip when an identical (contribution, format, note) notice already exists.
-        const events = readSession(deps, event.sessionId)
-        const already = events.some(
-          (priorEvent) =>
-            priorEvent.type === 'Contribution Attributed To Another Format' &&
-            priorEvent.contributionId === event.contributionId &&
-            priorEvent.format === track.format &&
-            priorEvent.note === track.note,
-        )
-        if (!already) {
-          const decided = decideSession(replaySession(events), {
-            type: 'Attribute Contribution',
-            sessionId: event.sessionId,
-            contributionId: event.contributionId,
-            format: track.format,
-            note: track.note,
-            at: event.at,
-          })
-          if (decided.ok) appendSession(deps, event.sessionId, decided.value)
-        }
+      case 'attribute-to-other-format':
+        deriveAttributeToOtherFormat(deps, event, track)
         break
-      }
-      case 'answer-question': {
-        const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
-          type: 'Answer Question',
-          sessionId: event.sessionId,
-          questionId: track.questionId,
-          byContributionId: event.contributionId,
-          at: event.at,
-        })
-        if (decided.ok) appendSession(deps, event.sessionId, decided.value)
-        else console.warn(`answer-question: dropped unknown/resolved questionId ${track.questionId}`)
+      case 'answer-question':
+        deriveAnswerQuestion(deps, event, track)
         break
-      }
     }
 
     markDerivedTrack(deps.db, event.contributionId, index)
   }
 
-  // The free follow-up question — once per turn, idempotent via the questions map.
-  if (event.askQuestionId !== undefined && event.askQuestionText !== undefined) {
-    const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
-      type: 'Ask Question',
-      sessionId: event.sessionId,
-      questionId: event.askQuestionId,
-      kind: 'free',
-      text: event.askQuestionText,
-      at: event.at,
-    })
-    if (decided.ok) appendSession(deps, event.sessionId, decided.value)
-  }
+  deriveFreeFollowUp(deps, event)
 }
 
 const runInterpretation = async (
