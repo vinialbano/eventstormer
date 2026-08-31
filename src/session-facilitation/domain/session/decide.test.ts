@@ -125,6 +125,33 @@ describe('Session.decide — Make Contribution', () => {
   })
 })
 
+describe('Session.decide — Attribute Contribution', () => {
+  it('emits Contribution Attributed To Another Format with command contribution id, format, note, and timestamp', () => {
+    const result = decide(replay(startedStream), {
+      type: 'Attribute Contribution',
+      sessionId,
+      contributionId: toContributionId('c_attr'),
+      format: 'process-modelling',
+      note: 'belongs in process modelling',
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Contribution Attributed To Another Format',
+          sessionId,
+          contributionId: 'c_attr',
+          format: 'process-modelling',
+          note: 'belongs in process modelling',
+        },
+      ])
+    }
+  })
+})
+
 describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('emits Contribution Interpreted the first time, ok([]) the second', () => {
     const first = decide(replay(startedStream), {

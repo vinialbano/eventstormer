@@ -165,8 +165,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Event type, contributionId, format, note, at pinned to literals
-- [ ] Gate: `pnpm test`
+- [x] Event type, contributionId, format, note, at pinned to literals
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick
