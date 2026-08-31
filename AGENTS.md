@@ -27,8 +27,9 @@ hand-authored, and is absent until the first `src/app/` build. The system's arch
 ## Commands
 
 `pnpm check` = process-ids → typecheck → lint → test → depcruise → knip, in that order, failing
-fast. Local `pnpm check` and the pre-push hook run this. CI adds `pnpm build` and `pnpm test:e2e`,
-and runs `pnpm check:process-ids` as the first `check` job step.
+fast. Local `pnpm check` and the pre-push hook run this. CI runs `pnpm check:process-ids` as the
+first `check` job step, then adds `pnpm build`, a domain/app coverage floor (`autoUpdate` off),
+an offline doc-link job, and `pnpm test:e2e`.
 `pnpm eval` is out of CI. `pnpm dev` is one process — Vite serves the SPA and hands `/api/*`
 to the Hono app.
 
