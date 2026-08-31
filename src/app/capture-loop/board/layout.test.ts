@@ -49,4 +49,20 @@ describe('layoutBoard', () => {
       expect(tilt).toBeLessThanOrEqual(1.1)
     }
   })
+
+  it('copies withdrawn onto each sticky rect so ghosts still occupy a backlog cell', () => {
+    const layout = layoutBoard(
+      [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: true }],
+      VIEWPORT,
+    )
+
+    expect(layout.backlog).toHaveLength(1)
+    expect(layout.backlog[0]).toMatchObject({
+      id: 'b1',
+      label: 'Order placed',
+      withdrawn: true,
+      w: 132,
+      h: 132,
+    })
+  })
 })

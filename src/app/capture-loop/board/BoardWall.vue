@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
+import { isTypingSurface } from './typing-surface.ts'
 
 /**
  * The board wall — a full-screen EventStorming surface. Slice 1 renders the
  * backlog area only (ADR-006: the layout is the pure `layoutBoard`; this file is
- * the swappable renderer). A pending proposal is NEVER drawn here — no ghost
- * sticky (that treatment is reword-only, slice 3).
+ * the swappable renderer). A pending proposal is never drawn here — the dashed
+ * ghost is reword-only.
  */
 const props = defineProps<{ blocks: BoardBlockInput[] }>()
+defineEmits<{ 'board-dirty': [] }>()
 
 const viewport = ref({ w: 1280, h: 800 })
 const measure = (): void => {
@@ -18,12 +20,60 @@ const measure = (): void => {
     h: Math.max(320, window.innerHeight),
   }
 }
+
+const selectedId = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+const draft = ref('')
+const draftInput = ref<HTMLInputElement | null>(null)
+const bindDraftInput = (element: unknown): void => {
+  draftInput.value = element instanceof HTMLInputElement ? element : null
+}
+
+const selectSticky = (id: string): void => {
+  selectedId.value = id
+}
+
+const cancelReword = (): void => {
+  editingId.value = null
+  draft.value = ''
+}
+
+const startReword = async (id: string): Promise<void> => {
+  const block = props.blocks.find((candidate) => candidate.id === id)
+  if (block === undefined || block.withdrawn === true) return
+  editingId.value = id
+  draft.value = block.label
+  await nextTick()
+  draftInput.value?.focus()
+  draftInput.value?.select()
+}
+
+const onWindowKeydown = (event: KeyboardEvent): void => {
+  if (isTypingSurface(event.target)) {
+    if (event.key === 'Escape' && editingId.value !== null) {
+      event.preventDefault()
+      cancelReword()
+    }
+    return
+  }
+  if (event.key === 'Escape') {
+    cancelReword()
+    return
+  }
+  if (editingId.value !== null || selectedId.value === null) return
+  if (event.key !== 'e' && event.key !== 'E' && event.key !== 'Enter') return
+  event.preventDefault()
+  void startReword(selectedId.value)
+}
+
 onMounted(() => {
   measure()
   window.addEventListener('resize', measure)
+  window.addEventListener('keydown', onWindowKeydown)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', measure)
+  window.removeEventListener('keydown', onWindowKeydown)
 })
 
 const layout = computed(() => layoutBoard(props.blocks, viewport.value))
@@ -64,6 +114,9 @@ const KIND_LABEL: Record<string, string> = {
   system: 'system',
 }
 const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
+
+const showsPencil = (id: string, withdrawn: boolean): boolean =>
+  selectedId.value === id && editingId.value !== id && !withdrawn
 </script>
 
 <template>
@@ -153,8 +206,14 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
         v-for="s in layout.backlog"
         :key="s.id"
         class="sticky"
-        :class="{ 'sticky--fresh': fresh.has(s.id) }"
+        :class="{
+          'sticky--fresh': fresh.has(s.id),
+          'sticky--withdrawn': s.withdrawn,
+          'sticky--selected': selectedId === s.id && editingId !== s.id,
+          'sticky--reword': editingId === s.id,
+        }"
         :data-kind="s.kind"
+        :data-withdrawn="s.withdrawn ? 'true' : 'false'"
         tabindex="0"
         :aria-label="`${kindWord(s.kind)}: ${s.label}`"
         :style="{
@@ -164,8 +223,39 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
           height: `${s.h}px`,
           '--tilt': `${s.tilt}deg`,
         }"
+        @focus="selectSticky(s.id)"
+        @click="selectSticky(s.id)"
+        @keydown="onWindowKeydown"
       >
-        <span class="sticky__label">{{ s.label }}</span>
+        <button
+          v-if="showsPencil(s.id, s.withdrawn)"
+          type="button"
+          class="sticky__pencil"
+          aria-label="Reword"
+          @click.stop="startReword(s.id)"
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path
+              d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+
+        <template v-if="editingId === s.id">
+          <label class="sticky__edit">
+            <span class="sr-only">Reword label</span>
+            <input :ref="bindDraftInput" v-model="draft" class="sticky__input" type="text">
+          </label>
+          <div class="sticky__ghostbtns">
+            <button type="button" class="sticky__keep" aria-label="Keep wording">✓</button>
+            <button type="button" class="sticky__cancel" aria-label="Cancel" @click.stop="cancelReword">✕</button>
+          </div>
+        </template>
+        <span v-else class="sticky__label">{{ s.label }}</span>
       </li>
     </ul>
   </div>
@@ -232,8 +322,8 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
   box-shadow: var(--shadow-sticky);
   transform: rotate(var(--tilt, 0deg));
 }
-.sticky[data-kind='actor'] { background-color: var(--color-actor); }
-.sticky[data-kind='system'] { background-color: var(--color-system); }
+.sticky[data-kind='actor'] { background-color: var(--color-actor); color: var(--color-actor-ink); }
+.sticky[data-kind='system'] { background-color: var(--color-system); color: var(--color-system-ink); }
 
 .sticky__label {
   font-family: var(--font-marker);
@@ -246,6 +336,132 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
 .sticky:focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 3px;
+}
+
+.sticky--selected {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
+.sticky--withdrawn {
+  background-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-paper));
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px rgb(43 39 35 / 0.12);
+  text-decoration: line-through;
+}
+.sticky--withdrawn[data-kind='actor'],
+.sticky--withdrawn[data-kind='system'] {
+  background-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-paper));
+  color: var(--color-ink);
+}
+
+.sticky--reword {
+  background-color: color-mix(in srgb, var(--color-event) 38%, var(--color-paper));
+  box-shadow: none;
+  outline: 2px dashed var(--color-event);
+  outline-offset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 8px 6px;
+}
+.sticky--reword[data-kind='actor'] {
+  background-color: color-mix(in srgb, var(--color-actor) 38%, var(--color-paper));
+  outline-color: var(--color-actor);
+}
+.sticky--reword[data-kind='system'] {
+  background-color: color-mix(in srgb, var(--color-system) 38%, var(--color-paper));
+  outline-color: var(--color-system);
+}
+
+.sticky__pencil {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+.sticky__pencil:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
+}
+
+.sticky__edit {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.sticky__input {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-marker);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  color: inherit;
+  resize: none;
+}
+.sticky__input:focus {
+  outline: none;
+}
+
+.sticky__ghostbtns {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.sticky__keep,
+.sticky__cancel {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.sticky__keep {
+  background-color: var(--color-event);
+  color: var(--color-event-ink);
+}
+.sticky__cancel {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.sticky__keep:focus-visible,
+.sticky__cancel:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .sticky--fresh {

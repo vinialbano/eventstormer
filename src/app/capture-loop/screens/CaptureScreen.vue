@@ -25,9 +25,12 @@ const startingSession = ref(false)
 const loaded = ref(false)
 
 const blocks = computed(() =>
-  board.snapshot.blocks
-    .filter((block) => !block.withdrawn)
-    .map((block) => ({ id: block.id, kind: block.kind, label: block.label })),
+  board.snapshot.blocks.map((block) => ({
+    id: block.id,
+    kind: block.kind,
+    label: block.label,
+    withdrawn: block.withdrawn,
+  })),
 )
 const needsSession = computed(() => loaded.value && !session.sessionOpen)
 

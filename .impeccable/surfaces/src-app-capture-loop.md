@@ -60,8 +60,9 @@ one screen.
 - **Reword in place (F06):** select a committed sticky → a pencil affordance appears →
   clicking it (or `Enter` / `E` on a focused sticky) turns the sticky into a **full
   dashed ghost** (dashed border, paler fill) with editable text and **✓ / ✕** controls;
-  `Enter` saves, `Esc` cancels. This dashed-ghost treatment is used **only** for editing an
-  existing sticky — never for proposals.
+  `Esc` / ✕ restore the previous label and append nothing. Confirming a new label is a
+  second step (the confirm popover). This dashed-ghost treatment is used **only** for
+  editing an existing sticky — never for proposals.
 - **Focal moment:** an accepted proposal card becomes a sticky on the wall — the
   words-into-model beat. Newest sticky briefly distinguished (settle + fading highlight),
   then it is just part of the wall; the card collapses to a one-line transcript receipt

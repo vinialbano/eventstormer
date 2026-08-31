@@ -394,13 +394,13 @@ proposals. `E`/`Enter` **must not** start reword when `event.target` is an input
 **Requirement**: S2-01, S2-09, S2-25
 **Tools**: MCP: NONE · Skill: `impeccable` (run `context.mjs` once per UI session before editing), `testing-boss`
 **Done when**:
-- [ ] brief §3 no longer says Enter saves a committed sticky (T15 still owns drawer / 4th store / withdraw copy)
-- [ ] jsdom **CaptureScreen**: a snapshot block with `withdrawn: true` is passed to BoardWall **with** `withdrawn: true` (stop-filtering alone is not enough; the `{ id, kind, label }` strip is gone)
-- [ ] jsdom: withdrawn sticky renders struck-through / ghosted graphite, still in the backlog; distinct from dashed-ghost
-- [ ] `layoutBoard` output `StickyRect`s carry `withdrawn` when the input did
-- [ ] select + `E` / pencil → dashed-ghost with the current label; Esc restores; a proposal card never receives this treatment
-- [ ] `E` in a focused text field types the letter
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] brief §3 no longer says Enter saves a committed sticky (T15 still owns drawer / 4th store / withdraw copy)
+- [x] jsdom **CaptureScreen**: a snapshot block with `withdrawn: true` is passed to BoardWall **with** `withdrawn: true` (stop-filtering alone is not enough; the `{ id, kind, label }` strip is gone)
+- [x] jsdom: withdrawn sticky renders struck-through / ghosted graphite, still in the backlog; distinct from dashed-ghost
+- [x] `layoutBoard` output `StickyRect`s carry `withdrawn` when the input did
+- [x] select + `E` / pencil → dashed-ghost with the current label; Esc restores; a proposal card never receives this treatment
+- [x] `E` in a focused text field types the letter
+- [x] Gate check passes: `pnpm test` · 453 passed, 0 failed
 **Tests**: unit (jsdom) · **Gate**: quick
 **Commit**: `feat(app): show withdrawn ghosts and the dashed-ghost reword editor`
 

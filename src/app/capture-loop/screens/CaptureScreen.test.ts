@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import type { SessionView } from '../types.ts'
+import BoardWall from '../board/BoardWall.vue'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import CaptureScreen from './CaptureScreen.vue'
 
@@ -109,6 +110,50 @@ describe('CaptureScreen', () => {
     await flushPromises()
 
     expect(boardCalls.length).toBe(before + 1)
+    wrapper.unmount()
+  })
+
+  it('passes a withdrawn snapshot block to the wall with withdrawn true', async () => {
+    fetchMock = vi.fn((url: string) => {
+      if (url.endsWith('/session')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify(
+              sessionView({ contributions: [{ contributionId: 'c1', status: 'derived' }] }),
+            ),
+            { status: 200 },
+          ),
+        )
+      }
+      if (url.endsWith('/board')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              position: 1,
+              blocks: [
+                {
+                  id: 'b1',
+                  kind: 'domain-event',
+                  label: 'Order placed',
+                  withdrawn: true,
+                  placement: 'backlog',
+                },
+              ],
+            }),
+            { status: 200 },
+          ),
+        )
+      }
+      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(wrapper.getComponent(BoardWall).props('blocks')).toEqual([
+      { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: true },
+    ])
     wrapper.unmount()
   })
 })
