@@ -245,7 +245,7 @@ label; POST `sequence` → 422; unit-test `applyOperation(reword)` does not thro
 | S2-16 | P1 Account (re-render on every applied op; no LLM) | Tasks | Pending |
 | S2-17 | P1 Account (rendered reference vs quoted evidence) | Tasks | Execute |
 | S2-18 | P1 Account (coverage disclosure + honest "not run") | Tasks | Execute |
-| S2-19 | P1 Account (Supporting context; api.ts only; no aggregate) | Tasks | Pending |
+| S2-19 | P1 Account (Supporting context; api.ts only; no aggregate) | Tasks | Execute |
 | S2-20 | P2 HTTP (`POST …/board/operations` reword/withdraw/reinstate only) | Tasks | Pending |
 | S2-21 | P2 HTTP (`applyOperation` returns `target`; no throw) | Tasks | Execute |
 | S2-22 | P2 HTTP (stale-position retry stays inside `applyOperation`) | Tasks | Execute |

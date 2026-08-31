@@ -234,9 +234,9 @@ if a gate is red.
 **Requirement**: S2-19
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `domain/AGENTS.md` present, path-scoped; no `src/**/CONTEXT.md`
-- [ ] planted Hono import in `derived-artifact-generation/domain/` fails `pnpm depcruise`; reverted
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] `domain/AGENTS.md` present, path-scoped; no `src/**/CONTEXT.md`
+- [x] planted Hono import in `derived-artifact-generation/domain/` fails `pnpm depcruise`; reverted
+- [x] Gate check passes: `pnpm check && pnpm build` · 421 passed, 0 failed
 **Tests**: none (build gate / static) · **Gate**: build
 **Commit**: `chore(artifacts): add the derived-artifact-generation context skeleton`
 

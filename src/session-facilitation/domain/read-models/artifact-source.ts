@@ -1,6 +1,6 @@
 import type { ProposalEvent, SessionEvent, WorkshopEvent } from '../schema/events.ts'
 
-export interface ArtifactQuote {
+interface ArtifactQuote {
   id: string
   text: string
 }
