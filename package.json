@@ -24,7 +24,8 @@
     "changeset": "changeset",
     "spike:structured-output": "JITI_TSCONFIG_PATHS=1 jiti scripts/spike-structured-output.ts",
     "knip": "knip",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm depcruise && pnpm knip",
+    "check:process-ids": "bash scripts/check-process-ids.sh",
+    "check": "pnpm check:process-ids && pnpm typecheck && pnpm lint && pnpm test && pnpm depcruise && pnpm knip",
     "prepare": "lefthook install"
   },
   "devDependencies": {

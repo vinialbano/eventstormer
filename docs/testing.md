@@ -14,6 +14,14 @@
   `plumbing/`. Placing it in `plumbing/` forces a back-import that only an architecture-rule
   carve-out allows — relocate the test instead.
 
+## Mutation / discrimination-sensor verification
+
+Sensor checks mutate real source files, run the suite to confirm a test catches the mutation,
+then revert. Run them in a **separate git worktree**, never the shared checkout — dispatch the
+verifier sub-agent with `isolation: "worktree"`. The `Stop` gate runs `pnpm check` against the
+live tree; a mutation in flight there reads as a red gate on a codebase that is actually green,
+and the main agent has no reliable way to tell the two apart.
+
 ## Verifying UI changes
 
 Use `playwright-cli` (installed globally, skill at `.claude/skills/playwright-cli/`) to drive the

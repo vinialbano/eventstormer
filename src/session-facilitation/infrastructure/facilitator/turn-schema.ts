@@ -16,7 +16,7 @@ import { InterpretationBar, InterpretedBlockKind } from '../../domain/schema/int
  * - `label` is `.max(200)`.
  *
  * Every constraint is mirrored into `.describe()` — Anthropic's sanitiser strips
- * `min`/`max`/`.refine()` from the schema the model sees (docs/ai-harness-gotchas.md).
+ * `min`/`max`/`.refine()` from the schema the model sees (docs/agents/ai-harness-gotchas.md).
  */
 
 const proposeBuildingBlock = z.object({

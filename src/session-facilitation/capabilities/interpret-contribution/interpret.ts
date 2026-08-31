@@ -286,7 +286,7 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
  * and sweep the half-closed case (`Session Closed` in the stream but the
  * `session_index` row still `open`). No model call.
  *
- * Known gap (AD-021 scale): this sweeps open sessions only. If the process
+ * Known gap (accepted at v1 single-user scale): this sweeps open sessions only. If the process
  * crashes mid-`deriveTracks` — one track marked, the next not — and the session
  * is then closed, the unmarked track is never derived (a missing proposal card,
  * no corruption). The crash window is sub-millisecond (`deriveTracks` is

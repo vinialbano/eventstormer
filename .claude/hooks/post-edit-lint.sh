@@ -21,6 +21,23 @@ case "$file" in
     fi ;;
 esac
 
+# .specs/ process ids (spec-task id like S1-05, decision-log id like AD-018,
+# milestone tag like M1-15) must not land in source — they point at .specs/ state a
+# code reader can't see and rot when the slice closes. Permanent docs/adr/NNN and
+# PRD F01 ids are fine. scripts/check-process-ids.sh is the matching `pnpm check` /
+# leftover / Stop / CI step.
+rel="${file#"$PWD"/}"
+rel="${rel#"${CLAUDE_PROJECT_DIR:-.}"/}"
+case "$rel" in
+  src/*.ts|src/*.tsx|src/*.vue|src/*.js|src/*.cjs|src/*.mjs|e2e/*.ts|e2e/*.vue)
+    ids="$(grep -nE '\b(AD-[0-9]+|S[0-9]+-[0-9]+|M[0-9]+-[0-9]+)\b' "$file" 2>/dev/null)"
+    if [ -n "$ids" ]; then
+      printf 'Process id in %s. AGENTS.md > "Keep process ids out of code": drop the tag, keep the reasoning (not `// synchronous (AD-013)` but `// synchronous — node:sqlite has no async API`). Permanent docs/adr/NNN and PRD F01 ids are allowed.\n\n%s\n' \
+        "$rel" "$(printf '%s' "$ids" | head -c 2000)" >&2
+      exit 2
+    fi ;;
+esac
+
 case "$file" in
   *.ts|*.vue|*.js) ;;
   *) exit 0 ;;

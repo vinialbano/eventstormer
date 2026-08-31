@@ -19,6 +19,14 @@ gets exercised.
   locally, so violations surface as `NoObjectGeneratedError` — a real error path, handle it.
 - **Read `result.warnings` on every model call** and log them. Settings are dropped silently.
 - **Model ids take no date suffix**: `claude-opus-5`, never `claude-opus-5-2026xxxx`.
+- **Anthropic structured output caps optional properties at ~24 across the whole schema.** Every
+  `.optional()` and every `z.literal(1).default(1)` counts — the `v` version fields on the
+  operation union alone blow the limit (the spike hit "too many optional parameters (41), limit
+  24"). The facilitator cannot send `z.array(Operation)`; it sends a **hand-shaped projection** of
+  the storage schema — only the block kinds it proposes, `v` dropped (the app stamps it on
+  append), `reference` as `z.string()`. Mirror every constraint into `.describe()` as usual.
+- **No empty schemas.** `z.unknown()` / `z.any()` serialize to `{}` and the request fails with
+  HTTP 400 "Empty schema … not supported". Type every field concretely.
 
 ## Installed pins
 
