@@ -165,3 +165,68 @@ describe('Proposal.decide — Lapse (close behaviour)', () => {
     expect(isOk(result) && result.value).toEqual([])
   })
 })
+
+describe('Proposal.decide — reject and apply outcomes', () => {
+  const proposalAccepted: ProposalEvent = {
+    v: 1,
+    at,
+    type: 'Proposal Accepted',
+    proposalId,
+    accepter: 'Dana',
+    buildingBlockId: bb,
+  }
+
+  it('Reject Proposal on PROPOSED emits exactly one Proposal Rejected', () => {
+    const result = decide(replay([proposed]), { type: 'Reject Proposal', proposalId, at })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([{ v: 1, at, type: 'Proposal Rejected', proposalId }])
+    }
+  })
+
+  it('Record Operation Applied on ACCEPTED emits Operation Applied, then ok([])', () => {
+    const first = decide(replay([proposed, proposalAccepted]), {
+      type: 'Record Operation Applied',
+      proposalId,
+      resultingBuildingBlockId: bb,
+      at,
+    })
+    expect(isOk(first)).toBe(true)
+    if (!isOk(first)) return
+    expect(first.value).toEqual([
+      { v: 1, at, type: 'Operation Applied', proposalId, resultingBuildingBlockId: bb },
+    ])
+
+    const second = decide(replay([proposed, proposalAccepted, ...first.value]), {
+      type: 'Record Operation Applied',
+      proposalId,
+      resultingBuildingBlockId: bb,
+      at,
+    })
+    expect(isOk(second)).toBe(true)
+    if (isOk(second)) expect(second.value).toEqual([])
+  })
+
+  it('Record Operation Rejected on ACCEPTED emits Operation Rejected, then ok([])', () => {
+    const first = decide(replay([proposed, proposalAccepted]), {
+      type: 'Record Operation Rejected',
+      proposalId,
+      reason: 'unknown-target',
+      at,
+    })
+    expect(isOk(first)).toBe(true)
+    if (!isOk(first)) return
+    expect(first.value).toEqual([
+      { v: 1, at, type: 'Operation Rejected', proposalId, reason: 'unknown-target' },
+    ])
+
+    const second = decide(replay([proposed, proposalAccepted, ...first.value]), {
+      type: 'Record Operation Rejected',
+      proposalId,
+      reason: 'unknown-target',
+      at,
+    })
+    expect(isOk(second)).toBe(true)
+    if (isOk(second)) expect(second.value).toEqual([])
+  })
+})

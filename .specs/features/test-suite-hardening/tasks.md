@@ -207,8 +207,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Three behaviours above, full event equality where the file already does that
-- [ ] Gate: `pnpm test`
+- [x] Three behaviours above, full event equality where the file already does that
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick
