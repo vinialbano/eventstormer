@@ -402,9 +402,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] “No model call happens anywhere” is gone
-- [ ] Eval markers present
-- [ ] Gate: `pnpm check`
+- [x] “No model call happens anywhere” is gone
+- [x] Eval markers present
+- [x] Gate: `pnpm check`
 
 **Tests**: none
 **Gate**: build

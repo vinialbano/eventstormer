@@ -9,8 +9,8 @@ afterwards is derived from it rather than transcribed from it.
 Product definition: [`docs/product/PRD.md`](docs/product/PRD.md). Architecture and the decisions
 behind it: [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/adr/`](docs/adr/).
 
-> **Status: scaffold.** The harness, the model and the board are not built yet. What runs today
-> is the toolchain, the architecture gates, and a health endpoint. See
+> **Status:** The capture loop is built — workshop, session, AI facilitator, and board. Eval is
+> `pnpm eval` (out of CI). E2E is `pnpm test:e2e` (CI, not `pnpm check`). See
 > [What is real vs stubbed](#what-is-real-vs-stubbed).
 
 ## Running it
@@ -50,11 +50,19 @@ shell/parent value beats both). Keep real secrets in `.env.local` — the test r
   passing and a failing input.
 - `GET /api/health`, which exists to prove the composition path and demonstrate the
   chained-route pattern the rest of the API must copy.
+- The capture loop: create a workshop, start a session, talk to the facilitator, accept
+  proposals onto the board. Live Anthropic when `ANTHROPIC_API_KEY` is set; `FACILITATOR_MODE=scripted` otherwise.
+- Capture-loop E2E: `pnpm test:e2e` (CI job, not `pnpm check` / pre-push).
+- Facilitator eval: `pnpm eval` (out of CI; needs a real key).
 
 **Not built:**
 
-- The facilitator. No model call happens anywhere in this repo yet.
-- The op log, replay, persistence, the board, the derived artifacts, the eval suite.
+- Derived artifacts (context folder exists; no `src/` yet).
+- The remaining Slice 5 eval cases (phase flagged, deeper-format, integration).
+
+<!-- eval:results -->
+Results are produced by `pnpm eval --report`.
+<!-- /eval:results -->
 
 ## Architecture
 
@@ -97,14 +105,13 @@ disagree about what green means. Direct commits to `main` are refused.
 
 ## Known limitations
 
-- **Everything interesting is unbuilt.** This is a foundation commit.
 - **TypeScript is pinned to 6.0.3 and must not be upgraded.** `typescript-eslint@8` peers on
   `<6.1.0`; TS 7 silently removes every type-aware lint rule this repo relies on.
 - No Docker or devcontainer — deliberate. A local-only prototype with SQLite and no services
   does not earn one.
-- No OpenTelemetry yet. Model-call logging will come with the first model call.
-- Evals are not a CI gate, on purpose: cost and flakiness are real and the value is low until
-  the prompts are stable enough to regress against.
+- No OpenTelemetry exporter yet. Model calls already append JSONL (`data/model-calls.jsonl`).
+- `pnpm eval` is not a CI gate, on purpose: cost and flakiness are real. Run it locally with a
+  key; splice k/N into this README with `pnpm eval --report`.
 
 ## Licence
 
