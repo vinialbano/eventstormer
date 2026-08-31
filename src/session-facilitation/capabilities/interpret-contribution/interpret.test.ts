@@ -209,6 +209,26 @@ describe('interpretContribution — the commit point + derivation', () => {
     ])
   })
 
+  it('keeps a distinct out-of-format notice per note, and suppresses an exact repeat', async () => {
+    seedSession()
+    contribute('acquisitions auto-places a hold and reserves a slot', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          { track: 'attribute-to-other-format', format: 'policy', note: '"auto-place a hold" is a policy.' },
+          { track: 'attribute-to-other-format', format: 'policy', note: '"reserve a slot" is a policy.' },
+          { track: 'attribute-to-other-format', format: 'policy', note: '"auto-place a hold" is a policy.' },
+        ]),
+      ]),
+    )
+
+    expect(only('Contribution Attributed To Another Format').map((event) => event.note)).toEqual([
+      '"auto-place a hold" is a policy.',
+      '"reserve a slot" is a policy.',
+    ])
+  })
+
   it('resolves an open question from an answer-question track', async () => {
     seedSession()
     // an open question q_open
