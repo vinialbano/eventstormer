@@ -56,7 +56,7 @@ is one deliberate minor" intent, which matters more with agents authoring the ch
 | Gate | Mechanism |
 |---|---|
 | Every delivery declares its version impact | CI check on PRs: a diff touching `src/**` with no `.changeset/*.md` fails |
-| Release is one action | `changesets/action` maintains a standing version PR; merging it performs the release — version bump, `CHANGELOG.md`, tag, GitHub Release |
+| Release is one action | `changesets/action` maintains a standing version PR; merging it performs the release — version bump, `CHANGELOG.md`, tag, GitHub Release. The repo setting "Allow GitHub Actions to create and approve pull requests" must be on; workflow `permissions` alone are not enough. |
 | Commit convention | `commitlint` locally; the version PR's commit and title are `chore: version packages` so they pass commitlint and the PR-title check. The release job sets `LEFTHOOK=0` so installed hooks do not run on the bot's `git commit` / `git push`. |
 | Local reminder | optional lefthook pre-push warning if `src/` changed and no changeset is staged |
 
