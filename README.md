@@ -100,8 +100,9 @@ surface fits in one readable file.
 does not give you for free: the discriminated union is declared once, and the lint rule catches
 every branch someone forgot when a variant was added.
 
-CI runs exactly `pnpm check` on push and PR, and so does the pre-push hook, so the two cannot
-disagree about what green means. Direct commits to `main` are refused.
+Local `pnpm check` and the pre-push hook are the same (typecheck → lint → test → depcruise →
+knip). CI adds `pnpm build` and `pnpm test:e2e`. `pnpm eval` is out of CI. Direct commits to
+`main` are refused.
 
 ## Known limitations
 

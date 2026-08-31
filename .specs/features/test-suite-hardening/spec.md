@@ -220,30 +220,30 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| TSH-01 | P1: E2E CI job | Tasks T12 | Done |
-| TSH-02 | P1: E2E locators | Tasks T11 | Done |
-| TSH-03 | P1: Replay literal oracle | Tasks T1 | Done |
-| TSH-04 | P1: Persistence literal oracle | Tasks T2 | Done |
-| TSH-05 | P1: Start Session | Tasks T3 | Done |
-| TSH-06 | P1: Attribute Contribution | Tasks T4 | Done |
-| TSH-07 | P1: Ask Question closed | Tasks T5 | Done |
-| TSH-08 | P1: Reject Proposal | Tasks T6 | Done |
-| TSH-09 | P1: Record Operation Applied | Tasks T6 | Done |
-| TSH-10 | P1: Record Operation Rejected | Tasks T6 | Done |
-| TSH-11 | P1: Dock reject/edit/hold/unhold | Tasks T8 | Done |
-| TSH-12 | P1: CreateWorkshop alert | Tasks T9 | Done |
-| TSH-13 | P1: Accept 404 | Tasks T7 | Done |
-| TSH-14 | P1: Accept 409 | Tasks T7 | Done |
-| TSH-15 | P1: Pre-push = pnpm check | Tasks T13 | Done |
-| TSH-16 | P1: docs/testing.md | Tasks T14 | Done |
-| TSH-17 | P1: README real vs stubbed | Tasks T15 | Done |
-| TSH-18 | P1: AGENTS.md gate wording | Tasks T16 | Done |
-| TSH-19 | P1: pnpm eval live 4×5 | Tasks T18–T19 | Done |
-| TSH-20 | P1: k/N, no aggregate | Tasks T19 | Done |
-| TSH-21 | P1: eval not in CI | Tasks T12, T19 | Done |
-| TSH-22 | P1: eval oracles in pnpm test | Tasks T17 | Done |
-| TSH-23 | P1: README eval markers | Tasks T15, T20 | Done |
-| TSH-24 | P2: askOpening ladder | Tasks T10 | Done |
+| TSH-01 | P1: E2E CI job | Tasks T12 | ✅ Verified |
+| TSH-02 | P1: E2E locators | Tasks T11 | ✅ Verified |
+| TSH-03 | P1: Replay literal oracle | Tasks T1 | ✅ Verified |
+| TSH-04 | P1: Persistence literal oracle | Tasks T2 | ✅ Verified |
+| TSH-05 | P1: Start Session | Tasks T3 | ✅ Verified |
+| TSH-06 | P1: Attribute Contribution | Tasks T4 | ✅ Verified |
+| TSH-07 | P1: Ask Question closed | Tasks T5 | ✅ Verified |
+| TSH-08 | P1: Reject Proposal | Tasks T6 | ✅ Verified |
+| TSH-09 | P1: Record Operation Applied | Tasks T6 | ✅ Verified |
+| TSH-10 | P1: Record Operation Rejected | Tasks T6 | ✅ Verified |
+| TSH-11 | P1: Dock reject/edit/hold/unhold | Tasks T8 | ✅ Verified |
+| TSH-12 | P1: CreateWorkshop alert | Tasks T9 | ✅ Verified |
+| TSH-13 | P1: Accept 404 | Tasks T7 | ✅ Verified |
+| TSH-14 | P1: Accept 409 | Tasks T7 | ✅ Verified |
+| TSH-15 | P1: Pre-push = pnpm check | Tasks T13 | ✅ Verified |
+| TSH-16 | P1: docs/testing.md | Tasks T14 | ✅ Verified |
+| TSH-17 | P1: README real vs stubbed | Tasks T15 | ✅ Verified |
+| TSH-18 | P1: AGENTS.md gate wording | Tasks T16 | ✅ Verified |
+| TSH-19 | P1: pnpm eval live 4×5 | Tasks T18–T19 | ✅ Verified |
+| TSH-20 | P1: k/N, no aggregate | Tasks T19 | ✅ Verified |
+| TSH-21 | P1: eval not in CI | Tasks T12, T19 | ✅ Verified |
+| TSH-22 | P1: eval oracles in pnpm test | Tasks T17 | ✅ Verified |
+| TSH-23 | P1: README eval markers | Tasks T15, T20 | ✅ Verified |
+| TSH-24 | P2: askOpening ladder | Tasks T10 | ✅ Verified |
 
 **Coverage:** 24 total, 24 mapped to tasks, 0 unmapped.
 

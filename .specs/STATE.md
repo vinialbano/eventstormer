@@ -39,21 +39,20 @@ capture.
 | AD-025 | **A closed `Session` rejects `Interpret Contribution` / `Fail Interpretation` — the decider returns `ok([])`.** The interpretation worker marks a contribution in flight, then `await`s the model for seconds; if the human closes the session in that window, the model call still returns and would commit `Contribution Interpreted` + derive a live `Building Block Proposed` onto the now-closed session. `finishClose` has already lapsed the proposals that existed at close time, and `reconcilePendingDerivations` only sweeps open sessions, so that proposal is un-lapsable and still acceptable onto the board. Guarding in the decider (where the interpret-once ledger already lives) is the fix: a late turn writes nothing. | PR #46 review W1. Consistent with AD-021 (idempotency/guards live in `decide`, not the caller) and the `Close Session` disposition's "lapse every non-terminal `Proposal`" guarantee. | 2026-08-31 | Slice 1 |
 | AD-024 | **Slice 1 `session-facilitation` capabilities are per-action, not one `capture-loop` slice:** `start-workshop`, `set-scope`, `start-session`, `make-contribution`, `review-proposal` (accept/edit/reject/hold/unhold — one use case), `close-session`, and `interpret-contribution` (tick-invoked). Each owns its Hono router (or, for `interpret-contribution`, its tick functions), all mounted/exposed through `session-facilitation/api.ts`. They share only `session-facilitation/domain/` (the 3 aggregates, the event SSOT, the read models incl. `sessionProposalIds`, the `InterpretedTrack` schema) and `session-facilitation/infrastructure/` (`session-index`, the `Facilitator` port). | ADR-010's slice-1 row already names them separately (`start-workshop`, `make-contribution`, `review-proposal`); Slice 2 adds `edit-model` as a new slice. A single mega-slice makes `no-cross-slice-imports` guard nothing and leaves the cross-context accept path un-isolated (plan-review round 2, arch M1). | 2026-08-30 | Slice 1 |
 | AD-026 | **Identifiers are spelled out in full, project abbreviations included — `wm` is `writeModel`.** The `id-length` (`min: 2`) + `unicorn/name-replacements` rules from PR #49 under-enforce this: a 2-character project shorthand that isn't an English abbreviation the plugin knows (`wm`, `op`, `bid`) passes both. So the convention is carried by review and this precedent, not only by lint. `@typescript-eslint/no-shadow` + `no-self-compare` are also `error` (PR #49 review) — a shadowed inner binding once turned an identity check into an `x === x` tautology that dropped a domain event. | 2026-08-31 | PR #49 + all later code |
+| AD-027 | **CI merge gate is `pnpm check` + `pnpm build` + `pnpm test:e2e`.** `pnpm check` and pre-push stay without Playwright and without `pnpm eval`. Pre-push runs `pnpm check` (lint included). Eval is `pnpm eval`, out of CI, against the real model (ADR-008). `package.json` `"test"` must name `--project domain --project app` so a third Vitest `eval` project cannot sneak onto the merge gate. | CI used to claim identity with `pnpm check` while omitting lint on pre-push and omitting the one capture-loop E2E everywhere. Iron Law 4: the real SPA+Hono+sqlite path gates merge; local Stop stays fast. | 2026-08-31 | test-suite-hardening; all later CI / eval work |
 
 ---
 
 ## Handoff
 
-**Active feature:** `pr-49-review-fixes` — the PR #49 automated-review fix batch (spec +
-validation in `.specs/features/pr-49-review-fixes/`). **Status: EXECUTE complete + Verifier PASS.**
-Branch `refactor/explicit-names`, 8 commits `1bc864e..6eef50e`, pushed. `pnpm check` green (381
-tests). Closed: the BLOCK (shadowed-`event` self-compare tautology in `interpret.ts` that dropped
-a `Contribution Attributed To Another Format` event — `e0ee294` + regression tests
-`e0ee294`/`6eef50e`), lint guard `no-self-compare` + `@typescript-eslint/no-shadow` at error
-(`5987432`), `wm` → `writeModel` repo-wide (`8191a00`, 20 files), NOTE renames (`ad96906`),
-**AD-026** recorded, PR #49 body corrected. Verifier gap AC1.2 (guard `format`/`note` clauses
-undiscriminated) closed by `6eef50e`. **PR #49 targets `main` directly and is mergeable**;
-coordinate merge order with #47 (both edit `package.json` / the lockfile).
+- **Feature**: `test-suite-hardening` (`.specs/features/test-suite-hardening/`)
+- **Phase / Task**: Execute complete. Verifier **PASS**. Opening PR.
+- **Completed**: T1–T20 (`fb8b54a..cdc9279`); Verifier 41/41 ACs, 404 tests, 3/3 mutants killed
+- **In-progress**: none
+- **Next step**: Human: live `pnpm eval` with a key, then `pnpm eval --report`. Related: Slice 5 (#42) still owns the full 8-case eval.
+- **Blockers**: none
+- **Uncommitted files**: none (spec pack + AD-027 in this commit; skill vendor files stay local)
+- **Branch**: `test/suite-hardening` off `main`
 
 ---
 
