@@ -488,11 +488,11 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `pnpm test` does not execute `eval/`
-- [ ] `pnpm eval` without `ANTHROPIC_API_KEY` exits non-zero
-- [ ] knip clean (`knip.json` entry includes `eval/` runner if needed)
-- [ ] Gate: `pnpm check && pnpm build`
-- [ ] Do **not** require a live billed run to mark the task done; structure is the gate. A live run is a Success Criterion for the human.
+- [x] `pnpm test` does not execute `eval/`
+- [x] `pnpm eval` without `ANTHROPIC_API_KEY` exits non-zero
+- [x] knip clean (`knip.json` entry includes `eval/` runner if needed)
+- [x] Gate: `pnpm check && pnpm build`
+- [x] Do **not** require a live billed run to mark the task done; structure is the gate. A live run is a Success Criterion for the human.
 
 **Tests**: eval
 **Gate**: build
