@@ -121,9 +121,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `expect(fromDisk).toEqual(replay(ops))` is gone
-- [ ] Empty-stream case still uses `emptySnapshot()` (factory, not a fold-vs-fold)
-- [ ] Gate: `pnpm test`
+- [x] `expect(fromDisk).toEqual(replay(ops))` is gone
+- [x] Empty-stream case still uses `emptySnapshot()` (factory, not a fold-vs-fold)
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick

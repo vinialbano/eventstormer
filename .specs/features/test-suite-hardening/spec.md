@@ -223,7 +223,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-01 | P1: E2E CI job | Tasks T12 | In Tasks |
 | TSH-02 | P1: E2E locators | Tasks T11 | In Tasks |
 | TSH-03 | P1: Replay literal oracle | Tasks T1 | Done |
-| TSH-04 | P1: Persistence literal oracle | Tasks T2 | In Tasks |
+| TSH-04 | P1: Persistence literal oracle | Tasks T2 | Done |
 | TSH-05 | P1: Start Session | Tasks T3 | In Tasks |
 | TSH-06 | P1: Attribute Contribution | Tasks T4 | In Tasks |
 | TSH-07 | P1: Ask Question closed | Tasks T5 | In Tasks |
