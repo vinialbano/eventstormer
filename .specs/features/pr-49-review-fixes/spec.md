@@ -118,4 +118,4 @@ corrected (it was never in `package.json` / the lockfile on `main`); the "the br
 | R5  | T5    | ✅ Verified — `6215b1e` |
 | R6  | T6    | ✅ Verified — PR #49 body edited |
 
-Validation: `.specs/features/pr-49-review-fixes/validation.md` (2026-08-31) — PASS, gate green (380 tests, +1), sensor 2/3 killed.
+Validation: `.specs/features/pr-49-review-fixes/validation.md` (2026-08-31) — PASS, gate green (381 tests, +2), sensor 3/3 killed.

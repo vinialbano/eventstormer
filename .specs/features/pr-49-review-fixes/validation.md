@@ -17,7 +17,7 @@
 | T3 — `wm` → `writeModel` repo-wide | ✅ Done | `8191a00`; `git grep -nw wm -- 'src/**/*.ts'` → nothing; ~20 files, pure rename |
 | T4 — NOTE naming corrections | ✅ Done | `ad96906`; `event`→`call`, `value`→`sessionView`, `index`→`issue` |
 | T5 — record AD-026 | ✅ Done | `6215b1e`; `.specs/STATE.md` Decisions table, dated 2026-08-31 |
-| T6 — correct PR #49 body | ✅ Done | `gh pr view 49` confirms: "380 tests pass", `ts-morph` line corrected ("never added to `package.json` or the lockfile"), `totalTokens`/`outputTokens` sentence gone (now "not token counters"); Review-fixes note lists R1–R5 with commits |
+| T6 — correct PR #49 body | ✅ Done | `gh pr view 49` confirms: "381 tests pass", `ts-morph` line corrected ("never added to `package.json` or the lockfile"), `totalTokens`/`outputTokens` sentence gone (now "not token counters"); Review-fixes note lists R1–R5 with commits |
 
 ---
 
@@ -26,22 +26,22 @@
 | Criterion | Spec-defined outcome | `file:line` + assertion | Result |
 | --------- | -------------------- | ----------------------- | ------ |
 | **AC1.1** — A then B (B≠A) with identical `attribute-to-other-format` track → stream has **two** events, `contributionId` A and B | event `contributionId` values `['c_1','c_2']` (not a call count) | `src/session-facilitation/capabilities/interpret-contribution/interpret.test.ts:206` — `expect(only('Contribution Attributed To Another Format').map((event) => event.contributionId)).toEqual(['c_1','c_2'])` | ✅ PASS |
-| **AC1.2** — same-contribution idempotency guard still holds (same `format`+`note` → no 2nd event for that contribution) | re-derive writes no second event; the `already` check's `contributionId` + `format` + `note` equality is the cross-contribution-independent second line and must not regress | `interpret.ts:127-133` (`already` guard, all three clauses present) + existing multi-track test `interpret.test.ts:180` (`only(...).map(format)` → `['policy']`, one event). No test re-derives the **same** contribution's `attribute-to-other-format` track, so the `format`/`note` clauses are transitively covered only by the `derived_track` ledger + interpreted-set skip | ⚠️ Spec-precision gap |
-| **AC1.3** — `pnpm check` green | exit 0 | gate run below — exit 0, 380 passed | ✅ PASS |
+| **AC1.2** — same-contribution idempotency guard still holds (same `format`+`note` → no 2nd event for that contribution) | re-derive writes no second event; the `already` check's `contributionId` + `format` + `note` equality is the cross-contribution-independent second line and must not regress | `interpret.ts:127-133` (`already` guard, all three clauses present) + `interpret.test.ts` `it('keeps a distinct out-of-format notice per note, and suppresses an exact repeat')` (`6eef50e`) — one turn, two distinct-note notices + an exact repeat → exactly two events; discriminates the `format` and `note` clauses (kills the `===`→`!==` mutant) | ✅ PASS |
+| **AC1.3** — `pnpm check` green | exit 0 | gate run below — exit 0, 381 passed | ✅ PASS |
 | **AC2.1** — `no-self-compare` is `error` | `'no-self-compare': 'error'` in `eslint.config.ts` | `eslint.config.ts:89` — `'no-self-compare': 'error'`; scratch probe (`x === x`) → `error no-self-compare` | ✅ PASS |
 | **AC2.2** — `@typescript-eslint/no-shadow` is `error`; core `no-shadow` off; 2 benign shadows renamed | both config lines present; `jsonSchema`→`draftSchema`, inner `command`→`nextCommand` | `eslint.config.ts:87-88` — `'no-shadow': 'off'`, `'@typescript-eslint/no-shadow': 'error'`; `scripts/spike-structured-output.ts:86` `draftSchema`; `machine.property.test.ts:66` `nextCommand`; scratch probe (shadowed binding) → `error @typescript-eslint/no-shadow` | ✅ PASS |
 | **AC2.3** — `pnpm check` green with both rules active | exit 0 | gate run — exit 0 | ✅ PASS |
 | **AC3.1** — every `wm` identifier in `src/` + tests → `writeModel`; types/literals/wire untouched | params, locals, destructured binds only | diffs of `board/decide.ts`, `proposal/evolve.ts`, `read-models/proposals-view.ts`, `session-close.ts`, `accept.ts`, `set-scope/http.ts` etc. — all local `wm`→`writeModel`; `BoardWriteModel`/`ProposalWriteModel`/`emptyProposal`, `v:` keys, event `type` literals intact | ✅ PASS |
 | **AC3.2** — no `\bwm\b` identifier remains in `src/` | grep returns nothing | `git grep -nw wm -- 'src/**/*.ts'` → exit 1, no matches; `git grep -n '\bwm\b' -- src/` → nothing | ✅ PASS |
-| **AC3.3** — `pnpm check` green; test count unchanged by R3 | 380 after T1, still 380 | gate — 380 passed (T3/T4 added 0 tests) | ✅ PASS |
+| **AC3.3** — `pnpm check` green; test count unchanged by R3 | 380 after T1, still 380 | gate — 381 passed (T3/T4 added 0 tests; +1 is the AC1.2 follow-up in `6eef50e`) | ✅ PASS |
 | **AC4.1** — `model-call-log.test.ts` `ModelCallEntry` local `event`→`call` | both occurrences | `src/plumbing/model-call-log.test.ts:32-41` — `const call = entry()`, `.map((call) => call.responseText)` | ✅ PASS |
 | **AC4.2** — `FacilitatorDock.test.ts` `seed(value)` → `seed(sessionView)` incl. `session.view =` | signature + body | `src/app/capture-loop/dock/FacilitatorDock.test.ts:38-42` — `seed = (sessionView: SessionView, …)`, `session.view = sessionView` | ✅ PASS |
 | **AC4.3** — `anthropic-adapter.ts` Zod issue param `index`→`issue` | `.issues.map((issue) => …)` | `src/session-facilitation/infrastructure/facilitator/anthropic-adapter.ts:175` — `parsed.error.issues.map((issue) => \`${issue.path.join('.')}: ${issue.message}\`)` | ✅ PASS |
 | **AC4.4** — `pnpm check` green | exit 0 | gate — exit 0 | ✅ PASS |
 | **AC5.1** — `.specs/STATE.md` gains AD-026 (spell-out identifiers incl. `wm`→`writeModel`, lint-under-enforcement rationale, dated 2026-08-31) | one Decisions row | `.specs/STATE.md:41` — `| AD-026 | **Identifiers are spelled out in full … `wm` is `writeModel`.** … | 2026-08-31 | PR #49 + all later code |` | ✅ PASS |
-| **AC6.1** — PR #49 body: real test count; vacuous `ts-morph` line fixed; `totalTokens`/`outputTokens` sentence corrected | live PR body | `gh pr view 49 --json body` — "380 tests pass"; "never added to `package.json` or the lockfile — nothing new ships"; "these index the scripted-facilitator `turns` / `openings` arrays … (not token counters)" — no "brief suggested" text | ✅ PASS |
+| **AC6.1** — PR #49 body: real test count; vacuous `ts-morph` line fixed; `totalTokens`/`outputTokens` sentence corrected | live PR body | `gh pr view 49 --json body` — "381 tests pass"; "never added to `package.json` or the lockfile — nothing new ships"; "these index the scripted-facilitator `turns` / `openings` arrays … (not token counters)" — no "brief suggested" text | ✅ PASS |
 
-**Status**: ⚠️ 16/17 ACs match spec outcome exactly; 1 spec-precision gap (AC1.2 — the redundant guard's `format`/`note` equality clauses are not discriminated by any test).
+**Status**: ✅ 17/17 ACs match spec outcome. AC1.2's `format`/`note` clauses were undiscriminated in the first verification run; `6eef50e` adds the discriminating test (see Fix 1).
 
 ---
 
@@ -53,12 +53,12 @@ Scratch: `cp` of `interpret.ts` to scratchpad, mutate real file, run `npx vitest
 | - | --------- | -------- | ------- |
 | a | `interpret.ts:129` | Re-introduce B1: `priorEvent.contributionId === event.contributionId` → `event.contributionId === event.contributionId` (the exact shipped bug) | ✅ Killed — new regression test fails (`['c_1'] !== ['c_1','c_2']`), 1 failed / 11 passed |
 | b | `interpret.ts:135` | Negate the guard: `if (!already)` → `if (already)` | ✅ Killed — 2 failed / 10 passed (new test + a sibling `attribute-to-other-format` test) |
-| c | `interpret.ts:132` | Flip the note clause: `priorEvent.note === track.note` → `priorEvent.note !== track.note` | ❌ **Survived** — 12/12 pass. No test re-derives the same contribution's track with a different `note`, so the `format`/`note` sub-clauses of the `already` guard are undiscriminated |
+| c | `interpret.ts:132` | Flip the note clause: `priorEvent.note === track.note` → `priorEvent.note !== track.note` | ⚠️ Survived the first run (12/12 pass) → ✅ Killed after `6eef50e` adds the distinct-note test (see Fix 1) |
 
 Lint-guard efficacy (AC2): scratch file `src/plumbing/__probe.ts` with a shadowed binding and two `x === x` self-compares → `npx eslint` reports `@typescript-eslint/no-shadow` and `no-self-compare` errors. Both rules bite. Restored (file removed).
 
 **Sensor depth**: lightweight (3 behaviour mutations + 1 lint-efficacy probe)
-**Result**: 2/3 killed on the guard; the survivor is on a redundant defense-in-depth clause, not on the shipped regression (mutations a + b, which cover B1 and the guard as a whole, are both killed). PASS with a noted spec-precision gap.
+**Result**: first run 2/3 killed (a + b cover B1 and the guard as a whole); `6eef50e` closes the third by adding the distinct-note test, so 3/3 killed. PASS.
 
 ---
 
@@ -84,17 +84,17 @@ Deliberate NOTE: `interpret.ts` comment style — the guard fix carries no proce
 - [x] Same `format`+`note` across **different** contributions → two events (AC1.1) — covered, mutation-killed.
 - [x] `no-shadow` core rule left on elsewhere → explicitly set `'off'` alongside the TS rule (AC2.2).
 - [x] `wm` inside comments / unrelated words (`swm`) → none exist; grep confirms.
-- [ ] Same contribution, same `format`, **different** `note`, re-derived → should write a second event; not tested (mutation c survived). Low risk: the facilitator rarely emits two `attribute-to-other-format` tracks for one contribution+format, and the `derived_track` ledger + interpreted-set skip prevent normal re-derivation.
+- [x] Same contribution, same `format`, **different** `note` → two events; covered by `6eef50e`'s `it('keeps a distinct out-of-format notice per note, and suppresses an exact repeat')`.
 
 ---
 
 ## Gate Check
 
 - **Gate command**: `pnpm check` (typecheck → `eslint . --max-warnings 0` → `vitest run` → depcruise → knip)
-- **Result**: exit 0 — 64 test files, **380 passed**, 0 failed, 0 skipped; depcruise 0 violations (183 modules); knip clean
+- **Result**: exit 0 — 64 test files, **381 passed**, 0 failed, 0 skipped; depcruise 0 violations (183 modules); knip clean
 - **Test count before feature**: 379 (PR #49 tip `f7f1347`)
-- **Test count after feature**: 380
-- **Delta**: +1 (the AC1.1 regression test) — matches the coverage matrix exactly
+- **Test count after feature**: 381
+- **Delta**: +2 (the AC1.1 regression test, plus the AC1.2 follow-up in `6eef50e`) — matches the coverage matrix
 - **Skipped tests**: none
 - **Failures**: none
 
@@ -115,7 +115,7 @@ Deliberate NOTE: `interpret.ts` comment style — the guard fix carries no proce
 
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
-| R1 | done — `e0ee294` | ✅ Verified (AC1.2 ⚠️ spec-precision gap — minor, non-blocking) |
+| R1 | done — `e0ee294` | ✅ Verified (AC1.2 gap closed by `6eef50e`) |
 | R2 | done — `5987432` | ✅ Verified |
 | R3 | done — `8191a00` | ✅ Verified |
 | R4 | done — `ad96906` | ✅ Verified |
@@ -126,14 +126,14 @@ Deliberate NOTE: `interpret.ts` comment style — the guard fix carries no proce
 
 ## Summary
 
-**Overall**: ✅ Ready (1 minor spec-precision gap noted, non-blocking)
+**Overall**: ✅ Ready
 
-**Spec-anchored check**: 16/17 ACs match the spec-defined outcome exactly; 1 ⚠️ spec-precision gap (AC1.2 — redundant guard clauses undiscriminated)
-**Sensor**: 2/3 guard mutations killed; the survivor is on a defense-in-depth clause, not the shipped regression. Lint-guard efficacy probe: both `no-self-compare` and `no-shadow` confirmed to error.
-**Gate**: `pnpm check` exit 0 — 380 passed, 0 failed, +1 vs baseline
+**Spec-anchored check**: 17/17 ACs match the spec-defined outcome (AC1.2's guard-clause gap from the first run closed by `6eef50e`)
+**Sensor**: 3/3 guard mutations killed (the third after `6eef50e`). Lint-guard efficacy probe: both `no-self-compare` and `no-shadow` confirmed to error.
+**Gate**: `pnpm check` exit 0 — 381 passed, 0 failed, +2 vs baseline
 
 **What works**: the B1 tautology is fixed and mutation-proven (reintroducing the exact bug fails the new test); `no-self-compare` + `no-shadow` are `error` and demonstrably bite; `wm` is gone from `src/` with types/wire shapes intact and the gate green; all NOTE renames landed; AD-026 recorded; PR #49 body corrected on all three points.
 
-**Issues found**: AC1.2 — a test that re-derives the same contribution's `attribute-to-other-format` track with a changed `note` would strengthen the guard. See Fix 1.
+**Issues found**: none open. AC1.2's guard-clause gap from the first verification run is closed by `6eef50e` (Fix 1).
 
-**Next steps**: optionally schedule Fix 1 as a NOTE follow-up; otherwise the feature is ready. Restacking PR #49 onto `main` remains tracked in STATE.md Handoff (out of scope here).
+**Next steps**: none — the feature is ready. PR #49 targets `main` directly and is mergeable; coordinate merge order with #47 (both edit `package.json`).

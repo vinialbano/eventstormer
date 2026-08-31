@@ -52,8 +52,8 @@ a `Contribution Attributed To Another Format` event — `e0ee294` + regression t
 `e0ee294`/`6eef50e`), lint guard `no-self-compare` + `@typescript-eslint/no-shadow` at error
 (`5987432`), `wm` → `writeModel` repo-wide (`8191a00`, 20 files), NOTE renames (`ad96906`),
 **AD-026** recorded, PR #49 body corrected. Verifier gap AC1.2 (guard `format`/`note` clauses
-undiscriminated) closed by `6eef50e`. **PR #49 still needs restacking onto `main` once its base
-lands** (unchanged from below).
+undiscriminated) closed by `6eef50e`. **PR #49 targets `main` directly and is mergeable**;
+coordinate merge order with #47 (both edit `package.json` / the lockfile).
 
 ---
 
@@ -65,8 +65,8 @@ the PR #46 automated-review fix batch (spec + validation in
 dock issues found in manual testing (empty feed after scope accept; first prompt must persist
 chat-style) and `.env.local` / e2e key-isolation. 13 commits `8b444b7..HEAD` on
 `slice-1-capture-loop`. `pnpm check` (369 tests) + e2e green. AD-025 added. Deferred (per the
-review): NOTE 1, NOTE 6, QW1 (→ PR #47), QW2. **PR #49 is stacked on this branch — restack after
-these land.**
+review): NOTE 1, NOTE 6, QW1 (→ PR #47), QW2. (Slice 1 landed as #46; PR #49 was rebased onto
+`main` and is no longer stacked.)
 
 slice-1 batch plan (historical): **B1** P1 (5) · **B2** P2+P3
 (6) · **B3** P4+P5 (7) · **B4** P6+P7 (7) · **B5** P8 (5) · **B6** P9 (2).
