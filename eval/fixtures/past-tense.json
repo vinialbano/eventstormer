@@ -1,0 +1,11 @@
+{
+  "id": "past-tense",
+  "scopeStatement": "A restaurant kitchen that fires tickets to the pass.",
+  "contribution": {
+    "speaker": "Dana",
+    "body": "The ticket goes off to the kitchen line."
+  },
+  "expect": {
+    "pastTense": true
+  }
+}

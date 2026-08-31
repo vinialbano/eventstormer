@@ -48,3 +48,20 @@ it('keeps the button disabled until a name is entered', () => {
   const wrapper = mount(CreateWorkshop, { global: { plugins: [router] } })
   expect(wrapper.get('button').attributes('disabled')).toBeDefined()
 })
+
+it('shows an alert and stays on / when create fails', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.resolve(new Response('{}', { status: 500 }))),
+  )
+  await router.push('/')
+  await router.isReady()
+
+  const wrapper = mount(CreateWorkshop, { global: { plugins: [router] } })
+  await wrapper.get('#creator-name').setValue('Maria')
+  await wrapper.get('form').trigger('submit')
+  await flushPromises()
+
+  expect(wrapper.get('[role="alert"]').text()).toBe('Could not start the workshop. Try again.')
+  expect(router.currentRoute.value.path).toBe('/')
+})

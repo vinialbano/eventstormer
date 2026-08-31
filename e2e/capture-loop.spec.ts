@@ -17,14 +17,12 @@ test('create → scope → 3 contributions → accept → building blocks in the
 
   await page.getByRole('button', { name: 'Start session' }).click()
 
-  // The scripted opening scope question arrives as an F05 accept/edit/reject card.
-  const scopeCard = page.locator('.dock__scope')
-  await expect(scopeCard).toBeVisible({ timeout: 20_000 })
-  await expect(
-    scopeCard.getByText('A public library that lends books to registered members.'),
-  ).toBeVisible()
-  await scopeCard.getByRole('button', { name: 'Accept' }).click()
-  await expect(scopeCard).toBeHidden()
+  const scopeStatement = 'A public library that lends books to registered members.'
+  await expect(page.getByText(scopeStatement)).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText(/What business are we mapping/)).toBeVisible()
+  await page.getByRole('button', { name: 'Accept' }).click()
+  await expect(page.getByText(scopeStatement)).toBeHidden()
+  await expect(page.getByText('describe the first thing that happens')).toBeVisible()
 
   const composer = page.getByRole('textbox', { name: 'Describe what happens' })
   const narration = [
@@ -40,11 +38,11 @@ test('create → scope → 3 contributions → accept → building blocks in the
 
   const backlog = page.getByRole('list', { name: 'Backlog' })
   for (const label of ['Book borrowed', 'Book returned', 'Member registered']) {
-    const card = page.locator('.pc--active', { hasText: label })
-    await expect(card).toBeVisible({ timeout: 20_000 })
-    await card.getByRole('button', { name: 'Accept' }).click()
-    await expect(backlog.getByText(label, { exact: true })).toBeVisible({ timeout: 20_000 })
+    const proposal = page.getByText(label, { exact: true })
+    await expect(proposal).toBeVisible({ timeout: 20_000 })
+    await proposal.locator('..').getByRole('button', { name: 'Accept' }).click()
+    await expect(backlog.getByLabel(`event: ${label}`)).toBeVisible({ timeout: 20_000 })
   }
 
-  await expect(page.locator('.wall__backlog .sticky')).toHaveCount(3)
+  await expect(backlog.getByRole('listitem')).toHaveCount(3)
 })

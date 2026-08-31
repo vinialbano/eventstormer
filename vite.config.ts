@@ -74,6 +74,16 @@ export default defineConfig({
           include: ['src/app/**/*.test.ts'],
         },
       },
+      {
+        extends: true,
+        test: {
+          name: 'eval',
+          environment: 'node',
+          include: ['eval/**/*.test.ts'],
+          fileParallelism: false,
+          testTimeout: 120_000,
+        },
+      },
     ],
   },
 })

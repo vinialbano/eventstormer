@@ -298,6 +298,63 @@ describe('FacilitatorDock', () => {
     expect(wrapper.emitted('board-dirty')).toHaveLength(1)
   })
 
+  it('reject POSTs and collapses to Dismissed only after the store confirms', async () => {
+    const { proposals } = seed(view(), [card()])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    const reject = wrapper.findAll('button').find((button) => button.text() === 'Reject')
+    if (reject === undefined) throw new Error('expected a Reject button')
+    await reject.trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/reject', expect.objectContaining({ method: 'POST' }))
+    expect(wrapper.findAll('button').some((button) => button.text() === 'Reject')).toBe(true)
+
+    proposals.cards = [card({ disposition: 'REJECTED' })]
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('button').some((button) => button.text() === 'Reject')).toBe(false)
+    expect(wrapper.text()).toContain('Dismissed')
+  })
+
+  it('edit POSTs the new label', async () => {
+    seed(view(), [card()])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    const edit = wrapper.findAll('button').find((button) => button.text() === 'Edit')
+    if (edit === undefined) throw new Error('expected an Edit button')
+    await edit.trigger('click')
+    await wrapper.get('input').setValue('Invoice sent')
+    const save = wrapper.findAll('button').find((button) => button.text() === 'Save')
+    if (save === undefined) throw new Error('expected a Save button')
+    await save.trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/proposals/p1/edit',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ label: 'Invoice sent' }) }),
+    )
+  })
+
+  it('hold then unhold POST in sequence', async () => {
+    const { proposals } = seed(view(), [card()])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    const hold = wrapper.findAll('button').find((button) => button.text() === 'Hold')
+    if (hold === undefined) throw new Error('expected a Hold button')
+    await hold.trigger('click')
+    await flushPromises()
+    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/hold', expect.objectContaining({ method: 'POST' }))
+
+    proposals.cards = [card({ held: true })]
+    await wrapper.vm.$nextTick()
+
+    const unpark = wrapper.findAll('button').find((button) => button.text() === 'Unpark')
+    if (unpark === undefined) throw new Error('expected an Unpark button')
+    await unpark.trigger('click')
+    await flushPromises()
+    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/unhold', expect.objectContaining({ method: 'POST' }))
+  })
+
   it('collapses to a Facilitator pill with a pending count and a parked dot', async () => {
     seed(view(), [card({ disposition: 'PROPOSED' }), card({ proposalId: 'p2', held: true })])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })

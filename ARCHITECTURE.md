@@ -172,8 +172,9 @@ pnpm dev                  # http://localhost:5173 — Vite + Hono, one process
 pnpm seed                 # optional: load the demo workshop
 ```
 
-`pnpm check` runs the full gate — typecheck → lint → test → depcruise → knip. `pnpm eval` runs
-the facilitator eval against the real model (costs ~$1.20). The SQLite database is created and
+`pnpm check` runs the full local gate — typecheck → lint → test → depcruise → knip. `pnpm eval`
+runs four restaurant F11 cases × N=5 against the real model, reports k/N per assertion, requires
+`ANTHROPIC_API_KEY`, and is out of CI. The SQLite database is created and
 migrated automatically at `./data/eventstormer.db`; `pnpm db:reset` wipes it.
 
 ## 8. Open items owned by the maintainer

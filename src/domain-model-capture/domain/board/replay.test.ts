@@ -25,16 +25,38 @@ describe('replay', () => {
     expect(replay([])).toEqual(emptySnapshot())
   })
 
-  // AT-18a: replaying the log from empty reproduces the incrementally-built snapshot exactly.
-  it('replay(log) equals the snapshot built by applying the same operations one at a time', () => {
+  it('replays two captures, a reword, and a withdraw to a known snapshot', () => {
     const log = [
       op({ kind: 'capture-domain-event', id: 'e1', label: 'order placed' }),
       op({ kind: 'capture-domain-event', id: 'e2', label: 'order paid' }),
       op({ kind: 'reword', target: 'e1', label: 'order was placed' }),
       op({ kind: 'withdraw', target: 'e2' }),
     ]
-    const incremental = log.reduce(project, emptySnapshot())
-    expect(replay(log)).toEqual(incremental)
+    expect(replay(log)).toEqual({
+      position: 3,
+      blocks: new Map([
+        [
+          bid('e1'),
+          {
+            kind: 'domain-event',
+            label: 'order was placed',
+            withdrawn: false,
+            placement: 'backlog',
+            provenance: author,
+          },
+        ],
+        [
+          bid('e2'),
+          {
+            kind: 'domain-event',
+            label: 'order paid',
+            withdrawn: true,
+            placement: 'backlog',
+            provenance: author,
+          },
+        ],
+      ]),
+    })
   })
 
   // PRD F01 replay: a targeted sequence produces an exactly-known snapshot.
@@ -70,7 +92,8 @@ describe('replay', () => {
     expect(writeModel.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
   })
 
-  // ADR-008 property #3 (required): incremental-replay consistency for `project`.
+  // Consistency property only — not an independent oracle. Both sides share
+  // `project`; a fold that silently drops a field still passes here.
   it('replay(log ++ [op]) deep-equals project(replay(log), op)', () => {
     fc.assert(
       fc.property(fc.array(fc.constantFrom(...POOL)), fc.constantFrom(...POOL), (log, next) => {

@@ -1,0 +1,11 @@
+{
+  "id": "kind",
+  "scopeStatement": "A restaurant kitchen that fires tickets to the pass.",
+  "contribution": {
+    "speaker": "Dana",
+    "body": "The ticket fired to the kitchen."
+  },
+  "expect": {
+    "kind": "domain-event"
+  }
+}

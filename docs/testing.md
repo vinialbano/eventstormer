@@ -21,9 +21,15 @@ running app and read its console — not `curl`, not a screenshot-only tool. `pl
 <url>` reports console errors/warnings inline; treat a nonzero count as a real finding, not
 noise — a console warning is signal here even when the page still renders.
 
-## E2E — decided, not yet built
+## E2E — capture-loop Playwright spec
 
-`@playwright/test` when there is a real UI feature to test end to end. Not added as a dependency
-yet: the only UI today is the health-check stub, and an e2e suite with nothing meaningful to
-assert would be dead weight knip can't even flag (test files are exempt from unused-export
-checks). Add it in the same sitting as the first real user-facing flow, not before.
+`e2e/capture-loop.spec.ts` is the one happy-path spec (ADR-008): create a workshop, accept the
+scope card, narrate three contributions, accept each proposed building block, and assert the
+three stickies in the board backlog. Run it with `pnpm test:e2e`.
+
+`playwright.config.ts` boots `pnpm dev` with `FACILITATOR_MODE=scripted` and an empty
+`ANTHROPIC_API_KEY` so the facilitator reads `e2e/fixtures/facilitator.json` and never reaches
+Anthropic. Everything else is the real server, real SQLite, and the real SPA.
+
+CI runs this spec in a sibling `e2e` job (`pnpm test:e2e` after installing Chromium). It is not
+part of `pnpm check` or the pre-push hook — those stay browser-free.

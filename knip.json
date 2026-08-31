@@ -2,9 +2,11 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "src/host/index.ts",
-    "src/*/api.ts"
+    "src/*/api.ts",
+    "eval/run.ts"
   ],
   "project": [
-    "src/**/*.{ts,vue,css}"
+    "src/**/*.{ts,vue,css}",
+    "eval/**/*.ts"
   ]
 }

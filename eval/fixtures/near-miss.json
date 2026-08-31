@@ -1,0 +1,11 @@
+{
+  "id": "near-miss",
+  "scopeStatement": "A restaurant kitchen during dinner service.",
+  "contribution": {
+    "speaker": "Dana",
+    "body": "The server fired the order to the kitchen."
+  },
+  "expect": {
+    "notFlagPhase": true
+  }
+}

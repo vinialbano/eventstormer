@@ -24,6 +24,36 @@ const track: InterpretedTrack = {
   bar: 'strict',
 }
 
+describe('Session.decide — Start Session', () => {
+  it('emits Session Started with the command session id, workshop id, and timestamp', () => {
+    const result = decide(replay([]), {
+      type: 'Start Session',
+      sessionId,
+      workshopId,
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        { v: 1, at, type: 'Session Started', sessionId, workshopId },
+      ])
+    }
+  })
+
+  it('rejects Start Session on an already-started session', () => {
+    const result = decide(replay(startedStream), {
+      type: 'Start Session',
+      sessionId,
+      workshopId,
+      at,
+    })
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'already-started', classification: 'systemic' })
+    }
+  })
+})
+
 describe('Session.decide — Make Contribution', () => {
   it('emits Contribution Made carrying session id, speaker, source "typed" and the timestamp', () => {
     const result = decide(replay(startedStream), {
@@ -92,6 +122,33 @@ describe('Session.decide — Make Contribution', () => {
     })
     expect(isErr(result)).toBe(true)
     if (isErr(result)) expect(result.error.kind).toBe('contribution-too-long')
+  })
+})
+
+describe('Session.decide — Attribute Contribution', () => {
+  it('emits Contribution Attributed To Another Format with command contribution id, format, note, and timestamp', () => {
+    const result = decide(replay(startedStream), {
+      type: 'Attribute Contribution',
+      sessionId,
+      contributionId: toContributionId('c_attr'),
+      format: 'process-modelling',
+      note: 'belongs in process modelling',
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Contribution Attributed To Another Format',
+          sessionId,
+          contributionId: 'c_attr',
+          format: 'process-modelling',
+          note: 'belongs in process modelling',
+        },
+      ])
+    }
   })
 })
 
@@ -276,6 +333,27 @@ describe('Session.decide — Ask Question idempotency', () => {
         kind: 'scope',
         scopeStatement: 'Library lending across branches.',
       })
+    }
+  })
+})
+
+describe('Session.decide — Ask Question', () => {
+  it('rejects Ask Question on a closed session', () => {
+    const closed = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [] },
+    ])
+    const result = decide(closed, {
+      type: 'Ask Question',
+      sessionId,
+      questionId: toQuestionId('q_closed'),
+      kind: 'phase',
+      text: 'phase?',
+      at,
+    })
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'session-closed', classification: 'systemic' })
     }
   })
 })

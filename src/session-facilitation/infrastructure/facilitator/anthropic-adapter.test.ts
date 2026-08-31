@@ -246,4 +246,30 @@ describe('anthropic adapter — askOpening', () => {
     expect(isOk(outcome)).toBe(true)
     if (isOk(outcome)) expect(outcome.value).toEqual(VALID_OPENING)
   })
+
+  it('walks claude-sonnet-5 → claude-sonnet-5 → claude-haiku-4-5, backing off between rungs', async () => {
+    const { generate, models } = scripted([
+      { throw: Object.assign(new Error('bad gateway'), { statusCode: 503 }) },
+      { throw: Object.assign(new Error('timeout'), { statusCode: 504 }) },
+      result(VALID_OPENING),
+    ])
+    const { facilitator, slept } = depsWith(generate)
+
+    const outcome = await facilitator.askOpening({ instructions: 'sys', prompt: 'new session' })
+
+    expect(isOk(outcome)).toBe(true)
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
+    expect(slept).toEqual([2_000, 4_000])
+  })
+
+  it('returns provider-down once the whole ladder is exhausted', async () => {
+    const { generate, models } = scripted([{ throw: Object.assign(new Error('down'), { statusCode: 500 }) }])
+    const { facilitator } = depsWith(generate)
+
+    const outcome = await facilitator.askOpening({ instructions: 'sys', prompt: 'new session' })
+
+    expect(isErr(outcome)).toBe(true)
+    if (isErr(outcome)) expect(outcome.error).toEqual({ kind: 'provider-down' })
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
+  })
 })

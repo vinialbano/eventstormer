@@ -157,4 +157,18 @@ describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
     expect(body.proposal.disposition).toBe('APPLIED')
     expect(readBuildingBlocks(deps(), workshopId)).toEqual([{ id: 'bb_1', kind: 'domain-event', label: 'Book borrowed' }])
   })
+
+  it('returns 404 unknown-proposal when the proposal id has no stream', async () => {
+    const response = await accept('no-such')
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'unknown-proposal' })
+  })
+
+  it('returns 409 and leaves the board empty when the proposal is already rejected', async () => {
+    seedProposal('p_1', [{ v: 1, at, type: 'Proposal Rejected', proposalId: 'p_1' as ProposalId }])
+
+    const response = await accept('p_1')
+    expect(response.status).toBe(409)
+    expect(readBuildingBlocks(deps(), workshopId)).toEqual([])
+  })
 })

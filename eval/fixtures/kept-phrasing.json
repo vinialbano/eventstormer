@@ -1,0 +1,11 @@
+{
+  "id": "kept-phrasing",
+  "scopeStatement": "A restaurant kitchen that fires tickets to the pass.",
+  "contribution": {
+    "speaker": "Dana",
+    "body": "the ticket thing gets fired off to the pass"
+  },
+  "expect": {
+    "sharesContentWord": true
+  }
+}

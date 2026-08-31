@@ -17,6 +17,7 @@ dependency-graph.svg
 *.sqlite-wal
 *.sqlite-shm
 data/
+eval-runs/
 
 # Model-call logs — real sessions become eval fixtures, but they contain
 # whatever business a person narrated. They stay local.
