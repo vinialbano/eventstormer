@@ -49,10 +49,10 @@ capture.
 ## Handoff
 
 - **Feature**: `slice-2-money-shot` (`.specs/features/slice-2-money-shot/`) — GitHub #39
-- **Phase / Task**: Execute B2 (P2: T6–T9). B1 complete.
-- **Completed**: Specify + Design + Tasks; AD-028/029/030; B1 T1–T5 (`da6789f`…`f7a6101`, 421 tests)
-- **In-progress**: B2 T6–T9
-- **Next step**: Batch worker T6→T9. Then B3 (T10–T17), then Verifier.
+- **Phase / Task**: Execute B3 (P3+P4: T10–T17). B1+B2 complete.
+- **Completed**: B1 T1–T5 (`da6789f`…`f7a6101`); B2 T6–T9 (`30a3bd0`…`4358c9d`, 445 tests)
+- **In-progress**: B3 T10–T17
+- **Next step**: Batch worker T10→T17. Then Verifier (author ≠ verifier).
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: `slice-2-money-shot` off `main`
