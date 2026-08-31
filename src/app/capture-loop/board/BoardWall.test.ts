@@ -1,6 +1,6 @@
-import { enableAutoUnmount, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import BoardWall from './BoardWall.vue'
 
 enableAutoUnmount(afterEach)
@@ -121,5 +121,84 @@ describe('BoardWall', () => {
     expect(event.defaultPrevented).toBe(false)
     expect(wrapper.find('.sticky--reword').exists()).toBe(false)
     field.remove()
+  })
+
+  it('opens the confirm popover from ✓ without POSTing, then confirm POSTs and emits board-dirty', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/references')) {
+        return Promise.resolve(
+          new Response(JSON.stringify([{ kind: 'readable-account', path: 'building-blocks' }]), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        )
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ position: 2 }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
+        workshopId: 'w1',
+        accepter: 'Maria',
+        revision: 1,
+      },
+    })
+    await wrapper.get('.sticky').trigger('focus')
+    await wrapper.get('[aria-label="Reword"]').trigger('click')
+    await wrapper.get('.sticky__keep').trigger('click')
+    await nextTick()
+    await flushPromises()
+
+    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/references'))).toBe(
+      true,
+    )
+    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/operations'))).toBe(
+      false,
+    )
+
+    const confirm = [...document.body.querySelectorAll('button')].find(
+      (button) => button.textContent.trim() === 'Confirm reword',
+    )
+    if (!(confirm instanceof HTMLButtonElement)) throw new Error('missing Confirm reword')
+    confirm.click()
+    await flushPromises()
+
+    expect(
+      fetchMock.mock.calls.filter((call) => typeof call[0] === 'string' && call[0].includes('/operations')),
+    ).toHaveLength(1)
+    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
+    vi.unstubAllGlobals()
+  })
+
+  it('rejects an empty label inline and never POSTs', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response('[]', { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
+        workshopId: 'w1',
+        accepter: 'Maria',
+        revision: 1,
+      },
+    })
+    await wrapper.get('.sticky').trigger('focus')
+    await wrapper.get('[aria-label="Reword"]').trigger('click')
+    await wrapper.get('input').setValue('   ')
+    await wrapper.get('.sticky__keep').trigger('click')
+    await nextTick()
+
+    expect(wrapper.text()).toContain("Name can't be empty.")
+    expect(fetchMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })

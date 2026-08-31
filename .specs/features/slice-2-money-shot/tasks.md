@@ -430,14 +430,14 @@ popover and show retry/cancel copy — no silent commit.
 **Requirement**: S2-02, S2-03, S2-04, S2-07, S2-25
 **Tools**: MCP: `context7` (`reka-ui` Popover) · Skill: `impeccable`, `testing-boss`
 **Done when**:
-- [ ] jsdom: opening the popover GETs references and does **not** POST; confirm POSTs once; cancel POSTs zero times; GET-fail shows retry/cancel and POSTs zero times
-- [ ] popover root `aria-label` is `Reword impact`; confirm **button** name is `Confirm reword`
-- [ ] `RewordConfirm` watches `revision`; a change while open refetches (or cancels) before a subsequent confirm
-- [ ] successful confirm `$emit('board-dirty')` from **BoardWall**
-- [ ] `CaptureScreen` renders `<BoardWall :blocks="…" :workshop-id="id" :accepter="session.creatorName" :revision="board.snapshot.position" />` (live store/position, not literals)
-- [ ] empty / whitespace label never POSTs; inline "Name can't be empty."
-- [ ] popover content is portalled (not clipped by the wall)
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] jsdom: opening the popover GETs references and does **not** POST; confirm POSTs once; cancel POSTs zero times; GET-fail shows retry/cancel and POSTs zero times
+- [x] popover root `aria-label` is `Reword impact`; confirm **button** name is `Confirm reword`
+- [x] `RewordConfirm` watches `revision`; a change while open refetches (or cancels) before a subsequent confirm
+- [x] successful confirm `$emit('board-dirty')` from **BoardWall**
+- [x] `CaptureScreen` renders `<BoardWall :blocks="…" :workshop-id="id" :accepter="session.creatorName" :revision="board.snapshot.position" />` (live store/position, not literals)
+- [x] empty / whitespace label never POSTs; inline "Name can't be empty."
+- [x] popover content is portalled (not clipped by the wall)
+- [x] Gate check passes: `pnpm test` · 461 passed, 0 failed
 **Tests**: unit (jsdom) · **Gate**: quick
 **Commit**: `feat(app): confirm a reword against the live reference list`
 

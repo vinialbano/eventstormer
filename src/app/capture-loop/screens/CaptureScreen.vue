@@ -70,7 +70,13 @@ onMounted(loadAll)
 
 <template>
   <div class="screen">
-    <BoardWall :blocks="blocks" class="screen__wall" />
+    <BoardWall
+      :blocks="blocks"
+      :workshop-id="id"
+      :accepter="session.creatorName"
+      :revision="board.snapshot.position"
+      class="screen__wall"
+    />
 
     <FacilitatorDock
       v-if="session.sessionOpen"

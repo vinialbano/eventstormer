@@ -154,6 +154,11 @@ describe('CaptureScreen', () => {
     expect(wrapper.getComponent(BoardWall).props('blocks')).toEqual([
       { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: true },
     ])
+    expect(wrapper.getComponent(BoardWall).props()).toMatchObject({
+      workshopId: 'w1',
+      accepter: 'Maria',
+      revision: 1,
+    })
     wrapper.unmount()
   })
 })

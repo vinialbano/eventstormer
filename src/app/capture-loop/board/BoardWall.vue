@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
+import RewordConfirm from './RewordConfirm.vue'
 import { isTypingSurface } from './typing-surface.ts'
 
 /**
@@ -10,8 +11,13 @@ import { isTypingSurface } from './typing-surface.ts'
  * the swappable renderer). A pending proposal is never drawn here — the dashed
  * ghost is reword-only.
  */
-const props = defineProps<{ blocks: BoardBlockInput[] }>()
-defineEmits<{ 'board-dirty': [] }>()
+const props = defineProps<{
+  blocks: BoardBlockInput[]
+  workshopId?: string
+  accepter?: string
+  revision?: number
+}>()
+const emit = defineEmits<{ 'board-dirty': [] }>()
 
 const viewport = ref({ w: 1280, h: 800 })
 const measure = (): void => {
@@ -24,6 +30,8 @@ const measure = (): void => {
 const selectedId = ref<string | null>(null)
 const editingId = ref<string | null>(null)
 const draft = ref('')
+const labelError = ref('')
+const confirmOpen = ref(false)
 const draftInput = ref<HTMLInputElement | null>(null)
 const bindDraftInput = (element: unknown): void => {
   draftInput.value = element instanceof HTMLInputElement ? element : null
@@ -34,8 +42,32 @@ const selectSticky = (id: string): void => {
 }
 
 const cancelReword = (): void => {
+  confirmOpen.value = false
   editingId.value = null
   draft.value = ''
+  labelError.value = ''
+}
+
+const requestConfirm = (): void => {
+  if (draft.value.trim().length === 0) {
+    labelError.value = "Name can't be empty."
+    return
+  }
+  labelError.value = ''
+  confirmOpen.value = true
+}
+
+const onRewordConfirmed = (): void => {
+  emit('board-dirty')
+  cancelReword()
+}
+
+const dismissEsc = (): void => {
+  if (confirmOpen.value) {
+    confirmOpen.value = false
+    return
+  }
+  cancelReword()
 }
 
 const startReword = async (id: string): Promise<void> => {
@@ -52,12 +84,16 @@ const onWindowKeydown = (event: KeyboardEvent): void => {
   if (isTypingSurface(event.target)) {
     if (event.key === 'Escape' && editingId.value !== null) {
       event.preventDefault()
-      cancelReword()
+      dismissEsc()
+    }
+    if (event.key === 'Enter' && editingId.value !== null) {
+      event.preventDefault()
+      requestConfirm()
     }
     return
   }
   if (event.key === 'Escape') {
-    cancelReword()
+    dismissEsc()
     return
   }
   if (editingId.value !== null || selectedId.value === null) return
@@ -248,12 +284,31 @@ const showsPencil = (id: string, withdrawn: boolean): boolean =>
         <template v-if="editingId === s.id">
           <label class="sticky__edit">
             <span class="sr-only">Reword label</span>
-            <input :ref="bindDraftInput" v-model="draft" class="sticky__input" type="text">
+            <input
+              :ref="bindDraftInput"
+              v-model="draft"
+              class="sticky__input"
+              type="text"
+              @keydown.enter.prevent="requestConfirm"
+            >
           </label>
+          <p v-if="labelError" class="sticky__error">{{ labelError }}</p>
           <div class="sticky__ghostbtns">
-            <button type="button" class="sticky__keep" aria-label="Keep wording">✓</button>
+            <button type="button" class="sticky__keep" aria-label="Keep wording" @click.stop="requestConfirm">
+              ✓
+            </button>
             <button type="button" class="sticky__cancel" aria-label="Cancel" @click.stop="cancelReword">✕</button>
           </div>
+          <RewordConfirm
+            :open="confirmOpen"
+            :workshop-id="workshopId ?? ''"
+            :block-id="s.id"
+            :label="draft.trim()"
+            :revision="revision ?? -1"
+            :accepter="accepter ?? ''"
+            @update:open="confirmOpen = $event"
+            @confirmed="onRewordConfirmed"
+          />
         </template>
         <span v-else class="sticky__label">{{ s.label }}</span>
       </li>
@@ -424,6 +479,13 @@ const showsPencil = (id: string, withdrawn: boolean): boolean =>
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+.sticky__error {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-danger);
 }
 .sticky__keep,
 .sticky__cancel {
