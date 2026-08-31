@@ -98,9 +98,9 @@ export function openSessions(db: SessionIndexDb): { workshopId: WorkshopId; sess
       `SELECT workshop_id, session_id FROM session_index WHERE status = 'open' ORDER BY started_at`,
     )
     .all() as { workshop_id: string; session_id: string }[]
-  return rows.map((r) => ({
-    workshopId: r.workshop_id as WorkshopId,
-    sessionId: r.session_id as SessionId,
+  return rows.map((row) => ({
+    workshopId: row.workshop_id as WorkshopId,
+    sessionId: row.session_id as SessionId,
   }))
 }
 

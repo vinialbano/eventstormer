@@ -35,7 +35,7 @@ export const facilitationContext = (input: FacilitationContextInput): Facilitati
 
 const looksLikePhaseName = (label: string): boolean => {
   const words = label.trim().split(/\s+/)
-  return words.length <= 3 && !words.some((w) => /(ed|ing)$/i.test(w))
+  return words.length <= 3 && !words.some((word) => /(ed|ing)$/i.test(word))
 }
 
 export const facilitationAgenda = (input: {
@@ -43,5 +43,5 @@ export const facilitationAgenda = (input: {
   buildingBlocks: { kind: string; label: string }[]
 }): string[] => [
   ...input.openQuestions,
-  ...input.buildingBlocks.filter((b) => looksLikePhaseName(b.label)).map((b) => b.label),
+  ...input.buildingBlocks.filter((block) => looksLikePhaseName(block.label)).map((block) => block.label),
 ]

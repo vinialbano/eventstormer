@@ -11,21 +11,21 @@ import { closeSessionRoutes } from './http.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const clock = () => at
-const w = 'w_1' as WorkshopId
-const s = 's_1' as SessionId
+const workshopId = 'w_1' as WorkshopId
+const sessionId = 's_1' as SessionId
 
 let store: EventStore
 let db: SessionIndexDb
 
 const routes = () => closeSessionRoutes({ store, db, clock })
-const close = async (id: SessionId = s): Promise<Response> =>
+const close = async (id: SessionId = sessionId): Promise<Response> =>
   routes().request(`/sessions/${id}/close`, { method: 'POST' })
 
 const proposalDisposition = (id: string): string | undefined => {
-  const events = store.read(proposalStream(id as ProposalId)).map((r) => ProposalEvent.parse(r.operation))
-  const lapsed = events.some((e) => e.type === 'Proposal Lapsed')
-  const rejected = events.some((e) => e.type === 'Proposal Rejected')
-  const accepted = events.some((e) => e.type === 'Proposal Accepted')
+  const events = store.read(proposalStream(id as ProposalId)).map((row) => ProposalEvent.parse(row.operation))
+  const lapsed = events.some((event) => event.type === 'Proposal Lapsed')
+  const rejected = events.some((event) => event.type === 'Proposal Rejected')
+  const accepted = events.some((event) => event.type === 'Proposal Accepted')
   if (lapsed) return 'LAPSED'
   if (rejected) return 'REJECTED'
   if (accepted) return 'ACCEPTED'
@@ -41,7 +41,7 @@ const seedProposal = (id: string, tail: ProposalEvent[] = []): void => {
         v: 1,
         type: 'Building Block Proposed',
         proposalId: id,
-        sessionId: s,
+        sessionId: sessionId,
         contributionId: 'c_1',
         blockKind: 'domain-event',
         label: `Block ${id}`,
@@ -64,19 +64,19 @@ beforeEach(() => {
   applySessionFacilitationMigrations(raw)
   db = raw
   store = createMemoryEventStore()
-  store.append(sessionStream(s), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: s, workshopId: w, at } },
+  store.append(sessionStream(sessionId), -1, [
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
   ])
-  reserve(db, w, s, at)
+  reserve(db, workshopId, sessionId, at)
   // one Contribution Interpreted listing three proposals p_1 (PROPOSED), p_2 (APPLY_FAILED), p_3 (ACCEPTED)
-  store.append(sessionStream(s), 0, [
+  store.append(sessionStream(sessionId), 0, [
     {
       at,
       opVersion: 1,
       operation: {
         v: 1,
         type: 'Contribution Interpreted',
-        sessionId: s,
+        sessionId: sessionId,
         contributionId: 'c_1',
         tracks: ['p_1', 'p_2', 'p_3'].map((proposalId) => ({
           track: 'propose-building-block',
@@ -101,23 +101,23 @@ beforeEach(() => {
 
 describe('POST /sessions/:id/close', () => {
   it('appends Session Closed with raw facts only, frees the index slot, lapses non-terminal proposals', async () => {
-    const res = await close()
-    expect(res.status).toBe(200)
+    const response = await close()
+    expect(response.status).toBe(200)
 
     const closed = store
-      .read(sessionStream(s))
-      .map((r) => SessionEvent.parse(r.operation))
-      .find((e) => e.type === 'Session Closed')
+      .read(sessionStream(sessionId))
+      .map((row) => SessionEvent.parse(row.operation))
+      .find((event) => event.type === 'Session Closed')
     expect(closed).toEqual({
       v: 1,
       type: 'Session Closed',
-      sessionId: s,
-      workshopId: w,
+      sessionId: sessionId,
+      workshopId: workshopId,
       unresolvedQuestionIds: [],
       at,
     })
 
-    expect(sessionIdsFor(db, w)).toEqual({ closed: [s] })
+    expect(sessionIdsFor(db, workshopId)).toEqual({ closed: [sessionId] })
     expect(proposalDisposition('p_1')).toBe('LAPSED')
     expect(proposalDisposition('p_2')).toBe('LAPSED')
     expect(proposalDisposition('p_3')).toBe('ACCEPTED') // in-flight — left to finish
@@ -128,8 +128,8 @@ describe('POST /sessions/:id/close', () => {
     const causeOf = (id: string): string | undefined => {
       const lapsed = store
         .read(proposalStream(id as ProposalId))
-        .map((r) => ProposalEvent.parse(r.operation))
-        .find((e) => e.type === 'Proposal Lapsed')
+        .map((row) => ProposalEvent.parse(row.operation))
+        .find((event) => event.type === 'Proposal Lapsed')
       return lapsed?.type === 'Proposal Lapsed' ? lapsed.cause : undefined
     }
     expect(causeOf('p_1')).toBe('undisposed')
@@ -138,15 +138,15 @@ describe('POST /sessions/:id/close', () => {
 
   it('is a clean no-op when re-run on an already-closed session', async () => {
     await close()
-    const before = store.read(sessionStream(s)).length
-    const res = await close()
-    expect(res.status).toBe(200)
-    expect(store.read(sessionStream(s)).length).toBe(before)
+    const before = store.read(sessionStream(sessionId)).length
+    const response = await close()
+    expect(response.status).toBe(200)
+    expect(store.read(sessionStream(sessionId)).length).toBe(before)
     expect(proposalDisposition('p_1')).toBe('LAPSED')
   })
 
   it('404s for an unknown session', async () => {
-    const res = await close('s_missing' as SessionId)
-    expect(res.status).toBe(404)
+    const response = await close('s_missing' as SessionId)
+    expect(response.status).toBe(404)
   })
 })

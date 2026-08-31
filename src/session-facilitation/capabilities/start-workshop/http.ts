@@ -14,9 +14,9 @@ const Body = z.object({ creatorName: z.string() })
  * URL is `/workshops/:id`.
  */
 export const startWorkshopRoutes = (deps: StartWorkshopDeps) =>
-  new Hono().post('/workshops', async (c) => {
-    const body = Body.safeParse(await c.req.json().catch(() => null))
-    if (!body.success) return c.json({ error: 'invalid-body' as const }, 400)
+  new Hono().post('/workshops', async (context) => {
+    const body = Body.safeParse(await context.req.json().catch(() => null))
+    if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
 
     const workshopId = newWorkshopId()
     const decided = decide(emptyWorkshop(), {
@@ -25,8 +25,8 @@ export const startWorkshopRoutes = (deps: StartWorkshopDeps) =>
       creatorName: body.data.creatorName,
       at: deps.clock(),
     })
-    if (!decided.ok) return c.json({ error: decided.error.kind }, 400)
+    if (!decided.ok) return context.json({ error: decided.error.kind }, 400)
 
     deps.store.append(workshopStream(workshopId), -1, storedOps(decided.value))
-    return c.json({ workshopId, url: `/workshops/${workshopId}` }, 201)
+    return context.json({ workshopId, url: `/workshops/${workshopId}` }, 201)
   })

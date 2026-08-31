@@ -9,22 +9,22 @@ import { setScopeRoutes } from './http.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const clock = () => at
-const w = 'w_1' as WorkshopId
+const workshopId = 'w_1' as WorkshopId
 
 const seededStore = (): EventStore => {
   const store = createMemoryEventStore()
-  store.append(workshopStream(w), -1, [
+  store.append(workshopStream(workshopId), -1, [
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: w, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
   return store
 }
 
 const postScope = async (store: EventStore, statement: string): Promise<Response> =>
-  setScopeRoutes({ store, clock }).request(`/workshops/${w}/scope`, {
+  setScopeRoutes({ store, clock }).request(`/workshops/${workshopId}/scope`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ statement }),
@@ -32,9 +32,9 @@ const postScope = async (store: EventStore, statement: string): Promise<Response
 
 const scopeSet = (store: EventStore): { statement: string }[] =>
   store
-    .read(workshopStream(w))
-    .map((r) => WorkshopEvent.parse(r.operation))
-    .filter((e): e is Extract<WorkshopEvent, { type: 'Scope Set' }> => e.type === 'Scope Set')
+    .read(workshopStream(workshopId))
+    .map((row) => WorkshopEvent.parse(row.operation))
+    .filter((event): event is Extract<WorkshopEvent, { type: 'Scope Set' }> => event.type === 'Scope Set')
 
 describe('POST /workshops/:id/scope', () => {
   it('replaces the scope on every call while the model has zero applied blocks', async () => {
@@ -42,14 +42,14 @@ describe('POST /workshops/:id/scope', () => {
     for (const statement of ['first scope', 'second scope', 'third scope']) {
       expect((await postScope(store, statement)).status).toBe(200)
     }
-    expect(scopeSet(store).map((e) => e.statement)).toEqual(['first scope', 'second scope', 'third scope'])
+    expect(scopeSet(store).map((event) => event.statement)).toEqual(['first scope', 'second scope', 'third scope'])
   })
 
   it('rejects with 409 and leaves the scope unchanged once a building block is applied', async () => {
     const store = seededStore()
     applyOperation(
       { store, clock },
-      w,
+      workshopId,
       Operation.parse({
         author: { accepter: { name: 'Dana' } },
         kind: 'capture-domain-event',
@@ -58,22 +58,22 @@ describe('POST /workshops/:id/scope', () => {
       }),
     )
 
-    const res = await postScope(store, 'trying to change it')
+    const response = await postScope(store, 'trying to change it')
 
-    expect(res.status).toBe(409)
-    await expect(res.json()).resolves.toEqual({ error: 'scope-locked' })
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({ error: 'scope-locked' })
     expect(scopeSet(store)).toEqual([])
   })
 
   it('rejects a blank statement with a 400 typed body', async () => {
-    const res = await postScope(seededStore(), '   ')
-    expect(res.status).toBe(400)
-    await expect(res.json()).resolves.toEqual({ error: 'blank-statement' })
+    const response = await postScope(seededStore(), '   ')
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'blank-statement' })
   })
 
   it('rejects a scope set on a workshop that was never started', async () => {
-    const res = await postScope(createMemoryEventStore(), 'x')
-    expect(res.status).toBe(400)
-    await expect(res.json()).resolves.toEqual({ error: 'not-started' })
+    const response = await postScope(createMemoryEventStore(), 'x')
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'not-started' })
   })
 })

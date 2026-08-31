@@ -9,9 +9,9 @@ import { reviewProposalRoutes } from './http.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const clock = () => at
-const w = 'w_1' as WorkshopId
-const s = 's_1' as SessionId
-const boardStream: StreamKey = { context: 'domain-model-capture', aggregate: 'board', id: w }
+const workshopId = 'w_1' as WorkshopId
+const sessionId = 's_1' as SessionId
+const boardStream: StreamKey = { context: 'domain-model-capture', aggregate: 'board', id: workshopId }
 
 let store: EventStore
 let appendStreams: StreamKey[]
@@ -35,15 +35,15 @@ const deps = () => ({ store, clock })
 const routes = () => reviewProposalRoutes(deps())
 
 const seedWorkshopAndSession = (): void => {
-  store.append(workshopStream(w), -1, [
+  store.append(workshopStream(workshopId), -1, [
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: w, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
-  store.append(sessionStream(s), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: s, workshopId: w, at } },
+  store.append(sessionStream(sessionId), -1, [
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
   ])
 }
 
@@ -56,7 +56,7 @@ const seedProposal = (id: string, extra: ProposalEvent[] = []): void => {
         v: 1,
         type: 'Building Block Proposed',
         proposalId: id,
-        sessionId: s,
+        sessionId: sessionId,
         contributionId: 'c_1',
         blockKind: 'domain-event',
         label: 'Book borrowed',
@@ -75,7 +75,7 @@ const seedProposal = (id: string, extra: ProposalEvent[] = []): void => {
 }
 
 const proposalTypes = (id: string): string[] =>
-  store.read(proposalStream(id as ProposalId)).map((r) => (r.operation as { type: string }).type)
+  store.read(proposalStream(id as ProposalId)).map((row) => (row.operation as { type: string }).type)
 
 const accept = async (id: string): Promise<Response> =>
   routes().request(`/proposals/${id}/accept`, { method: 'POST' })
@@ -90,13 +90,13 @@ beforeEach(() => {
 describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
   it('applies the operation and the building block lands in the backlog', async () => {
     seedProposal('p_1')
-    const res = await accept('p_1')
-    expect(res.status).toBe(200)
-    const body = (await res.json()) as { boardPosition: number | null; proposal: { disposition: string } }
+    const response = await accept('p_1')
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as { boardPosition: number | null; proposal: { disposition: string } }
 
     expect(body.proposal.disposition).toBe('APPLIED')
     expect(body.boardPosition).toBe(0)
-    expect(readBuildingBlocks(deps(), w)).toEqual([
+    expect(readBuildingBlocks(deps(), workshopId)).toEqual([
       { id: expect.any(String) as string, kind: 'domain-event', label: 'Book borrowed' },
     ])
     expect(proposalTypes('p_1')).toEqual(['Building Block Proposed', 'Proposal Accepted', 'Operation Applied'])
@@ -111,8 +111,8 @@ describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
 
     const accepted = store
       .read(proposalStream('p_1' as ProposalId))
-      .map((r) => ProposalEvent.parse(r.operation))
-      .find((e) => e.type === 'Proposal Accepted')
+      .map((row) => ProposalEvent.parse(row.operation))
+      .find((event) => event.type === 'Proposal Accepted')
     expect(accepted?.type === 'Proposal Accepted' && accepted.accepter).toBe('Dana')
   })
 
@@ -120,11 +120,11 @@ describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
     seedProposal('p_1')
     await accept('p_1')
 
-    const contexts = appendStreams.map((k) => k.context)
+    const contexts = appendStreams.map((streamKey) => streamKey.context)
     expect(contexts).toContain('domain-model-capture')
     expect(contexts).toContain('session-facilitation')
     // every append call targets exactly one stream — the two contexts are never batched
-    expect(new Set(appendStreams.map((k) => `${k.context}/${k.aggregate}/${k.id}`)).size).toBeGreaterThanOrEqual(2)
+    expect(new Set(appendStreams.map((streamKey) => `${streamKey.context}/${streamKey.aggregate}/${streamKey.id}`)).size).toBeGreaterThanOrEqual(2)
   })
 
   it('double-accept produces exactly one building block, reusing the stored id, without re-applying', async () => {
@@ -136,7 +136,7 @@ describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
 
     expect(second.proposal.disposition).toBe('APPLIED')
     expect(second.proposal.buildingBlockId).toBe(first.proposal.buildingBlockId)
-    expect(readBuildingBlocks(deps(), w)).toHaveLength(1)
+    expect(readBuildingBlocks(deps(), workshopId)).toHaveLength(1)
 
     // once APPLIED, the second accept returns the stored id and does NOT run
     // the apply chain again. applyOperation is the only reader of the board stream on
@@ -151,10 +151,10 @@ describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
       { v: 1, at, type: 'Operation Rejected', proposalId: 'p_1' as ProposalId, reason: 'unknown-target' },
     ])
 
-    const res = await accept('p_1')
-    expect(res.status).toBe(200)
-    const body = (await res.json()) as { proposal: { disposition: string } }
+    const response = await accept('p_1')
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as { proposal: { disposition: string } }
     expect(body.proposal.disposition).toBe('APPLIED')
-    expect(readBuildingBlocks(deps(), w)).toEqual([{ id: 'bb_1', kind: 'domain-event', label: 'Book borrowed' }])
+    expect(readBuildingBlocks(deps(), workshopId)).toEqual([{ id: 'bb_1', kind: 'domain-event', label: 'Book borrowed' }])
   })
 })

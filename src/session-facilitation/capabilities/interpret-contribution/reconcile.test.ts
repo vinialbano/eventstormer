@@ -18,27 +18,27 @@ import type { InterpretContributionDeps } from './deps.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const clock = () => at
-const w = 'w_1' as WorkshopId
-const s = 's_1' as SessionId
+const workshopId = 'w_1' as WorkshopId
+const sessionId = 's_1' as SessionId
 
 let store: EventStore
 let db: SessionIndexDb & DerivedTrackDb
 let interpretCalls: number
 
 const mint = (): TrackIdMint => {
-  let q = 0
-  return { proposalId: () => 'p_x' as ProposalId, questionId: () => `q_${String((q += 1))}` as QuestionId }
+  let questionCounter = 0
+  return { proposalId: () => 'p_x' as ProposalId, questionId: () => `q_${String((questionCounter += 1))}` as QuestionId }
 }
 
 const facilitator = (openings: (OpeningQuestion | FacilitatorFailure)[]): Facilitator => {
-  let i = 0
+  let index = 0
   return {
     interpret: () => {
       interpretCalls += 1
       return Promise.resolve(err({ kind: 'provider-down' as const }))
     },
     askOpening: (): Promise<Result<OpeningQuestion, FacilitatorFailure>> => {
-      const step = openings[i++] ?? ({ kind: 'provider-down' } as const)
+      const step = openings[index++] ?? ({ kind: 'provider-down' } as const)
       return Promise.resolve('kind' in step ? err(step) : ok(step))
     },
   }
@@ -53,11 +53,11 @@ const deps = (openings: (OpeningQuestion | FacilitatorFailure)[] = []): Interpre
   mint: mint(),
 })
 
-const sessionEvents = (id: SessionId = s): SessionEvent[] =>
-  store.read(sessionStream(id)).map((r) => SessionEvent.parse(r.operation))
+const sessionEvents = (id: SessionId = sessionId): SessionEvent[] =>
+  store.read(sessionStream(id)).map((row) => SessionEvent.parse(row.operation))
 
-const only = <T extends SessionEvent['type']>(t: T): Extract<SessionEvent, { type: T }>[] =>
-  sessionEvents().filter((e): e is Extract<SessionEvent, { type: T }> => e.type === t)
+const only = <T extends SessionEvent['type']>(type: T): Extract<SessionEvent, { type: T }>[] =>
+  sessionEvents().filter((event): event is Extract<SessionEvent, { type: T }> => event.type === type)
 
 beforeEach(() => {
   const raw = new DatabaseSync(':memory:')
@@ -65,17 +65,17 @@ beforeEach(() => {
   db = raw
   store = createMemoryEventStore()
   interpretCalls = 0
-  store.append(workshopStream(w), -1, [
+  store.append(workshopStream(workshopId), -1, [
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: w, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
-  store.append(sessionStream(s), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: s, workshopId: w, at } },
+  store.append(sessionStream(sessionId), -1, [
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
   ])
-  reserve(db, w, s, at)
+  reserve(db, workshopId, sessionId, at)
 })
 
 describe('askOpeningQuestion', () => {
@@ -84,11 +84,11 @@ describe('askOpeningQuestion', () => {
       deps([{ questionText: 'What business are you mapping?', scopeStatement: 'Library lending across branches.' }]),
     )
 
-    const q = only('Question Asked')
-    expect(q).toHaveLength(1)
-    expect(q[0]?.kind).toBe('scope')
-    expect(q[0]?.text).toBe('What business are you mapping?')
-    expect(q[0]?.scopeStatement).toBe('Library lending across branches.')
+    const question = only('Question Asked')
+    expect(question).toHaveLength(1)
+    expect(question[0]?.kind).toBe('scope')
+    expect(question[0]?.text).toBe('What business are you mapping?')
+    expect(question[0]?.scopeStatement).toBe('Library lending across branches.')
   })
 
   it('asks nothing on provider-down, then asks on the next tick when the provider returns', async () => {
@@ -121,19 +121,19 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
   const p2 = 'p_2' as ProposalId
 
   const proposalEvents = (id: ProposalId): ProposalEvent[] =>
-    store.read(proposalStream(id)).map((r) => ProposalEvent.parse(r.operation))
+    store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
 
   // A crash between the Contribution Interpreted append and deriveTracks: the
   // ledger event is present, no derived_track rows, no proposal streams.
   const ledgerWithoutDerivation = (): void => {
-    store.append(sessionStream(s), store.read(sessionStream(s)).length - 1, [
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
       {
         at,
         opVersion: 1,
         operation: {
           v: 1,
           type: 'Contribution Made',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: 'c_1',
           speaker: 'Dana',
           body: 'a member borrowed a book and returned another',
@@ -147,7 +147,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         operation: {
           v: 1,
           type: 'Contribution Interpreted',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: 'c_1',
           tracks: [
             { track: 'propose-building-block', proposalId: p1, blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' },
@@ -164,54 +164,54 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
 
     reconcilePendingDerivations(deps())
 
-    expect(proposalEvents(p1).map((e) => e.type)).toEqual(['Building Block Proposed'])
-    expect(proposalEvents(p2).map((e) => e.type)).toEqual(['Building Block Proposed'])
+    expect(proposalEvents(p1).map((event) => event.type)).toEqual(['Building Block Proposed'])
+    expect(proposalEvents(p2).map((event) => event.type)).toEqual(['Building Block Proposed'])
     expect(interpretCalls).toBe(0)
   })
 
   it('is idempotent — a second reconcile adds no events and makes no model calls', () => {
     ledgerWithoutDerivation()
     reconcilePendingDerivations(deps())
-    const before = store.read(proposalStream(p1)).length + store.read(sessionStream(s)).length
+    const before = store.read(proposalStream(p1)).length + store.read(sessionStream(sessionId)).length
 
     reconcilePendingDerivations(deps())
 
-    const after = store.read(proposalStream(p1)).length + store.read(sessionStream(s)).length
+    const after = store.read(proposalStream(p1)).length + store.read(sessionStream(sessionId)).length
     expect(after).toBe(before)
     expect(interpretCalls).toBe(0)
   })
 
   it('sweeps the half-closed case — Session Closed present but the index row still open', () => {
-    store.append(sessionStream(s), store.read(sessionStream(s)).length - 1, [
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
       {
         at,
         opVersion: 1,
-        operation: { v: 1, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [], at },
+        operation: { v: 1, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [], at },
       },
     ])
-    expect(sessionIdsFor(db, w).open).toBe(s)
+    expect(sessionIdsFor(db, workshopId).open).toBe(sessionId)
 
     reconcilePendingDerivations(deps())
 
-    expect(sessionIdsFor(db, w)).toEqual({ closed: [s] })
+    expect(sessionIdsFor(db, workshopId)).toEqual({ closed: [sessionId] })
   })
 
   it('leaves a sound closed session alone (no open row to sweep)', () => {
-    close(db, s, at)
+    close(db, sessionId, at)
     reconcilePendingDerivations(deps())
-    expect(sessionIdsFor(db, w).closed).toEqual([s])
+    expect(sessionIdsFor(db, workshopId).closed).toEqual([sessionId])
   })
 
   it('completes a crash-mid-close: lapses the session proposals the close handler did not reach', () => {
     // one proposed proposal, and Session Closed on the stream, but the index row still open
-    store.append(sessionStream(s), store.read(sessionStream(s)).length - 1, [
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
       {
         at,
         opVersion: 1,
         operation: {
           v: 1,
           type: 'Contribution Interpreted',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: 'c_1',
           tracks: [{ track: 'propose-building-block', proposalId: 'p_x', blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' }],
           at,
@@ -220,7 +220,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
       {
         at,
         opVersion: 1,
-        operation: { v: 1, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [], at },
+        operation: { v: 1, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [], at },
       },
     ])
     store.append(proposalStream('p_x' as ProposalId), -1, [
@@ -231,7 +231,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
           v: 1,
           type: 'Building Block Proposed',
           proposalId: 'p_x',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: 'c_1',
           blockKind: 'domain-event',
           label: 'Book borrowed',
@@ -243,11 +243,11 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
 
     reconcilePendingDerivations(deps())
 
-    expect(sessionIdsFor(db, w)).toEqual({ closed: [s] })
+    expect(sessionIdsFor(db, workshopId)).toEqual({ closed: [sessionId] })
     expect(
       store
         .read(proposalStream('p_x' as ProposalId))
-        .map((r) => (r.operation as { type: string }).type),
+        .map((row) => (row.operation as { type: string }).type),
     ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
   })
 })

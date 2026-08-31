@@ -15,14 +15,14 @@ import type { CloseSessionDeps } from './deps.ts'
  * crash mid-close self-heals via `reconcilePendingDerivations`.
  */
 export const closeSessionRoutes = (deps: CloseSessionDeps) =>
-  new Hono().post('/sessions/:id/close', (c) => {
-    const sessionId = c.req.param('id') as SessionId
+  new Hono().post('/sessions/:id/close', (context) => {
+    const sessionId = context.req.param('id') as SessionId
     const rows = deps.store.read(sessionStream(sessionId))
-    if (rows.length === 0) return c.json({ error: 'unknown-session' as const }, 404)
+    if (rows.length === 0) return context.json({ error: 'unknown-session' as const }, 404)
 
-    const events = rows.map((r) => SessionEvent.parse(r.operation))
-    const workshopId = events.find((e) => e.type === 'Session Started')?.workshopId
-    if (workshopId === undefined) return c.json({ error: 'unknown-session' as const }, 404)
+    const events = rows.map((row) => SessionEvent.parse(row.operation))
+    const workshopId = events.find((event) => event.type === 'Session Started')?.workshopId
+    if (workshopId === undefined) return context.json({ error: 'unknown-session' as const }, 404)
 
     const decided = decide(replay(events), {
       type: 'Close Session',
@@ -35,5 +35,5 @@ export const closeSessionRoutes = (deps: CloseSessionDeps) =>
     }
 
     finishClose(deps, sessionId)
-    return c.json({ ok: true as const }, 200)
+    return context.json({ ok: true as const }, 200)
   })

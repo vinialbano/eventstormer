@@ -7,13 +7,13 @@ import { decide } from './decide.ts'
 import { replay } from './replay.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
-const s = 's_1' as SessionId
-const w = 'w_1' as WorkshopId
-const c = (v: string) => v as ContributionId
-const q = (v: string) => v as QuestionId
+const sessionId = 's_1' as SessionId
+const workshopId = 'w_1' as WorkshopId
+const toContributionId = (value: string) => value as ContributionId
+const toQuestionId = (value: string) => value as QuestionId
 
 const startedStream: SessionEvent[] = [
-  { v: 1, at, type: 'Session Started', sessionId: s, workshopId: w },
+  { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
 ]
 
 const track: InterpretedTrack = {
@@ -28,8 +28,8 @@ describe('Session.decide — Make Contribution', () => {
   it('emits Contribution Made carrying session id, speaker, source "typed" and the timestamp', () => {
     const result = decide(replay(startedStream), {
       type: 'Make Contribution',
-      sessionId: s,
-      contributionId: c('c_1'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_1'),
       speaker: 'Dana',
       body: 'A member borrowed a book.',
       at,
@@ -41,7 +41,7 @@ describe('Session.decide — Make Contribution', () => {
           v: 1,
           at,
           type: 'Contribution Made',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: 'c_1',
           speaker: 'Dana',
           body: 'A member borrowed a book.',
@@ -54,12 +54,12 @@ describe('Session.decide — Make Contribution', () => {
   it('rejects a contribution on a CLOSED session', () => {
     const closed = replay([
       ...startedStream,
-      { v: 1, at, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [] },
+      { v: 1, at, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [] },
     ])
     const result = decide(closed, {
       type: 'Make Contribution',
-      sessionId: s,
-      contributionId: c('c_2'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_2'),
       speaker: 'Dana',
       body: 'too late',
       at,
@@ -71,8 +71,8 @@ describe('Session.decide — Make Contribution', () => {
   it('rejects an empty / whitespace-only body', () => {
     const result = decide(replay(startedStream), {
       type: 'Make Contribution',
-      sessionId: s,
-      contributionId: c('c_3'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_3'),
       speaker: 'Dana',
       body: '   ',
       at,
@@ -84,8 +84,8 @@ describe('Session.decide — Make Contribution', () => {
   it('rejects a body longer than 10 000 characters', () => {
     const result = decide(replay(startedStream), {
       type: 'Make Contribution',
-      sessionId: s,
-      contributionId: c('c_4'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_4'),
       speaker: 'Dana',
       body: 'x'.repeat(10_001),
       at,
@@ -99,8 +99,8 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('emits Contribution Interpreted the first time, ok([]) the second', () => {
     const first = decide(replay(startedStream), {
       type: 'Interpret Contribution',
-      sessionId: s,
-      contributionId: c('c_1'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_1'),
       tracks: [track],
       at,
     })
@@ -108,12 +108,12 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
 
     const seen = replay([
       ...startedStream,
-      { v: 1, at, type: 'Contribution Interpreted', sessionId: s, contributionId: c('c_1'), tracks: [track] },
+      { v: 1, at, type: 'Contribution Interpreted', sessionId: sessionId, contributionId: toContributionId('c_1'), tracks: [track] },
     ])
     const second = decide(seen, {
       type: 'Interpret Contribution',
-      sessionId: s,
-      contributionId: c('c_1'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_1'),
       tracks: [track],
       at,
     })
@@ -124,12 +124,12 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('a failed interpretation ledgers the contribution — a later Interpret is ok([])', () => {
     const failed = replay([
       ...startedStream,
-      { v: 1, at, type: 'Contribution Interpretation Failed', sessionId: s, contributionId: c('c_1'), reason: 'schema-invalid' },
+      { v: 1, at, type: 'Contribution Interpretation Failed', sessionId: sessionId, contributionId: toContributionId('c_1'), reason: 'schema-invalid' },
     ])
     const result = decide(failed, {
       type: 'Interpret Contribution',
-      sessionId: s,
-      contributionId: c('c_1'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_1'),
       tracks: [track],
       at,
     })
@@ -140,12 +140,12 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('Interpret Contribution on a CLOSED session is ok([]) — a late model call writes nothing', () => {
     const closed = replay([
       ...startedStream,
-      { v: 1, at, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [] },
+      { v: 1, at, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [] },
     ])
     const result = decide(closed, {
       type: 'Interpret Contribution',
-      sessionId: s,
-      contributionId: c('c_1'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_1'),
       tracks: [track],
       at,
     })
@@ -156,12 +156,12 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('Fail Interpretation on a CLOSED session is ok([])', () => {
     const closed = replay([
       ...startedStream,
-      { v: 1, at, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [] },
+      { v: 1, at, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [] },
     ])
     const result = decide(closed, {
       type: 'Fail Interpretation',
-      sessionId: s,
-      contributionId: c('c_1'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_1'),
       reason: 'schema-invalid',
       at,
     })
@@ -172,8 +172,8 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
   it('Fail Interpretation emits Contribution Interpretation Failed with the reason', () => {
     const result = decide(replay(startedStream), {
       type: 'Fail Interpretation',
-      sessionId: s,
-      contributionId: c('c_9'),
+      sessionId: sessionId,
+      contributionId: toContributionId('c_9'),
       reason: 'schema-invalid after one retry',
       at,
     })
@@ -184,7 +184,7 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
           v: 1,
           at,
           type: 'Contribution Interpretation Failed',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: 'c_9',
           reason: 'schema-invalid after one retry',
         },
@@ -196,15 +196,15 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
 describe('Session.decide — Answer Question', () => {
   const asked = replay([
     ...startedStream,
-    { v: 1, at, type: 'Question Asked', sessionId: s, questionId: q('q_1'), kind: 'phase', text: 'phase?' },
+    { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'phase?' },
   ])
 
   it('resolves an open question', () => {
     const result = decide(asked, {
       type: 'Answer Question',
-      sessionId: s,
-      questionId: q('q_1'),
-      byContributionId: c('c_1'),
+      sessionId: sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_1'),
       at,
     })
     expect(isOk(result)).toBe(true)
@@ -214,9 +214,9 @@ describe('Session.decide — Answer Question', () => {
   it('rejects an unknown questionId', () => {
     const result = decide(asked, {
       type: 'Answer Question',
-      sessionId: s,
-      questionId: q('q_unknown'),
-      byContributionId: c('c_1'),
+      sessionId: sessionId,
+      questionId: toQuestionId('q_unknown'),
+      byContributionId: toContributionId('c_1'),
       at,
     })
     expect(isErr(result)).toBe(true)
@@ -226,14 +226,14 @@ describe('Session.decide — Answer Question', () => {
   it('rejects an already-resolved questionId', () => {
     const resolved = replay([
       ...startedStream,
-      { v: 1, at, type: 'Question Asked', sessionId: s, questionId: q('q_1'), kind: 'phase', text: 'phase?' },
-      { v: 1, at, type: 'Question Answered', sessionId: s, questionId: q('q_1'), byContributionId: c('c_1') },
+      { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'phase?' },
+      { v: 1, at, type: 'Question Answered', sessionId: sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') },
     ])
     const result = decide(resolved, {
       type: 'Answer Question',
-      sessionId: s,
-      questionId: q('q_1'),
-      byContributionId: c('c_2'),
+      sessionId: sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_2'),
       at,
     })
     expect(isErr(result)).toBe(true)
@@ -245,12 +245,12 @@ describe('Session.decide — Ask Question idempotency', () => {
   it('a known questionId returns ok([])', () => {
     const asked = replay([
       ...startedStream,
-      { v: 1, at, type: 'Question Asked', sessionId: s, questionId: q('q_1'), kind: 'phase', text: 'phase?' },
+      { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'phase?' },
     ])
     const result = decide(asked, {
       type: 'Ask Question',
-      sessionId: s,
-      questionId: q('q_1'),
+      sessionId: sessionId,
+      questionId: toQuestionId('q_1'),
       kind: 'phase',
       text: 'phase?',
       at,
@@ -262,8 +262,8 @@ describe('Session.decide — Ask Question idempotency', () => {
   it('a scope question carries its scopeStatement', () => {
     const result = decide(replay(startedStream), {
       type: 'Ask Question',
-      sessionId: s,
-      questionId: q('q_s'),
+      sessionId: sessionId,
+      questionId: toQuestionId('q_s'),
       kind: 'scope',
       text: 'What business are you mapping?',
       scopeStatement: 'Library lending across branches.',
@@ -284,11 +284,11 @@ describe('Session.decide — Close Session', () => {
   it('emits Session Closed carrying only the unresolved open questions and no summary struct', () => {
     const stream = replay([
       ...startedStream,
-      { v: 1, at, type: 'Question Asked', sessionId: s, questionId: q('q_open'), kind: 'phase', text: 'p?' },
-      { v: 1, at, type: 'Question Asked', sessionId: s, questionId: q('q_done'), kind: 'free', text: 'f?' },
-      { v: 1, at, type: 'Question Answered', sessionId: s, questionId: q('q_done'), byContributionId: c('c_1') },
+      { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_open'), kind: 'phase', text: 'p?' },
+      { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_done'), kind: 'free', text: 'f?' },
+      { v: 1, at, type: 'Question Answered', sessionId: sessionId, questionId: toQuestionId('q_done'), byContributionId: toContributionId('c_1') },
     ])
-    const result = decide(stream, { type: 'Close Session', sessionId: s, workshopId: w, at })
+    const result = decide(stream, { type: 'Close Session', sessionId: sessionId, workshopId: workshopId, at })
     expect(isOk(result)).toBe(true)
     if (isOk(result)) {
       expect(result.value).toEqual([
@@ -296,8 +296,8 @@ describe('Session.decide — Close Session', () => {
           v: 1,
           at,
           type: 'Session Closed',
-          sessionId: s,
-          workshopId: w,
+          sessionId: sessionId,
+          workshopId: workshopId,
           unresolvedQuestionIds: ['q_open'],
         },
       ])
@@ -307,9 +307,9 @@ describe('Session.decide — Close Session', () => {
   it('a second Close Session returns ok([]) — idempotent', () => {
     const closed = replay([
       ...startedStream,
-      { v: 1, at, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [] },
+      { v: 1, at, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [] },
     ])
-    const result = decide(closed, { type: 'Close Session', sessionId: s, workshopId: w, at })
+    const result = decide(closed, { type: 'Close Session', sessionId: sessionId, workshopId: workshopId, at })
     expect(isOk(result)).toBe(true)
     if (isOk(result)) expect(result.value).toEqual([])
   })

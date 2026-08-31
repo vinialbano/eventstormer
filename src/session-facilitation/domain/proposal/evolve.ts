@@ -2,14 +2,14 @@ import type { ProposalEvent } from '../schema/events.ts'
 import type { ProposalWriteModel } from './model.ts'
 
 /** The `Proposal` write-model fold — pure, returns a new model. */
-export const evolve = (wm: ProposalWriteModel, e: ProposalEvent): ProposalWriteModel => {
-  switch (e.type) {
+export const evolve = (wm: ProposalWriteModel, event: ProposalEvent): ProposalWriteModel => {
+  switch (event.type) {
     case 'Building Block Proposed':
       return { born: true, disposition: 'PROPOSED', held: false }
     case 'Proposal Edited':
       return { ...wm, disposition: 'EDITED' }
     case 'Proposal Accepted':
-      return { ...wm, disposition: 'ACCEPTED', buildingBlockId: e.buildingBlockId }
+      return { ...wm, disposition: 'ACCEPTED', buildingBlockId: event.buildingBlockId }
     case 'Proposal Rejected':
       return { ...wm, disposition: 'REJECTED' }
     case 'Proposal Held':

@@ -6,10 +6,10 @@ import type { WorkshopWriteModel } from './model.ts'
  * the write model untouched: scope status is a read-model concern, not
  * an aggregate field, which is what makes `Set Scope` repeatable.
  */
-export const evolve = (wm: WorkshopWriteModel, e: WorkshopEvent): WorkshopWriteModel => {
-  switch (e.type) {
+export const evolve = (wm: WorkshopWriteModel, event: WorkshopEvent): WorkshopWriteModel => {
+  switch (event.type) {
     case 'Workshop Started':
-      return { started: true, format: e.format, creatorName: e.creatorName }
+      return { started: true, format: event.format, creatorName: event.creatorName }
     case 'Scope Set':
       return wm
   }

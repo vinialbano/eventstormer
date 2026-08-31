@@ -132,9 +132,9 @@ export const SessionEvent = z
     SessionClosed,
   ])
   .refine(
-    (e) =>
-      e.type !== 'Question Asked' ||
-      (e.kind === 'scope') === (e.scopeStatement !== undefined),
+    (event) =>
+      event.type !== 'Question Asked' ||
+      (event.kind === 'scope') === (event.scopeStatement !== undefined),
     {
       error: 'Question Asked: scopeStatement is present iff kind is "scope"',
       path: ['scopeStatement'],

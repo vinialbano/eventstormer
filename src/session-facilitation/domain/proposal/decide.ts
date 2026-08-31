@@ -24,89 +24,89 @@ const badTransition = (
  */
 export const decide = (
   wm: ProposalWriteModel,
-  cmd: ProposalCommand,
+  command: ProposalCommand,
 ): Result<ProposalEvent[], ProposalRejection> => {
-  if (cmd.type === 'Propose Building Block') {
+  if (command.type === 'Propose Building Block') {
     if (wm.born) return ok([])
     return ok([
       {
         v: 1,
         type: 'Building Block Proposed',
-        proposalId: cmd.proposalId,
-        sessionId: cmd.sessionId,
-        contributionId: cmd.contributionId,
-        blockKind: cmd.blockKind,
-        label: cmd.label,
-        bar: cmd.bar,
-        ...(cmd.evidenceSpan === undefined ? {} : { evidenceSpan: cmd.evidenceSpan }),
-        at: cmd.at,
+        proposalId: command.proposalId,
+        sessionId: command.sessionId,
+        contributionId: command.contributionId,
+        blockKind: command.blockKind,
+        label: command.label,
+        bar: command.bar,
+        ...(command.evidenceSpan === undefined ? {} : { evidenceSpan: command.evidenceSpan }),
+        at: command.at,
       },
     ])
   }
 
   if (!wm.born) return err({ kind: 'not-born', classification: 'systemic' })
 
-  switch (cmd.type) {
+  switch (command.type) {
     case 'Edit Proposal': {
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, cmd.type)
-      if (cmd.label.length > LABEL_MAX) {
+      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
+      if (command.label.length > LABEL_MAX) {
         return err({ kind: 'label-too-long', classification: 'systemic' })
       }
-      return ok([{ v: 1, type: 'Proposal Edited', proposalId: cmd.proposalId, label: cmd.label, at: cmd.at }])
+      return ok([{ v: 1, type: 'Proposal Edited', proposalId: command.proposalId, label: command.label, at: command.at }])
     }
 
     case 'Accept Proposal': {
       if (wm.disposition === 'ACCEPTED' || wm.disposition === 'APPLIED') return ok([])
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, cmd.type)
+      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
       return ok([
         {
           v: 1,
           type: 'Proposal Accepted',
-          proposalId: cmd.proposalId,
-          accepter: cmd.accepter,
-          buildingBlockId: cmd.buildingBlockId,
-          at: cmd.at,
+          proposalId: command.proposalId,
+          accepter: command.accepter,
+          buildingBlockId: command.buildingBlockId,
+          at: command.at,
         },
       ])
     }
 
     case 'Reject Proposal': {
       if (wm.disposition === 'REJECTED') return ok([])
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, cmd.type)
-      return ok([{ v: 1, type: 'Proposal Rejected', proposalId: cmd.proposalId, at: cmd.at }])
+      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
+      return ok([{ v: 1, type: 'Proposal Rejected', proposalId: command.proposalId, at: command.at }])
     }
 
     case 'Hold Proposal': {
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, cmd.type)
+      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
       if (wm.held) return ok([])
-      return ok([{ v: 1, type: 'Proposal Held', proposalId: cmd.proposalId, at: cmd.at }])
+      return ok([{ v: 1, type: 'Proposal Held', proposalId: command.proposalId, at: command.at }])
     }
 
     case 'Unhold Proposal': {
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, cmd.type)
+      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
       if (!wm.held) return ok([])
-      return ok([{ v: 1, type: 'Proposal Unheld', proposalId: cmd.proposalId, at: cmd.at }])
+      return ok([{ v: 1, type: 'Proposal Unheld', proposalId: command.proposalId, at: command.at }])
     }
 
     case 'Record Operation Applied': {
       if (wm.disposition === 'APPLIED') return ok([])
-      if (wm.disposition !== 'ACCEPTED') return badTransition(wm, cmd.type)
+      if (wm.disposition !== 'ACCEPTED') return badTransition(wm, command.type)
       return ok([
         {
           v: 1,
           type: 'Operation Applied',
-          proposalId: cmd.proposalId,
-          resultingBuildingBlockId: cmd.resultingBuildingBlockId,
-          at: cmd.at,
+          proposalId: command.proposalId,
+          resultingBuildingBlockId: command.resultingBuildingBlockId,
+          at: command.at,
         },
       ])
     }
 
     case 'Record Operation Rejected': {
       if (wm.disposition === 'APPLY_FAILED') return ok([])
-      if (wm.disposition !== 'ACCEPTED') return badTransition(wm, cmd.type)
+      if (wm.disposition !== 'ACCEPTED') return badTransition(wm, command.type)
       return ok([
-        { v: 1, type: 'Operation Rejected', proposalId: cmd.proposalId, reason: cmd.reason, at: cmd.at },
+        { v: 1, type: 'Operation Rejected', proposalId: command.proposalId, reason: command.reason, at: command.at },
       ])
     }
 
@@ -114,7 +114,7 @@ export const decide = (
       // Terminal or in-flight (`ACCEPTED`) — left to finish; nothing to lapse.
       if (TERMINAL.has(wm.disposition) || wm.disposition === 'ACCEPTED') return ok([])
       return ok([
-        { v: 1, type: 'Proposal Lapsed', proposalId: cmd.proposalId, cause: cmd.cause, at: cmd.at },
+        { v: 1, type: 'Proposal Lapsed', proposalId: command.proposalId, cause: command.cause, at: command.at },
       ])
     }
   }

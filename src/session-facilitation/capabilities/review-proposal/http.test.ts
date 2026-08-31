@@ -8,7 +8,7 @@ import { reviewProposalRoutes } from './http.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const clock = () => at
-const s = 's_1' as SessionId
+const sessionId = 's_1' as SessionId
 const c1 = 'c_1' as ContributionId
 
 let store: EventStore
@@ -24,7 +24,7 @@ const seedProposal = (id: string, label = `Block ${id}`): void => {
         v: 1,
         type: 'Building Block Proposed',
         proposalId: id,
-        sessionId: s,
+        sessionId: sessionId,
         contributionId: c1,
         blockKind: 'domain-event',
         label,
@@ -36,7 +36,7 @@ const seedProposal = (id: string, label = `Block ${id}`): void => {
 }
 
 const proposalTypes = (id: string): string[] =>
-  store.read(proposalStream(id as ProposalId)).map((r) => (r.operation as { type: string }).type)
+  store.read(proposalStream(id as ProposalId)).map((row) => (row.operation as { type: string }).type)
 
 const post = async (path: string, body: unknown = {}): Promise<Response> =>
   routes().request(path, {
@@ -52,12 +52,12 @@ beforeEach(() => {
 describe('POST /proposals/:id/{edit,reject,hold,unhold}', () => {
   it('edit → 200 and a Proposal Edited event with the new label', async () => {
     seedProposal('p_1')
-    const res = await post('/proposals/p_1/edit', { label: 'Loan recorded' })
-    expect(res.status).toBe(200)
+    const response = await post('/proposals/p_1/edit', { label: 'Loan recorded' })
+    expect(response.status).toBe(200)
     const edited = store
       .read(proposalStream('p_1' as ProposalId))
-      .map((r) => ProposalEvent.parse(r.operation))
-      .find((e) => e.type === 'Proposal Edited')
+      .map((row) => ProposalEvent.parse(row.operation))
+      .find((event) => event.type === 'Proposal Edited')
     expect(edited?.type === 'Proposal Edited' && edited.label).toBe('Loan recorded')
   })
 
@@ -77,28 +77,28 @@ describe('POST /proposals/:id/{edit,reject,hold,unhold}', () => {
   it('edit after reject → 409 (bad transition), no further event', async () => {
     seedProposal('p_1')
     await post('/proposals/p_1/reject')
-    const res = await post('/proposals/p_1/edit', { label: 'too late' })
-    expect(res.status).toBe(409)
+    const response = await post('/proposals/p_1/edit', { label: 'too late' })
+    expect(response.status).toBe(409)
     expect(proposalTypes('p_1')).toEqual(['Building Block Proposed', 'Proposal Rejected'])
   })
 
   it('unknown proposal → 404', async () => {
-    const res = await post('/proposals/p_missing/reject')
-    expect(res.status).toBe(404)
+    const response = await post('/proposals/p_missing/reject')
+    expect(response.status).toBe(404)
   })
 })
 
 describe('GET /sessions/:id/proposals', () => {
   it('returns the session proposals with overflow grouping past the 7th', async () => {
-    const ids = Array.from({ length: 8 }, (_, i) => `p_${String(i + 1)}`)
-    store.append(sessionStream(s), -1, [
+    const ids = Array.from({ length: 8 }, (_, index) => `p_${String(index + 1)}`)
+    store.append(sessionStream(sessionId), -1, [
       {
         at,
         opVersion: 1,
         operation: {
           v: 1,
           type: 'Contribution Interpreted',
-          sessionId: s,
+          sessionId: sessionId,
           contributionId: c1,
           tracks: ids.map((id) => ({
             track: 'propose-building-block',
@@ -115,10 +115,10 @@ describe('GET /sessions/:id/proposals', () => {
       seedProposal(id)
     })
 
-    const res = await routes().request(`/sessions/${s}/proposals`)
-    expect(res.status).toBe(200)
-    const { proposals } = (await res.json()) as { proposals: { proposalId: string; overflow: boolean }[] }
-    expect(proposals.map((p) => p.proposalId)).toEqual(ids)
-    expect(proposals.map((p) => p.overflow)).toEqual([false, false, false, false, false, false, false, true])
+    const response = await routes().request(`/sessions/${sessionId}/proposals`)
+    expect(response.status).toBe(200)
+    const { proposals } = (await response.json()) as { proposals: { proposalId: string; overflow: boolean }[] }
+    expect(proposals.map((proposal) => proposal.proposalId)).toEqual(ids)
+    expect(proposals.map((proposal) => proposal.overflow)).toEqual([false, false, false, false, false, false, false, true])
   })
 })

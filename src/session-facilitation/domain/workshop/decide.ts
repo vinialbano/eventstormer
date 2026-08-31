@@ -14,39 +14,39 @@ const STATEMENT_MAX = 10_000
  */
 export const decide = (
   wm: WorkshopWriteModel,
-  cmd: WorkshopCommand,
+  command: WorkshopCommand,
 ): Result<WorkshopEvent[], WorkshopRejection> => {
-  switch (cmd.type) {
+  switch (command.type) {
     case 'Start Workshop': {
       if (wm.started) return err({ kind: 'already-started', classification: 'systemic' })
-      if (cmd.creatorName.trim().length === 0) {
+      if (command.creatorName.trim().length === 0) {
         return err({ kind: 'blank-name', classification: 'systemic' })
       }
-      if (cmd.creatorName.length > NAME_MAX) {
+      if (command.creatorName.length > NAME_MAX) {
         return err({ kind: 'name-too-long', classification: 'systemic' })
       }
       return ok([
         {
           v: 1,
           type: 'Workshop Started',
-          workshopId: cmd.workshopId,
+          workshopId: command.workshopId,
           format: 'big-picture',
-          creatorName: cmd.creatorName,
-          at: cmd.at,
+          creatorName: command.creatorName,
+          at: command.at,
         },
       ])
     }
 
     case 'Set Scope': {
       if (!wm.started) return err({ kind: 'not-started', classification: 'systemic' })
-      if (cmd.statement.trim().length === 0) {
+      if (command.statement.trim().length === 0) {
         return err({ kind: 'blank-statement', classification: 'systemic' })
       }
-      if (cmd.statement.length > STATEMENT_MAX) {
+      if (command.statement.length > STATEMENT_MAX) {
         return err({ kind: 'statement-too-long', classification: 'systemic' })
       }
       return ok([
-        { v: 1, type: 'Scope Set', workshopId: cmd.workshopId, statement: cmd.statement, at: cmd.at },
+        { v: 1, type: 'Scope Set', workshopId: command.workshopId, statement: command.statement, at: command.at },
       ])
     }
   }

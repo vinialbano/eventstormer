@@ -74,7 +74,7 @@ export const buildInstructions = (): string =>
   ].join('\n')
 
 const bulletList = (items: string[]): string =>
-  items.length === 0 ? '(none)' : items.map((i) => `- ${i}`).join('\n')
+  items.length === 0 ? '(none)' : items.map((index) => `- ${index}`).join('\n')
 
 export const buildTurnInput = (
   context: FacilitationContext,
@@ -85,15 +85,15 @@ export const buildTurnInput = (
     context.scopeStatement ?? '(not set yet)',
     '',
     '## Building blocks on the board so far',
-    bulletList(context.buildingBlocks.map((b) => `${b.kind}: ${b.label}`)),
+    bulletList(context.buildingBlocks.map((block) => `${block.kind}: ${block.label}`)),
     '',
     '## Prior sessions',
     context.priorSummaries.length === 0
       ? '(none)'
       : context.priorSummaries
           .map(
-            (s, i) =>
-              `Session ${String(i + 1)}: ${String(s.blocksAdded)} blocks added, ${String(s.contributionCount)} contributions, ${String(s.questionsUnresolved)} questions left open.`,
+            (sentence, index) =>
+              `Session ${String(index + 1)}: ${String(sentence.blocksAdded)} blocks added, ${String(sentence.contributionCount)} contributions, ${String(sentence.questionsUnresolved)} questions left open.`,
           )
           .join('\n'),
     '',

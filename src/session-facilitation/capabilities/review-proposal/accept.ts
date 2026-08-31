@@ -21,10 +21,10 @@ const OP_KIND: Record<
 }
 
 const readProposal = (deps: ReviewProposalDeps, id: ProposalId): ProposalEvent[] =>
-  deps.store.read(proposalStream(id)).map((r) => ProposalEvent.parse(r.operation))
+  deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
 
 const readSession = (deps: ReviewProposalDeps, id: SessionId): SessionEvent[] =>
-  deps.store.read(sessionStream(id)).map((r) => SessionEvent.parse(r.operation))
+  deps.store.read(sessionStream(id)).map((row) => SessionEvent.parse(row.operation))
 
 const appendProposal = (deps: ReviewProposalDeps, id: ProposalId, events: ProposalEvent[]): void => {
   if (events.length === 0) return
@@ -48,31 +48,31 @@ const appendProposal = (deps: ReviewProposalDeps, id: ProposalId, events: Propos
  * after apply is the idempotency signal → recorded as applied.
  */
 export const acceptRoutes = (deps: ReviewProposalDeps) =>
-  new Hono().post('/proposals/:id/accept', (c) => {
-    const id = c.req.param('id') as ProposalId
+  new Hono().post('/proposals/:id/accept', (context) => {
+    const id = context.req.param('id') as ProposalId
     const events = readProposal(deps, id)
-    if (events.length === 0) return c.json({ error: 'unknown-proposal' as const }, 404)
+    if (events.length === 0) return context.json({ error: 'unknown-proposal' as const }, 404)
 
-    const birth = events.find((e) => e.type === 'Building Block Proposed')
+    const birth = events.find((event) => event.type === 'Building Block Proposed')
     if (birth?.type !== 'Building Block Proposed') {
-      return c.json({ error: 'unknown-proposal' as const }, 404)
+      return context.json({ error: 'unknown-proposal' as const }, 404)
     }
-    const lastEdit = [...events].reverse().find((e) => e.type === 'Proposal Edited')
+    const lastEdit = [...events].reverse().find((event) => event.type === 'Proposal Edited')
     const label = lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label
 
     const sessionEvents = readSession(deps, birth.sessionId)
-    const workshopId = sessionEvents.find((e) => e.type === 'Session Started')?.workshopId
-    if (workshopId === undefined) return c.json({ error: 'unknown-session' as const }, 404)
+    const workshopId = sessionEvents.find((event) => event.type === 'Session Started')?.workshopId
+    if (workshopId === undefined) return context.json({ error: 'unknown-session' as const }, 404)
     const creatorName =
       replayWorkshop(
-        deps.store.read(workshopStream(workshopId)).map((r) => WorkshopEvent.parse(r.operation)),
+        deps.store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation)),
       ).creatorName ?? 'unknown'
 
     const cardOf = () => proposalCard(readProposal(deps, id))
 
     const wm = replay(events)
     if (wm.disposition === 'APPLIED') {
-      return c.json({ boardPosition: null, proposal: cardOf() }, 200)
+      return context.json({ boardPosition: null, proposal: cardOf() }, 200)
     }
 
     // 1. accept — mint once, reuse the stored id on a re-accept
@@ -86,10 +86,10 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
         buildingBlockId,
         at: deps.clock(),
       })
-      if (!accepted.ok) return c.json({ error: accepted.error.kind }, 409)
+      if (!accepted.ok) return context.json({ error: accepted.error.kind }, 409)
       appendProposal(deps, id, accepted.value)
     }
-    if (buildingBlockId === undefined) return c.json({ error: 'accept-failed' as const }, 500)
+    if (buildingBlockId === undefined) return context.json({ error: 'accept-failed' as const }, 500)
 
     // 2. build + parse the operation against the Slice 0 SSOT
     const operation = Operation.parse({
@@ -142,13 +142,13 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
       )
     }
 
-    return c.json({ boardPosition, proposal: cardOf() }, 200)
+    return context.json({ boardPosition, proposal: cardOf() }, 200)
   })
 
 const decideOrEmpty = (
   wm: Parameters<typeof decide>[0],
-  cmd: Parameters<typeof decide>[1],
+  command: Parameters<typeof decide>[1],
 ): ProposalEvent[] => {
-  const decided = decide(wm, cmd)
+  const decided = decide(wm, command)
   return decided.ok ? decided.value : []
 }

@@ -10,7 +10,7 @@ import { startSessionRoutes } from './http.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const clock = () => at
-const w = 'w_1' as WorkshopId
+const workshopId = 'w_1' as WorkshopId
 
 let db: SessionIndexDb
 let store: EventStore
@@ -23,46 +23,46 @@ beforeEach(() => {
 })
 
 const startSession = async (): Promise<Response> =>
-  startSessionRoutes({ store, db, clock }).request(`/workshops/${w}/sessions`, { method: 'POST' })
+  startSessionRoutes({ store, db, clock }).request(`/workshops/${workshopId}/sessions`, { method: 'POST' })
 
 describe('POST /workshops/:id/sessions', () => {
   it('starts a session — 202 with the session id, a Session Started event, and an open index row', async () => {
-    const res = await startSession()
-    expect(res.status).toBe(202)
-    const { sessionId } = (await res.json()) as { sessionId: string }
+    const response = await startSession()
+    expect(response.status).toBe(202)
+    const { sessionId } = (await response.json()) as { sessionId: string }
 
-    expect(sessionIdsFor(db, w)).toEqual({ open: sessionId, closed: [] })
-    expect(store.read(sessionStream(sessionId as SessionId)).map((r) => (r.operation as { type: string }).type)).toEqual([
+    expect(sessionIdsFor(db, workshopId)).toEqual({ open: sessionId, closed: [] })
+    expect(store.read(sessionStream(sessionId as SessionId)).map((row) => (row.operation as { type: string }).type)).toEqual([
       'Session Started',
     ])
   })
 
   it('rejects a second start while a session is genuinely open with 409', async () => {
     await startSession()
-    const res = await startSession()
-    expect(res.status).toBe(409)
-    await expect(res.json()).resolves.toEqual({ error: 'session-already-open' })
+    const response = await startSession()
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({ error: 'session-already-open' })
   })
 
   it('starts a new session once the open one is closed', async () => {
     const first = (await (await startSession()).json()) as { sessionId: string }
     close(db, first.sessionId as SessionId, at)
 
-    const res = await startSession()
-    expect(res.status).toBe(202)
-    const second = (await res.json()) as { sessionId: string }
+    const response = await startSession()
+    expect(response.status).toBe(202)
+    const second = (await response.json()) as { sessionId: string }
     expect(second.sessionId).not.toBe(first.sessionId)
-    expect(sessionIdsFor(db, w)).toEqual({ open: second.sessionId, closed: [first.sessionId] })
+    expect(sessionIdsFor(db, workshopId)).toEqual({ open: second.sessionId, closed: [first.sessionId] })
   })
 
   it('recovers a stale open row (reserved but never Session Started) and starts successfully', async () => {
-    reserve(db, w, 'stale_1' as SessionId, at)
-    expect(sessionIdsFor(db, w)).toEqual({ open: 'stale_1', closed: [] })
+    reserve(db, workshopId, 'stale_1' as SessionId, at)
+    expect(sessionIdsFor(db, workshopId)).toEqual({ open: 'stale_1', closed: [] })
 
-    const res = await startSession()
-    expect(res.status).toBe(202)
-    const { sessionId } = (await res.json()) as { sessionId: string }
+    const response = await startSession()
+    expect(response.status).toBe(202)
+    const { sessionId } = (await response.json()) as { sessionId: string }
     expect(sessionId).not.toBe('stale_1')
-    expect(sessionIdsFor(db, w)).toEqual({ open: sessionId, closed: [] })
+    expect(sessionIdsFor(db, workshopId)).toEqual({ open: sessionId, closed: [] })
   })
 })

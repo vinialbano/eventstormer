@@ -43,19 +43,19 @@ const jsonSchema = z.toJSONSchema(FacilitationTurnSchema, { io: 'input' }) as Js
 describe('FacilitationTurnSchema — Anthropic structured-output limits', () => {
   it('has 24 or fewer optional parameters across the whole schema', () => {
     let optionalCount = 0
-    walk(jsonSchema, (n) => {
-      if (n.properties === undefined) return
-      const required = new Set(n.required ?? [])
-      for (const key of Object.keys(n.properties)) if (!required.has(key)) optionalCount += 1
+    walk(jsonSchema, (node) => {
+      if (node.properties === undefined) return
+      const required = new Set(node.required ?? [])
+      for (const key of Object.keys(node.properties)) if (!required.has(key)) optionalCount += 1
     })
     expect(optionalCount).toBeLessThanOrEqual(24)
   })
 
   it('contains no empty {} subschema (every field is a concrete type — no z.unknown())', () => {
     const empties: string[] = []
-    walk(jsonSchema, (n) => {
-      const keys = Object.keys(n).filter((k) => k !== 'description' && k !== 'title')
-      if (keys.length === 0) empties.push(JSON.stringify(n))
+    walk(jsonSchema, (node) => {
+      const keys = Object.keys(node).filter((key) => key !== 'description' && key !== 'title')
+      if (keys.length === 0) empties.push(JSON.stringify(node))
     })
     expect(empties).toEqual([])
   })

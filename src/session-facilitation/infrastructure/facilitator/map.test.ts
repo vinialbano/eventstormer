@@ -5,11 +5,11 @@ import { mapTurn, type TrackIdMint } from './map.ts'
 
 /** A deterministic mint — `p_1`, `p_2`, … / `q_1`, `q_2`, … in call order. */
 const countingMint = (): TrackIdMint => {
-  let p = 0
-  let q = 0
+  let proposalCounter = 0
+  let questionCounter = 0
   return {
-    proposalId: () => `p_${String((p += 1))}` as ProposalId,
-    questionId: () => `q_${String((q += 1))}` as QuestionId,
+    proposalId: () => `p_${String((proposalCounter += 1))}` as ProposalId,
+    questionId: () => `q_${String((questionCounter += 1))}` as QuestionId,
   }
 }
 

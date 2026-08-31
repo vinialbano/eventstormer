@@ -24,15 +24,15 @@ export interface SessionCloseDeps {
 }
 
 export const finishClose = (deps: SessionCloseDeps, sessionId: SessionId): void => {
-  const events = deps.store.read(sessionStream(sessionId)).map((r) => SessionEvent.parse(r.operation))
-  const closed = events.find((e) => e.type === 'Session Closed')
+  const events = deps.store.read(sessionStream(sessionId)).map((row) => SessionEvent.parse(row.operation))
+  const closed = events.find((event) => event.type === 'Session Closed')
   if (closed === undefined) return
 
   closeIndexRow(deps.db, sessionId, closed.at)
 
   for (const proposalId of sessionProposalIds(events)) {
     const rows = deps.store.read(proposalStream(proposalId))
-    const wm = replayProposal(rows.map((r) => ProposalEvent.parse(r.operation)))
+    const wm = replayProposal(rows.map((row) => ProposalEvent.parse(row.operation)))
     if (!wm.born) continue
 
     const cause = wm.disposition === 'APPLY_FAILED' ? 'apply-failed' : 'undisposed'

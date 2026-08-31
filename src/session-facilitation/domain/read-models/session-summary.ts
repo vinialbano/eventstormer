@@ -24,9 +24,9 @@ const RECENT_TURNS = 8
 /** Every `proposalId` this session proposed — a fold over `Contribution Interpreted` tracks. */
 export const sessionProposalIds = (events: SessionEvent[]): ProposalId[] => {
   const ids: ProposalId[] = []
-  for (const e of events) {
-    if (e.type !== 'Contribution Interpreted') continue
-    for (const track of e.tracks) {
+  for (const event of events) {
+    if (event.type !== 'Contribution Interpreted') continue
+    for (const track of event.tracks) {
       if (track.track === 'propose-building-block') ids.push(track.proposalId)
     }
   }
@@ -40,20 +40,20 @@ export const sessionSummary = (events: SessionEvent[], blocksAdded: number): Ses
   const openQuestions = new Set<string>()
   const turns: string[] = []
 
-  for (const e of events) {
-    switch (e.type) {
+  for (const event of events) {
+    switch (event.type) {
       case 'Contribution Made':
         contributionCount += 1
-        turns.push(`${e.speaker}: ${e.body}`)
+        turns.push(`${event.speaker}: ${event.body}`)
         break
       case 'Question Asked':
         questionsAsked += 1
-        openQuestions.add(e.questionId)
-        turns.push(`facilitator: ${e.text}`)
+        openQuestions.add(event.questionId)
+        turns.push(`facilitator: ${event.text}`)
         break
       case 'Question Answered':
         questionsAnswered += 1
-        openQuestions.delete(e.questionId)
+        openQuestions.delete(event.questionId)
         break
       case 'Session Started':
       case 'Contribution Interpreted':
@@ -80,4 +80,4 @@ export const sessionSummary = (events: SessionEvent[], blocksAdded: number): Ses
  */
 export const priorSessionHistory = (
   closed: { events: SessionEvent[]; blocksAdded: number }[],
-): SessionSummary[] => closed.map((c) => sessionSummary(c.events, c.blocksAdded))
+): SessionSummary[] => closed.map((closedSession) => sessionSummary(closedSession.events, closedSession.blocksAdded))

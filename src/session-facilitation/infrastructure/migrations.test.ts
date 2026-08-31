@@ -7,7 +7,7 @@ import {
 
 const tableNames = (db: DatabaseSync): string[] =>
   (db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`).all() as { name: string }[]).map(
-    (r) => r.name,
+    (row) => row.name,
   )
 
 describe('SESSION_FACILITATION_MIGRATIONS', () => {
@@ -31,7 +31,7 @@ describe('applySessionFacilitationMigrations', () => {
         unique: number
         partial: number
       }[]
-    ).find((i) => i.name === 'session_index_one_open')
+    ).find((index) => index.name === 'session_index_one_open')
     expect(indexes).toMatchObject({ unique: 1, partial: 1 })
   })
 
@@ -59,6 +59,6 @@ describe('applySessionFacilitationMigrations', () => {
     applySessionFacilitationMigrations(db)
     expect(() => { applySessionFacilitationMigrations(db) }).not.toThrow()
     const applied = db.prepare(`SELECT id FROM _sf_migrations ORDER BY id`).all() as { id: number }[]
-    expect(applied.map((r) => r.id)).toEqual(SESSION_FACILITATION_MIGRATIONS.map((m) => m.id))
+    expect(applied.map((row) => row.id)).toEqual(SESSION_FACILITATION_MIGRATIONS.map((migration) => migration.id))
   })
 })

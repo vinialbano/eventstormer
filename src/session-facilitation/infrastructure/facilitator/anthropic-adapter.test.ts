@@ -17,32 +17,32 @@ const VALID_OPENING = { questionText: 'What business are you mapping?', scopeSta
 
 const USAGE = { inputTokens: 1_000, outputTokens: 200, cacheReadTokens: 500 }
 
-let dataDir: string
+let dataDirectory: string
 const clock = () => '2026-08-30T12:00:00.000Z'
 
 beforeEach(() => {
-  dataDir = mkdtempSync(join(tmpdir(), 'eventstormer-facilitator-'))
+  dataDirectory = mkdtempSync(join(tmpdir(), 'eventstormer-facilitator-'))
 })
 afterEach(() => {
-  rmSync(dataDir, { recursive: true, force: true })
+  rmSync(dataDirectory, { recursive: true, force: true })
 })
 
 const readLog = (): ModelCallEntry[] =>
-  readFileSync(join(dataDir, 'model-calls.jsonl'), 'utf8')
+  readFileSync(join(dataDirectory, 'model-calls.jsonl'), 'utf8')
     .trim()
     .split('\n')
-    .map((l) => JSON.parse(l) as ModelCallEntry)
+    .map((line) => JSON.parse(line) as ModelCallEntry)
 
 /** A scripted `generate` — each call consumes the next scripted step. */
 type Step = FacilitatorGenerateResult | { throw: unknown }
 
 const scripted = (steps: Step[]): { generate: FacilitatorGenerate; models: string[] } => {
   const models: string[] = []
-  let i = 0
+  let index = 0
   const generate: FacilitatorGenerate = (args) => {
     models.push(args.model)
-    const step: Step = steps[Math.min(i, steps.length - 1)] ?? { throw: new Error('no step') }
-    i += 1
+    const step: Step = steps[Math.min(index, steps.length - 1)] ?? { throw: new Error('no step') }
+    index += 1
     if ('throw' in step) return Promise.reject(step.throw instanceof Error ? step.throw : new Error('x'))
     return Promise.resolve(step)
   }
@@ -59,7 +59,7 @@ const result = (output: unknown, warnings: unknown = []): FacilitatorGenerateRes
 const depsWith = (generate: FacilitatorGenerate, extra: Partial<AnthropicFacilitatorDeps> = {}) => {
   const slept: number[] = []
   const deps: AnthropicFacilitatorDeps = {
-    dataDir,
+    dataDirectory,
     clock,
     generate,
     sleep: (ms) => {
@@ -76,10 +76,10 @@ describe('anthropic adapter — happy path', () => {
     const { generate, models } = scripted([result(VALID_TURN)])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'a member borrowed a book' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'a member borrowed a book' })
 
-    expect(isOk(r)).toBe(true)
-    if (isOk(r)) expect(r.value).toEqual(VALID_TURN)
+    expect(isOk(outcome)).toBe(true)
+    if (isOk(outcome)) expect(outcome.value).toEqual(VALID_TURN)
     expect(models).toEqual(['claude-sonnet-5'])
 
     const log = readLog()
@@ -110,9 +110,9 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     ])
     const { facilitator, slept } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isOk(r)).toBe(true)
+    expect(isOk(outcome)).toBe(true)
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
     expect(slept).toEqual([2_000, 4_000])
     expect(readLog()).toHaveLength(3)
@@ -124,10 +124,10 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     ])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isErr(r)).toBe(true)
-    if (isErr(r)) expect(r.error).toEqual({ kind: 'provider-down' })
+    expect(isErr(outcome)).toBe(true)
+    if (isErr(outcome)) expect(outcome.error).toEqual({ kind: 'provider-down' })
     // ladder, not a one-shot schema retry: sonnet → sonnet → haiku
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
   })
@@ -138,10 +138,10 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     ])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isErr(r)).toBe(true)
-    if (isErr(r)) expect(r.error.kind).toBe('schema-invalid')
+    expect(isErr(outcome)).toBe(true)
+    if (isErr(outcome)) expect(outcome.error.kind).toBe('schema-invalid')
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
   })
 
@@ -152,9 +152,9 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     ])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isOk(r)).toBe(true)
+    expect(isOk(outcome)).toBe(true)
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
   })
 
@@ -169,9 +169,9 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     ])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isOk(r)).toBe(true)
+    expect(isOk(outcome)).toBe(true)
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
   })
 
@@ -179,10 +179,10 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     const { generate, models } = scripted([{ throw: Object.assign(new Error('down'), { statusCode: 500 }) }])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isErr(r)).toBe(true)
-    if (isErr(r)) expect(r.error).toEqual({ kind: 'provider-down' })
+    expect(isErr(outcome)).toBe(true)
+    if (isErr(outcome)) expect(outcome.error).toEqual({ kind: 'provider-down' })
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
   })
 })
@@ -216,10 +216,10 @@ describe('anthropic adapter — schema-invalid: one retry total, then terminal',
     const { generate, models } = scripted([result({ not: 'a turn' })])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isErr(r)).toBe(true)
-    if (isErr(r)) expect(r.error.kind).toBe('schema-invalid')
+    expect(isErr(outcome)).toBe(true)
+    if (isErr(outcome)) expect(outcome.error.kind).toBe('schema-invalid')
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
     expect(readLog()).toHaveLength(2)
     expect(readLog()[0]?.parseResult).not.toBe('ok')
@@ -229,9 +229,9 @@ describe('anthropic adapter — schema-invalid: one retry total, then terminal',
     const { generate, models } = scripted([result({ bad: true }), result(VALID_TURN)])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+    const outcome = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
 
-    expect(isOk(r)).toBe(true)
+    expect(isOk(outcome)).toBe(true)
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
   })
 })
@@ -241,9 +241,9 @@ describe('anthropic adapter — askOpening', () => {
     const { generate } = scripted([result(VALID_OPENING)])
     const { facilitator } = depsWith(generate)
 
-    const r = await facilitator.askOpening({ instructions: 'sys', prompt: 'new session' })
+    const outcome = await facilitator.askOpening({ instructions: 'sys', prompt: 'new session' })
 
-    expect(isOk(r)).toBe(true)
-    if (isOk(r)) expect(r.value).toEqual(VALID_OPENING)
+    expect(isOk(outcome)).toBe(true)
+    if (isOk(outcome)) expect(outcome.value).toEqual(VALID_OPENING)
   })
 })
