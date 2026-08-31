@@ -69,6 +69,10 @@ type FeedItem =
   | { type: 'turn'; key: string; kind: 'contribution' | 'question' | 'notice'; speaker: string; text: string }
   | { type: 'cluster'; key: string; cards: ProposalCardData[] }
 
+const contribStatus = computed(
+  () => new Map((session.view?.contributions ?? []).map((c) => [c.contributionId, c.status])),
+)
+
 const feed = computed<FeedItem[]>(() => {
   const items: FeedItem[] = []
   const turns = session.view?.transcript ?? []
@@ -82,11 +86,34 @@ const feed = computed<FeedItem[]>(() => {
       speaker: turn.speaker,
       text: turn.text,
     })
-    if (turn.kind === 'contribution' && turn.contributionId !== undefined) {
-      const cards = byContribution.value.get(turn.contributionId)
-      if (cards !== undefined && cards.length > 0) {
-        items.push({ type: 'cluster', key: `c${turn.contributionId}`, cards })
-      }
+    if (turn.kind !== 'contribution' || turn.contributionId === undefined) return
+
+    const cards = byContribution.value.get(turn.contributionId)
+    if (cards !== undefined && cards.length > 0) {
+      items.push({ type: 'cluster', key: `c${turn.contributionId}`, cards })
+      return
+    }
+    // No proposals for this contribution. Give the facilitator a visible reply
+    // so a turn never looks dropped — unless it already answered with a
+    // question or a notice (the next transcript turn).
+    const status = contribStatus.value.get(turn.contributionId)
+    const answered = turns[i + 1]?.kind === 'question' || turns[i + 1]?.kind === 'notice'
+    if (status === 'failed') {
+      items.push({
+        type: 'turn',
+        key: `k${turn.contributionId}`,
+        kind: 'notice',
+        speaker: 'facilitator',
+        text: "I couldn't make sense of that one — try rephrasing it.",
+      })
+    } else if (status === 'derived' && !answered) {
+      items.push({
+        type: 'turn',
+        key: `k${turn.contributionId}`,
+        kind: 'notice',
+        speaker: 'facilitator',
+        text: 'Noted — nothing to capture from that one.',
+      })
     }
   })
   return items

@@ -181,6 +181,52 @@ describe('FacilitatorDock', () => {
     expect(turns.some((t) => t.includes('A customer places an order.'))).toBe(true)
   })
 
+  it('shows a "noted" reply when a contribution produced no proposals', () => {
+    seed(
+      view({
+        transcript: [
+          { kind: 'contribution', speaker: 'Maria', text: 'Hmm, let me think.', at: 't1', contributionId: 'c1' },
+        ],
+        contributions: [{ contributionId: 'c1', status: 'derived' }],
+      }),
+      [],
+    )
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).toContain('Noted')
+  })
+
+  it('shows a rephrase hint when a contribution failed interpretation', () => {
+    seed(
+      view({
+        transcript: [
+          { kind: 'contribution', speaker: 'Maria', text: 'zzz', at: 't1', contributionId: 'c1' },
+        ],
+        contributions: [{ contributionId: 'c1', status: 'failed' }],
+      }),
+      [],
+    )
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).toContain('try rephrasing')
+  })
+
+  it('does not add a "noted" reply when the facilitator answered with a question', () => {
+    seed(
+      view({
+        transcript: [
+          { kind: 'contribution', speaker: 'Maria', text: 'A phase of work.', at: 't1', contributionId: 'c1' },
+          { kind: 'question', speaker: 'facilitator', text: 'Is that a phase rather than an event?', at: 't2', questionKind: 'phase' },
+        ],
+        contributions: [{ contributionId: 'c1', status: 'derived' }],
+      }),
+      [],
+    )
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).not.toContain('Noted')
+  })
+
   it('does not show the first prompt while the scope is still unset', () => {
     seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })

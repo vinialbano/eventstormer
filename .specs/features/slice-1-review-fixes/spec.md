@@ -84,6 +84,11 @@ a follow-up report — the feed should read like a chat where messages persist, 
 17. The opening prompt SHALL persist at the head of the feed as contributions are narrated below
     it (chat-log behaviour), and SHALL NOT render while the scope is still unset (the F05 scope
     card stands in its place then).
+18. WHEN a contribution finishes interpretation (`status = derived`) with no proposal cards AND
+    the facilitator did not answer it with a question or a notice THEN the feed SHALL show a
+    short facilitator "noted" reply — a turn must never look dropped.
+19. WHEN a contribution's interpretation `status = failed` THEN the feed SHALL show a facilitator
+    "try rephrasing" hint (never an error state — `impeccable` brief §5).
 
 ### AC-NOTE — precision fixes
 12. `NextMove.questionText.describe()` SHALL state the 400-character ceiling (Anthropic strips
