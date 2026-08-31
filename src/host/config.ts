@@ -84,7 +84,9 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): HostConfig => 
   mkdirSync(dirname(dbPath), { recursive: true })
 
   const store = createSqliteEventStore(dbPath)
-  const db = new DatabaseSync(dbPath)
+  // Same 5s busy-wait window as the EventStore connection — the projection
+  // handlers (`reserve` / `close` / `markDerivedTrack`) share the file.
+  const db = new DatabaseSync(dbPath, { timeout: 5_000 })
   applySessionFacilitationMigrations(db)
 
   const facilitator = scripted
