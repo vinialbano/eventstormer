@@ -467,8 +467,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Four files; grep fixtures for `library` / `book` is empty
-- [ ] Gate: `pnpm check` (JSON only — knip ignores `eval/` until T19)
+- [x] Four files; grep fixtures for `library` / `book` is empty
+- [x] Gate: `pnpm check` (JSON only — knip ignores `eval/` until T19)
 
 **Tests**: none
 **Gate**: build
