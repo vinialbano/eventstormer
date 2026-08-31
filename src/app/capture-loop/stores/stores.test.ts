@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
+import type { AccountSnapshot, BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
+import { useAccountStore } from './account.ts'
 import { useBoardStore } from './board.ts'
 import { useProposalsStore } from './proposals.ts'
 import { useSessionStore } from './session.ts'
@@ -104,5 +105,39 @@ describe('board store', () => {
 
     expect(store.snapshot).toEqual({ position: -1, blocks: [] })
     expect(store.error).toBeNull()
+  })
+})
+
+describe('account store', () => {
+  const emptyAccount: AccountSnapshot = {
+    position: -1,
+    markdown: `# Readable account
+Format: Big Picture
+Narrators: 0
+Scope: (not set)
+`,
+  }
+
+  it('cold-loads from exactly one GET and stores 200 empty markdown as success', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(emptyAccount))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const store = useAccountStore()
+    await store.load('w1')
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/workshops/w1/readable-account')
+    expect(store.document).toEqual(emptyAccount)
+    expect(store.error).toBeNull()
+  })
+
+  it('records an error on 404 and does not invent an empty document', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: 'workshop-not-found' }, 404)))
+
+    const store = useAccountStore()
+    await store.load('w1')
+
+    expect(store.document).toBeNull()
+    expect(store.error).not.toBeNull()
   })
 })

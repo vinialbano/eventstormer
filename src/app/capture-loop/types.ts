@@ -1,9 +1,10 @@
 /**
  * Read-model shapes the capture screen consumes over HTTP. The SPA talks to
  * capabilities through `fetch` only (ADR-007) and never imports server code, so
- * the shapes `GET /workshops/:id/session`, `GET /sessions/:id/proposals`, and
- * `GET /workshops/:id/board` return are mirrored here by hand. A drift shows up
- * as a failing store test, not a silent type hole.
+ * the shapes `GET /workshops/:id/session`, `GET /sessions/:id/proposals`,
+ * `GET /workshops/:id/board`, and `GET /workshops/:id/readable-account` return
+ * are mirrored here by hand. A drift shows up as a failing store test, not a
+ * silent type hole.
  */
 
 export type InterpretationStatus =
@@ -80,4 +81,9 @@ interface BoardBlock {
 export interface BoardSnapshot {
   position: number
   blocks: BoardBlock[]
+}
+
+export interface AccountSnapshot {
+  position: number
+  markdown: string
 }

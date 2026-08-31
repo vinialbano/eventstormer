@@ -365,10 +365,10 @@ a DOMPurify package via `pnpm view` (do not invent versions); they live in `src/
 **Requirement**: S2-14, S2-23
 **Tools**: MCP: `context7` (`markdown-it`, DOMPurify / `isomorphic-dompurify`) · Skill: `testing-boss`
 **Done when**:
-- [ ] jsdom: store hydrates from exactly one mocked GET; 200 empty markdown is stored, not an error
-- [ ] planted store→store import fails `pnpm depcruise`; reverted
-- [ ] `knip` clean (the parser is imported from app code in this task or T14 — if knip flags until T14, import a tiny `renderAccountHtml` helper here)
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] jsdom: store hydrates from exactly one mocked GET; 200 empty markdown is stored, not an error
+- [x] planted store→store import fails `pnpm depcruise`; reverted
+- [x] `knip` clean (the parser is imported from app code in this task or T14 — if knip flags until T14, import a tiny `renderAccountHtml` helper here)
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: unit (jsdom) · **Gate**: build
 **Commit**: `feat(app): add the readable-account store`
 
