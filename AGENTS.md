@@ -100,6 +100,9 @@ them all. There is no filesystem routing anywhere in this project.
   report.
 - Branch before committing; never commit to `main`. Conventional commit prefixes (`feat:`,
   `fix:`, `docs:`, `chore:`).
+- **Version impact is a changeset, not a `package.json` edit.** A `src/**` delivery adds a
+  `.changeset/*.md` (`minor` for a completed slice, `patch` for a fix). Leave `package.json`
+  `version` alone — the version PR is the only writer ([ADR-009](docs/adr/009-versioning-and-release.md)).
 - **Visual and UX work goes through the `impeccable` skill** (`.claude/skills/impeccable/`). It
   owns the visual world, the per-surface briefs in `.impeccable/surfaces/`, and `DESIGN.md`. For a
   new or reworked `src/app/` surface, run it (`/impeccable shape <surface>`, then build) rather

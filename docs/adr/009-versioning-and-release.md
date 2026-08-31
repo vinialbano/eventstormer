@@ -56,17 +56,18 @@ is one deliberate minor" intent, which matters more with agents authoring the ch
 | Gate | Mechanism |
 |---|---|
 | Every delivery declares its version impact | CI check on PRs: a diff touching `src/**` with no `.changeset/*.md` fails |
-| Release is one action | `changesets/action` maintains a standing "Version Packages" PR; merging it performs the release — version bump, `CHANGELOG.md`, tag, GitHub Release |
-| Commit convention | `commitlint` (unchanged from the existing harness) |
+| Release is one action | `changesets/action` maintains a standing version PR; merging it performs the release — version bump, `CHANGELOG.md`, tag, GitHub Release |
+| Commit convention | `commitlint` locally; the version PR's commit and title are `chore: version packages` so they pass commitlint and the PR-title check. The release job sets `LEFTHOOK=0` so installed hooks do not run on the bot's `git commit` / `git push`. |
 | Local reminder | optional lefthook pre-push warning if `src/` changed and no changeset is staged |
 
 ### AI-agent automation
 
-`AGENTS.md` gains a rule: on completing a slice or a user-facing change, run `pnpm changeset` and
-declare the bump (`minor` for a completed slice capability, `patch` for a fix); an agent may write
-the `.changeset/*.md` directly. The CI check is the backstop — a forgotten changeset is a red PR
-with a clear message, the same pattern as the lint hooks. Changesets bumps by the highest pending
-type once per `version` run, so releasing once per slice yields exactly one minor bump per slice.
+On completing a slice or a user-facing change, add a `.changeset/*.md` (`minor` for a completed
+slice capability, `patch` for a fix). Do not edit `package.json` `version` — `changeset version`
+on the version PR is the only writer. The CI check is the backstop — a forgotten changeset is a
+red PR with a clear message, the same pattern as the lint hooks. Changesets bumps by the highest
+pending type once per `version` run, so releasing once per slice yields exactly one minor bump per
+slice.
 
 ## Consequences
 
