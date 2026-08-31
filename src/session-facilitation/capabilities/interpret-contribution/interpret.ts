@@ -48,9 +48,9 @@ const assembleFacilitationContext = (
   workshopId: WorkshopId,
   events: SessionEvent[],
 ) => {
-  const scopeStatement = [...readWorkshop(deps, workshopId)]
-    .reverse()
-    .find((event) => event.type === 'Scope Set')?.statement
+  const scopeStatement = readWorkshop(deps, workshopId).findLast(
+    (event) => event.type === 'Scope Set',
+  )?.statement
 
   const buildingBlocks = readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId).map(
     (block) => ({ kind: block.kind, label: block.label }),
@@ -89,8 +89,8 @@ const assembleFacilitationContext = (
 const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void => {
   const derived = readDerivedTrackKeys(deps.db)
 
-  event.tracks.forEach((track, index) => {
-    if (derived.has(`${event.contributionId}::${String(index)}`)) return
+  for (const [index, track] of event.tracks.entries()) {
+    if (derived.has(`${event.contributionId}::${String(index)}`)) continue
 
     switch (track.track) {
       case 'propose-building-block': {
@@ -163,7 +163,7 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
     }
 
     markDerivedTrack(deps.db, event.contributionId, index)
-  })
+  }
 
   // The free follow-up question — once per turn, idempotent via the questions map.
   if (event.askQuestionId !== undefined && event.askQuestionText !== undefined) {

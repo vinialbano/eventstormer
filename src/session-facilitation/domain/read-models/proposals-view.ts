@@ -43,8 +43,8 @@ export const proposalCard = (events: ProposalEvent[], overflow = false): Proposa
   if (birth === undefined) return undefined
 
   const writeModel = replay(events)
-  const lastEdit = [...events].reverse().find((event) => event.type === 'Proposal Edited')
-  const rejected = [...events].reverse().find((event) => event.type === 'Operation Rejected')
+  const lastEdit = events.findLast((event) => event.type === 'Proposal Edited')
+  const rejected = events.findLast((event) => event.type === 'Operation Rejected')
 
   return {
     proposalId: birth.proposalId,
