@@ -17,7 +17,7 @@ discrimination sensor).
 **Context**: `.specs/features/slice-2-money-shot/context.md`
 **Decisions**: `.specs/STATE.md` AD-005, AD-008, AD-009, AD-011, AD-012, AD-016, AD-017, AD-022,
 AD-024, AD-026, **AD-028**, **AD-029**, **AD-030**
-**Status**: Execute — B1 (T1–T5) in progress
+**Status**: Execute complete + Verifier PASS
 
 Every task obeys the Execution Contract: tests derive from the spec's ACs (never mirror the
 implementation); the gate passes before a task is done; one atomic commit per task; never weaken
