@@ -111,9 +111,11 @@ corrected (it was never in `package.json` / the lockfile on `main`); the "the br
 
 | Req | Tasks | Status |
 | --- | ----- | ------ |
-| R1  | T1    | done — `e0ee294` |
-| R2  | T2    | done — `5987432` |
-| R3  | T3    | done — `8191a00` |
-| R4  | T4    | done — `ad96906` |
-| R5  | T5    | done — `6215b1e` |
-| R6  | T6    | done — PR #49 body edited |
+| R1  | T1    | ✅ Verified — `e0ee294` (AC1.2 ⚠️ spec-precision gap: redundant guard `format`/`note` clauses undiscriminated — minor, non-blocking) |
+| R2  | T2    | ✅ Verified — `5987432` |
+| R3  | T3    | ✅ Verified — `8191a00` |
+| R4  | T4    | ✅ Verified — `ad96906` |
+| R5  | T5    | ✅ Verified — `6215b1e` |
+| R6  | T6    | ✅ Verified — PR #49 body edited |
+
+Validation: `.specs/features/pr-49-review-fixes/validation.md` (2026-08-31) — PASS, gate green (380 tests, +1), sensor 2/3 killed.
