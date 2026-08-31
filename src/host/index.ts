@@ -10,11 +10,18 @@ import { startScheduler } from './scheduler.ts'
 // Vite (and so `@hono/vite-dev-server`, which boots this file) does not populate
 // `process.env` from `.env` — it only exposes `VITE_`-prefixed vars to the
 // client bundle. Load it here so `pnpm dev` reads `ANTHROPIC_API_KEY` from the
-// file the docs point at. No-op when there is no `.env` (ambient env wins).
-try {
-  process.loadEnvFile()
-} catch {
-  /* no .env file — rely on the ambient environment */
+// file the docs point at.
+//
+// `.env.local` first, then `.env`: `loadEnvFile` never overrides a key already
+// set, so `.env.local` (and anything the caller already put in the environment —
+// e.g. Playwright's `webServer.env`) wins. Each load is a no-op when its file is
+// absent. Keep real secrets in `.env.local`; commit only `.env.example`.
+for (const file of ['.env.local', '.env']) {
+  try {
+    process.loadEnvFile(file)
+  } catch {
+    /* file absent — fall through to the next / the ambient environment */
+  }
 }
 
 /**

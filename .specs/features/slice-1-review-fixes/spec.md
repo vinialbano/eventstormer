@@ -25,11 +25,17 @@ WARN, and the cheap/safe NOTEs.
 
 ## Acceptance criteria
 
-### AC-B1 — `pnpm dev` loads `.env`
-1. WHEN `ANTHROPIC_API_KEY` is present only in `.env` (not the ambient shell) THEN `pnpm dev`
-   SHALL boot the Hono host without throwing the fail-fast, i.e. `src/host/index.ts` SHALL load
-   the `.env` file into `process.env` before `loadConfig()` runs.
-2. WHEN no `.env` file exists THEN the load SHALL be a silent no-op (ambient env still wins).
+### AC-B1 — `pnpm dev` loads `.env`, tests stay isolated
+1. WHEN `ANTHROPIC_API_KEY` is present only in `.env.local` / `.env` (not the ambient shell) THEN
+   `pnpm dev` SHALL boot the Hono host without throwing the fail-fast — `src/host/index.ts` loads
+   `.env.local` then `.env` via `process.loadEnvFile` before `loadConfig()`.
+2. WHEN a file is absent THEN its load SHALL be a silent no-op. `loadEnvFile` never overrides a
+   key already in `process.env`, so `.env.local` beats `.env`, and a value the parent process set
+   (a shell export, or Playwright's `webServer.env`) beats both.
+3. The e2e webserver SHALL set `ANTHROPIC_API_KEY: ''` in `playwright.config.ts` `webServer.env`
+   so the e2e process can never reach the real Anthropic API even if `FACILITATOR_MODE` were
+   dropped. `pnpm test` (vitest) never boots `host/index.ts` — `loadConfig` is always called with
+   an explicit `env` object — so it is already isolated.
 
 ### AC-B2 — no process ids in code
 3. `git grep -nE '\b(T[0-9]+|S[01]-[0-9]+|AD-[0-9]+|MAJOR|MINOR|BLOCKER)\b'` over `src/**` and

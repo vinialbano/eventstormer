@@ -19,17 +19,21 @@ Requires **Node 24.16.0+** and **pnpm 8+**.
 
 ```bash
 pnpm install
-cp .env.example .env      # then add your Anthropic API key
-pnpm dev                  # http://localhost:5173
+cp .env.example .env.local   # then add your Anthropic API key
+pnpm dev                     # http://localhost:5173
 ```
 
 One process. Vite serves the SPA and hands `/api/*` to the Hono app in the same dev server.
 
 ### Environment
 
+`pnpm dev` loads `.env.local` then `.env` (both gitignored; `.env.local` wins, and an existing
+shell/parent value beats both). Keep real secrets in `.env.local` — the test runners
+(`pnpm test`, `pnpm test:e2e`) set the variables they need explicitly and never inherit your key.
+
 | Variable | Required | Notes |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | for the facilitator | `pnpm dev` reads it from `.env` and fails fast when it is unset (unless `FACILITATOR_MODE=scripted`). `.env` is gitignored. |
+| `ANTHROPIC_API_KEY` | for the facilitator | `pnpm dev` fails fast when it is unset (unless `FACILITATOR_MODE=scripted`). |
 | `FACILITATOR_MODEL` | no | Primary model for the retry ladder. Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)); the only other supported value is `claude-haiku-4-5`. Model ids take no date suffix. |
 | `PORT` | no | Defaults to 5173. |
 

@@ -33,8 +33,13 @@ export default defineConfig({
     url: `http://localhost:${String(port)}`,
     reuseExistingServer: false,
     timeout: 60_000,
+    // These take precedence over `.env` / `.env.local` — `host/index.ts` loads
+    // those with `loadEnvFile`, which never overrides an already-set key. The
+    // empty `ANTHROPIC_API_KEY` guarantees the e2e server can never reach the
+    // real Anthropic API even if `FACILITATOR_MODE` were ever dropped.
     env: {
       FACILITATOR_MODE: 'scripted',
+      ANTHROPIC_API_KEY: '',
       SCRIPTED_FACILITATOR_FILE: join(import.meta.dirname, 'e2e', 'fixtures', 'facilitator.json'),
       INTERPRETATION_INTERVAL_MS: '250',
       DATA_DIR: dataDir,
