@@ -532,9 +532,9 @@ add a second spec.
 **Requirement**: spec Success Criteria; S2-04, S2-05, S2-07, S2-09, S2-10, S2-16
 **Tools**: MCP: `context7` (`@playwright/test` locators if needed) · Skill: `playwright-cli`, `testing-boss`
 **Done when**:
-- [ ] `pnpm test:e2e` passes headless including the new beats; the quote still contains the pre-reword label after the account line moved
-- [ ] still a single spec file
-- [ ] Gate check passes: `pnpm test && pnpm test:e2e`
+- [x] `pnpm test:e2e` passes headless including the new beats; the quote still contains the pre-reword label after the account line moved
+- [x] still a single spec file
+- [x] Gate check passes: `pnpm test && pnpm test:e2e` · 467 unit + 1 e2e passed
 **Tests**: e2e · **Gate**: full
 **Commit**: `test(e2e): reword, quotes, and withdraw on the capture-loop flow`
 
