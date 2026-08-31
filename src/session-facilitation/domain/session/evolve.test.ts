@@ -12,33 +12,33 @@ const toQuestionId = (value: string) => value as QuestionId
 
 describe('Session.evolve / replay', () => {
   it('Session Started flips started; Session Closed flips closed (terminal)', () => {
-    const wm = replay([
+    const writeModel = replay([
       { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
       { v: 1, at, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [] },
     ])
-    expect(wm.started).toBe(true)
-    expect(wm.closed).toBe(true)
+    expect(writeModel.started).toBe(true)
+    expect(writeModel.closed).toBe(true)
   })
 
   it('tracks the open-questions map through Asked → Answered', () => {
-    const wm = replay([
+    const writeModel = replay([
       { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
       { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'a?' },
       { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_2'), kind: 'free', text: 'b?' },
       { v: 1, at, type: 'Question Answered', sessionId: sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') },
     ])
-    expect(wm.questions.get(toQuestionId('q_1'))).toBe('resolved')
-    expect(wm.questions.get(toQuestionId('q_2'))).toBe('open')
+    expect(writeModel.questions.get(toQuestionId('q_1'))).toBe('resolved')
+    expect(writeModel.questions.get(toQuestionId('q_2'))).toBe('open')
   })
 
   it('the interpret-once ledger holds both interpreted and failed contribution ids', () => {
-    const wm = replay([
+    const writeModel = replay([
       { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
       { v: 1, at, type: 'Contribution Interpreted', sessionId: sessionId, contributionId: toContributionId('c_ok'), tracks: [] },
       { v: 1, at, type: 'Contribution Interpretation Failed', sessionId: sessionId, contributionId: toContributionId('c_bad'), reason: 'x' },
     ])
-    expect(wm.interpreted.has(toContributionId('c_ok'))).toBe(true)
-    expect(wm.interpreted.has(toContributionId('c_bad'))).toBe(true)
+    expect(writeModel.interpreted.has(toContributionId('c_ok'))).toBe(true)
+    expect(writeModel.interpreted.has(toContributionId('c_bad'))).toBe(true)
   })
 
   it('evolve does not mutate its argument', () => {

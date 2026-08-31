@@ -16,19 +16,19 @@ const CONTRIBUTION_MAX = 10_000
  * - `Close Session` — a second close returns `ok([])`.
  */
 export const decide = (
-  wm: SessionWriteModel,
+  writeModel: SessionWriteModel,
   command: SessionCommand,
 ): Result<SessionEvent[], SessionRejection> => {
   switch (command.type) {
     case 'Start Session': {
-      if (wm.started) return err({ kind: 'already-started', classification: 'systemic' })
+      if (writeModel.started) return err({ kind: 'already-started', classification: 'systemic' })
       return ok([
         { v: 1, type: 'Session Started', sessionId: command.sessionId, workshopId: command.workshopId, at: command.at },
       ])
     }
 
     case 'Make Contribution': {
-      if (wm.closed) return err({ kind: 'session-closed', classification: 'systemic' })
+      if (writeModel.closed) return err({ kind: 'session-closed', classification: 'systemic' })
       const body = command.body.trim()
       if (body.length === 0) return err({ kind: 'empty-contribution', classification: 'systemic' })
       if (body.length > CONTRIBUTION_MAX) {
@@ -49,8 +49,8 @@ export const decide = (
     }
 
     case 'Ask Question': {
-      if (wm.closed) return err({ kind: 'session-closed', classification: 'systemic' })
-      if (wm.questions.has(command.questionId)) return ok([])
+      if (writeModel.closed) return err({ kind: 'session-closed', classification: 'systemic' })
+      if (writeModel.questions.has(command.questionId)) return ok([])
       return ok([
         {
           v: 1,
@@ -66,7 +66,7 @@ export const decide = (
     }
 
     case 'Answer Question': {
-      const status = wm.questions.get(command.questionId)
+      const status = writeModel.questions.get(command.questionId)
       if (status === undefined) return err({ kind: 'unknown-question', classification: 'systemic' })
       if (status === 'resolved') {
         return err({ kind: 'question-already-resolved', classification: 'systemic' })
@@ -84,8 +84,8 @@ export const decide = (
     }
 
     case 'Interpret Contribution': {
-      if (wm.closed) return ok([])
-      if (wm.interpreted.has(command.contributionId)) return ok([])
+      if (writeModel.closed) return ok([])
+      if (writeModel.interpreted.has(command.contributionId)) return ok([])
       return ok([
         {
           v: 1,
@@ -101,8 +101,8 @@ export const decide = (
     }
 
     case 'Fail Interpretation': {
-      if (wm.closed) return ok([])
-      if (wm.interpreted.has(command.contributionId)) return ok([])
+      if (writeModel.closed) return ok([])
+      if (writeModel.interpreted.has(command.contributionId)) return ok([])
       return ok([
         {
           v: 1,
@@ -130,8 +130,8 @@ export const decide = (
     }
 
     case 'Close Session': {
-      if (wm.closed) return ok([])
-      const unresolvedQuestionIds = [...wm.questions]
+      if (writeModel.closed) return ok([])
+      const unresolvedQuestionIds = [...writeModel.questions]
         .filter(([, status]) => status === 'open')
         .map(([id]) => id)
       return ok([

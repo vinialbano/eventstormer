@@ -31,9 +31,9 @@ export const setScopeRoutes = (deps: SetScopeDeps) =>
     }
 
     const rows = deps.store.read(workshopStream(workshopId))
-    const wm = replay(rows.map((row) => WorkshopEvent.parse(row.operation)))
+    const writeModel = replay(rows.map((row) => WorkshopEvent.parse(row.operation)))
 
-    const decided = decide(wm, {
+    const decided = decide(writeModel, {
       type: 'Set Scope',
       workshopId,
       statement: body.data.statement,

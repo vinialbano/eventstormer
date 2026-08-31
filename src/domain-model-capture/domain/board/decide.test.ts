@@ -10,7 +10,7 @@ const op = (raw: Record<string, unknown>): Operation => Operation.parse({ author
 
 /** Given(prior operations): fold them into the write model (ADR-008 style). */
 const given = (priors: Record<string, unknown>[]): BoardWriteModel =>
-  priors.reduce((wm, raw) => evolve(wm, op(raw)), emptyWriteModel())
+  priors.reduce((writeModel, raw) => evolve(writeModel, op(raw)), emptyWriteModel())
 
 const NOT_IMPLEMENTED: OperationKind[] = [
   'raise-hot-spot',
@@ -42,8 +42,8 @@ describe('decide — capture', () => {
   })
 
   it('rejects a duplicate id (systemic, no-op)', () => {
-    const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
-    const result = decide(wm, op({ kind: 'capture-domain-event', id: 'e1', label: 'again' }))
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    const result = decide(writeModel, op({ kind: 'capture-domain-event', id: 'e1', label: 'again' }))
     expect(isErr(result)).toBe(true)
     if (isErr(result)) {
       expect(result.error).toEqual({ kind: 'duplicate-id', classification: 'systemic', id: 'e1' })
@@ -53,8 +53,8 @@ describe('decide — capture', () => {
 
 describe('decide — reword', () => {
   it('rewords a present target', () => {
-    const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
-    const result = decide(wm, op({ kind: 'reword', target: 'e1', label: 'order was placed' }))
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    const result = decide(writeModel, op({ kind: 'reword', target: 'e1', label: 'order was placed' }))
     expect(isOk(result)).toBe(true)
     if (isOk(result)) expect(result.value[0]).toMatchObject({ kind: 'reword', target: 'e1' })
   })
@@ -72,8 +72,8 @@ describe('decide — reword', () => {
   })
 
   it('rejects a whitespace-only label — the schema catches an empty string first', () => {
-    const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
-    const result = decide(wm, op({ kind: 'reword', target: 'e1', label: '   ' }))
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    const result = decide(writeModel, op({ kind: 'reword', target: 'e1', label: '   ' }))
     expect(isErr(result)).toBe(true)
     if (isErr(result)) {
       expect(result.error).toEqual({
@@ -85,18 +85,18 @@ describe('decide — reword', () => {
   })
 
   it('does not dedupe — two blocks may share a label', () => {
-    const wm = given([
+    const writeModel = given([
       { kind: 'capture-domain-event', id: 'e1', label: 'same' },
       { kind: 'capture-domain-event', id: 'e2', label: 'same' },
     ])
-    expect(isOk(decide(wm, op({ kind: 'reword', target: 'e1', label: 'same' })))).toBe(true)
+    expect(isOk(decide(writeModel, op({ kind: 'reword', target: 'e1', label: 'same' })))).toBe(true)
   })
 })
 
 describe('decide — withdraw / reinstate', () => {
   it('withdraws a present target', () => {
-    const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
-    expect(isOk(decide(wm, op({ kind: 'withdraw', target: 'e1' })))).toBe(true)
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    expect(isOk(decide(writeModel, op({ kind: 'withdraw', target: 'e1' })))).toBe(true)
   })
 
   it('rejects a withdraw of an unknown target', () => {
@@ -108,18 +108,18 @@ describe('decide — withdraw / reinstate', () => {
   // AT-17: a reinstate returns the operation naked — no relation restored
   // (there are none to restore in Slice 0).
   it('reinstates a withdrawn target', () => {
-    const wm = given([
+    const writeModel = given([
       { kind: 'capture-domain-event', id: 'e1', label: 'x' },
       { kind: 'withdraw', target: 'e1' },
     ])
-    const result = decide(wm, op({ kind: 'reinstate', target: 'e1' }))
+    const result = decide(writeModel, op({ kind: 'reinstate', target: 'e1' }))
     expect(isOk(result)).toBe(true)
     if (isOk(result)) expect(result.value).toEqual([op({ kind: 'reinstate', target: 'e1' })])
   })
 
   it('rejects a reinstate of a target that is not withdrawn', () => {
-    const wm = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
-    const result = decide(wm, op({ kind: 'reinstate', target: 'e1' }))
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    const result = decide(writeModel, op({ kind: 'reinstate', target: 'e1' }))
     expect(isErr(result)).toBe(true)
     if (isErr(result)) {
       expect(result.error).toEqual({

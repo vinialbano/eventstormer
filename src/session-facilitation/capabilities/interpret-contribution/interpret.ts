@@ -245,8 +245,8 @@ const runInterpretation = async (
 export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promise<void> => {
   for (const { workshopId, sessionId } of openSessions(deps.db)) {
     const events = readSession(deps, sessionId)
-    const wm = replaySession(events)
-    if (wm.closed) continue
+    const writeModel = replaySession(events)
+    if (writeModel.closed) continue
 
     const hasScopeQuestion = events.some((event) => event.type === 'Question Asked' && event.kind === 'scope')
     const scopeSet = readWorkshop(deps, workshopId).some((event) => event.type === 'Scope Set')
@@ -261,7 +261,7 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
     })
     if (!opening.ok) return
 
-    const decided = decideSession(wm, {
+    const decided = decideSession(writeModel, {
       type: 'Ask Question',
       sessionId,
       questionId: deps.mint.questionId(),
@@ -310,12 +310,12 @@ export const interpretContribution = async (deps: InterpretContributionDeps): Pr
   for (const { workshopId, sessionId } of openSessions(deps.db)) {
     if (deps.inFlight.sessions().has(sessionId)) continue
     const events = readSession(deps, sessionId)
-    const wm = replaySession(events)
-    if (wm.closed) continue
+    const writeModel = replaySession(events)
+    if (writeModel.closed) continue
 
     const pending = events.find(
       (event): event is Extract<SessionEvent, { type: 'Contribution Made' }> =>
-        event.type === 'Contribution Made' && !wm.interpreted.has(event.contributionId),
+        event.type === 'Contribution Made' && !writeModel.interpreted.has(event.contributionId),
     )
     if (pending === undefined) continue
 

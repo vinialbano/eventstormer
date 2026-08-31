@@ -13,7 +13,7 @@ import type { BoardWriteModel, Rejection } from './model.ts'
  * The `switch` is exhaustive over the frozen union — the 14 not-yet-implemented
  * kinds are rejected explicitly, never silently ignored.
  */
-export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], Rejection> => {
+export const decide = (writeModel: BoardWriteModel, op: Operation): Result<Operation[], Rejection> => {
   // Belt-and-suspenders re-parse: the append path parses before `decide`, but a
   // schema failure here is cheap to map and keeps `decide` self-contained.
   const parsed = Operation.safeParse(op)
@@ -26,12 +26,12 @@ export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], 
     case 'capture-domain-event':
     case 'identify-actor':
     case 'identify-system':
-      return wm.has(operation.id)
+      return writeModel.has(operation.id)
         ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
         : ok([operation])
 
     case 'reword': {
-      if (!wm.has(operation.target)) {
+      if (!writeModel.has(operation.target)) {
         return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
       }
       if (operation.label.trim().length === 0) {
@@ -41,12 +41,12 @@ export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], 
     }
 
     case 'withdraw':
-      return wm.has(operation.target)
+      return writeModel.has(operation.target)
         ? ok([operation])
         : err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
 
     case 'reinstate': {
-      const block = wm.get(operation.target)
+      const block = writeModel.get(operation.target)
       if (!block) {
         return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
       }

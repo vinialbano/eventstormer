@@ -89,9 +89,9 @@ describe('Workshop.decide — Set Scope', () => {
   })
 
   it('is repeatable — 3 successive Set Scope all emit Scope Set', () => {
-    const wm = replay([started])
+    const writeModel = replay([started])
     for (const statement of ['first scope', 'second scope', 'third scope']) {
-      const result = decide(wm, { type: 'Set Scope', workshopId: workshopId, statement, at })
+      const result = decide(writeModel, { type: 'Set Scope', workshopId: workshopId, statement, at })
       expect(isOk(result)).toBe(true)
       if (isOk(result)) {
         expect(result.value).toEqual([{ v: 1, at, type: 'Scope Set', workshopId: workshopId, statement }])

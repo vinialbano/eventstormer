@@ -70,16 +70,16 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
 
     const cardOf = () => proposalCard(readProposal(deps, id))
 
-    const wm = replay(events)
-    if (wm.disposition === 'APPLIED') {
+    const writeModel = replay(events)
+    if (writeModel.disposition === 'APPLIED') {
       return context.json({ boardPosition: null, proposal: cardOf() }, 200)
     }
 
     // 1. accept — mint once, reuse the stored id on a re-accept
-    let buildingBlockId: BuildingBlockId | undefined = wm.buildingBlockId
-    if (wm.disposition !== 'ACCEPTED') {
+    let buildingBlockId: BuildingBlockId | undefined = writeModel.buildingBlockId
+    if (writeModel.disposition !== 'ACCEPTED') {
       buildingBlockId = buildingBlockId ?? newBuildingBlockId()
-      const accepted = decide(wm, {
+      const accepted = decide(writeModel, {
         type: 'Accept Proposal',
         proposalId: id,
         accepter: creatorName,
@@ -146,9 +146,9 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
   })
 
 const decideOrEmpty = (
-  wm: Parameters<typeof decide>[0],
+  writeModel: Parameters<typeof decide>[0],
   command: Parameters<typeof decide>[1],
 ): ProposalEvent[] => {
-  const decided = decide(wm, command)
+  const decided = decide(writeModel, command)
   return decided.ok ? decided.value : []
 }

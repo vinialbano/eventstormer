@@ -61,29 +61,29 @@ describe('Proposal disposition machine — property', () => {
   it('no command sequence reaches an illegal transition', () => {
     fc.assert(
       fc.property(fc.array(command('b_1'), { maxLength: 40 }), (cmds) => {
-        let wm = emptyProposal()
+        let writeModel = emptyProposal()
         let mintedId: BuildingBlockId | undefined
 
         for (const nextCommand of cmds) {
-          const wasTerminal = TERMINAL.has(wm.disposition)
-          const result = decide(wm, nextCommand)
+          const wasTerminal = TERMINAL.has(writeModel.disposition)
+          const result = decide(writeModel, nextCommand)
 
           if (isOk(result)) {
             // A terminal proposal never produces a further event.
             if (wasTerminal) expect(result.value).toEqual([])
-            for (const event of result.value) wm = evolve(wm, event)
+            for (const event of result.value) writeModel = evolve(writeModel, event)
           }
 
-          expect(VALID.has(wm.disposition)).toBe(true)
+          expect(VALID.has(writeModel.disposition)).toBe(true)
 
           // Once minted, the buildingBlockId is stable for the life of the proposal.
-          if (wm.buildingBlockId !== undefined) {
-            mintedId ??= wm.buildingBlockId
-            expect(wm.buildingBlockId).toBe(mintedId)
+          if (writeModel.buildingBlockId !== undefined) {
+            mintedId ??= writeModel.buildingBlockId
+            expect(writeModel.buildingBlockId).toBe(mintedId)
           }
 
           // `Operation Applied` / `Operation Rejected` only ever land from ACCEPTED.
-          if (wm.disposition === 'APPLIED' || wm.disposition === 'APPLY_FAILED') {
+          if (writeModel.disposition === 'APPLIED' || writeModel.disposition === 'APPLY_FAILED') {
             expect(mintedId).toBeDefined()
           }
         }

@@ -64,12 +64,12 @@ describe('Proposal.decide — accept idempotency', () => {
   })
 
   it('accept is still a no-op once APPLIED', () => {
-    const wm = replay([
+    const writeModel = replay([
       proposed,
       { v: 1, at, type: 'Proposal Accepted', proposalId: proposalId, accepter: 'Dana', buildingBlockId: bb },
       { v: 1, at, type: 'Operation Applied', proposalId: proposalId, resultingBuildingBlockId: bb },
     ])
-    const result = decide(wm, accept)
+    const result = decide(writeModel, accept)
     expect(isOk(result) && result.value).toEqual([])
   })
 })

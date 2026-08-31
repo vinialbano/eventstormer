@@ -16,17 +16,17 @@ describe('evolve (write-model fold)', () => {
       ['identify-system', 'system'],
     ] as const
     for (const [kind, blockKind] of cases) {
-      const wm = evolve(emptyWriteModel(), op({ kind, id: 'b1', label: 'x' }))
-      expect(wm.get(bid('b1'))).toEqual({ kind: blockKind, withdrawn: false })
+      const writeModel = evolve(emptyWriteModel(), op({ kind, id: 'b1', label: 'x' }))
+      expect(writeModel.get(bid('b1'))).toEqual({ kind: blockKind, withdrawn: false })
     }
   })
 
   it('withdraw sets withdrawn: true, reinstate sets it back to false', () => {
-    let wm = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
-    wm = evolve(wm, op({ kind: 'withdraw', target: 'e1' }))
-    expect(wm.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
-    wm = evolve(wm, op({ kind: 'reinstate', target: 'e1' }))
-    expect(wm.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: false })
+    let writeModel = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
+    writeModel = evolve(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(writeModel.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+    writeModel = evolve(writeModel, op({ kind: 'reinstate', target: 'e1' }))
+    expect(writeModel.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: false })
   })
 
   it('reword does not change the write model', () => {

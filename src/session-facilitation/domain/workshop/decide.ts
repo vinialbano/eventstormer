@@ -13,12 +13,12 @@ const STATEMENT_MAX = 10_000
  * first-building-block lock is a `set-scope` handler precondition, never here.
  */
 export const decide = (
-  wm: WorkshopWriteModel,
+  writeModel: WorkshopWriteModel,
   command: WorkshopCommand,
 ): Result<WorkshopEvent[], WorkshopRejection> => {
   switch (command.type) {
     case 'Start Workshop': {
-      if (wm.started) return err({ kind: 'already-started', classification: 'systemic' })
+      if (writeModel.started) return err({ kind: 'already-started', classification: 'systemic' })
       if (command.creatorName.trim().length === 0) {
         return err({ kind: 'blank-name', classification: 'systemic' })
       }
@@ -38,7 +38,7 @@ export const decide = (
     }
 
     case 'Set Scope': {
-      if (!wm.started) return err({ kind: 'not-started', classification: 'systemic' })
+      if (!writeModel.started) return err({ kind: 'not-started', classification: 'systemic' })
       if (command.statement.trim().length === 0) {
         return err({ kind: 'blank-statement', classification: 'systemic' })
       }

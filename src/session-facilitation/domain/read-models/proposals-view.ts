@@ -42,7 +42,7 @@ export const proposalCard = (events: ProposalEvent[], overflow = false): Proposa
   const birth = birthOf(events)
   if (birth === undefined) return undefined
 
-  const wm = replay(events)
+  const writeModel = replay(events)
   const lastEdit = [...events].reverse().find((event) => event.type === 'Proposal Edited')
   const rejected = [...events].reverse().find((event) => event.type === 'Operation Rejected')
 
@@ -52,11 +52,11 @@ export const proposalCard = (events: ProposalEvent[], overflow = false): Proposa
     blockKind: birth.blockKind,
     label: lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label,
     bar: birth.bar,
-    disposition: wm.disposition,
-    held: wm.held,
+    disposition: writeModel.disposition,
+    held: writeModel.held,
     overflow,
     ...(rejected?.type === 'Operation Rejected' ? { applyFailedReason: rejected.reason } : {}),
-    ...(wm.buildingBlockId === undefined ? {} : { buildingBlockId: wm.buildingBlockId }),
+    ...(writeModel.buildingBlockId === undefined ? {} : { buildingBlockId: writeModel.buildingBlockId }),
   }
 }
 

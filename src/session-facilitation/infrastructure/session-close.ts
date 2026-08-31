@@ -32,11 +32,11 @@ export const finishClose = (deps: SessionCloseDeps, sessionId: SessionId): void 
 
   for (const proposalId of sessionProposalIds(events)) {
     const rows = deps.store.read(proposalStream(proposalId))
-    const wm = replayProposal(rows.map((row) => ProposalEvent.parse(row.operation)))
-    if (!wm.born) continue
+    const writeModel = replayProposal(rows.map((row) => ProposalEvent.parse(row.operation)))
+    if (!writeModel.born) continue
 
-    const cause = wm.disposition === 'APPLY_FAILED' ? 'apply-failed' : 'undisposed'
-    const decided = decideProposal(wm, {
+    const cause = writeModel.disposition === 'APPLY_FAILED' ? 'apply-failed' : 'undisposed'
+    const decided = decideProposal(writeModel, {
       type: 'Lapse Proposal',
       proposalId,
       cause,

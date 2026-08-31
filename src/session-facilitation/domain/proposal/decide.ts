@@ -11,10 +11,10 @@ import {
 const LABEL_MAX = 200
 
 const badTransition = (
-  wm: ProposalWriteModel,
+  writeModel: ProposalWriteModel,
   command: string,
 ): Result<never, ProposalRejection> =>
-  err({ kind: 'bad-transition', classification: 'systemic', from: wm.disposition, command })
+  err({ kind: 'bad-transition', classification: 'systemic', from: writeModel.disposition, command })
 
 /**
  * The pure guard for `Proposal`. G/W/T through the operation. Idempotent
@@ -23,11 +23,11 @@ const badTransition = (
  * terminal or in-flight proposal.
  */
 export const decide = (
-  wm: ProposalWriteModel,
+  writeModel: ProposalWriteModel,
   command: ProposalCommand,
 ): Result<ProposalEvent[], ProposalRejection> => {
   if (command.type === 'Propose Building Block') {
-    if (wm.born) return ok([])
+    if (writeModel.born) return ok([])
     return ok([
       {
         v: 1,
@@ -44,11 +44,11 @@ export const decide = (
     ])
   }
 
-  if (!wm.born) return err({ kind: 'not-born', classification: 'systemic' })
+  if (!writeModel.born) return err({ kind: 'not-born', classification: 'systemic' })
 
   switch (command.type) {
     case 'Edit Proposal': {
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
+      if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
       if (command.label.length > LABEL_MAX) {
         return err({ kind: 'label-too-long', classification: 'systemic' })
       }
@@ -56,8 +56,8 @@ export const decide = (
     }
 
     case 'Accept Proposal': {
-      if (wm.disposition === 'ACCEPTED' || wm.disposition === 'APPLIED') return ok([])
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
+      if (writeModel.disposition === 'ACCEPTED' || writeModel.disposition === 'APPLIED') return ok([])
+      if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
       return ok([
         {
           v: 1,
@@ -71,26 +71,26 @@ export const decide = (
     }
 
     case 'Reject Proposal': {
-      if (wm.disposition === 'REJECTED') return ok([])
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
+      if (writeModel.disposition === 'REJECTED') return ok([])
+      if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
       return ok([{ v: 1, type: 'Proposal Rejected', proposalId: command.proposalId, at: command.at }])
     }
 
     case 'Hold Proposal': {
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
-      if (wm.held) return ok([])
+      if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
+      if (writeModel.held) return ok([])
       return ok([{ v: 1, type: 'Proposal Held', proposalId: command.proposalId, at: command.at }])
     }
 
     case 'Unhold Proposal': {
-      if (!REVIEWABLE.has(wm.disposition)) return badTransition(wm, command.type)
-      if (!wm.held) return ok([])
+      if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
+      if (!writeModel.held) return ok([])
       return ok([{ v: 1, type: 'Proposal Unheld', proposalId: command.proposalId, at: command.at }])
     }
 
     case 'Record Operation Applied': {
-      if (wm.disposition === 'APPLIED') return ok([])
-      if (wm.disposition !== 'ACCEPTED') return badTransition(wm, command.type)
+      if (writeModel.disposition === 'APPLIED') return ok([])
+      if (writeModel.disposition !== 'ACCEPTED') return badTransition(writeModel, command.type)
       return ok([
         {
           v: 1,
@@ -103,8 +103,8 @@ export const decide = (
     }
 
     case 'Record Operation Rejected': {
-      if (wm.disposition === 'APPLY_FAILED') return ok([])
-      if (wm.disposition !== 'ACCEPTED') return badTransition(wm, command.type)
+      if (writeModel.disposition === 'APPLY_FAILED') return ok([])
+      if (writeModel.disposition !== 'ACCEPTED') return badTransition(writeModel, command.type)
       return ok([
         { v: 1, type: 'Operation Rejected', proposalId: command.proposalId, reason: command.reason, at: command.at },
       ])
@@ -112,7 +112,7 @@ export const decide = (
 
     case 'Lapse Proposal': {
       // Terminal or in-flight (`ACCEPTED`) — left to finish; nothing to lapse.
-      if (TERMINAL.has(wm.disposition) || wm.disposition === 'ACCEPTED') return ok([])
+      if (TERMINAL.has(writeModel.disposition) || writeModel.disposition === 'ACCEPTED') return ok([])
       return ok([
         { v: 1, type: 'Proposal Lapsed', proposalId: command.proposalId, cause: command.cause, at: command.at },
       ])
