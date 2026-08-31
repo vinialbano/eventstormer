@@ -507,9 +507,9 @@ drawer and **4** Pinia stores; §6 withdraw/reinstate + account toggle. Do **not
 **Requirement**: S2-25
 **Tools**: MCP: NONE · Skill: `impeccable`
 **Done when**:
-- [ ] brief §3: Enter / E on a focused committed sticky still opens the dashed-ghost; Enter inside the ghost opens the confirm popover (does not silent-save); 4th store and drawer are in scope; withdraw/reinstate is specified
-- [ ] `DESIGN.md` untouched
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] brief §3: Enter / E on a focused committed sticky still opens the dashed-ghost; Enter inside the ghost opens the confirm popover (does not silent-save); 4th store and drawer are in scope; withdraw/reinstate is specified
+- [x] `DESIGN.md` untouched
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: none (doc) · **Gate**: build
 **Commit**: `docs(brief): confirm reword, withdraw, and the account drawer on capture-loop`
 
