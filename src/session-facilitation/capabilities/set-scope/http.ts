@@ -13,9 +13,10 @@ const Body = z.object({ statement: z.string() })
 /**
  * `POST /workshops/:id/scope` — accept/edit the proposed scope (F05 card).
  *
- * The revision window is a **handler precondition**, not a `decide` argument
- * (domain MAJOR 1): scope is revisable only while the model has zero applied
- * building blocks. `readBuildingBlocks().length > 0` → 409 (systemic), scope
+ * The revision window is a **handler precondition**, not a `decide` argument:
+ * a true invariant never delegates its data to another context, so scope is
+ * revisable only while the model has zero applied building blocks.
+ * `readBuildingBlocks().length > 0` → 409 (systemic), scope
  * unchanged. `Workshop.decide(Set Scope)` only validates the statement and is
  * repeatable.
  */

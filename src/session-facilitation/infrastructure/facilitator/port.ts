@@ -6,7 +6,7 @@ import type { FacilitationTurn, OpeningQuestion } from './turn-schema.ts'
  * §6). The behaviour ACs are tested at the translation layer against the double;
  * real-model judgment quality is the Slice-5 eval.
  *
- * Both calls take pre-assembled prompt strings (`prompt.ts`, T14, builds them)
+ * Both calls take pre-assembled prompt strings (`prompt.ts` builds them)
  * and return the parsed model output or a classified failure.
  */
 export interface FacilitatorInput {

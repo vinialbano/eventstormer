@@ -6,7 +6,7 @@ import type { Disposition } from '../types.ts'
  * One proposed building block, welded to the facilitator turn that produced it.
  * Purely presentational — it emits intent and the dock does the POST + refetch,
  * so the card never mutates model state optimistically. The same component
- * renders the scope card (T29): a `kindLabel` of `SCOPE`, no bar.
+ * renders the scope card: a `kindLabel` of `SCOPE`, no bar.
  */
 const props = defineProps<{
   kindLabel: string

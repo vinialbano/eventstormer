@@ -7,7 +7,7 @@ import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
 import type { SessionIndexDb } from '../../infrastructure/session-index.ts'
 
 /**
- * The one-interpretation-in-flight-per-session guard. Owned by `host/` (T24),
+ * The one-interpretation-in-flight-per-session guard. Owned by `host/`,
  * injected here so the tick functions can be driven directly in tests with a
  * fresh guard and no timers. `contributions()` feeds `sessionView`'s
  * `interpreting` sub-state.
