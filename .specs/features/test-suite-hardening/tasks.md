@@ -228,9 +228,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] 404 JSON body pinned
-- [ ] 409 path: board `readBuildingBlocks` empty (or unchanged empty)
-- [ ] Gate: `pnpm test`
+- [x] 404 JSON body pinned
+- [x] 409 path: board `readBuildingBlocks` empty (or unchanged empty)
+- [x] Gate: `pnpm test`
 
 **Tests**: integration
 **Gate**: quick

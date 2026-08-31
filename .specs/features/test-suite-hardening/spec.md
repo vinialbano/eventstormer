@@ -232,8 +232,8 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-10 | P1: Record Operation Rejected | Tasks T6 | Done |
 | TSH-11 | P1: Dock reject/edit/hold/unhold | Tasks T8 | In Tasks |
 | TSH-12 | P1: CreateWorkshop alert | Tasks T9 | In Tasks |
-| TSH-13 | P1: Accept 404 | Tasks T7 | In Tasks |
-| TSH-14 | P1: Accept 409 | Tasks T7 | In Tasks |
+| TSH-13 | P1: Accept 404 | Tasks T7 | Done |
+| TSH-14 | P1: Accept 409 | Tasks T7 | Done |
 | TSH-15 | P1: Pre-push = pnpm check | Tasks T13 | In Tasks |
 | TSH-16 | P1: docs/testing.md | Tasks T14 | In Tasks |
 | TSH-17 | P1: README real vs stubbed | Tasks T15 | In Tasks |
