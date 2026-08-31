@@ -12,7 +12,7 @@ import { FacilitationTurnSchema, OpeningQuestionSchema } from './turn-schema.ts'
  * The Anthropic adapter for the `Facilitator` port.
  *
  * - `generateText` + `Output.object`, `structuredOutputMode: 'outputFormat'`,
- *   `effort: 'low'`, no `temperature` (Sonnet 5 strips it — docs/ai-harness-gotchas.md).
+ *   `effort: 'low'`, no `temperature` (Sonnet 5 strips it — docs/agents/ai-harness-gotchas.md).
  * - Model ladder: `claude-sonnet-5` → backoff → `claude-sonnet-5` → backoff →
  *   `claude-haiku-4-5`. A `provider-down` step (5xx / timeout / transport) walks
  *   to the next rung; the ladder exhausting returns `provider-down`.

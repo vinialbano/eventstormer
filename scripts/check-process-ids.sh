@@ -4,8 +4,9 @@
 # state a code reader cannot see and rot the moment the slice closes. Permanent
 # `docs/adr/NNN` and PRD `F01` ids are allowed and not matched here.
 #
-# This is the CI / pre-push gate for AGENTS.md > "Keep process ids out of code".
-# `.claude/hooks/post-edit-lint.sh` runs the same check per edit; the two must agree.
+# `pnpm check`, leftover pre-push, the Stop hook, and the first CI `check` job
+# step all run this. `.claude/hooks/post-edit-lint.sh` runs the same check per
+# edit; the two must agree.
 set -uo pipefail
 cd "${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}" || exit 1
 

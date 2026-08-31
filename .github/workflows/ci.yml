@@ -64,9 +64,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # One job, one Node version, fail fast. Typecheck is cheapest and catches
-  # most, so it runs first. This mirrors `pnpm check` exactly — CI and the
-  # pre-push hook must never be able to disagree about what "green" means.
+  # Steps through knip match `pnpm check` / leftover (process-ids first).
+  # `build` is CI-only and sits after that, out of the Stop hook.
   check:
     runs-on: ubuntu-latest
     steps:
@@ -84,6 +83,9 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: process-ids
+        run: pnpm check:process-ids
 
       - name: typecheck
         run: pnpm typecheck

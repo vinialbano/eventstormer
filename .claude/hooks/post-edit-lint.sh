@@ -24,7 +24,8 @@ esac
 # .specs/ process ids (spec-task id like S1-05, decision-log id like AD-018,
 # milestone tag like M1-15) must not land in source — they point at .specs/ state a
 # code reader can't see and rot when the slice closes. Permanent docs/adr/NNN and
-# PRD F01 ids are fine. scripts/check-process-ids.sh is the matching CI / pre-push gate.
+# PRD F01 ids are fine. scripts/check-process-ids.sh is the matching `pnpm check` /
+# leftover / Stop / CI step.
 rel="${file#"$PWD"/}"
 rel="${rel#"${CLAUDE_PROJECT_DIR:-.}"/}"
 case "$rel" in
