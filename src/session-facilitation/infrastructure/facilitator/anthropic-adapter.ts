@@ -75,9 +75,12 @@ const ensureTelemetry = (): void => {
   telemetryRegistered = true
 }
 
-// A hung provider call must not stall the scheduler cycle (the ticks run in
-// sequence, so a stuck `generateText` blocks reconcile for every workshop). The
-// abort surfaces as a thrown error → `provider-down` → the ladder continues.
+// Bounds ONE `generateText` call. The abort surfaces as a thrown error →
+// `provider-down` → the ladder continues. Note this bounds the attempt, not the
+// turn: a full `interpret()` can still walk all three rungs plus the schema
+// retry, so its worst case is ≈ 3 × this + the 2s/4s backoffs (~2 min). The
+// scheduler ticks run in sequence, so that worst case also delays reconcile for
+// every workshop — acceptable at v1 single-user scale.
 const DEFAULT_ATTEMPT_TIMEOUT_MS = 30_000
 
 const makeDefaultGenerate =
@@ -147,6 +150,10 @@ export const createAnthropicFacilitator = (deps: AnthropicFacilitatorDeps): Faci
       raw = await generate({ model, schema, instructions, prompt })
     } catch (e) {
       const kind = classifyThrown(e)
+      // usage 0 on a throw: a client-side abort (or a transport error) fires
+      // after the request reached the provider, which may still bill it — the
+      // JSONL ledger under-accounts a timed-out attempt. Acceptable for a
+      // best-effort cost estimate; revisit if spend tracking needs to be exact.
       logModelCall(deps.dataDir, {
         at: deps.clock(),
         model,
