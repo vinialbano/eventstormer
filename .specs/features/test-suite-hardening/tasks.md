@@ -273,9 +273,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Alert text pinned to the production string in `CreateWorkshop.vue`
-- [ ] `router.currentRoute` still `/`
-- [ ] Gate: `pnpm test`
+- [x] Alert text pinned to the production string in `CreateWorkshop.vue`
+- [x] `router.currentRoute` still `/`
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick
