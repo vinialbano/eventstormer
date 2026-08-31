@@ -161,4 +161,63 @@ describe('CaptureScreen', () => {
     })
     wrapper.unmount()
   })
+
+  it('loads board and account when the wall emits board-dirty', async () => {
+    const urls: string[] = []
+    fetchMock = vi.fn((url: string) => {
+      urls.push(url)
+      if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
+      if (url.endsWith('/board')) {
+        return Promise.resolve(new Response(JSON.stringify({ position: 1, blocks: [] }), { status: 200 }))
+      }
+      if (url.endsWith('/readable-account')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ position: 1, markdown: '# Readable account\n' }), { status: 200 }),
+        )
+      }
+      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
+    await flushPromises()
+    const beforeAccount = urls.filter((url) => url.endsWith('/readable-account')).length
+    const beforeBoard = urls.filter((url) => url.endsWith('/board')).length
+
+    wrapper.getComponent(BoardWall).vm.$emit('board-dirty')
+    await flushPromises()
+
+    expect(urls.filter((url) => url.endsWith('/board')).length).toBe(beforeBoard + 1)
+    expect(urls.filter((url) => url.endsWith('/readable-account')).length).toBe(beforeAccount + 1)
+    wrapper.unmount()
+  })
+
+  it('GETs the readable account once when the drawer first opens', async () => {
+    const urls: string[] = []
+    fetchMock = vi.fn((url: string) => {
+      urls.push(url)
+      if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
+      if (url.endsWith('/readable-account')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ position: -1, markdown: '# Readable account\n' }), { status: 200 }),
+        )
+      }
+      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
+    await flushPromises()
+    expect(urls.some((url) => url.endsWith('/readable-account'))).toBe(false)
+
+    await wrapper.get('[aria-label="Readable account"]').trigger('click')
+    await flushPromises()
+    expect(urls.filter((url) => url.endsWith('/readable-account'))).toHaveLength(1)
+
+    await wrapper.get('[aria-label="Readable account"]').trigger('click')
+    await wrapper.get('[aria-label="Readable account"]').trigger('click')
+    await flushPromises()
+    expect(urls.filter((url) => url.endsWith('/readable-account'))).toHaveLength(1)
+    wrapper.unmount()
+  })
 })

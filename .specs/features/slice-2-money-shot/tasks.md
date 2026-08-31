@@ -483,11 +483,11 @@ staleness copy, no LLM. Empty model: deterministic empty-state from the GET.
 **Requirement**: S2-07, S2-14, S2-16, S2-17, S2-25
 **Tools**: MCP: NONE · Skill: `impeccable`, `playwright-cli` (console-zero pass against `pnpm dev`), `testing-boss`
 **Done when**:
-- [ ] jsdom: `BoardWall` `$emit('board-dirty')` calls `account.load` **and** `board.load` (keep the dock emit for accept)
-- [ ] drawer toggle GETs once on open if not loaded
-- [ ] sanitised output wraps quote markdown in a blockquote; rendered-ref lines are not blockquotes
-- [ ] `playwright-cli open` on the capture screen (scripted facilitator): toggle drawer, reword through confirm — **0** console errors, **0** warnings
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] jsdom: `BoardWall` `$emit('board-dirty')` calls `account.load` **and** `board.load` (keep the dock emit for accept)
+- [x] drawer toggle GETs once on open if not loaded
+- [x] sanitised output wraps quote markdown in a blockquote; rendered-ref lines are not blockquotes
+- [x] `playwright-cli open` on the capture screen (scripted facilitator): toggle drawer, reword through confirm — **0** console errors, **0** warnings
+- [x] Gate check passes: `pnpm test` · 467 passed, 0 failed
 **Tests**: unit (jsdom) + visual (`playwright-cli`) · **Gate**: quick
 **Commit**: `feat(app): live readable-account drawer on the capture screen`
 

@@ -43,6 +43,15 @@ const loadReferences = async (): Promise<void> => {
   }
 }
 
+const ensurePortal = (): void => {
+  if (document.querySelector('#reword-portal') !== null) return
+  const host = document.createElement('div')
+  host.id = 'reword-portal'
+  document.body.append(host)
+}
+
+ensurePortal()
+
 watch(
   () => [props.open, props.revision, props.blockId] as const,
   ([isOpen]) => {
@@ -84,7 +93,7 @@ const confirm = async (): Promise<void> => {
     <PopoverAnchor as-child>
       <span class="reword-anchor" />
     </PopoverAnchor>
-    <PopoverPortal>
+    <PopoverPortal to="#reword-portal">
       <PopoverContent
         class="reword-pop"
         :side-offset="10"
@@ -138,7 +147,6 @@ const confirm = async (): Promise<void> => {
   pointer-events: none;
 }
 .reword-pop {
-  z-index: 40;
   width: min(320px, calc(100vw - 32px));
   padding: 14px 16px;
   border-radius: var(--radius-card);
