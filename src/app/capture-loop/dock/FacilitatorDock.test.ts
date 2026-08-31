@@ -323,7 +323,7 @@ describe('FacilitatorDock', () => {
     const edit = wrapper.findAll('button').find((button) => button.text() === 'Edit')
     if (edit === undefined) throw new Error('expected an Edit button')
     await edit.trigger('click')
-    await wrapper.get('.pc__input').setValue('Invoice sent')
+    await wrapper.get('input').setValue('Invoice sent')
     const save = wrapper.findAll('button').find((button) => button.text() === 'Save')
     if (save === undefined) throw new Error('expected a Save button')
     await save.trigger('click')
