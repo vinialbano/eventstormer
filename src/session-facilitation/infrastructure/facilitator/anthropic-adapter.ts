@@ -113,6 +113,9 @@ const RETRYABLE_STATUS = new Set([408, 409, 425, 429])
 
 const classifyThrown = (e: unknown): FacilitatorFailure['kind'] => {
   if (NoObjectGeneratedError.isInstance(e)) return 'schema-invalid'
+  // The AI SDK's `APICallError` already computes a retryable flag (408/409/429/5xx,
+  // plus anything a provider marks transient) — trust it before guessing from the status.
+  if ((e as { isRetryable?: unknown }).isRetryable === true) return 'provider-down'
   const status = (e as { statusCode?: unknown }).statusCode
   if (typeof status === 'number' && RETRYABLE_STATUS.has(status)) return 'provider-down'
   if (typeof status === 'number' && status >= 400 && status < 500) return 'schema-invalid'

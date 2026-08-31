@@ -158,6 +158,23 @@ describe('anthropic adapter — the model ladder on provider-down', () => {
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
   })
 
+  it('treats an SDK-retryable error as provider-down even when its status is a 4xx', async () => {
+    // isRetryable wins over the `4xx -> schema-invalid` guess: the ladder walks
+    // all three rungs. Without honouring the flag this 400 would terminate after
+    // one same-rung schema retry (models = [sonnet, sonnet], err schema-invalid).
+    const { generate, models } = scripted([
+      { throw: Object.assign(new Error('overloaded'), { statusCode: 400, isRetryable: true }) },
+      { throw: Object.assign(new Error('overloaded'), { statusCode: 400, isRetryable: true }) },
+      result(VALID_TURN),
+    ])
+    const { facilitator } = depsWith(generate)
+
+    const r = await facilitator.interpret({ instructions: 'sys', prompt: 'x' })
+
+    expect(isOk(r)).toBe(true)
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
+  })
+
   it('returns provider-down once the whole ladder is exhausted', async () => {
     const { generate, models } = scripted([{ throw: Object.assign(new Error('down'), { statusCode: 500 }) }])
     const { facilitator } = depsWith(generate)
