@@ -9,7 +9,9 @@ const CONTRIBUTION_MAX = 10_000
  *
  * Idempotency lives here, not in the caller:
  * - `Interpret Contribution` / `Fail Interpretation` — a second call for a
- *   `contributionId` already in the ledger returns `ok([])`.
+ *   `contributionId` already in the ledger returns `ok([])`; so does a call on a
+ *   CLOSED session (a model call that returns after the session closed writes
+ *   nothing and derives no proposal — a lapse sweep would never reach it).
  * - `Ask Question` — a known `questionId` returns `ok([])`.
  * - `Close Session` — a second close returns `ok([])`.
  */
@@ -82,6 +84,7 @@ export const decide = (
     }
 
     case 'Interpret Contribution': {
+      if (wm.closed) return ok([])
       if (wm.interpreted.has(cmd.contributionId)) return ok([])
       return ok([
         {
@@ -98,6 +101,7 @@ export const decide = (
     }
 
     case 'Fail Interpretation': {
+      if (wm.closed) return ok([])
       if (wm.interpreted.has(cmd.contributionId)) return ok([])
       return ok([
         {

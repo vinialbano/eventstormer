@@ -37,10 +37,13 @@ Three event-sourced aggregates, each with pure `decide` / `evolve`:
   - `Answer Question` — **rejects an unknown or already-resolved `questionId`** (a domain rule,
     not a capability `if`). "Something was said" alone never resolves a question.
   - `Interpret Contribution` — a second call for a `contributionId` already in the ledger returns
-    `ok([])`. `Contribution Interpreted` carries the full facilitator turn and the ids it assigns
+    `ok([])`, and so does any call on a **closed** session (a model call that returns after the
+    session closed must write nothing — a proposal born then would escape the close-time lapse
+    sweep). `Contribution Interpreted` carries the full facilitator turn and the ids it assigns
     per track; it is the **sole commit point** for an interpretation.
   - `Fail Interpretation` — emits `Contribution Interpretation Failed` (its **own** event, not a
     flag on `Contribution Interpreted`); also ledgered so interpretation is not retried forever.
+    `ok([])` on a closed session, as `Interpret Contribution`.
   - `Close Session` — idempotent (a second call returns `ok([])`). `Session Closed` carries only
     `{ unresolvedQuestionIds, closedAt }` — **raw facts, no summary struct**. Any
     summary a reader wants is a read-time projection over the terminal stream.

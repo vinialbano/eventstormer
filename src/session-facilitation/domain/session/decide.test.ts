@@ -137,6 +137,38 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
     if (isOk(result)) expect(result.value).toEqual([])
   })
 
+  it('Interpret Contribution on a CLOSED session is ok([]) — a late model call writes nothing', () => {
+    const closed = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [] },
+    ])
+    const result = decide(closed, {
+      type: 'Interpret Contribution',
+      sessionId: s,
+      contributionId: c('c_1'),
+      tracks: [track],
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('Fail Interpretation on a CLOSED session is ok([])', () => {
+    const closed = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Session Closed', sessionId: s, workshopId: w, unresolvedQuestionIds: [] },
+    ])
+    const result = decide(closed, {
+      type: 'Fail Interpretation',
+      sessionId: s,
+      contributionId: c('c_1'),
+      reason: 'schema-invalid',
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
   it('Fail Interpretation emits Contribution Interpretation Failed with the reason', () => {
     const result = decide(replay(startedStream), {
       type: 'Fail Interpretation',
