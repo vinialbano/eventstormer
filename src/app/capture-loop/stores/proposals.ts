@@ -22,8 +22,8 @@ export const useProposalsStore = defineStore('proposals', () => {
       )
       cards.value = body.proposals
       error.value = null
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'load failed'
+    } catch (caught) {
+      error.value = caught instanceof Error ? caught.message : 'load failed'
     } finally {
       loading.value = false
     }

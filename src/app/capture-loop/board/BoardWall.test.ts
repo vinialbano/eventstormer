@@ -16,8 +16,8 @@ describe('BoardWall', () => {
 
     const stickies = wrapper.findAll('.sticky')
     expect(stickies).toHaveLength(3)
-    expect(stickies.map((s) => s.text())).toEqual(['Order placed', 'Order confirmed', 'Waiter'])
-    expect(stickies.map((s) => s.attributes('aria-label'))).toEqual([
+    expect(stickies.map((sticky) => sticky.text())).toEqual(['Order placed', 'Order confirmed', 'Waiter'])
+    expect(stickies.map((sticky) => sticky.attributes('aria-label'))).toEqual([
       'event: Order placed',
       'event: Order confirmed',
       'actor: Waiter',

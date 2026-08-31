@@ -23,12 +23,12 @@ export const useBoardStore = defineStore('board', () => {
     try {
       snapshot.value = await getJson<BoardSnapshot>(`/api/workshops/${workshopId.value}/board`)
       error.value = null
-    } catch (e) {
-      if (e instanceof HttpError && e.status === 404) {
+    } catch (caught) {
+      if (caught instanceof HttpError && caught.status === 404) {
         snapshot.value = EMPTY
         error.value = null
       } else {
-        error.value = e instanceof Error ? e.message : 'load failed'
+        error.value = caught instanceof Error ? caught.message : 'load failed'
       }
     } finally {
       loading.value = false

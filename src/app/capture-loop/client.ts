@@ -18,19 +18,19 @@ export class HttpError extends Error {
 const parse = (text: string): unknown => (text.length > 0 ? JSON.parse(text) : null)
 
 export const getJson = async <T>(path: string): Promise<T> => {
-  const res = await fetch(path)
-  const body = parse(await res.text())
-  if (!res.ok) throw new HttpError(res.status, body)
+  const response = await fetch(path)
+  const body = parse(await response.text())
+  if (!response.ok) throw new HttpError(response.status, body)
   return body as T
 }
 
 export const postJson = async <T>(path: string, body?: unknown): Promise<T> => {
-  const res = await fetch(path, {
+  const response = await fetch(path, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body ?? {}),
   })
-  const parsed = parse(await res.text())
-  if (!res.ok) throw new HttpError(res.status, parsed)
+  const parsed = parse(await response.text())
+  if (!response.ok) throw new HttpError(response.status, parsed)
   return parsed as T
 }

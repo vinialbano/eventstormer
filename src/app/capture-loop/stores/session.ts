@@ -25,8 +25,8 @@ export const useSessionStore = defineStore('session', () => {
     try {
       view.value = await getJson<SessionView>(`/api/workshops/${workshopId.value}/session`)
       error.value = null
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'load failed'
+    } catch (caught) {
+      error.value = caught instanceof Error ? caught.message : 'load failed'
     } finally {
       loading.value = false
     }

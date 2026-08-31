@@ -26,7 +26,7 @@ export const useInterpretationPoll = (intervalMs = 1000) => {
     const view = session.view
     if (view === null) return false
     if (view.scope.status !== 'set') return true
-    return view.contributions.some((c) => IN_FLIGHT.has(c.status))
+    return view.contributions.some((contribution) => IN_FLIGHT.has(contribution.status))
   })
 
   const stop = (): void => {

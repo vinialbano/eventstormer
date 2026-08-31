@@ -55,33 +55,33 @@ const MAX_COLS = 3
 /** A small deterministic hash → a stable per-sticky tilt so the wall does not
  * reshuffle on every render. */
 export const tiltFor = (id: string): number => {
-  let h = 0
-  for (let i = 0; i < id.length; i += 1) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0
-  return Math.round((-1.4 + (h % 26) / 10) * 100) / 100
+  let hash = 0
+  for (let index = 0; index < id.length; index += 1) hash = (Math.imul(hash, 31) + id.charCodeAt(index)) >>> 0
+  return Math.round((-1.4 + (hash % 26) / 10) * 100) / 100
 }
 
 export const layoutBoard = (
   blocks: readonly BoardBlockInput[],
   viewport: LayoutViewport,
 ): BoardLayout => {
-  const n = blocks.length
-  const cols = n === 0 ? MAX_COLS : Math.min(MAX_COLS, n)
-  const rows = n === 0 ? 1 : Math.ceil(n / MAX_COLS)
+  const count = blocks.length
+  const cols = count === 0 ? MAX_COLS : Math.min(MAX_COLS, count)
+  const rows = count === 0 ? 1 : Math.ceil(count / MAX_COLS)
 
   const frameW = cols * CELL + (cols - 1) * GAP + FRAME_PAD * 2
   const frameH = FRAME_TITLE_H + rows * CELL + (rows - 1) * GAP + FRAME_PAD * 2
   const frameX = WALL_INSET
   const frameY = WALL_INSET
 
-  const backlog: StickyRect[] = blocks.map((b, i) => ({
-    id: b.id,
-    kind: b.kind,
-    label: b.label,
-    x: frameX + FRAME_PAD + (i % MAX_COLS) * (CELL + GAP),
-    y: frameY + FRAME_TITLE_H + FRAME_PAD + Math.floor(i / MAX_COLS) * (CELL + GAP),
+  const backlog: StickyRect[] = blocks.map((block, index) => ({
+    id: block.id,
+    kind: block.kind,
+    label: block.label,
+    x: frameX + FRAME_PAD + (index % MAX_COLS) * (CELL + GAP),
+    y: frameY + FRAME_TITLE_H + FRAME_PAD + Math.floor(index / MAX_COLS) * (CELL + GAP),
     w: CELL,
     h: CELL,
-    tilt: tiltFor(b.id),
+    tilt: tiltFor(block.id),
   }))
 
   const canvasW = Math.max(viewport.w, frameX + frameW + WALL_INSET)

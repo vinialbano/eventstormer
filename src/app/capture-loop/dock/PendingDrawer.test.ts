@@ -57,7 +57,7 @@ describe('PendingDrawer', () => {
       },
     })
     const pills = wrapper.findAll('.drawer__pill')
-    expect(pills.map((p) => p.text())).toEqual(['ACTOR', 'SYSTEM'])
+    expect(pills.map((pill) => pill.text())).toEqual(['ACTOR', 'SYSTEM'])
     expect(pills[0]?.classes()).toContain('drawer__pill--actor')
     expect(pills[1]?.classes()).toContain('drawer__pill--system')
   })

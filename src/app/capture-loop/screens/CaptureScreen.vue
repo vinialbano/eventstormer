@@ -26,8 +26,8 @@ const loaded = ref(false)
 
 const blocks = computed(() =>
   board.snapshot.blocks
-    .filter((b) => !b.withdrawn)
-    .map((b) => ({ id: b.id, kind: b.kind, label: b.label })),
+    .filter((block) => !block.withdrawn)
+    .map((block) => ({ id: block.id, kind: block.kind, label: block.label })),
 )
 const needsSession = computed(() => loaded.value && !session.sessionOpen)
 

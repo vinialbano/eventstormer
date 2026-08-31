@@ -71,18 +71,18 @@ type FeedItem =
   | { type: 'cluster'; key: string; cards: ProposalCardData[] }
 
 const contribStatus = computed(
-  () => new Map((session.view?.contributions ?? []).map((c) => [c.contributionId, c.status])),
+  () => new Map((session.view?.contributions ?? []).map((contribution) => [contribution.contributionId, contribution.status])),
 )
 
 const feed = computed<FeedItem[]>(() => {
   const items: FeedItem[] = []
   const turns = session.view?.transcript ?? []
-  turns.forEach((turn, i) => {
+  turns.forEach((turn, index) => {
     // The scope question is rendered as its own F05 card, not a plain message.
     if (turn.kind === 'question' && turn.questionKind === 'scope') return
     items.push({
       type: 'turn',
-      key: `t${String(i)}`,
+      key: `t${String(index)}`,
       kind: turn.kind,
       speaker: turn.speaker,
       text: turn.text,
@@ -97,7 +97,7 @@ const feed = computed<FeedItem[]>(() => {
     // No proposals for this contribution. Give the facilitator a visible reply
     // so a turn never looks dropped — unless it already answered with a
     // question or a notice (the next transcript turn), which stands on its own.
-    if (turns[i + 1]?.kind === 'question' || turns[i + 1]?.kind === 'notice') return
+    if (turns[index + 1]?.kind === 'question' || turns[index + 1]?.kind === 'notice') return
     const status = contribStatus.value.get(turn.contributionId)
     if (status === 'failed') {
       items.push({
@@ -126,19 +126,21 @@ const feed = computed<FeedItem[]>(() => {
 const showFirstPrompt = computed(() => scopeState.value.status === 'set')
 
 const actionable = computed(() =>
-  proposals.cards.filter((c) => ACTIONABLE.has(c.disposition)),
+  proposals.cards.filter((card) => ACTIONABLE.has(card.disposition)),
 )
-const parked = computed(() => actionable.value.filter((c) => c.held))
-const awaiting = computed(() => actionable.value.filter((c) => !c.held))
+const parked = computed(() => actionable.value.filter((card) => card.held))
+const awaiting = computed(() => actionable.value.filter((card) => !card.held))
 const pendingCount = computed(() => actionable.value.length)
 const anyHeld = computed(() => parked.value.length > 0)
 
 const catchingUp = computed(() =>
-  (session.view?.contributions ?? []).some((c) => c.status === 'pending' || c.status === 'interpreting'),
+  (session.view?.contributions ?? []).some(
+    (contribution) => contribution.status === 'pending' || contribution.status === 'interpreting',
+  ),
 )
 
 const acceptableInCluster = (cards: ProposalCardData[]): ProposalCardData[] =>
-  cards.filter((c) => !c.held && ACTIONABLE.has(c.disposition))
+  cards.filter((card) => !card.held && ACTIONABLE.has(card.disposition))
 
 const run = async (work: Promise<unknown>, boardDirty = false): Promise<void> => {
   await work
