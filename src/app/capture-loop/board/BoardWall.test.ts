@@ -201,4 +201,103 @@ describe('BoardWall', () => {
     expect(fetchMock).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
   })
+
+  it('withdraws a selected active sticky and emits board-dirty', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ position: 2 }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
+        workshopId: 'w1',
+        accepter: 'Maria',
+        revision: 1,
+      },
+    })
+    await wrapper.get('.sticky').trigger('focus')
+    await wrapper.get('[aria-label="Withdraw"]').trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/workshops/w1/board/operations',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          v: 1,
+          kind: 'withdraw',
+          target: 'b1',
+          author: { accepter: { name: 'Maria' } },
+        }),
+      }),
+    )
+    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
+    vi.unstubAllGlobals()
+  })
+
+  it('shows Reinstate on a ghost, not pencil or Withdraw, and reinstates', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ position: 3 }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: true }],
+        workshopId: 'w1',
+        accepter: 'Maria',
+        revision: 2,
+      },
+    })
+    await wrapper.get('.sticky').trigger('focus')
+
+    expect(wrapper.find('[aria-label="Reword"]').exists()).toBe(false)
+    expect(wrapper.find('[aria-label="Withdraw"]').exists()).toBe(false)
+    await wrapper.get('[aria-label="Reinstate"]').trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/workshops/w1/board/operations',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          v: 1,
+          kind: 'reinstate',
+          target: 'b1',
+          author: { accepter: { name: 'Maria' } },
+        }),
+      }),
+    )
+    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
+    vi.unstubAllGlobals()
+  })
+
+  it('does not open dashed-ghost from E or Enter on a focused ghost', async () => {
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: true }] },
+    })
+    const sticky = wrapper.get('.sticky')
+    await sticky.trigger('focus')
+    sticky.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    sticky.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', bubbles: true }))
+    await nextTick()
+
+    expect(wrapper.find('.sticky--reword').exists()).toBe(false)
+    expect(wrapper.find('input').exists()).toBe(false)
+  })
 })

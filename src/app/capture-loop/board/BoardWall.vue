@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
+import { postBoardOperation } from '../dock/mutations.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import RewordConfirm from './RewordConfirm.vue'
 import { isTypingSurface } from './typing-surface.ts'
@@ -60,6 +61,19 @@ const requestConfirm = (): void => {
 const onRewordConfirmed = (): void => {
   emit('board-dirty')
   cancelReword()
+}
+
+const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise<void> => {
+  const workshopId = props.workshopId
+  const accepter = props.accepter
+  if (workshopId === undefined || workshopId.length === 0 || accepter === undefined) return
+  await postBoardOperation(workshopId, {
+    v: 1,
+    kind,
+    target,
+    author: { accepter: { name: accepter } },
+  })
+  emit('board-dirty')
 }
 
 const dismissEsc = (): void => {
@@ -151,8 +165,10 @@ const KIND_LABEL: Record<string, string> = {
 }
 const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
 
-const showsPencil = (id: string, withdrawn: boolean): boolean =>
+const showsActiveControls = (id: string, withdrawn: boolean): boolean =>
   selectedId.value === id && editingId.value !== id && !withdrawn
+const showsReinstate = (id: string, withdrawn: boolean): boolean =>
+  selectedId.value === id && withdrawn
 </script>
 
 <template>
@@ -264,7 +280,7 @@ const showsPencil = (id: string, withdrawn: boolean): boolean =>
         @keydown="onWindowKeydown"
       >
         <button
-          v-if="showsPencil(s.id, s.withdrawn)"
+          v-if="showsActiveControls(s.id, s.withdrawn)"
           type="button"
           class="sticky__pencil"
           aria-label="Reword"
@@ -279,6 +295,24 @@ const showsPencil = (id: string, withdrawn: boolean): boolean =>
               stroke-linejoin="round"
             />
           </svg>
+        </button>
+        <button
+          v-if="showsActiveControls(s.id, s.withdrawn)"
+          type="button"
+          class="sticky__status"
+          aria-label="Withdraw"
+          @click.stop="postEdit('withdraw', s.id)"
+        >
+          Withdraw
+        </button>
+        <button
+          v-if="showsReinstate(s.id, s.withdrawn)"
+          type="button"
+          class="sticky__status"
+          aria-label="Reinstate"
+          @click.stop="postEdit('reinstate', s.id)"
+        >
+          Reinstate
         </button>
 
         <template v-if="editingId === s.id">
@@ -446,6 +480,28 @@ const showsPencil = (id: string, withdrawn: boolean): boolean =>
   cursor: pointer;
 }
 .sticky__pencil:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
+}
+
+.sticky__status {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sticky__status:focus-visible {
   outline: 2px solid var(--color-event-strong);
   outline-offset: 2px;
 }

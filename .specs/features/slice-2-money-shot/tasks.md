@@ -455,9 +455,9 @@ Keyboard remains reachable (WCAG 2.2 AA).
 **Requirement**: S2-09, S2-10, S2-11, S2-25
 **Tools**: MCP: NONE · Skill: `impeccable`, `testing-boss`
 **Done when**:
-- [ ] jsdom: Withdraw POSTs `{ kind: 'withdraw', target }` once and emits `board-dirty`; Reinstate POSTs `{ kind: 'reinstate', target }`
-- [ ] a ghosted sticky shows Reinstate, not pencil/Withdraw; `E` / `Enter` on a focused ghosted sticky does not open dashed-ghost
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] jsdom: Withdraw POSTs `{ kind: 'withdraw', target }` once and emits `board-dirty`; Reinstate POSTs `{ kind: 'reinstate', target }`
+- [x] a ghosted sticky shows Reinstate, not pencil/Withdraw; `E` / `Enter` on a focused ghosted sticky does not open dashed-ghost
+- [x] Gate check passes: `pnpm test` · 464 passed, 0 failed
 **Tests**: unit (jsdom) · **Gate**: quick
 **Commit**: `feat(app): withdraw and reinstate a committed sticky`
 
