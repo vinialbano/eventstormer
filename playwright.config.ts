@@ -12,7 +12,7 @@ import { defineConfig, devices } from '@playwright/test'
  *
  * Each run gets a throwaway data directory so it never touches `./data/`.
  */
-const dataDir = mkdtempSync(join(tmpdir(), 'eventstormer-e2e-'))
+const dataDirectory = mkdtempSync(join(tmpdir(), 'eventstormer-e2e-'))
 const port = 5178
 
 export default defineConfig({
@@ -42,8 +42,8 @@ export default defineConfig({
       ANTHROPIC_API_KEY: '',
       SCRIPTED_FACILITATOR_FILE: join(import.meta.dirname, 'e2e', 'fixtures', 'facilitator.json'),
       INTERPRETATION_INTERVAL_MS: '250',
-      DATA_DIR: dataDir,
-      EVENTSTORMER_DB: join(dataDir, 'e2e.db'),
+      DATA_DIR: dataDirectory,
+      EVENTSTORMER_DB: join(dataDirectory, 'e2e.db'),
     },
   },
 })

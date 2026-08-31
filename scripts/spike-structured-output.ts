@@ -55,9 +55,9 @@ async function run(label: string, output: GenerateOutput): Promise<void> {
     console.log('warnings:', result.warnings)
     console.log('finishReason:', result.finishReason, '· usage:', result.usage)
   } catch (error) {
-    const e = error as { name?: string; message?: string; data?: unknown }
-    console.log(`FAILED — ${e.name ?? 'Error'}: ${e.message ?? String(error)}`)
-    if (e.data) console.dir(e.data, { depth: null })
+    const errorShape = error as { name?: string; message?: string; data?: unknown }
+    console.log(`FAILED — ${errorShape.name ?? 'Error'}: ${errorShape.message ?? String(error)}`)
+    if (errorShape.data) console.dir(errorShape.data, { depth: null })
   }
 }
 
@@ -84,13 +84,13 @@ async function main(): Promise<void> {
     io: 'input',
     unrepresentable: 'throw',
     override: ({ jsonSchema }) => {
-      const s = jsonSchema as Emptyable
-      if (Array.isArray(s.oneOf)) {
-        s.anyOf = s.oneOf
-        delete s.oneOf
+      const schema = jsonSchema as Emptyable
+      if (Array.isArray(schema.oneOf)) {
+        schema.anyOf = schema.oneOf
+        delete schema.oneOf
       }
       // z.unknown() → `{}` (accepts any JSON); Anthropic's output_config rejects it.
-      if (Object.keys(s).length === 0) s.type = 'string'
+      if (Object.keys(schema).length === 0) schema.type = 'string'
     },
   })
   // `z.toJSONSchema` emits Draft-2020-12; `jsonSchema()` types its arg as Draft-7. Structurally
