@@ -38,6 +38,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/session-facilitation/capabilities/review-proposal/accept.ts:75 (cross-context;accept-chain;tests)
 - last seen: 2026-08-30T22:37:18Z
 
+### L-005 — When a test asserts an error CLASSIFICATION, drive the input so only the correct branch reaches the asserted outcome (e.g. an always-failing 429 forces the retry ladder to exhaust); a short script where the schema-retry and ladder-walk paths both succeed proves nothing.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/session-facilitation/infrastructure/facilitator` · harmful: 0
+- features: slice-1-review-fixes
+- evidence: mutant-1: anthropic-adapter.ts classifyThrown RETRYABLE_STATUS (src/session-facilitation/infrastructure/facilitator)
+- last seen: 2026-08-31T05:47:22Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 5,
+  "next_id": 6,
   "lessons": [
     {
       "id": "L-001",
@@ -76,6 +76,24 @@
       ],
       "created": "2026-08-30T22:37:18Z",
       "last_seen": "2026-08-30T22:37:18Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::when a test asserts an error classification drive the input so only the correct branch reaches the asserted outcome e g an always failing 429 forces the retry ladder to exhaust a short script where the schema retry and ladder walk paths both succeed proves nothing",
+      "text": "When a test asserts an error CLASSIFICATION, drive the input so only the correct branch reaches the asserted outcome (e.g. an always-failing 429 forces the retry ladder to exhaust); a short script where the schema-retry and ladder-walk paths both succeed proves nothing.",
+      "signal": "surviving_mutant",
+      "scope": "src/session-facilitation/infrastructure/facilitator",
+      "status": "candidate",
+      "features": [
+        "slice-1-review-fixes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant-1: anthropic-adapter.ts classifyThrown RETRYABLE_STATUS (src/session-facilitation/infrastructure/facilitator)"
+      ],
+      "created": "2026-08-31T05:47:22Z",
+      "last_seen": "2026-08-31T05:47:22Z"
     }
   ]
 }
