@@ -227,32 +227,32 @@ label; POST `sequence` → 422; unit-test `applyOperation(reword)` does not thro
 
 | ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| S2-01 | P1 Reword (dashed-ghost, not for proposals) | Tasks | Pending |
-| S2-02 | P1 Reword (two-step confirm; no silent commit) | Tasks | Pending |
-| S2-03 | P1 Reword (exactly one op; id retained; empty-label rejected) | Tasks | Pending |
-| S2-04 | P1 Reword (reference set stable; new label on every site) | Tasks | Pending |
-| S2-05 | P1 Reword (quoted evidence byte-identical + marked) | Tasks | Execute |
-| S2-06 | P1 Reword (substring label does not clobber the longer id) | Tasks | Pending |
-| S2-07 | P1 Reword (account live-refetch same interaction) | Tasks | Pending |
-| S2-08 | P1 Reword (unknown / withdrawn target rejected) | Tasks | Execute |
-| S2-09 | P1 Withdraw (single op; ghosted sticky; id kept) | Tasks | Execute |
-| S2-10 | P1 Withdraw (reinstate naked, same id) | Tasks | Pending |
-| S2-11 | P1 Withdraw (illegal transitions rejected) | Tasks | Execute |
-| S2-12 | P1 Withdraw (vacuous cascade: no unlink-cause / hot-spot withdraw) | Tasks | Execute |
-| S2-13 | P1 Withdraw (references still resolve) | Tasks | Execute |
-| S2-14 | P1 Account (drawer GET; empty state deterministic) | Tasks | Pending |
-| S2-15 | P1 Account (byte-identical replay of same snapshot) | Tasks | Pending |
-| S2-16 | P1 Account (re-render on every applied op; no LLM) | Tasks | Pending |
-| S2-17 | P1 Account (rendered reference vs quoted evidence) | Tasks | Execute |
-| S2-18 | P1 Account (coverage disclosure + honest "not run") | Tasks | Execute |
-| S2-19 | P1 Account (Supporting context; api.ts only; no aggregate) | Tasks | Execute |
-| S2-20 | P2 HTTP (`POST …/board/operations` reword/withdraw/reinstate only) | Tasks | Pending |
-| S2-21 | P2 HTTP (`applyOperation` returns `target`; no throw) | Tasks | Execute |
-| S2-22 | P2 HTTP (stale-position retry stays inside `applyOperation`) | Tasks | Execute |
-| S2-23 | cross (`edit-model` capability; 4th Pinia store; `no-cross-store-imports`) | Tasks | Pending |
-| S2-24 | cross (`minor` changeset; do not edit `package.json` version) | Tasks | Pending |
-| S2-25 | cross (`impeccable` shape of drawer + confirm popover on capture-loop surface) | Tasks | Pending |
-| S2-26 | cross (comments on #40 / #41 / #42 — already posted; keep in sync if Design diverges) | Tasks | Pending |
+| S2-01 | P1 Reword (dashed-ghost, not for proposals) | Tasks | ✅ Verified |
+| S2-02 | P1 Reword (two-step confirm; no silent commit) | Tasks | ✅ Verified |
+| S2-03 | P1 Reword (exactly one op; id retained; empty-label rejected) | Tasks | ✅ Verified |
+| S2-04 | P1 Reword (reference set stable; new label on every site) | Tasks | ✅ Verified |
+| S2-05 | P1 Reword (quoted evidence byte-identical + marked) | Tasks | ✅ Verified |
+| S2-06 | P1 Reword (substring label does not clobber the longer id) | Tasks | ✅ Verified |
+| S2-07 | P1 Reword (account live-refetch same interaction) | Tasks | ✅ Verified |
+| S2-08 | P1 Reword (unknown / withdrawn target rejected) | Tasks | ✅ Verified |
+| S2-09 | P1 Withdraw (single op; ghosted sticky; id kept) | Tasks | ✅ Verified |
+| S2-10 | P1 Withdraw (reinstate naked, same id) | Tasks | ✅ Verified |
+| S2-11 | P1 Withdraw (illegal transitions rejected) | Tasks | ✅ Verified |
+| S2-12 | P1 Withdraw (vacuous cascade: no unlink-cause / hot-spot withdraw) | Tasks | ✅ Verified |
+| S2-13 | P1 Withdraw (references still resolve) | Tasks | ✅ Verified |
+| S2-14 | P1 Account (drawer GET; empty state deterministic) | Tasks | ✅ Verified |
+| S2-15 | P1 Account (byte-identical replay of same snapshot) | Tasks | ✅ Verified |
+| S2-16 | P1 Account (re-render on every applied op; no LLM) | Tasks | ✅ Verified |
+| S2-17 | P1 Account (rendered reference vs quoted evidence) | Tasks | ✅ Verified |
+| S2-18 | P1 Account (coverage disclosure + honest "not run") | Tasks | ✅ Verified |
+| S2-19 | P1 Account (Supporting context; api.ts only; no aggregate) | Tasks | ✅ Verified |
+| S2-20 | P2 HTTP (`POST …/board/operations` reword/withdraw/reinstate only) | Tasks | ✅ Verified |
+| S2-21 | P2 HTTP (`applyOperation` returns `target`; no throw) | Tasks | ✅ Verified |
+| S2-22 | P2 HTTP (stale-position retry stays inside `applyOperation`) | Tasks | ✅ Verified |
+| S2-23 | cross (`edit-model` capability; 4th Pinia store; `no-cross-store-imports`) | Tasks | ✅ Verified |
+| S2-24 | cross (`minor` changeset; do not edit `package.json` version) | Tasks | ✅ Verified |
+| S2-25 | cross (`impeccable` shape of drawer + confirm popover on capture-loop surface) | Tasks | ✅ Verified |
+| S2-26 | cross (comments on #40 / #41 / #42 — already posted; keep in sync if Design diverges) | Tasks | ✅ Verified |
 
 **Coverage:** 26 requirement IDs, 0 unmapped onto tasks. Spec **Edge Cases** fold into existing
 IDs: same-label + 10 000-char bound → S2-03/T8; empty-board account 200 → S2-14/T7; stale
