@@ -49,18 +49,13 @@ capture.
 ## Handoff
 
 - **Feature**: `slice-2-money-shot` (`.specs/features/slice-2-money-shot/`) — GitHub #39
-- **Phase / Task**: Execute B1 (P1: T1–T5). Awaiting batch-worker summary.
-- **Completed**: Specify + context; Design (Approved); Tasks (approved); AD-028; AD-029; AD-030;
-  plan review round 2
-- **In-progress**: B1 T1–T5
-- **Next step**: Batch worker runs T1→T5 (atomic commit each). Then B2 (T6–T9), then B3
-  (T10–T17), then Verifier.
+- **Phase / Task**: Execute B2 (P2: T6–T9). B1 complete.
+- **Completed**: Specify + Design + Tasks; AD-028/029/030; B1 T1–T5 (`da6789f`…`f7a6101`, 421 tests)
+- **In-progress**: B2 T6–T9
+- **Next step**: Batch worker T6→T9. Then B3 (T10–T17), then Verifier.
 - **Blockers**: none
-- **Uncommitted files**: planning docs being committed on `slice-2-money-shot`
+- **Uncommitted files**: none
 - **Branch**: `slice-2-money-shot` off `main`
-- **Blockers**: task approval
-- **Uncommitted files**: `.specs/features/slice-2-money-shot/{spec,context,design,tasks}.md`, `.specs/STATE.md`
-- **Branch**: current working branch (planning artifacts only)
 
 ---
 
