@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadConfig } from './config.ts'
 
 let dir: string
@@ -41,18 +41,21 @@ describe('loadConfig', () => {
     expect(existsSync(join(nested, 'db'))).toBe(true)
   })
 
-  it('fails fast when FACILITATOR_MODEL is not a supported model', () => {
-    expect(() =>
-      loadConfig({
-        ANTHROPIC_API_KEY: 'sk-test',
-        EVENTSTORMER_DB: join(dir, 'e.db'),
-        DATA_DIR: dir,
-        FACILITATOR_MODEL: 'claude-opus-5',
-      }),
-    ).toThrow(/FACILITATOR_MODEL.*not supported/)
+  it('warns and falls back to the default when FACILITATOR_MODEL is unsupported', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const config = loadConfig({
+      ANTHROPIC_API_KEY: 'sk-test',
+      EVENTSTORMER_DB: join(dir, 'e.db'),
+      DATA_DIR: dir,
+      FACILITATOR_MODEL: 'claude-opus-5',
+    })
+    expect(config.facilitator).toBeDefined()
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/FACILITATOR_MODEL.*not supported/))
+    warn.mockRestore()
   })
 
-  it('accepts a supported FACILITATOR_MODEL', () => {
+  it('accepts a supported FACILITATOR_MODEL without warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const config = loadConfig({
       ANTHROPIC_API_KEY: 'sk-test',
       EVENTSTORMER_DB: join(dir, 'e.db'),
@@ -60,6 +63,8 @@ describe('loadConfig', () => {
       FACILITATOR_MODEL: 'claude-haiku-4-5',
     })
     expect(config.facilitator).toBeDefined()
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 
   it('honours INTERPRETATION_INTERVAL_MS', () => {

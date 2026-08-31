@@ -90,20 +90,17 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): HostConfig => 
   const db = new DatabaseSync(dbPath, { timeout: 5_000 })
   applySessionFacilitationMigrations(db)
 
-  const model = env.FACILITATOR_MODEL
-  if (model !== undefined && model !== '' && !isModelName(model)) {
-    throw new Error(
-      `FACILITATOR_MODEL="${model}" is not supported — use one of: ${MODEL_NAMES.join(', ')}.`,
+  const requested = env.FACILITATOR_MODEL
+  const model = requested !== undefined && requested !== '' && isModelName(requested) ? requested : undefined
+  if (requested !== undefined && requested !== '' && model === undefined) {
+    console.warn(
+      `FACILITATOR_MODEL="${requested}" is not supported — using claude-sonnet-5. Supported: ${MODEL_NAMES.join(', ')}.`,
     )
   }
 
   const facilitator = scripted
     ? scriptedFacilitator(env.SCRIPTED_FACILITATOR_FILE)
-    : createAnthropicFacilitator({
-        dataDir,
-        clock,
-        ...(model !== undefined && model !== '' ? { model } : {}),
-      })
+    : createAnthropicFacilitator({ dataDir, clock, ...(model === undefined ? {} : { model }) })
 
   return {
     store,
