@@ -83,6 +83,13 @@ export default defineConfig([
         },
       ],
 
+      // A renamed inner binding that shadows an outer one silently changed
+      // behaviour once (an `x === x` self-compare from a shadowed `event`); these
+      // two together make that class a lint error, not a shipped regression.
+      'no-shadow': 'off',
+      '@typescript-eslint/no-shadow': 'error',
+      'no-self-compare': 'error',
+
       // Formatting is not this tool's job and the noise trains agents to ignore it.
       'vue/singleline-html-element-content-newline': 'off',
       'vue/max-attributes-per-line': 'off',

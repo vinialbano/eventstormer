@@ -64,9 +64,9 @@ describe('Proposal disposition machine — property', () => {
         let wm = emptyProposal()
         let mintedId: BuildingBlockId | undefined
 
-        for (const command of cmds) {
+        for (const nextCommand of cmds) {
           const wasTerminal = TERMINAL.has(wm.disposition)
-          const result = decide(wm, command)
+          const result = decide(wm, nextCommand)
 
           if (isOk(result)) {
             // A terminal proposal never produces a further event.

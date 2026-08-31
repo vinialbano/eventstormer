@@ -83,8 +83,8 @@ async function main(): Promise<void> {
     target: 'draft-2020-12',
     io: 'input',
     unrepresentable: 'throw',
-    override: ({ jsonSchema }) => {
-      const schema = jsonSchema as Emptyable
+    override: ({ jsonSchema: draftSchema }) => {
+      const schema = draftSchema as Emptyable
       if (Array.isArray(schema.oneOf)) {
         schema.anyOf = schema.oneOf
         delete schema.oneOf
