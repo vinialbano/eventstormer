@@ -1,4 +1,3 @@
-import { testClient } from 'hono/testing'
 import { describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
@@ -23,9 +22,10 @@ const capture = (deps: EditModelDeps, id: string, label: string) =>
   )
 
 const postOp = (deps: EditModelDeps, body: unknown, id: string = workshopId) =>
-  testClient(editModelRoutes(deps)).workshops[':id'].board.operations.$post({
-    param: { id },
-    json: body as Record<string, unknown>,
+  editModelRoutes(deps).request(`/workshops/${id}/board/operations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
   })
 
 const logOf = (deps: EditModelDeps) => deps.store.read(boardStream(workshopId))

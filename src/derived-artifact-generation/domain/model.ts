@@ -7,7 +7,7 @@ export interface AccountBlock {
   withdrawn: boolean
 }
 
-export interface AccountQuote {
+interface AccountQuote {
   id: string
   text: string
 }

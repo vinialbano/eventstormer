@@ -344,9 +344,9 @@ F06 does not. Extend `routes.test.ts`. **Plant** `host/routes.ts` →
 **Requirement**: S2-19, S2-20, S2-23
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `createRoutes` serves `POST /api/workshops/:id/board/operations` and both artifact GETs
-- [ ] planted host → DAG `domain/` import fails `pnpm depcruise`; reverted
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] `createRoutes` serves `POST /api/workshops/:id/board/operations` and both artifact GETs
+- [x] planted host → DAG `domain/` import fails `pnpm depcruise`; reverted
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: unit (host) · **Gate**: build
 **Commit**: `feat(host): mount edit-model and readable-account routes`
 

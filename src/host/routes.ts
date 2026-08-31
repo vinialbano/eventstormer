@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import { boardAccessRoutes } from '../domain-model-capture/api.ts'
+import { readableAccountRoutes } from '../derived-artifact-generation/api.ts'
+import { boardAccessRoutes, editModelRoutes } from '../domain-model-capture/api.ts'
 import {
   closeSessionRoutes,
   makeContributionRoutes,
@@ -25,6 +26,8 @@ export const createRoutes = (config: HostConfig) => {
   return new Hono()
     .route('/api', healthRoutes)
     .route('/api', boardAccessRoutes(io))
+    .route('/api', editModelRoutes(io))
+    .route('/api', readableAccountRoutes({ store, db }))
     .route('/api', startWorkshopRoutes(io))
     .route('/api', setScopeRoutes(io))
     .route('/api', startSessionRoutes(withDb))
