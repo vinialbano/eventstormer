@@ -3,4 +3,5 @@
  * contexts and the composition root reach this context only through here —
  * never its `domain/`, `capabilities/`, or `infrastructure/`.
  */
-export {}
+export { readableAccountRoutes } from './capabilities/readable-account/http.ts'
+export type { ReadableAccountDeps } from './capabilities/readable-account/deps.ts'

@@ -291,12 +291,12 @@ confirm `cross-context-only-via-api` fails; revert.
 **Requirement**: S2-14, S2-15, S2-19
 **Tools**: MCP: NONE · Skill: `testing-boss`
 **Done when**:
-- [ ] two GETs of the same workshop with no intervening op → identical Markdown bodies
-- [ ] known workshop, empty board → 200, not 404; unknown workshop → 404
-- [ ] references GET returns a JSON array `{ kind, path }[]` — the same site set `listReferences` would for that id, including a **withdrawn** target
-- [ ] DAG `http.ts` / `deps.ts` import `SessionIndexDb` from `session-facilitation/api.ts`, not `infrastructure/`
-- [ ] planted cross-context import fails `pnpm depcruise`; reverted
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] two GETs of the same workshop with no intervening op → identical Markdown bodies
+- [x] known workshop, empty board → 200, not 404; unknown workshop → 404
+- [x] references GET returns a JSON array `{ kind, path }[]` — the same site set `listReferences` would for that id, including a **withdrawn** target
+- [x] DAG `http.ts` / `deps.ts` import `SessionIndexDb` from `session-facilitation/api.ts`, not `infrastructure/`
+- [x] planted cross-context import fails `pnpm depcruise`; reverted
+- [x] Gate check passes: `pnpm test` · 434 passed, 0 failed
 **Tests**: integration · **Gate**: quick
 **Commit**: `feat(artifacts): serve the readable account and its reference list`
 
