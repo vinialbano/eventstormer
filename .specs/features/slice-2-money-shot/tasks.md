@@ -125,11 +125,11 @@ cascade). Add both kinds to the `Rejection` union.
 **Requirement**: S2-08, S2-11, S2-12
 **Tools**: MCP: NONE · Skill: `testing-boss` (G/W/T through the operation)
 **Done when**:
-- [ ] `reword` of a withdrawn target → `{ kind: 'withdrawn-target', classification: 'systemic' }`
-- [ ] `withdraw` of a withdrawn target → `{ kind: 'already-withdrawn', classification: 'systemic' }`
-- [ ] `withdraw` of a present actor/event with no edges → `ok` array length 1, that op is `withdraw`
-- [ ] existing reinstate / unknown-target / empty-label cases still pass
-- [ ] Gate check passes: `pnpm test` · test count recorded (no silent deletions)
+- [x] `reword` of a withdrawn target → `{ kind: 'withdrawn-target', classification: 'systemic' }`
+- [x] `withdraw` of a withdrawn target → `{ kind: 'already-withdrawn', classification: 'systemic' }`
+- [x] `withdraw` of a present actor/event with no edges → `ok` array length 1, that op is `withdraw`
+- [x] existing reinstate / unknown-target / empty-label cases still pass
+- [x] Gate check passes: `pnpm test` · 408 passed, 0 failed
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): reject reword and re-withdraw of a withdrawn building block`
 

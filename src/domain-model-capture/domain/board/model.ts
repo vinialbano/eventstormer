@@ -51,4 +51,6 @@ export type Rejection =
   | { kind: 'empty-label'; classification: 'systemic'; target: string }
   | { kind: 'duplicate-id'; classification: 'systemic'; id: string }
   | { kind: 'not-withdrawn'; classification: 'systemic'; target: string }
+  | { kind: 'already-withdrawn'; classification: 'systemic'; target: string }
+  | { kind: 'withdrawn-target'; classification: 'systemic'; target: string }
   | { kind: 'not-implemented-in-slice'; classification: 'systemic'; operation: string }

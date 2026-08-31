@@ -2,6 +2,42 @@ import { err, ok, type Result } from '~/plumbing/result.ts'
 import { Operation } from '../schema/index.ts'
 import type { BoardWriteModel, Rejection } from './model.ts'
 
+type OpOf<Kind extends Operation['kind']> = Extract<Operation, { kind: Kind }>
+type Decision = Result<Operation[], Rejection>
+
+const unknownTarget = (target: string): Decision =>
+  err({ kind: 'unknown-target', classification: 'systemic', target })
+
+const decideReword = (writeModel: BoardWriteModel, operation: OpOf<'reword'>): Decision => {
+  const block = writeModel.get(operation.target)
+  if (!block) return unknownTarget(operation.target)
+  if (block.withdrawn) {
+    return err({ kind: 'withdrawn-target', classification: 'systemic', target: operation.target })
+  }
+  if (operation.label.trim().length === 0) {
+    return err({ kind: 'empty-label', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
+const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>): Decision => {
+  const block = writeModel.get(operation.target)
+  if (!block) return unknownTarget(operation.target)
+  if (block.withdrawn) {
+    return err({ kind: 'already-withdrawn', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
+const decideReinstate = (writeModel: BoardWriteModel, operation: OpOf<'reinstate'>): Decision => {
+  const block = writeModel.get(operation.target)
+  if (!block) return unknownTarget(operation.target)
+  if (!block.withdrawn) {
+    return err({ kind: 'not-withdrawn', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -13,7 +49,7 @@ import type { BoardWriteModel, Rejection } from './model.ts'
  * The `switch` is exhaustive over the frozen union — the 14 not-yet-implemented
  * kinds are rejected explicitly, never silently ignored.
  */
-export const decide = (writeModel: BoardWriteModel, op: Operation): Result<Operation[], Rejection> => {
+export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => {
   // Belt-and-suspenders re-parse: the append path parses before `decide`, but a
   // schema failure here is cheap to map and keeps `decide` self-contained.
   const parsed = Operation.safeParse(op)
@@ -30,31 +66,14 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Result<Opera
         ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
         : ok([operation])
 
-    case 'reword': {
-      if (!writeModel.has(operation.target)) {
-        return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
-      }
-      if (operation.label.trim().length === 0) {
-        return err({ kind: 'empty-label', classification: 'systemic', target: operation.target })
-      }
-      return ok([operation])
-    }
+    case 'reword':
+      return decideReword(writeModel, operation)
 
     case 'withdraw':
-      return writeModel.has(operation.target)
-        ? ok([operation])
-        : err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
+      return decideWithdraw(writeModel, operation)
 
-    case 'reinstate': {
-      const block = writeModel.get(operation.target)
-      if (!block) {
-        return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
-      }
-      if (!block.withdrawn) {
-        return err({ kind: 'not-withdrawn', classification: 'systemic', target: operation.target })
-      }
-      return ok([operation])
-    }
+    case 'reinstate':
+      return decideReinstate(writeModel, operation)
 
     case 'raise-hot-spot':
     case 'place':
