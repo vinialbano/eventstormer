@@ -24,6 +24,36 @@ const track: InterpretedTrack = {
   bar: 'strict',
 }
 
+describe('Session.decide — Start Session', () => {
+  it('emits Session Started with the command session id, workshop id, and timestamp', () => {
+    const result = decide(replay([]), {
+      type: 'Start Session',
+      sessionId,
+      workshopId,
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        { v: 1, at, type: 'Session Started', sessionId, workshopId },
+      ])
+    }
+  })
+
+  it('rejects Start Session on an already-started session', () => {
+    const result = decide(replay(startedStream), {
+      type: 'Start Session',
+      sessionId,
+      workshopId,
+      at,
+    })
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'already-started', classification: 'systemic' })
+    }
+  })
+})
+
 describe('Session.decide — Make Contribution', () => {
   it('emits Contribution Made carrying session id, speaker, source "typed" and the timestamp', () => {
     const result = decide(replay(startedStream), {

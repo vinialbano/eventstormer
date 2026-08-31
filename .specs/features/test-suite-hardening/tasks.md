@@ -143,9 +143,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Unstarted → exactly one `Session Started` with sessionId, workshopId, at
-- [ ] Already started → `already-started` / systemic
-- [ ] Gate: `pnpm test`
+- [x] Unstarted → exactly one `Session Started` with sessionId, workshopId, at
+- [x] Already started → `already-started` / systemic
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick
