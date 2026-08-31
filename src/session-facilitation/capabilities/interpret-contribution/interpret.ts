@@ -123,6 +123,10 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
         break
       }
       case 'attribute-to-other-format': {
+        // `Attribute Contribution` is not self-idempotent in the session decider,
+        // so re-deriving this track (a different track on the same contribution
+        // hitting `derived_track`, or a replay) would append a duplicate notice.
+        // Skip when an identical (contribution, format, note) notice already exists.
         const events = readSession(deps, event.sessionId)
         const already = events.some(
           (priorEvent) =>
