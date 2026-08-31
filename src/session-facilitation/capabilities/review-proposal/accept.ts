@@ -57,7 +57,7 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
     if (birth?.type !== 'Building Block Proposed') {
       return context.json({ error: 'unknown-proposal' as const }, 404)
     }
-    const lastEdit = [...events].reverse().find((event) => event.type === 'Proposal Edited')
+    const lastEdit = events.findLast((event) => event.type === 'Proposal Edited')
     const label = lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label
 
     const sessionEvents = readSession(deps, birth.sessionId)

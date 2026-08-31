@@ -77,9 +77,9 @@ const contribStatus = computed(
 const feed = computed<FeedItem[]>(() => {
   const items: FeedItem[] = []
   const turns = session.view?.transcript ?? []
-  turns.forEach((turn, index) => {
+  for (const [index, turn] of turns.entries()) {
     // The scope question is rendered as its own F05 card, not a plain message.
-    if (turn.kind === 'question' && turn.questionKind === 'scope') return
+    if (turn.kind === 'question' && turn.questionKind === 'scope') continue
     items.push({
       type: 'turn',
       key: `t${String(index)}`,
@@ -87,17 +87,17 @@ const feed = computed<FeedItem[]>(() => {
       speaker: turn.speaker,
       text: turn.text,
     })
-    if (turn.kind !== 'contribution' || turn.contributionId === undefined) return
+    if (turn.kind !== 'contribution' || turn.contributionId === undefined) continue
 
     const cards = byContribution.value.get(turn.contributionId)
     if (cards !== undefined && cards.length > 0) {
       items.push({ type: 'cluster', key: `c${turn.contributionId}`, cards })
-      return
+      continue
     }
     // No proposals for this contribution. Give the facilitator a visible reply
     // so a turn never looks dropped — unless it already answered with a
     // question or a notice (the next transcript turn), which stands on its own.
-    if (turns[index + 1]?.kind === 'question' || turns[index + 1]?.kind === 'notice') return
+    if (turns[index + 1]?.kind === 'question' || turns[index + 1]?.kind === 'notice') continue
     const status = contribStatus.value.get(turn.contributionId)
     if (status === 'failed') {
       items.push({
@@ -116,7 +116,7 @@ const feed = computed<FeedItem[]>(() => {
         text: 'Noted — nothing to capture from that one.',
       })
     }
-  })
+  }
   return items
 })
 

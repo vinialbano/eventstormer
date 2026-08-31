@@ -111,9 +111,9 @@ describe('GET /sessions/:id/proposals', () => {
         },
       },
     ])
-    ids.forEach((id) => {
+    for (const id of ids) {
       seedProposal(id)
-    })
+    }
 
     const response = await routes().request(`/sessions/${sessionId}/proposals`)
     expect(response.status).toBe(200)

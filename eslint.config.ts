@@ -57,6 +57,17 @@ export default defineConfig([
       // Identifiers are spelled out in full — terse single-letter and abbreviated
       // names are rejected so the derived model reads like prose.
       'id-length': ['error', { min: 2, properties: 'never', exceptions: ['_'] }],
+      // Agent-facing sensors — not the unicorn recommended kitchen sink.
+      // Bare eslint-disable, missing `node:`, `throw Error()`, empty Error,
+      // forEach, reverse().find, mutating sort, await-in-Promise.all.
+      'unicorn/no-abusive-eslint-disable': 'error',
+      'unicorn/prefer-node-protocol': 'error',
+      'unicorn/throw-new-error': 'error',
+      'unicorn/error-message': 'error',
+      'unicorn/no-for-each': 'error',
+      'unicorn/prefer-array-last-methods': 'error',
+      'unicorn/no-array-sort': 'error',
+      'unicorn/no-await-in-promise-methods': 'error',
       'unicorn/name-replacements': [
         'error',
         {
