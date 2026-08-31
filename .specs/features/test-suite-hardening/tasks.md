@@ -316,8 +316,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Those three CSS selectors are gone
-- [ ] Gate: `pnpm test && pnpm test:e2e`
+- [x] Those three CSS selectors are gone
+- [x] Gate: `pnpm test && pnpm test:e2e`
 
 **Tests**: e2e
 **Gate**: full
