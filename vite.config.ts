@@ -45,11 +45,11 @@ export default defineConfig({
       // rewrites the numbers below into THIS FILE on every `pnpm test:coverage`
       // run, only ever upward. A diff to these numbers is a deliberate,
       // committed change — never regenerate-and-discard, and never lower them by
-      // hand. No global or per-glob number is set; the hard `**/domain/** ≥ 90%`
-      // glob is a later slice (ADR-010). CI runs `pnpm test`, not
-      // `pnpm test:coverage`, so the ratchet only moves locally and on purpose.
+      // hand. The `**/domain/** ≥ 90%` floor (ADR-008) is enforced in CI
+      // (`autoUpdate` disabled there) and ratchets up locally like the rest.
       thresholds: {
         autoUpdate: true,
+        'src/**/domain/**': { statements: 90, branches: 90, functions: 90, lines: 90 },
       },
     },
     projects: [

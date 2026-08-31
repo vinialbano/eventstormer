@@ -64,6 +64,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # This repo exists because a hand-written doc drifts from the model it
+  # describes. The docs here must not drift from each other: offline mode
+  # resolves every relative link across the project's own Markdown and fails on
+  # a dangling one — the exact breakage a file move or rename leaves behind.
+  # External URLs are not checked (someone else's server being down is not our
+  # build failing); `.claude/` and `.specs/` are vendored / historical.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline --no-progress
+            'AGENTS.md' 'ARCHITECTURE.md' 'PRODUCT.md' 'README.md' 'CLAUDE.md'
+            'docs/**/*.md' '.changeset/README.md'
+          failIfEmpty: true
+
   # Steps through knip match `pnpm check` / leftover (process-ids first).
   # `build` is CI-only and sits after that, out of the Stop hook.
   check:
@@ -108,6 +126,14 @@ jobs:
       # gets caught before it reaches a reviewer.
       - name: build
         run: pnpm build
+
+      # Also outside `pnpm check` for speed, same rationale as build. The hard
+      # floor is `**/domain/** ≥ 90%` (ADR-008); the local ratchet in
+      # vite.config is disabled here so CI measures against the committed
+      # numbers, never a number it just raised itself. `--project` keeps the
+      # eval project out of CI (ADR-008).
+      - name: coverage
+        run: pnpm exec vitest run --project domain --project app --coverage --coverage.thresholds.autoUpdate=false
 
   # Capture-loop Playwright spec. Not part of `pnpm check` / pre-push — those
   # stay fast. Env (scripted facilitator, empty ANTHROPIC_API_KEY, throwaway

@@ -22,6 +22,14 @@ verifier sub-agent with `isolation: "worktree"`. The `Stop` gate runs `pnpm chec
 live tree; a mutation in flight there reads as a red gate on a codebase that is actually green,
 and the main agent has no reliable way to tell the two apart.
 
+## Coverage
+
+`vite.config.ts` sets `coverage.thresholds`. Locally, `autoUpdate` ratchets the numbers upward on
+every `pnpm test:coverage` — a downward diff is never accidental. The one hard floor is
+`src/**/domain/** ≥ 90%` (ADR-008), enforced by the CI `coverage` step (inside `check`) with `autoUpdate` off so CI
+measures against the committed numbers. Coverage is not in `pnpm check` — it stays out of the
+per-edit and per-stop path for speed, same as `build`.
+
 ## Verifying UI changes
 
 Use `playwright-cli` (installed globally, skill at `.claude/skills/playwright-cli/`) to drive the
