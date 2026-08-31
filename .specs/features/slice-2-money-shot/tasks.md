@@ -259,15 +259,15 @@ is not a site; the account line is). Unknown id → `[]`.
 **Requirement**: S2-04, S2-05, S2-06, S2-13, S2-14, S2-15, S2-17, S2-18
 **Tools**: MCP: NONE · Skill: `testing-boss`
 **Done when**:
-- [ ] same input twice → byte-identical `markdown`
-- [ ] empty input markdown is a pinned literal (headings present, lists empty)
-- [ ] Coverage section contains the exact lines `Stakeholder check: not run`, `Chosen problem: not run`, `Timeline and relations: not run` — not "none" / "0"
-- [ ] blocks `Order` and `Order placed`: rewording only the `Order` id in the input changes only that id's building-block line; the longer label's line is unchanged
-- [ ] a quote whose text contains the old label is byte-identical after that reword
-- [ ] withdrawn block still appears (`Event (withdrawn): …` or Actor/System equivalent) and `listReferences` still returns its **building-blocks** site (non-empty)
-- [ ] an actor line is `Actor: <label>` and a system line is `System: <label>` — never `Event:`
-- [ ] `listReferences` for a captured id returns ≥1 site with `path: 'building-blocks'`; unknown id → `[]`
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] same input twice → byte-identical `markdown`
+- [x] empty input markdown is a pinned literal (headings present, lists empty)
+- [x] Coverage section contains the exact lines `Stakeholder check: not run`, `Chosen problem: not run`, `Timeline and relations: not run` — not "none" / "0"
+- [x] blocks `Order` and `Order placed`: rewording only the `Order` id in the input changes only that id's building-block line; the longer label's line is unchanged
+- [x] a quote whose text contains the old label is byte-identical after that reword
+- [x] withdrawn block still appears (`Event (withdrawn): …` or Actor/System equivalent) and `listReferences` still returns its **building-blocks** site (non-empty)
+- [x] an actor line is `Actor: <label>` and a system line is `System: <label>` — never `Event:`
+- [x] `listReferences` for a captured id returns ≥1 site with `path: 'building-blocks'`; unknown id → `[]`
+- [x] Gate check passes: `pnpm test` · 429 passed, 0 failed
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(artifacts): render a deterministic readable account from the snapshot`
 
