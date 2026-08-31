@@ -69,7 +69,7 @@ const deps = (steps: Step[]): InterpretContributionDeps => ({
 
 const seedSession = (sessionId: SessionId = defaultSessionId): void => {
   store.append(sessionStream(sessionId), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId: workshopId, at } },
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
   ])
   reserve(db, workshopId, sessionId, at)
 }
@@ -119,7 +119,7 @@ beforeEach(() => {
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
 })
@@ -348,9 +348,9 @@ describe('interpretContribution — a later session sees prior summaries', () =>
     for (const [id, body] of [['s_a', 'first session line'], ['s_b', 'second session line']] as const) {
       const sid = id as SessionId
       store.append(sessionStream(sid), -1, [
-        { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sid, workshopId: workshopId, at } },
+        { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sid, workshopId, at } },
         { at, opVersion: 1, operation: { v: 1, type: 'Contribution Made', sessionId: sid, contributionId: `${id}_c`, speaker: 'Dana', body, source: 'typed', at } },
-        { at, opVersion: 1, operation: { v: 1, type: 'Session Closed', sessionId: sid, workshopId: workshopId, unresolvedQuestionIds: [], at } },
+        { at, opVersion: 1, operation: { v: 1, type: 'Session Closed', sessionId: sid, workshopId, unresolvedQuestionIds: [], at } },
       ])
       reserve(db, workshopId, sid, at)
       closeIndexRow(db, sid, at)

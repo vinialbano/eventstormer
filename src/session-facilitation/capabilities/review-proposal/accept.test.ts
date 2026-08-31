@@ -39,11 +39,11 @@ const seedWorkshopAndSession = (): void => {
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
   store.append(sessionStream(sessionId), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
   ])
 }
 
@@ -56,7 +56,7 @@ const seedProposal = (id: string, extra: ProposalEvent[] = []): void => {
         v: 1,
         type: 'Building Block Proposed',
         proposalId: id,
-        sessionId: sessionId,
+        sessionId,
         contributionId: 'c_1',
         blockKind: 'domain-event',
         label: 'Book borrowed',

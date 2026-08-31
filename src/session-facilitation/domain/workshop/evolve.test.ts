@@ -11,7 +11,7 @@ const started: WorkshopEvent = {
   v: 1,
   at,
   type: 'Workshop Started',
-  workshopId: workshopId,
+  workshopId,
   format: 'big-picture',
   creatorName: 'Dana',
 }
@@ -31,7 +31,7 @@ describe('Workshop.evolve', () => {
       v: 1,
       at,
       type: 'Scope Set',
-      workshopId: workshopId,
+      workshopId,
       statement: 'Library lending across branches.',
     }
     expect(evolve(afterStart, scopeSet)).toBe(afterStart)

@@ -17,7 +17,7 @@ const seededStore = (): EventStore => {
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
   return store

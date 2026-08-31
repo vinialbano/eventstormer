@@ -19,12 +19,12 @@ const proposeTrack: InterpretedTrack = {
 }
 
 const base: SessionEvent[] = [
-  { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
+  { v: 1, at, type: 'Session Started', sessionId, workshopId },
   {
     v: 1,
     at,
     type: 'Question Asked',
-    sessionId: sessionId,
+    sessionId,
     questionId: toQuestionId('q_scope'),
     kind: 'scope',
     text: 'What business are you mapping?',
@@ -34,7 +34,7 @@ const base: SessionEvent[] = [
     v: 1,
     at,
     type: 'Contribution Made',
-    sessionId: sessionId,
+    sessionId,
     contributionId: toContributionId('c_1'),
     speaker: 'Dana',
     body: 'A member borrowed a book.',
@@ -72,8 +72,8 @@ describe('sessionView — open questions', () => {
   it('drops a question once it is answered', () => {
     const events: SessionEvent[] = [
       ...base,
-      { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_phase'), kind: 'phase', text: 'phase?' },
-      { v: 1, at, type: 'Question Answered', sessionId: sessionId, questionId: toQuestionId('q_scope'), byContributionId: toContributionId('c_1') },
+      { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_phase'), kind: 'phase', text: 'phase?' },
+      { v: 1, at, type: 'Question Answered', sessionId, questionId: toQuestionId('q_scope'), byContributionId: toContributionId('c_1') },
     ]
     expect(sessionView(events).openQuestions).toEqual([
       { questionId: 'q_phase', kind: 'phase', text: 'phase?' },
@@ -84,7 +84,7 @@ describe('sessionView — open questions', () => {
 describe('sessionView — per-contribution interpretation status + fullyDerived', () => {
   const interpreted: SessionEvent[] = [
     ...base,
-    { v: 1, at, type: 'Contribution Interpreted', sessionId: sessionId, contributionId: toContributionId('c_1'), tracks: [proposeTrack] },
+    { v: 1, at, type: 'Contribution Interpreted', sessionId, contributionId: toContributionId('c_1'), tracks: [proposeTrack] },
   ]
 
   it('a made-but-not-interpreted contribution is "pending"', () => {
@@ -114,7 +114,7 @@ describe('sessionView — per-contribution interpretation status + fullyDerived'
   it('a failed interpretation is "failed" and counts as fully derived', () => {
     const failed: SessionEvent[] = [
       ...base,
-      { v: 1, at, type: 'Contribution Interpretation Failed', sessionId: sessionId, contributionId: toContributionId('c_1'), reason: 'x' },
+      { v: 1, at, type: 'Contribution Interpretation Failed', sessionId, contributionId: toContributionId('c_1'), reason: 'x' },
     ]
     const view = sessionView(failed)
     expect(view.contributions).toEqual([{ contributionId: 'c_1', status: 'failed' }])

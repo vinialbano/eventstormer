@@ -14,7 +14,7 @@ const madeC = (id: string, speaker: string, body: string): SessionEvent => ({
   v: 1,
   at,
   type: 'Contribution Made',
-  sessionId: sessionId,
+  sessionId,
   contributionId: toContributionId(id),
   speaker,
   body,
@@ -32,12 +32,12 @@ const proposeTrack = (proposalId: string): InterpretedTrack => ({
 describe('sessionProposalIds', () => {
   it('folds every propose-building-block proposalId, in order, ignoring other tracks', () => {
     const events: SessionEvent[] = [
-      { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
+      { v: 1, at, type: 'Session Started', sessionId, workshopId },
       {
         v: 1,
         at,
         type: 'Contribution Interpreted',
-        sessionId: sessionId,
+        sessionId,
         contributionId: toContributionId('c_1'),
         tracks: [
           proposeTrack('p_1'),
@@ -49,7 +49,7 @@ describe('sessionProposalIds', () => {
         v: 1,
         at,
         type: 'Contribution Interpreted',
-        sessionId: sessionId,
+        sessionId,
         contributionId: toContributionId('c_2'),
         tracks: [proposeTrack('p_3')],
       },
@@ -60,13 +60,13 @@ describe('sessionProposalIds', () => {
 
 describe('sessionSummary — read-time projection over a canned stream', () => {
   const events: SessionEvent[] = [
-    { v: 1, at, type: 'Session Started', sessionId: sessionId, workshopId: workshopId },
-    { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'Is fulfilment a phase?' },
+    { v: 1, at, type: 'Session Started', sessionId, workshopId },
+    { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'Is fulfilment a phase?' },
     madeC('c_1', 'Dana', 'A member borrowed a book.'),
-    { v: 1, at, type: 'Question Answered', sessionId: sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') },
+    { v: 1, at, type: 'Question Answered', sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') },
     madeC('c_2', 'Dana', 'The book was returned.'),
-    { v: 1, at, type: 'Question Asked', sessionId: sessionId, questionId: toQuestionId('q_2'), kind: 'free', text: 'Who reshelves it?' },
-    { v: 1, at, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [toQuestionId('q_2')] },
+    { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_2'), kind: 'free', text: 'Who reshelves it?' },
+    { v: 1, at, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [toQuestionId('q_2')] },
   ]
 
   it('matches the hand-written expected struct', () => {

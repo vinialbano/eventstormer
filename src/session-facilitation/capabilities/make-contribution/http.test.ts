@@ -27,11 +27,11 @@ beforeEach(() => {
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
   store.append(sessionStream(sessionId), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
   ])
   reserve(db, workshopId, sessionId, at)
 })
@@ -61,7 +61,7 @@ describe('POST /sessions/:id/contributions', () => {
       {
         v: 1,
         type: 'Contribution Made',
-        sessionId: sessionId,
+        sessionId,
         contributionId,
         speaker: 'Dana',
         body: 'A member borrowed a book.',
@@ -86,7 +86,7 @@ describe('POST /sessions/:id/contributions', () => {
 
   it('rejects a contribution on a closed session with 409', async () => {
     store.append(sessionStream(sessionId), 0, [
-      { at, opVersion: 1, operation: { v: 1, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [], at } },
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [], at } },
     ])
     const response = await postContribution('too late')
     expect(response.status).toBe(409)

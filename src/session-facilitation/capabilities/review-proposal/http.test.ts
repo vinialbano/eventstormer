@@ -24,7 +24,7 @@ const seedProposal = (id: string, label = `Block ${id}`): void => {
         v: 1,
         type: 'Building Block Proposed',
         proposalId: id,
-        sessionId: sessionId,
+        sessionId,
         contributionId: c1,
         blockKind: 'domain-event',
         label,
@@ -98,7 +98,7 @@ describe('GET /sessions/:id/proposals', () => {
         operation: {
           v: 1,
           type: 'Contribution Interpreted',
-          sessionId: sessionId,
+          sessionId,
           contributionId: c1,
           tracks: ids.map((id) => ({
             track: 'propose-building-block',

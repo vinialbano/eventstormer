@@ -41,7 +41,7 @@ const seedProposal = (id: string, tail: ProposalEvent[] = []): void => {
         v: 1,
         type: 'Building Block Proposed',
         proposalId: id,
-        sessionId: sessionId,
+        sessionId,
         contributionId: 'c_1',
         blockKind: 'domain-event',
         label: `Block ${id}`,
@@ -65,7 +65,7 @@ beforeEach(() => {
   db = raw
   store = createMemoryEventStore()
   store.append(sessionStream(sessionId), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
   ])
   reserve(db, workshopId, sessionId, at)
   // one Contribution Interpreted listing three proposals p_1 (PROPOSED), p_2 (APPLY_FAILED), p_3 (ACCEPTED)
@@ -76,7 +76,7 @@ beforeEach(() => {
       operation: {
         v: 1,
         type: 'Contribution Interpreted',
-        sessionId: sessionId,
+        sessionId,
         contributionId: 'c_1',
         tracks: ['p_1', 'p_2', 'p_3'].map((proposalId) => ({
           track: 'propose-building-block',
@@ -111,8 +111,8 @@ describe('POST /sessions/:id/close', () => {
     expect(closed).toEqual({
       v: 1,
       type: 'Session Closed',
-      sessionId: sessionId,
-      workshopId: workshopId,
+      sessionId,
+      workshopId,
       unresolvedQuestionIds: [],
       at,
     })

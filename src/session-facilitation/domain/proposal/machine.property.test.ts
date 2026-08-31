@@ -23,7 +23,7 @@ const command = (bbId: string): fc.Arbitrary<ProposalCommand> =>
   fc.oneof(
     fc.constant<ProposalCommand>({
       type: 'Propose Building Block',
-      proposalId: proposalId,
+      proposalId,
       sessionId: 's_1' as SessionId,
       contributionId: 'c_1' as ContributionId,
       blockKind: 'domain-event',
@@ -31,30 +31,30 @@ const command = (bbId: string): fc.Arbitrary<ProposalCommand> =>
       bar: 'strict',
       at,
     }),
-    fc.constant<ProposalCommand>({ type: 'Edit Proposal', proposalId: proposalId, label: 'y', at }),
+    fc.constant<ProposalCommand>({ type: 'Edit Proposal', proposalId, label: 'y', at }),
     fc.constant<ProposalCommand>({
       type: 'Accept Proposal',
-      proposalId: proposalId,
+      proposalId,
       accepter: 'Dana',
       buildingBlockId: bbId as BuildingBlockId,
       at,
     }),
-    fc.constant<ProposalCommand>({ type: 'Reject Proposal', proposalId: proposalId, at }),
-    fc.constant<ProposalCommand>({ type: 'Hold Proposal', proposalId: proposalId, at }),
-    fc.constant<ProposalCommand>({ type: 'Unhold Proposal', proposalId: proposalId, at }),
+    fc.constant<ProposalCommand>({ type: 'Reject Proposal', proposalId, at }),
+    fc.constant<ProposalCommand>({ type: 'Hold Proposal', proposalId, at }),
+    fc.constant<ProposalCommand>({ type: 'Unhold Proposal', proposalId, at }),
     fc.constant<ProposalCommand>({
       type: 'Record Operation Applied',
-      proposalId: proposalId,
+      proposalId,
       resultingBuildingBlockId: 'b_applied' as BuildingBlockId,
       at,
     }),
     fc.constant<ProposalCommand>({
       type: 'Record Operation Rejected',
-      proposalId: proposalId,
+      proposalId,
       reason: 'r',
       at,
     }),
-    fc.constant<ProposalCommand>({ type: 'Lapse Proposal', proposalId: proposalId, cause: 'undisposed', at }),
+    fc.constant<ProposalCommand>({ type: 'Lapse Proposal', proposalId, cause: 'undisposed', at }),
   )
 
 describe('Proposal disposition machine — property', () => {

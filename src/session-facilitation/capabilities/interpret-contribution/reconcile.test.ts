@@ -69,11 +69,11 @@ beforeEach(() => {
     {
       at,
       opVersion: 1,
-      operation: { v: 1, type: 'Workshop Started', workshopId: workshopId, format: 'big-picture', creatorName: 'Dana', at },
+      operation: { v: 1, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana', at },
     },
   ])
   store.append(sessionStream(sessionId), -1, [
-    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sessionId, workshopId: workshopId, at } },
+    { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
   ])
   reserve(db, workshopId, sessionId, at)
 })
@@ -133,7 +133,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         operation: {
           v: 1,
           type: 'Contribution Made',
-          sessionId: sessionId,
+          sessionId,
           contributionId: 'c_1',
           speaker: 'Dana',
           body: 'a member borrowed a book and returned another',
@@ -147,7 +147,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         operation: {
           v: 1,
           type: 'Contribution Interpreted',
-          sessionId: sessionId,
+          sessionId,
           contributionId: 'c_1',
           tracks: [
             { track: 'propose-building-block', proposalId: p1, blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' },
@@ -186,7 +186,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
       {
         at,
         opVersion: 1,
-        operation: { v: 1, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [], at },
+        operation: { v: 1, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [], at },
       },
     ])
     expect(sessionIdsFor(db, workshopId).open).toBe(sessionId)
@@ -211,7 +211,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         operation: {
           v: 1,
           type: 'Contribution Interpreted',
-          sessionId: sessionId,
+          sessionId,
           contributionId: 'c_1',
           tracks: [{ track: 'propose-building-block', proposalId: 'p_x', blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' }],
           at,
@@ -220,7 +220,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
       {
         at,
         opVersion: 1,
-        operation: { v: 1, type: 'Session Closed', sessionId: sessionId, workshopId: workshopId, unresolvedQuestionIds: [], at },
+        operation: { v: 1, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [], at },
       },
     ])
     store.append(proposalStream('p_x' as ProposalId), -1, [
@@ -231,7 +231,7 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
           v: 1,
           type: 'Building Block Proposed',
           proposalId: 'p_x',
-          sessionId: sessionId,
+          sessionId,
           contributionId: 'c_1',
           blockKind: 'domain-event',
           label: 'Book borrowed',

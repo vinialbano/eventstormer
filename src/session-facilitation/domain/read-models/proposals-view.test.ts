@@ -13,7 +13,7 @@ const interpretedWith = (proposalIds: ProposalId[]): SessionEvent[] => [
     v: 1,
     at,
     type: 'Contribution Interpreted',
-    sessionId: sessionId,
+    sessionId,
     contributionId: c1,
     tracks: proposalIds.map((proposalId) => ({
       track: 'propose-building-block',
@@ -30,7 +30,7 @@ const birth = (proposalId: ProposalId, label = `Block ${proposalId}`): ProposalE
   at,
   type: 'Building Block Proposed',
   proposalId,
-  sessionId: sessionId,
+  sessionId,
   contributionId: c1,
   blockKind: 'domain-event',
   label,
