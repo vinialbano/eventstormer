@@ -552,8 +552,8 @@ diverged from those contracts. Do **not** do the Slice-6 ADR-007 / ARCHITECTURE.
 **Requirement**: S2-24, S2-26
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `minor` changeset present; `package.json` `version` is still `0.2.0`
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] `minor` changeset present; `package.json` `version` is still `0.2.0`
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: none (release artifact) · **Gate**: build
 **Commit**: `chore: add the Slice 2 minor changeset`
 
