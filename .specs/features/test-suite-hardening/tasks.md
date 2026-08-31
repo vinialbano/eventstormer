@@ -424,8 +424,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] No claim that CI and pre-push run *exactly* `pnpm check` with no extras
-- [ ] Gate: `pnpm check`
+- [x] No claim that CI and pre-push run *exactly* `pnpm check` with no extras
+- [x] Gate: `pnpm check`
 
 **Tests**: none
 **Gate**: build

@@ -25,9 +25,10 @@ is the first.
 
 ## Commands
 
-`pnpm check` = typecheck → lint → test → depcruise → knip, in that order, failing fast. CI and
-the pre-push hook run exactly this; they must never be able to disagree about what green means.
-`pnpm dev` is one process — Vite serves the SPA and hands `/api/*` to the Hono app.
+`pnpm check` = typecheck → lint → test → depcruise → knip, in that order, failing fast. Local
+`pnpm check` and the pre-push hook run this. CI adds `pnpm build` and `pnpm test:e2e`.
+`pnpm eval` is out of CI. `pnpm dev` is one process — Vite serves the SPA and hands `/api/*`
+to the Hono app.
 
 ## The one rule that is not negotiable
 
