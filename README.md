@@ -36,7 +36,7 @@ shell/parent value beats both). Keep real secrets in `.env.local` — the test r
 | `ANTHROPIC_API_KEY` | for the facilitator | `pnpm dev` fails fast when it is unset (unless `FACILITATOR_MODE=scripted`). |
 | `FACILITATOR_MODEL` | no | Primary model for the retry ladder. Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)); the only other supported value is `claude-haiku-4-5`. Model ids take no date suffix. |
 | `FACILITATOR_MODE` | no | `scripted` replaces the model with a canned facilitator — no key, no network. It replays `SCRIPTED_FACILITATOR_FILE` positionally, ignoring your text. |
-| `SCRIPTED_FACILITATOR_FILE` | no | Path to the script for `scripted` mode. Copy `e2e/fixtures/facilitator.json` to `facilitator.local.json` (gitignored) and edit. |
+| `SCRIPTED_FACILITATOR_FILE` | no | Path to the script for `scripted` mode. Copy `facilitator.example.json` to `facilitator.local.json` (gitignored) and edit — the example covers every track kind. |
 | `PORT` | no | Defaults to 5173. |
 
 ## What is real vs stubbed

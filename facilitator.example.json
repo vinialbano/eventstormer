@@ -1,0 +1,66 @@
+{
+  "//": "Example script for FACILITATOR_MODE=scripted. Copy to facilitator.local.json (gitignored) and point SCRIPTED_FACILITATOR_FILE at it. The script is replayed POSITIONALLY and ignores what you type: openings[n] answers the nth askOpening, turns[n] answers the nth contribution, and the last entry repeats once you run past the end. See README.md > Environment.",
+
+  "openings": [
+    {
+      "questionText": "What business are we mapping in this session?",
+      "scopeStatement": "A restaurant, from a guest arriving to settling the bill."
+    }
+  ],
+
+  "turns": [
+    {
+      "//": "turn 1 — one past-tense event, well-formed (bar: strict), and a follow-up question",
+      "interpretation": [
+        { "track": "propose-building-block", "blockKind": "domain-event", "label": "Guest seated", "bar": "strict" }
+      ],
+      "nextMove": { "move": "ask", "questionText": "What happens once the guest is seated?" }
+    },
+    {
+      "//": "turn 2 — two building blocks from one contribution: an actor and an event",
+      "interpretation": [
+        { "track": "propose-building-block", "blockKind": "actor", "label": "Waiter", "bar": "strict" },
+        { "track": "propose-building-block", "blockKind": "domain-event", "label": "Order taken", "bar": "strict" }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "//": "turn 3 — the human's wording was kept despite awkward phrasing (bar: lenient); evidenceSpan is the verbatim substring it came from",
+      "interpretation": [
+        {
+          "track": "propose-building-block",
+          "blockKind": "domain-event",
+          "label": "Order fired to the kitchen",
+          "bar": "lenient",
+          "evidenceSpan": "fire the order"
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "//": "turn 4 — the contribution named a whole phase, not one event: flag it, propose no block",
+      "interpretation": [
+        { "track": "flag-phase", "questionText": "\"Service\" sounds like a whole phase — what are the concrete steps inside it?" }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "//": "turn 5 — the content belongs to a deeper EventStorming format; notice only, no block",
+      "interpretation": [
+        {
+          "track": "attribute-to-other-format",
+          "format": "command",
+          "note": "\"Comp the check\" is a command someone issues, not something that happened."
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "//": "turn 6 — an external system",
+      "interpretation": [
+        { "track": "propose-building-block", "blockKind": "system", "label": "POS terminal", "bar": "strict" }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    }
+  ]
+}

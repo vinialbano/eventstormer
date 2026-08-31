@@ -1,7 +1,8 @@
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { isOk } from '~/plumbing/result.ts'
 import { loadConfig } from './config.ts'
 
 let dir: string
@@ -65,6 +66,22 @@ describe('loadConfig', () => {
     expect(config.facilitator).toBeDefined()
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
+  })
+
+  it('replays facilitator.example.json — the committed scripted-mode example stays valid', async () => {
+    const config = loadConfig({
+      FACILITATOR_MODE: 'scripted',
+      SCRIPTED_FACILITATOR_FILE: resolve('facilitator.example.json'),
+      EVENTSTORMER_DB: join(dir, 'e.db'),
+      DATA_DIR: dir,
+    })
+
+    const opening = await config.facilitator.askOpening({ instructions: '', prompt: '' })
+    expect(isOk(opening) && opening.value.scopeStatement.length).toBeGreaterThan(0)
+
+    const turn = await config.facilitator.interpret({ instructions: '', prompt: '' })
+    expect(isOk(turn) && turn.value.interpretation[0]?.track).toBe('propose-building-block')
+    expect(isOk(turn) && turn.value.nextMove.move).toBe('ask')
   })
 
   it('honours INTERPRETATION_INTERVAL_MS', () => {
