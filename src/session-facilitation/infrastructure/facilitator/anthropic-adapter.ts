@@ -89,9 +89,15 @@ const defaultGenerate: FacilitatorGenerate = async ({ model, schema, instruction
   }
 }
 
+// 4xx codes that are transient, not a bad request: rate limit, request timeout,
+// conflict, too-early. Classified `provider-down` so the ladder retries instead
+// of terminally failing the contribution.
+const RETRYABLE_STATUS = new Set([408, 409, 425, 429])
+
 const classifyThrown = (e: unknown): FacilitatorFailure['kind'] => {
   if (NoObjectGeneratedError.isInstance(e)) return 'schema-invalid'
   const status = (e as { statusCode?: unknown }).statusCode
+  if (typeof status === 'number' && RETRYABLE_STATUS.has(status)) return 'provider-down'
   if (typeof status === 'number' && status >= 400 && status < 500) return 'schema-invalid'
   return 'provider-down'
 }
