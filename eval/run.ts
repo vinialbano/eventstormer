@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { systemClock } from '~/plumbing/clock.ts'
 import { isOk } from '~/plumbing/result.ts'
@@ -12,6 +12,7 @@ import {
 } from '~/session-facilitation/infrastructure/facilitator/eval-oracles.ts'
 import { buildInstructions, buildTurnInput } from '~/session-facilitation/infrastructure/facilitator/prompt.ts'
 import type { FacilitationTrack } from '~/session-facilitation/infrastructure/facilitator/turn-schema.ts'
+import { formatEvalTable, spliceEvalResults } from './report.ts'
 
 const RUNS = 5
 const DATA_DIRECTORY = 'eval-runs'
@@ -194,7 +195,10 @@ export const runEval = async (options: RunEvalOptions): Promise<EvalRow[]> => {
     rows.push(...scored)
   }
 
-  void options.report
+  if (options.report) {
+    const readmePath = 'README.md'
+    writeFileSync(readmePath, spliceEvalResults(readFileSync(readmePath, 'utf8'), formatEvalTable(rows)))
+  }
   return rows
 }
 

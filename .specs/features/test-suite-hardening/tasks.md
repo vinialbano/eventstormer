@@ -512,8 +512,8 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Splice is idempotent (running twice with the same table yields the same README)
-- [ ] Gate: `pnpm check`
+- [x] Splice is idempotent (running twice with the same table yields the same README)
+- [x] Gate: `pnpm check`
 
 **Tests**: none
 **Gate**: build
