@@ -109,11 +109,14 @@ not exceptions and not Effect
 
 ## 4. The `/api` surface
 
-All routes are user-facing (the SPA calls them). The facilitator is server-side and reactive —
-its messages ride back on `start-session` and `contributions` responses.
+All routes are user-facing (the SPA calls them). The facilitator is server-side and reactive: the
+interpretation scheduler in `host/` (`scheduler.ts`, a recursive `setTimeout`) drives
+`askOpeningQuestion` → `interpretContribution` → `reconcilePendingDerivations` each tick, and the
+SPA short-polls `GET /workshops/:id/session` + `/sessions/:id/proposals` while a contribution is
+still in flight (no message rides back on a mutation response).
 
 **Writes:** `POST` `/workshops` · `/workshops/:id/scope` · `/workshops/:id/sessions` ·
-`/sessions/:id/contributions` · `/proposals/:id/{accept,edit,reject}` ·
+`/sessions/:id/contributions` · `/proposals/:id/{accept,edit,reject,hold,unhold}` ·
 `/resolutions/:id/{accept,edit,reject}` · `/workshops/:id/board/operations` *(F06/F07, op-union
 body)* · `/workshops/:id/{stakeholder-check,chosen-problem}` · `/sessions/:id/close`
 
@@ -122,7 +125,8 @@ body)* · `/workshops/:id/{stakeholder-check,chosen-problem}` · `/sessions/:id/
 `/workshops/:id/artifacts/{model,summary,transcript}`
 
 **Not routes** (in-process): `apply-operation`, `raise`/`resolve-hot-spot`,
-`interpret-contribution`, `propose-scope`, the automatic question policies.
+`interpret-contribution` / `ask-opening-question` / `reconcile-pending-derivations` (the `host/`
+scheduler's tick functions), `propose-scope`, the automatic question policies.
 
 ## 5. Build plan
 

@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 *.local
+*.local.json
 
 # Secrets. .env.example is committed; .env never is.
 .env
@@ -28,6 +29,12 @@ logs/
 
 # playwright-cli session artifacts (snapshots, console logs, traces)
 .playwright-cli/
+
+# @playwright/test run output (e2e/ itself is committed — spec + fixtures)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # impeccable design skill. Vendored copy lives at .claude/skills/impeccable/;
 # the per-harness mirrors and per-user state are local only. The committed

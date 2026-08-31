@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 3,
+  "next_id": 7,
   "lessons": [
     {
       "id": "L-001",
@@ -40,6 +40,78 @@
       ],
       "created": "2026-08-29T21:53:44Z",
       "last_seen": "2026-08-29T21:53:44Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::when idempotency has a dedicated ledger marker and redundant downstream no op guards add a test that removes the marker and asserts the effect re derives otherwise a regression that drops the marker check passes ci",
+      "text": "When idempotency has a dedicated ledger/marker AND redundant downstream no-op guards, add a test that removes the marker and asserts the effect re-derives — otherwise a regression that drops the marker check passes CI.",
+      "signal": "surviving_mutant",
+      "scope": "session-facilitation/capabilities;idempotency;tests",
+      "status": "candidate",
+      "features": [
+        "slice-1-capture-loop"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/session-facilitation/capabilities/interpret-contribution/interpret.ts:89 (session-facilitation/capabilities;idempotency;tests)"
+      ],
+      "created": "2026-08-30T22:37:18Z",
+      "last_seen": "2026-08-30T22:37:18Z"
+    },
+    {
+      "id": "L-004",
+      "key": "surviving_mutant::for a shall not call x again idempotency edge case spy on x and assert call count 1 across retries asserting only the end state one entity reused id passes even when the guard is removed",
+      "text": "For a 'SHALL NOT call X again' idempotency edge case, spy on X and assert call-count == 1 across retries; asserting only the end-state (one entity, reused id) passes even when the guard is removed.",
+      "signal": "surviving_mutant",
+      "scope": "cross-context;accept-chain;tests",
+      "status": "candidate",
+      "features": [
+        "slice-1-capture-loop"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/session-facilitation/capabilities/review-proposal/accept.ts:75 (cross-context;accept-chain;tests)"
+      ],
+      "created": "2026-08-30T22:37:18Z",
+      "last_seen": "2026-08-30T22:37:18Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::when a test asserts an error classification drive the input so only the correct branch reaches the asserted outcome e g an always failing 429 forces the retry ladder to exhaust a short script where the schema retry and ladder walk paths both succeed proves nothing",
+      "text": "When a test asserts an error CLASSIFICATION, drive the input so only the correct branch reaches the asserted outcome (e.g. an always-failing 429 forces the retry ladder to exhaust); a short script where the schema-retry and ladder-walk paths both succeed proves nothing.",
+      "signal": "surviving_mutant",
+      "scope": "src/session-facilitation/infrastructure/facilitator",
+      "status": "candidate",
+      "features": [
+        "slice-1-review-fixes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant-1: anthropic-adapter.ts classifyThrown RETRYABLE_STATUS (src/session-facilitation/infrastructure/facilitator)"
+      ],
+      "created": "2026-08-31T05:47:22Z",
+      "last_seen": "2026-08-31T05:47:22Z"
+    },
+    {
+      "id": "L-006",
+      "key": "gate_fail::a verifier sub agent with isolation worktree can land on a stale base checkout seen slice 0 tip no node modules before trusting any gate result check git rev parse head feature branch tip and that node modules exists git reset hard branch pnpm install if not",
+      "text": "A Verifier sub-agent with isolation:worktree can land on a stale base checkout (seen: slice-0 tip, no node_modules). Before trusting any gate result, check 'git rev-parse HEAD' == feature-branch tip and that node_modules exists; git reset --hard <branch> + pnpm install if not.",
+      "signal": "gate_fail",
+      "scope": "spec-driven/verifier",
+      "status": "candidate",
+      "features": [
+        "slice-1-review-fixes-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/slice-1-review-fixes-2/validation.md (spec-driven/verifier)"
+      ],
+      "created": "2026-08-31T11:19:44Z",
+      "last_seen": "2026-08-31T11:19:44Z"
     }
   ]
 }

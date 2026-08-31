@@ -19,18 +19,24 @@ Requires **Node 24.16.0+** and **pnpm 8+**.
 
 ```bash
 pnpm install
-cp .env.example .env      # then add your Anthropic API key
-pnpm dev                  # http://localhost:5173
+cp .env.example .env.local   # then add your Anthropic API key
+pnpm dev                     # http://localhost:5173
 ```
 
 One process. Vite serves the SPA and hands `/api/*` to the Hono app in the same dev server.
 
 ### Environment
 
+`pnpm dev` loads `.env.local` then `.env` (both gitignored; `.env.local` wins, and an existing
+shell/parent value beats both). Keep real secrets in `.env.local` — the test runners
+(`pnpm test`, `pnpm test:e2e`) set the variables they need explicitly and never inherit your key.
+
 | Variable | Required | Notes |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | for the facilitator | Not yet read by anything. `.env` is gitignored. |
-| `FACILITATOR_MODEL` | no | Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)). Model ids take no date suffix. |
+| `ANTHROPIC_API_KEY` | for the facilitator | `pnpm dev` fails fast when it is unset (unless `FACILITATOR_MODE=scripted`). |
+| `FACILITATOR_MODEL` | no | Primary model for the retry ladder. Defaults to `claude-sonnet-5` ([ADR-005](docs/adr/005-ai-facilitator.md)); the only other supported value is `claude-haiku-4-5`. Model ids take no date suffix. |
+| `FACILITATOR_MODE` | no | `scripted` replaces the model with a canned facilitator — no key, no network. It replays `SCRIPTED_FACILITATOR_FILE` positionally, ignoring your text. |
+| `SCRIPTED_FACILITATOR_FILE` | no | Path to the script for `scripted` mode. Copy `facilitator.example.json` to `facilitator.local.json` (gitignored) and edit — the example covers every track kind. |
 | `PORT` | no | Defaults to 5173. |
 
 ## What is real vs stubbed

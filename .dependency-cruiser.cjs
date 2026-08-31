@@ -108,6 +108,19 @@ module.exports = {
     },
 
     {
+      name: 'no-cross-store-imports',
+      severity: 'error',
+      comment:
+        'Each Pinia store cold-loads its slice of client state from one GET (ADR-007). A store ' +
+        'importing a sibling store rebuilds the coupling the single-GET rule exists to remove.',
+      from: { path: '^src/app/[^/]+/stores/([^/]+)\\.ts$', pathNot: '\\.test\\.ts$' },
+      to: {
+        path: '^src/app/[^/]+/stores/([^/]+)\\.ts$',
+        pathNot: ['^src/app/[^/]+/stores/$1\\.ts$', '\\.test\\.ts$'],
+      },
+    },
+
+    {
       name: 'no-cross-slice-imports',
       severity: 'error',
       comment:
@@ -132,6 +145,10 @@ module.exports = {
           '\\.d\\.ts$',
           '(^|/)tsconfig\\.json$',
           '(^|/)(?:package|package-lock)\\.json$',
+          // A context's api.ts is its public surface — an entry point by design
+          // (knip treats it the same). It is legitimately unimported until
+          // another context or host/ wires it.
+          '^src/[^/]+/api\\.ts$',
         ],
       },
       to: {},

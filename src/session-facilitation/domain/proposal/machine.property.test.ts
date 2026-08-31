@@ -1,0 +1,93 @@
+import fc from 'fast-check'
+import { describe, expect, it } from 'vitest'
+import type { BuildingBlockId, ContributionId, ProposalId, SessionId } from '~/plumbing/ids.ts'
+import { isOk } from '~/plumbing/result.ts'
+import { decide } from './decide.ts'
+import { evolve } from './evolve.ts'
+import { type Disposition, emptyProposal, type ProposalCommand, TERMINAL } from './model.ts'
+
+const at = '2026-08-30T12:00:00.000Z'
+const p = 'p_1' as ProposalId
+
+const VALID: ReadonlySet<Disposition> = new Set<Disposition>([
+  'PROPOSED',
+  'EDITED',
+  'ACCEPTED',
+  'APPLIED',
+  'APPLY_FAILED',
+  'REJECTED',
+  'LAPSED',
+])
+
+const command = (bbId: string): fc.Arbitrary<ProposalCommand> =>
+  fc.oneof(
+    fc.constant<ProposalCommand>({
+      type: 'Propose Building Block',
+      proposalId: p,
+      sessionId: 's_1' as SessionId,
+      contributionId: 'c_1' as ContributionId,
+      blockKind: 'domain-event',
+      label: 'x',
+      bar: 'strict',
+      at,
+    }),
+    fc.constant<ProposalCommand>({ type: 'Edit Proposal', proposalId: p, label: 'y', at }),
+    fc.constant<ProposalCommand>({
+      type: 'Accept Proposal',
+      proposalId: p,
+      accepter: 'Dana',
+      buildingBlockId: bbId as BuildingBlockId,
+      at,
+    }),
+    fc.constant<ProposalCommand>({ type: 'Reject Proposal', proposalId: p, at }),
+    fc.constant<ProposalCommand>({ type: 'Hold Proposal', proposalId: p, at }),
+    fc.constant<ProposalCommand>({ type: 'Unhold Proposal', proposalId: p, at }),
+    fc.constant<ProposalCommand>({
+      type: 'Record Operation Applied',
+      proposalId: p,
+      resultingBuildingBlockId: 'b_applied' as BuildingBlockId,
+      at,
+    }),
+    fc.constant<ProposalCommand>({
+      type: 'Record Operation Rejected',
+      proposalId: p,
+      reason: 'r',
+      at,
+    }),
+    fc.constant<ProposalCommand>({ type: 'Lapse Proposal', proposalId: p, cause: 'undisposed', at }),
+  )
+
+describe('Proposal disposition machine — property', () => {
+  it('no command sequence reaches an illegal transition', () => {
+    fc.assert(
+      fc.property(fc.array(command('b_1'), { maxLength: 40 }), (cmds) => {
+        let wm = emptyProposal()
+        let mintedId: BuildingBlockId | undefined
+
+        for (const cmd of cmds) {
+          const wasTerminal = TERMINAL.has(wm.disposition)
+          const result = decide(wm, cmd)
+
+          if (isOk(result)) {
+            // A terminal proposal never produces a further event.
+            if (wasTerminal) expect(result.value).toEqual([])
+            for (const event of result.value) wm = evolve(wm, event)
+          }
+
+          expect(VALID.has(wm.disposition)).toBe(true)
+
+          // Once minted, the buildingBlockId is stable for the life of the proposal.
+          if (wm.buildingBlockId !== undefined) {
+            mintedId ??= wm.buildingBlockId
+            expect(wm.buildingBlockId).toBe(mintedId)
+          }
+
+          // `Operation Applied` / `Operation Rejected` only ever land from ACCEPTED.
+          if (wm.disposition === 'APPLIED' || wm.disposition === 'APPLY_FAILED') {
+            expect(mintedId).toBeDefined()
+          }
+        }
+      }),
+    )
+  })
+})

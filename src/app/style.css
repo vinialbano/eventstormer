@@ -1,1 +1,83 @@
 @import "tailwindcss";
+
+/* EventStormer design tokens — see DESIGN.md. Light only (§2): the use scene is
+   a person describing their business at a laptop in daylight. */
+@theme {
+  --color-paper: #efe7d6;
+  --color-paper-edge: #e4d8c0;
+  --color-ink: #2b2723;
+  --color-surface: #ffffff;
+  --color-surface-sunk: #f7f4ee;
+  --color-text: #26221e;
+  --color-text-soft: #6b6459;
+  --color-line: #e7e0d2;
+  --color-event: #f28c28;
+  --color-event-strong: #d9741a;
+  --color-event-ink: #7a3d05;
+
+  /* Building-block kind fills — EventStorming's cast for the three v1 kinds.
+     Orange stays the one *saturated* accent and the action colour; actor and
+     system are muted so the wall still reads orange-first. */
+  --color-actor: #f2c744;
+  --color-actor-ink: #574400;
+  --color-system: #e2a0bd;
+  --color-system-ink: #612a48;
+
+  --color-pivotal: #f6c945;
+  --color-time: #2f6fb3;
+  --color-danger: #b23b3b;
+  --color-parked: #8a8172;
+
+  --font-marker: "Kalam", "Bradley Hand", "Comic Sans MS", cursive;
+  --font-ui: "Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+
+  --radius-panel: 18px;
+  --radius-card: 12px;
+  --radius-control: 9px;
+  --radius-chip: 6px;
+
+  --shadow-panel: 0 6px 24px -6px rgb(43 39 35 / 0.18), 0 1px 3px rgb(43 39 35 / 0.12);
+  --shadow-sticky: 0 2px 3px rgb(43 39 35 / 0.16), 0 8px 14px -6px rgb(43 39 35 / 0.22);
+  --shadow-card: 0 1px 2px rgb(43 39 35 / 0.12);
+
+  --ease-flight: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-ui);
+    background-color: var(--color-paper);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-event) 22%, transparent);
+  }
+
+  :root {
+    caret-color: var(--color-event-strong);
+    accent-color: var(--color-event-strong);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-event-strong);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

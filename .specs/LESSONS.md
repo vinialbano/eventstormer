@@ -26,6 +26,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: S0-11 AC4 (plumbing/event-store)
 - last seen: 2026-08-29T21:53:44Z
 
+### L-003 — When idempotency has a dedicated ledger/marker AND redundant downstream no-op guards, add a test that removes the marker and asserts the effect re-derives — otherwise a regression that drops the marker check passes CI.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `session-facilitation/capabilities;idempotency;tests` · harmful: 0
+- features: slice-1-capture-loop
+- evidence: src/session-facilitation/capabilities/interpret-contribution/interpret.ts:89 (session-facilitation/capabilities;idempotency;tests)
+- last seen: 2026-08-30T22:37:18Z
+
+### L-004 — For a 'SHALL NOT call X again' idempotency edge case, spy on X and assert call-count == 1 across retries; asserting only the end-state (one entity, reused id) passes even when the guard is removed.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `cross-context;accept-chain;tests` · harmful: 0
+- features: slice-1-capture-loop
+- evidence: src/session-facilitation/capabilities/review-proposal/accept.ts:75 (cross-context;accept-chain;tests)
+- last seen: 2026-08-30T22:37:18Z
+
+### L-005 — When a test asserts an error CLASSIFICATION, drive the input so only the correct branch reaches the asserted outcome (e.g. an always-failing 429 forces the retry ladder to exhaust); a short script where the schema-retry and ladder-walk paths both succeed proves nothing.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/session-facilitation/infrastructure/facilitator` · harmful: 0
+- features: slice-1-review-fixes
+- evidence: mutant-1: anthropic-adapter.ts classifyThrown RETRYABLE_STATUS (src/session-facilitation/infrastructure/facilitator)
+- last seen: 2026-08-31T05:47:22Z
+
+### L-006 — A Verifier sub-agent with isolation:worktree can land on a stale base checkout (seen: slice-0 tip, no node_modules). Before trusting any gate result, check 'git rev-parse HEAD' == feature-branch tip and that node_modules exists; git reset --hard <branch> + pnpm install if not.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `spec-driven/verifier` · harmful: 0
+- features: slice-1-review-fixes-2
+- evidence: .specs/features/slice-1-review-fixes-2/validation.md (spec-driven/verifier)
+- last seen: 2026-08-31T11:19:44Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

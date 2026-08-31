@@ -4,6 +4,13 @@
  * never its `domain/`, `capabilities/`, or `infrastructure/`.
  */
 export { anthropicOperationSchema } from './domain/anthropic-contract.ts'
+export { type ApplyResult, applyOperation } from './capabilities/board-access/apply-operation.ts'
+export type { BoardAccessDeps } from './capabilities/board-access/deps.ts'
+export { boardAccessRoutes } from './capabilities/board-access/http.ts'
+export {
+  type BuildingBlockRow,
+  readBuildingBlocks,
+} from './capabilities/board-access/read-building-blocks.ts'
 export { decide } from './domain/board/decide.ts'
 export { evolve } from './domain/board/evolve.ts'
 export {
@@ -26,7 +33,6 @@ export {
   OP_SCHEMA_VERSION,
   Operation,
   REPLAYABLE_OP_SCHEMA_VERSIONS,
-  SessionId,
   WorkshopId,
 } from './domain/schema/index.ts'
 export type { OperationKind } from './domain/schema/index.ts'

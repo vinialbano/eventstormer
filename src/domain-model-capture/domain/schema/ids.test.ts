@@ -1,12 +1,12 @@
 import type { z } from 'zod'
 import { describe, expect, it } from 'vitest'
-import type { WorkshopId as PlumbingWorkshopId } from '~/plumbing/ids.ts'
-import { BuildingBlockId, SessionId, WorkshopId } from './ids.ts'
+import type { BuildingBlockId as PlumbingBuildingBlockId } from '~/plumbing/ids.ts'
+import { WorkshopId as PlumbingWorkshopId } from '~/plumbing/ids.ts'
+import { BuildingBlockId, WorkshopId } from './ids.ts'
 
 describe('branded id schemas', () => {
   it('parses a string into the brand, leaving the value unchanged', () => {
     expect(WorkshopId.parse('w_abc')).toBe('w_abc')
-    expect(SessionId.parse('s_abc')).toBe('s_abc')
     expect(BuildingBlockId.parse('b_abc')).toBe('b_abc')
   })
 
@@ -15,15 +15,19 @@ describe('branded id schemas', () => {
   })
 
   it('a bare string is not assignable to the inferred brand (compile-time)', () => {
-    // @ts-expect-error a plain string is not a WorkshopId
-    const bad: z.infer<typeof WorkshopId> = 'not-branded'
+    // @ts-expect-error a plain string is not a BuildingBlockId
+    const bad: z.infer<typeof BuildingBlockId> = 'not-branded'
     expect(typeof bad).toBe('string')
   })
 
-  it('infers the same type as plumbing/ids.ts — assignable both directions, no cast', () => {
-    const parsed = WorkshopId.parse('w_1')
-    const asPlumbing: PlumbingWorkshopId = parsed
-    const back: z.infer<typeof WorkshopId> = asPlumbing
-    expect(back).toBe('w_1')
+  it('re-exports the one canonical WorkshopId from plumbing', () => {
+    expect(WorkshopId).toBe(PlumbingWorkshopId)
+  })
+
+  it('BuildingBlockId infers the same type as plumbing/ids.ts — assignable both directions, no cast', () => {
+    const parsed = BuildingBlockId.parse('b_1')
+    const asPlumbing: PlumbingBuildingBlockId = parsed
+    const back: z.infer<typeof BuildingBlockId> = asPlumbing
+    expect(back).toBe('b_1')
   })
 })
