@@ -241,7 +241,7 @@ named Proposal reject/apply sequences — HTTP covers some wiring, not the lowes
 | TSH-19 | P1: pnpm eval live 4×5 | Tasks T18–T19 | In Tasks |
 | TSH-20 | P1: k/N, no aggregate | Tasks T19 | In Tasks |
 | TSH-21 | P1: eval not in CI | Tasks T12, T19 | In Tasks |
-| TSH-22 | P1: eval oracles in pnpm test | Tasks T17 | In Tasks |
+| TSH-22 | P1: eval oracles in pnpm test | Tasks T17 | Done |
 | TSH-23 | P1: README eval markers | Tasks T15, T20 | In Tasks |
 | TSH-24 | P2: askOpening ladder | Tasks T10 | Done |
 

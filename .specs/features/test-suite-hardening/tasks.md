@@ -445,9 +445,9 @@ T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Negative: no shared content word → `sharesContentWord` false
-- [ ] Negative: `flag-phase` present → `hasFlagPhase` true
-- [ ] Gate: `pnpm test`
+- [x] Negative: no shared content word → `sharesContentWord` false
+- [x] Negative: `flag-phase` present → `hasFlagPhase` true
+- [x] Gate: `pnpm test`
 
 **Tests**: unit
 **Gate**: quick
