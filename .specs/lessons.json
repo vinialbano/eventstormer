@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 6,
+  "next_id": 7,
   "lessons": [
     {
       "id": "L-001",
@@ -94,6 +94,24 @@
       ],
       "created": "2026-08-31T05:47:22Z",
       "last_seen": "2026-08-31T05:47:22Z"
+    },
+    {
+      "id": "L-006",
+      "key": "gate_fail::a verifier sub agent with isolation worktree can land on a stale base checkout seen slice 0 tip no node modules before trusting any gate result check git rev parse head feature branch tip and that node modules exists git reset hard branch pnpm install if not",
+      "text": "A Verifier sub-agent with isolation:worktree can land on a stale base checkout (seen: slice-0 tip, no node_modules). Before trusting any gate result, check 'git rev-parse HEAD' == feature-branch tip and that node_modules exists; git reset --hard <branch> + pnpm install if not.",
+      "signal": "gate_fail",
+      "scope": "spec-driven/verifier",
+      "status": "candidate",
+      "features": [
+        "slice-1-review-fixes-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/slice-1-review-fixes-2/validation.md (spec-driven/verifier)"
+      ],
+      "created": "2026-08-31T11:19:44Z",
+      "last_seen": "2026-08-31T11:19:44Z"
     }
   ]
 }

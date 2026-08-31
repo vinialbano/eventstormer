@@ -44,6 +44,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: mutant-1: anthropic-adapter.ts classifyThrown RETRYABLE_STATUS (src/session-facilitation/infrastructure/facilitator)
 - last seen: 2026-08-31T05:47:22Z
 
+### L-006 — A Verifier sub-agent with isolation:worktree can land on a stale base checkout (seen: slice-0 tip, no node_modules). Before trusting any gate result, check 'git rev-parse HEAD' == feature-branch tip and that node_modules exists; git reset --hard <branch> + pnpm install if not.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `spec-driven/verifier` · harmful: 0
+- features: slice-1-review-fixes-2
+- evidence: .specs/features/slice-1-review-fixes-2/validation.md (spec-driven/verifier)
+- last seen: 2026-08-31T11:19:44Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -136,17 +136,17 @@ trust a wrong ceiling or mistake UI copy for a model contract.
 
 | Requirement ID | Story | Status |
 | --- | --- | --- |
-| R2FIX-01 | P1: dock replies (AC 1–3) | Pending |
-| R2FIX-02 | P1: poll survives refetch failure (AC 4–5) | Pending |
-| R2FIX-03 | P2: adapter comments (AC 6–7) | Pending |
-| R2FIX-04 | P2: dock opening-prompt comment (AC 8) | Pending |
-| R2FIX-05 | P2: deriveTracks gap doc (AC 9) | Pending |
-| R2FIX-06 | P1: `classifyThrown` honours `isRetryable` (AC 10) | Pending |
+| R2FIX-01 | P1: dock replies (AC 1–3) | Verified — `08e7da8` |
+| R2FIX-02 | P1: poll survives refetch failure (AC 4–5) | Verified — `50d2509` |
+| R2FIX-03 | P2: adapter comments (AC 6–7) | Verified — `b73196c` |
+| R2FIX-04 | P2: dock opening-prompt comment (AC 8) | Verified — `21a1656` |
+| R2FIX-05 | P2: deriveTracks gap doc (AC 9) | Verified — `0d8279f` |
+| R2FIX-06 | P1: `classifyThrown` honours `isRetryable` (AC 10) | Verified — `85fc133` |
 
 **Coverage:** 6 requirements, all mapped to execution steps.
 
 ## Success Criteria
 
-- [ ] `pnpm check` green after every step (typecheck → lint → test → depcruise → knip).
-- [ ] New unit tests for R2FIX-01 (2 cases) and R2FIX-02 (1 case); no existing test weakened.
-- [ ] Verifier pass writes `validation.md` — PASS, per-AC evidence, discrimination sensor.
+- [x] `pnpm check` green after every step (typecheck → lint → test → depcruise → knip). 379 tests.
+- [x] 3 new unit tests (R2FIX-01, R2FIX-02, R2FIX-06 — one case each); no existing test weakened.
+- [x] Verifier pass wrote `validation.md` — PASS (10/10 AC, 3/3 mutants killed, e2e 1 passed).
