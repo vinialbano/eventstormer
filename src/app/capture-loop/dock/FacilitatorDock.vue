@@ -92,12 +92,10 @@ const feed = computed<FeedItem[]>(() => {
   return items
 })
 
-// Once the scope is set but nothing has been narrated yet, the feed would be
-// empty — accepting the scope card would look like nothing happened. Show the
-// facilitator's first prompt instead (brief §5).
-const showFirstPrompt = computed(
-  () => scopeState.value.status === 'set' && feed.value.length === 0,
-)
+// Once the scope is set, the facilitator's opening prompt leads the conversation
+// and stays there — the feed reads as a chat log, messages append below it
+// (brief §5). Before that it is the F05 scope card instead (`showScopeCard`).
+const showFirstPrompt = computed(() => scopeState.value.status === 'set')
 
 const actionable = computed(() =>
   proposals.cards.filter((c) => ACTIONABLE.has(c.disposition)),

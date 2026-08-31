@@ -171,8 +171,18 @@ describe('FacilitatorDock', () => {
     expect(wrapper.find('.dock__scope').exists()).toBe(false)
   })
 
-  it('drops the first prompt once a contribution has been narrated', () => {
+  it('keeps the first prompt at the head of the feed after contributions are narrated', () => {
     seed(view(), [])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    expect(wrapper.text()).toContain('describe the first thing that happens')
+    const turns = wrapper.findAll('.turn').map((t) => t.text())
+    expect(turns[0]).toContain('describe the first thing that happens')
+    expect(turns.some((t) => t.includes('A customer places an order.'))).toBe(true)
+  })
+
+  it('does not show the first prompt while the scope is still unset', () => {
+    seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
     expect(wrapper.text()).not.toContain('describe the first thing that happens')

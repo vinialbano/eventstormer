@@ -75,14 +75,15 @@ WARN, and the cheap/safe NOTEs.
 
 ### AC-DOCK — the dock shows a first prompt after scope is set
 
-Reported in manual testing (`FACILITATOR_MODE=scripted`): accepting the scope card empties the
-dock feed and looks like nothing happened.
+Reported in manual testing: accepting the scope card emptied the dock feed ("nothing happened");
+a follow-up report — the feed should read like a chat where messages persist, not vanish.
 
-16. WHEN `scope.status` is `set` AND no contribution has been narrated yet THEN the dock feed
-    SHALL show the facilitator's first prompt (a `question` turn asking the expert to describe
-    the first thing that happens) — matching the `impeccable` brief §5 "dock open with the
-    facilitator's first prompt".
-17. WHEN at least one contribution turn exists THEN that first prompt SHALL NOT render.
+16. WHEN `scope.status` is `set` THEN the dock feed SHALL lead with the facilitator's opening
+    prompt (asking the expert to describe the first thing that happens) — matching the
+    `impeccable` brief §5 "dock open with the facilitator's first prompt".
+17. The opening prompt SHALL persist at the head of the feed as contributions are narrated below
+    it (chat-log behaviour), and SHALL NOT render while the scope is still unset (the F05 scope
+    card stands in its place then).
 
 ### AC-NOTE — precision fixes
 12. `NextMove.questionText.describe()` SHALL state the 400-character ceiling (Anthropic strips
