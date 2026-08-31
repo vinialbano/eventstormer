@@ -209,12 +209,12 @@ SF `infrastructure/`.
 **Requirement**: S2-05, S2-17, S2-18 (coverage inputs)
 **Tools**: MCP: NONE · Skill: `testing-boss`
 **Done when**:
-- [ ] fold tests pin `quotes[].text` to literal contribution bodies and `evidenceSpan`s
-- [ ] `narratorCount` is the number of distinct speakers on `Contribution Made` (0 if none)
-- [ ] two successive `Scope Set` events → `scope` is the **later** statement
-- [ ] unknown workshop is distinguishable from known-empty
-- [ ] `api.ts` re-exports `SessionIndexDb` (type-only)
-- [ ] Gate check passes: `pnpm test` · test count recorded
+- [x] fold tests pin `quotes[].text` to literal contribution bodies and `evidenceSpan`s
+- [x] `narratorCount` is the number of distinct speakers on `Contribution Made` (0 if none)
+- [x] two successive `Scope Set` events → `scope` is the **later** statement
+- [x] unknown workshop is distinguishable from known-empty
+- [x] `api.ts` re-exports `SessionIndexDb` (type-only)
+- [x] Gate check passes: `pnpm test` · 421 passed, 0 failed
 **Tests**: unit + integration · **Gate**: quick
 **Commit**: `feat(session): publish quoted evidence and coverage inputs for artifacts`
 

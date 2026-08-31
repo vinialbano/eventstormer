@@ -231,7 +231,7 @@ label; POST `sequence` → 422; unit-test `applyOperation(reword)` does not thro
 | S2-02 | P1 Reword (two-step confirm; no silent commit) | Tasks | Pending |
 | S2-03 | P1 Reword (exactly one op; id retained; empty-label rejected) | Tasks | Pending |
 | S2-04 | P1 Reword (reference set stable; new label on every site) | Tasks | Pending |
-| S2-05 | P1 Reword (quoted evidence byte-identical + marked) | Tasks | Pending |
+| S2-05 | P1 Reword (quoted evidence byte-identical + marked) | Tasks | Execute |
 | S2-06 | P1 Reword (substring label does not clobber the longer id) | Tasks | Pending |
 | S2-07 | P1 Reword (account live-refetch same interaction) | Tasks | Pending |
 | S2-08 | P1 Reword (unknown / withdrawn target rejected) | Tasks | Execute |
@@ -243,8 +243,8 @@ label; POST `sequence` → 422; unit-test `applyOperation(reword)` does not thro
 | S2-14 | P1 Account (drawer GET; empty state deterministic) | Tasks | Pending |
 | S2-15 | P1 Account (byte-identical replay of same snapshot) | Tasks | Pending |
 | S2-16 | P1 Account (re-render on every applied op; no LLM) | Tasks | Pending |
-| S2-17 | P1 Account (rendered reference vs quoted evidence) | Tasks | Pending |
-| S2-18 | P1 Account (coverage disclosure + honest "not run") | Tasks | Pending |
+| S2-17 | P1 Account (rendered reference vs quoted evidence) | Tasks | Execute |
+| S2-18 | P1 Account (coverage disclosure + honest "not run") | Tasks | Execute |
 | S2-19 | P1 Account (Supporting context; api.ts only; no aggregate) | Tasks | Pending |
 | S2-20 | P2 HTTP (`POST …/board/operations` reword/withdraw/reinstate only) | Tasks | Pending |
 | S2-21 | P2 HTTP (`applyOperation` returns `target`; no throw) | Tasks | Execute |
