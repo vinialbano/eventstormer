@@ -79,8 +79,12 @@ const assembleFacilitationContext = (
 
 /**
  * Derive every stream implied by a `Contribution Interpreted` event.
- * Idempotent: a track already marked in `derived_track` is skipped, and each
- * `decide` is a no-op once its effect exists. Runs with no model call.
+ * Idempotent from two guards: a track already in `derived_track` is skipped, and
+ * every `decide` here is a no-op once its effect exists. The `-1` on the proposal
+ * append is not what makes it idempotent — that append returns `stale-position`
+ * (not a silent no-op) when the stream already exists, and the Result is
+ * deliberately discarded because "already born" is the success case. Runs with no
+ * model call.
  */
 const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void => {
   const derived = readDerivedTrackKeys(deps.db)
