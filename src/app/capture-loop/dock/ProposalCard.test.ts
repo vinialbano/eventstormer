@@ -13,6 +13,20 @@ describe('ProposalCard', () => {
     expect(wrapper.emitted('accept')).toHaveLength(1)
   })
 
+  it('colours the kind pill by pillKind, and leaves it on the event pair when absent', () => {
+    const actor = mount(ProposalCard, {
+      props: { ...base, kindLabel: 'ACTOR', pillKind: 'actor', disposition: 'PROPOSED' },
+    })
+    expect(actor.get('.pc__pill').classes()).toContain('pc__pill--actor')
+
+    const scope = mount(ProposalCard, {
+      props: { kindLabel: 'SCOPE', label: 'A library.', disposition: 'PROPOSED', noHold: true },
+    })
+    const cls = scope.get('.pc__pill').classes()
+    expect(cls).not.toContain('pc__pill--actor')
+    expect(cls).not.toContain('pc__pill--system')
+  })
+
   it('collapses to a transcript receipt naming the accepter once APPLIED', () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'APPLIED' } })
     expect(wrapper.text()).toContain('Order placed — added by Maria')

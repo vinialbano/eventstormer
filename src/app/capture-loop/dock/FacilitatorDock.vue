@@ -248,6 +248,7 @@ const onJump = async (proposalId: string): Promise<void> => {
                 >
                   <ProposalCard
                     :kind-label="kindLabel(card.blockKind)"
+                    :pill-kind="card.blockKind"
                     :label="card.label"
                     :disposition="card.disposition"
                     :held="card.held"

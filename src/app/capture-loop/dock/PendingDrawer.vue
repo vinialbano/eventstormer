@@ -26,7 +26,7 @@ const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
         class="drawer__row"
         @click="emit('jump', card.proposalId)"
       >
-        <span class="drawer__pill">{{ kindLabel(card.blockKind) }}</span>
+        <span class="drawer__pill" :class="`drawer__pill--${card.blockKind}`">{{ kindLabel(card.blockKind) }}</span>
         <span class="drawer__label">{{ card.label }}</span>
         <span class="drawer__chev" aria-hidden="true">›</span>
       </button>
@@ -41,7 +41,7 @@ const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
         class="drawer__row"
         @click="emit('jump', card.proposalId)"
       >
-        <span class="drawer__pill">{{ kindLabel(card.blockKind) }}</span>
+        <span class="drawer__pill" :class="`drawer__pill--${card.blockKind}`">{{ kindLabel(card.blockKind) }}</span>
         <span class="drawer__label">{{ card.label }}</span>
         <span class="drawer__chev" aria-hidden="true">›</span>
       </button>
@@ -110,6 +110,14 @@ const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
   border-radius: var(--radius-chip);
   background-color: var(--color-event);
   color: var(--color-event-ink);
+}
+.drawer__pill--actor {
+  background-color: var(--color-actor);
+  color: var(--color-actor-ink);
+}
+.drawer__pill--system {
+  background-color: var(--color-system);
+  color: var(--color-system-ink);
 }
 .drawer__label {
   flex: 1;

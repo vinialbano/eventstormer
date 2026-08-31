@@ -10,6 +10,8 @@ import type { Disposition } from '../types.ts'
  */
 const props = defineProps<{
   kindLabel: string
+  /** Raw building-block kind — drives the pill colour. Absent on the scope card. */
+  pillKind?: 'domain-event' | 'actor' | 'system' | undefined
   label: string
   disposition: Disposition
   held?: boolean | undefined
@@ -19,6 +21,10 @@ const props = defineProps<{
   busy?: boolean | undefined
   noHold?: boolean | undefined
 }>()
+
+const pillClass = computed(() =>
+  props.pillKind === undefined ? undefined : `pc__pill--${props.pillKind}`,
+)
 
 const emit = defineEmits<{
   accept: []
@@ -70,7 +76,7 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
   <div v-else class="pc pc--active" :class="{ 'pc--held': held }" :data-disposition="disposition">
     <span v-if="held" class="pc__ribbon" aria-hidden="true" />
     <div class="pc__head">
-      <span class="pc__pill">{{ kindLabel }}</span>
+      <span class="pc__pill" :class="pillClass">{{ kindLabel }}</span>
       <span v-if="bar === 'lenient'" class="pc__bar" title="Kept your wording">your words</span>
       <span v-if="held" class="pc__parked">parked</span>
     </div>
@@ -170,6 +176,14 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
   border-radius: var(--radius-chip);
   background-color: var(--color-event);
   color: var(--color-event-ink);
+}
+.pc__pill--actor {
+  background-color: var(--color-actor);
+  color: var(--color-actor-ink);
+}
+.pc__pill--system {
+  background-color: var(--color-system);
+  color: var(--color-system-ink);
 }
 .pc__bar {
   font-size: 0.6875rem;

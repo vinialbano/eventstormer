@@ -232,8 +232,8 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
   box-shadow: var(--shadow-sticky);
   transform: rotate(var(--tilt, 0deg));
 }
-.sticky[data-kind='actor'] { background-color: var(--color-pivotal); }
-.sticky[data-kind='system'] { background-color: #e8dcc4; }
+.sticky[data-kind='actor'] { background-color: var(--color-actor); }
+.sticky[data-kind='system'] { background-color: var(--color-system); }
 
 .sticky__label {
   font-family: var(--font-marker);

@@ -51,10 +51,12 @@ one screen.
     is an **index, not a second card**: rows are kind pill + label + jump chevron, grouped
     `Parked by you` / `Awaiting review`, with `Accept all remaining` at the foot. A row
     click switches to the Conversation column, scrolls to that inline card, and pulses it.
-- **The board — Big-Picture grammar:** orange past-tense event stickies on a left-to-right
+- **The board — Big-Picture grammar:** past-tense event stickies (orange) on a left-to-right
   timeline **joined by hand-drawn sequence arrows**; a bounded `backlog` area top-left for
-  unplaced events; pivotal-event bars (tall thin yellow); a visible `time →`. No swimlanes,
-  no extra sticky colours in v1.
+  unplaced blocks; pivotal-event bars (tall thin yellow); a visible `time →`. No swimlanes.
+  The three v1 kinds carry EventStorming's hues — event orange, actor yellow, system pink
+  (muted; orange still leads) — kind pills match. Deeper-format colours wait for their
+  formats.
 - **Reword in place (F06):** select a committed sticky → a pencil affordance appears →
   clicking it (or `Enter` / `E` on a focused sticky) turns the sticky into a **full
   dashed ghost** (dashed border, paler fill) with editable text and **✓ / ✕** controls;

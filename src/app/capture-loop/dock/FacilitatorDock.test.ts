@@ -188,10 +188,10 @@ describe('FacilitatorDock', () => {
     ])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
-    const pills = wrapper.findAll('.pc__pill').map((p) => p.text())
-    expect(pills).toContain('ACTOR')
-    expect(pills).toContain('SYSTEM')
-    expect(pills).not.toContain('EVENT')
+    const pills = wrapper.findAll('.pc__pill')
+    expect(pills.map((p) => p.text())).toEqual(['ACTOR', 'SYSTEM'])
+    expect(pills[0]?.classes()).toContain('pc__pill--actor')
+    expect(pills[1]?.classes()).toContain('pc__pill--system')
   })
 
   it('shows a "noted" reply when a contribution produced no proposals', () => {

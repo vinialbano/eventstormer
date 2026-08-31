@@ -14,6 +14,15 @@
   --color-event: #f28c28;
   --color-event-strong: #d9741a;
   --color-event-ink: #7a3d05;
+
+  /* Building-block kind fills — EventStorming's cast for the three v1 kinds.
+     Orange stays the one *saturated* accent and the action colour; actor and
+     system are muted so the wall still reads orange-first. */
+  --color-actor: #f2c744;
+  --color-actor-ink: #574400;
+  --color-system: #e2a0bd;
+  --color-system-ink: #612a48;
+
   --color-pivotal: #f6c945;
   --color-time: #2f6fb3;
   --color-danger: #b23b3b;

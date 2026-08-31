@@ -20,6 +20,12 @@ Two materials, never blended: **paper + marker** for the model, **paper-white ap
 sans** for the controls. A control never looks hand-drawn; a sticky never looks like a UI
 chip.
 
+Orange is the one **saturated** colour and the only **action** colour. The other two v1
+building-block kinds carry EventStorming's own hues — actor a warm yellow, system a dusty
+pink — but kept muted so the wall still reads orange-first and nothing competes with the
+action colour. Deeper-format colours (command blue, policy purple, read-model green) are
+still not earned; they arrive with their formats.
+
 Locked by the brief and not up for reinvention: board-first with a floating collapsible
 dock; the pending list as an in-dock drawer; Big-Picture grammar (orange event stickies,
 sequence arrows, pivotal bars, backlog, `time →`); accent = EventStorming orange;
@@ -45,6 +51,10 @@ Tokens (defined in `src/app/style.css` via Tailwind v4 `@theme`):
 | `--color-event` | `#f28c28` | EventStorming orange — event stickies **and** the action colour |
 | `--color-event-strong` | `#d9741a` | orange pressed / focus ring |
 | `--color-event-ink` | `#7a3d05` | text on an orange surface (≥ 4.5:1) |
+| `--color-actor` | `#f2c744` | actor building-block fill (sticky + kind pill) |
+| `--color-actor-ink` | `#574400` | text on an actor surface (≥ 4.5:1) |
+| `--color-system` | `#e2a0bd` | system building-block fill (sticky + kind pill) |
+| `--color-system-ink` | `#612a48` | text on a system surface (≥ 4.5:1) |
 | `--color-pivotal` | `#f6c945` | pivotal-event bar (slice 3; token reserved now) |
 | `--color-time` | `#2f6fb3` | the `time →` arrow, ink-blue marker |
 | `--color-danger` | `#b23b3b` | reject / destructive text |
@@ -110,11 +120,15 @@ the sticky simply appears — and makes the drawer snap.
 
 ## 7. Components
 
-- **Sticky** — orange fill, marker text, id-seeded tilt, lifted-paper shadow. Kinds:
-  `domain-event` (orange), `actor` (`#f6c945` pale — reserved), `system` (`#e8dcc4` —
-  reserved). Slice 1 ships `domain-event`; others use the same cell with their fill.
-- **Kind pill** — `--radius-chip`, `0.6875rem`/700/`0.04em` uppercase, orange fill +
-  `--color-event-ink` text for EVENT.
+- **Sticky** — marker text, id-seeded tilt, lifted-paper shadow, same `132×132` cell for
+  every kind. Fill by kind: `domain-event` → `--color-event`, `actor` → `--color-actor`,
+  `system` → `--color-system`. Marker-black label on all three (AA on each fill). Slice 1
+  ships all three kinds.
+- **Kind pill** — `--radius-chip`, `0.6875rem` (drawer `0.625rem`) / 700 / `0.04em`
+  uppercase. Fill + ink by kind: `EVENT` → `--color-event` / `--color-event-ink`,
+  `ACTOR` → `--color-actor` / `--color-actor-ink`, `SYSTEM` → `--color-system` /
+  `--color-system-ink`. The scope card's `SCOPE` pill uses the EVENT pair (it is a
+  facilitator proposal, action-coloured).
 - **Proposal card** — white, `--radius-card`, kind pill + marker label + a 4-button action
   row (`Accept` filled orange, `Edit` / `Reject` / `Hold` quiet outline; `Reject` text
   `--color-danger`). A held card shows a `parked` chip and a left-edge parked ribbon.
