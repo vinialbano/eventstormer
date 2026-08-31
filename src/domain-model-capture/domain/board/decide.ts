@@ -20,40 +20,40 @@ export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], 
   if (!parsed.success) {
     return err({ kind: 'schema', classification: 'systemic', issues: parsed.error.issues })
   }
-  const o = parsed.data
+  const operation = parsed.data
 
-  switch (o.kind) {
+  switch (operation.kind) {
     case 'capture-domain-event':
     case 'identify-actor':
     case 'identify-system':
-      return wm.has(o.id)
-        ? err({ kind: 'duplicate-id', classification: 'systemic', id: o.id })
-        : ok([o])
+      return wm.has(operation.id)
+        ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
+        : ok([operation])
 
     case 'reword': {
-      if (!wm.has(o.target)) {
-        return err({ kind: 'unknown-target', classification: 'systemic', target: o.target })
+      if (!wm.has(operation.target)) {
+        return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
       }
-      if (o.label.trim().length === 0) {
-        return err({ kind: 'empty-label', classification: 'systemic', target: o.target })
+      if (operation.label.trim().length === 0) {
+        return err({ kind: 'empty-label', classification: 'systemic', target: operation.target })
       }
-      return ok([o])
+      return ok([operation])
     }
 
     case 'withdraw':
-      return wm.has(o.target)
-        ? ok([o])
-        : err({ kind: 'unknown-target', classification: 'systemic', target: o.target })
+      return wm.has(operation.target)
+        ? ok([operation])
+        : err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
 
     case 'reinstate': {
-      const block = wm.get(o.target)
+      const block = wm.get(operation.target)
       if (!block) {
-        return err({ kind: 'unknown-target', classification: 'systemic', target: o.target })
+        return err({ kind: 'unknown-target', classification: 'systemic', target: operation.target })
       }
       if (!block.withdrawn) {
-        return err({ kind: 'not-withdrawn', classification: 'systemic', target: o.target })
+        return err({ kind: 'not-withdrawn', classification: 'systemic', target: operation.target })
       }
-      return ok([o])
+      return ok([operation])
     }
 
     case 'raise-hot-spot':
@@ -70,6 +70,6 @@ export const decide = (wm: BoardWriteModel, op: Operation): Result<Operation[], 
     case 'unmark-pivotal':
     case 'resolve':
     case 'reopen':
-      return err({ kind: 'not-implemented-in-slice', classification: 'systemic', operation: o.kind })
+      return err({ kind: 'not-implemented-in-slice', classification: 'systemic', operation: operation.kind })
   }
 }

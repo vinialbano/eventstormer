@@ -7,21 +7,21 @@ import { applyOperation } from './apply-operation.ts'
 import type { BoardAccessDeps } from './deps.ts'
 import { boardAccessRoutes } from './http.ts'
 
-const w = 'w_1' as WorkshopId
+const workshopId = 'w_1' as WorkshopId
 const author = { accepter: { name: 'Dana' } }
 const clock = () => '2026-08-30T12:00:00.000Z'
 
 describe('GET /workshops/:id/board', () => {
   it('returns the snapshot rebuilt from the log', async () => {
     const deps: BoardAccessDeps = { store: createMemoryEventStore(), clock }
-    applyOperation(deps, w, Operation.parse({ author, kind: 'capture-domain-event', id: 'b_1', label: 'Loan recorded' }))
+    applyOperation(deps, workshopId, Operation.parse({ author, kind: 'capture-domain-event', id: 'b_1', label: 'Loan recorded' }))
 
-    const res = await testClient(boardAccessRoutes(deps)).workshops[':id'].board.$get({
-      param: { id: w },
+    const response = await testClient(boardAccessRoutes(deps)).workshops[':id'].board.$get({
+      param: { id: workshopId },
     })
 
-    expect(res.status).toBe(200)
-    await expect(res.json()).resolves.toEqual({
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
       position: 0,
       blocks: [
         {
@@ -38,9 +38,9 @@ describe('GET /workshops/:id/board', () => {
 
   it('404s for an unknown workshop id (no operations logged)', async () => {
     const deps: BoardAccessDeps = { store: createMemoryEventStore(), clock }
-    const res = await testClient(boardAccessRoutes(deps)).workshops[':id'].board.$get({
+    const response = await testClient(boardAccessRoutes(deps)).workshops[':id'].board.$get({
       param: { id: 'nope' },
     })
-    expect(res.status).toBe(404)
+    expect(response.status).toBe(404)
   })
 })

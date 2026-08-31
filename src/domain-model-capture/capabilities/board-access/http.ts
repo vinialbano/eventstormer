@@ -12,13 +12,13 @@ import { type BoardAccessDeps, boardStream } from './deps.ts'
  * Chained router (Hono RPC / `testClient` type inference depends on it).
  */
 export const boardAccessRoutes = (deps: BoardAccessDeps) =>
-  new Hono().get('/workshops/:id/board', (c) => {
-    const workshopId = c.req.param('id') as WorkshopId
+  new Hono().get('/workshops/:id/board', (context) => {
+    const workshopId = context.req.param('id') as WorkshopId
     const rows = deps.store.read(boardStream(workshopId))
-    if (rows.length === 0) return c.json({ error: 'workshop not found' as const }, 404)
+    if (rows.length === 0) return context.json({ error: 'workshop not found' as const }, 404)
 
-    const snapshot = replay(rows.map((r) => Operation.parse(r.operation)))
-    return c.json({
+    const snapshot = replay(rows.map((row) => Operation.parse(row.operation)))
+    return context.json({
       position: snapshot.position,
       blocks: [...snapshot.blocks].map(([id, block]) => ({ id, ...block })),
     })
