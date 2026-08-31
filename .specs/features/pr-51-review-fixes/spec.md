@@ -83,15 +83,15 @@ or `e2e` **fails the workflow** — not that GitHub required status checks exist
 
 | Req | Status |
 | --- | --- |
-| R1 | Pending |
-| R2 | Pending |
-| R3 | Pending |
+| R1 | ✅ Verified |
+| R2 | ✅ Verified |
+| R3 | ✅ Verified |
 
 ---
 
 ## Success Criteria
 
-- [ ] No `eval/**/*.test.ts` file calls `runEval`.
-- [ ] Dock edit test does not mention `.pc__input`.
-- [ ] ADR-008, design.md, spec Success Criteria, and the PR #51 test plan agree: `pnpm eval` is
+- [x] No `eval/**/*.test.ts` file calls `runEval`.
+- [x] Dock edit test does not mention `.pc__input`.
+- [x] ADR-008, design.md, spec Success Criteria, and the PR #51 test plan agree: `pnpm eval` is
   jiti; CI `check`/`e2e` fail the workflow when red.

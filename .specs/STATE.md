@@ -45,13 +45,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `test-suite-hardening` (`.specs/features/test-suite-hardening/`)
-- **Phase / Task**: Execute complete. Verifier **PASS**. Opening PR.
-- **Completed**: T1–T20 (`fb8b54a..cdc9279`); Verifier 41/41 ACs, 404 tests, 3/3 mutants killed
+- **Feature**: `pr-51-review-fixes` (`.specs/features/pr-51-review-fixes/`)
+- **Phase / Task**: Execute complete. Verifier **PASS**.
+- **Completed**: R1 `eeabbf5` · R2 `f12a3a0` · R3 `14d07da`; Verifier 11/11 ACs, 404 tests, 1/1 killable mutant killed
 - **In-progress**: none
-- **Next step**: Human: live `pnpm eval` with a key, then `pnpm eval --report`. Related: Slice 5 (#42) still owns the full 8-case eval.
+- **Next step**: Push `test/suite-hardening` so PR #51 picks up the three commits. Human: live `pnpm eval` with a key, then `pnpm eval --report`. Slice 5 (#42) still owns the full 8-case eval.
 - **Blockers**: none
-- **Uncommitted files**: none (spec pack + AD-027 in this commit; skill vendor files stay local)
+- **Uncommitted files**: none (skill vendor files `.agents/` / `testing-boss` / `skills-lock.json` stay local)
 - **Branch**: `test/suite-hardening` off `main`
 
 ---
