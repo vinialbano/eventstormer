@@ -36,8 +36,9 @@ const props = defineProps<{
   workshopId?: string
   accepter?: string
   revision?: number
+  showWithdrawn?: boolean
 }>()
-const emit = defineEmits<{ 'board-dirty': [] }>()
+const emit = defineEmits<{ 'board-dirty': []; 'update:showWithdrawn': [value: boolean] }>()
 
 const viewport = ref({ w: 1280, h: 800 })
 const measure = (): void => {
@@ -253,6 +254,7 @@ const attachedIds = computed(() => {
 })
 const backlogBlocks = computed(() =>
   props.blocks.filter((block) => {
+    if (!props.showWithdrawn && block.withdrawn) return false
     if (block.placement === 'timeline') return false
     if (timelineEventIds.value.has(block.id)) return false
     if (attachedIds.value.has(block.id)) return false
@@ -290,6 +292,12 @@ watch(
 onMounted(() => {
   mounted = true
 })
+
+const onShowWithdrawnChange = (event: Event): void => {
+  const target = event.target
+  if (!(target instanceof HTMLInputElement)) return
+  emit('update:showWithdrawn', target.checked)
+}
 
 const KIND_LABEL: Record<string, string> = {
   'domain-event': 'event',
@@ -494,13 +502,28 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
       </li>
     </ul>
 
+    <label
+      class="wall__reveal"
+      :style="{
+        left: `${layout.frame.x}px`,
+        top: `${layout.frame.y + layout.frame.h + 12}px`,
+      }"
+    >
+      <input
+        type="checkbox"
+        :checked="showWithdrawn"
+        aria-label="Show withdrawn"
+        @change="onShowWithdrawnChange"
+      >
+      Show withdrawn
+    </label>
     <p
       v-if="relationError"
       class="wall__cycle"
       role="alert"
       :style="{
         left: `${layout.frame.x}px`,
-        top: `${layout.frame.y + layout.frame.h + 52}px`,
+        top: `${layout.frame.y + layout.frame.h + 84}px`,
       }"
     >
       {{ relationError }}
@@ -512,7 +535,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
       aria-label="Sticky actions"
       :style="{
         left: `${layout.frame.x}px`,
-        top: `${layout.frame.y + layout.frame.h + 12}px`,
+        top: `${layout.frame.y + layout.frame.h + 44}px`,
       }"
     >
       <button v-if="canPlace" type="button" class="wall__action" aria-label="Place on timeline" @click="placeSelected">
@@ -625,6 +648,23 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
 .wall__timeline {
   position: absolute;
   z-index: 1;
+}
+
+.wall__reveal {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.wall__reveal input {
+  margin: 0;
+  accent-color: var(--color-ink);
 }
 
 .wall__cycle {

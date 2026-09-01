@@ -518,9 +518,9 @@ use Slice 2 ghost treatment at last placement. Snapshot still contains them (rei
 **Requirement**: S3-25
 **Tools**: MCP: NONE · Skill: `impeccable`
 **Done when**:
-- [ ] default: withdrawn event not in the timeline/backlog DOM
-- [ ] toggle on: ghost appears; reinstate still works
-- [ ] Gate check passes: `pnpm test`
+- [x] default: withdrawn event not in the timeline/backlog DOM
+- [x] toggle on: ghost appears; reinstate still works
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(app): hide withdrawn building blocks by default`
 

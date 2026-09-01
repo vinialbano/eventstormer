@@ -66,6 +66,7 @@ describe('BoardWall', () => {
           { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: true },
           { id: 'b2', kind: 'domain-event', label: 'Order confirmed', withdrawn: false },
         ],
+        showWithdrawn: true,
       },
     })
 
@@ -90,7 +91,7 @@ describe('BoardWall', () => {
     await nextTick()
 
     expect(sticky.classes()).toContain('sticky--reword')
-    const field = wrapper.get('input')
+    const field = wrapper.get('input[type="text"]')
     expect((field.element as HTMLInputElement).value).toBe('Order confirmed')
 
     await field.setValue('Order acknowledged')
@@ -99,7 +100,7 @@ describe('BoardWall', () => {
 
     expect(wrapper.find('.sticky--reword').exists()).toBe(false)
     expect(wrapper.get('.sticky').text()).toContain('Order confirmed')
-    expect(wrapper.find('input').exists()).toBe(false)
+    expect(wrapper.find('input[type="text"]').exists()).toBe(false)
   })
 
   it('opens the dashed-ghost from Enter on a focused sticky', async () => {
@@ -113,7 +114,7 @@ describe('BoardWall', () => {
     await nextTick()
 
     expect(wrapper.get('.sticky').classes()).toContain('sticky--reword')
-    expect((wrapper.get('input').element as HTMLInputElement).value).toBe('Order placed')
+    expect((wrapper.get('input[type="text"]').element as HTMLInputElement).value).toBe('Order placed')
   })
 
   it('does not start reword when E is typed in a text field', async () => {
@@ -205,7 +206,7 @@ describe('BoardWall', () => {
     })
     await wrapper.get('.sticky').trigger('focus')
     await wrapper.get('[aria-label="Reword"]').trigger('click')
-    await wrapper.get('input').setValue('   ')
+    await wrapper.get('input[type="text"]').setValue('   ')
     await wrapper.get('.sticky__keep').trigger('click')
     await nextTick()
 
@@ -277,6 +278,7 @@ describe('BoardWall', () => {
         workshopId: 'w1',
         accepter: 'Maria',
         revision: 2,
+        showWithdrawn: true,
       },
     })
     await wrapper.get('.sticky').trigger('focus')
@@ -305,7 +307,10 @@ describe('BoardWall', () => {
   it('does not open dashed-ghost from E or Enter on a focused ghost', async () => {
     const wrapper = mount(BoardWall, {
       attachTo: document.body,
-      props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: true }] },
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: true }],
+        showWithdrawn: true,
+      },
     })
     const sticky = wrapper.get('.sticky')
     await sticky.trigger('focus')
@@ -314,7 +319,7 @@ describe('BoardWall', () => {
     await nextTick()
 
     expect(wrapper.find('.sticky--reword').exists()).toBe(false)
-    expect(wrapper.find('input').exists()).toBe(false)
+    expect(wrapper.find('input[type="text"]').exists()).toBe(false)
   })
 
   it('Esc from the ghost input closes the confirm popover and keeps the dashed-ghost', async () => {
@@ -348,7 +353,7 @@ describe('BoardWall', () => {
 
     expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(true)
 
-    const field = wrapper.get('input')
+    const field = wrapper.get('input[type="text"]')
     const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
     Object.defineProperty(escape, 'target', { value: field.element })
     window.dispatchEvent(escape)
@@ -389,5 +394,60 @@ describe('BoardWall', () => {
     ])
     expect(nodes.find((node) => node.id === 'eA')?.data.pivotal).toBe(true)
     expect(wrapper.findComponent({ name: 'VueFlow' }).props('nodesDraggable')).toBe(false)
+  })
+
+  it('hides withdrawn stickies by default and reveals ghosts when Show withdrawn is on', async () => {
+    const wrapper = mount(BoardWall, {
+      props: {
+        blocks: [
+          { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: true },
+          { id: 'b2', kind: 'domain-event', label: 'Order confirmed', withdrawn: false },
+        ],
+      },
+    })
+
+    expect(wrapper.findAll('[aria-label="Backlog"] .sticky')).toHaveLength(1)
+    expect(wrapper.get('[aria-label="Backlog"] .sticky').text()).toContain('Order confirmed')
+    expect(wrapper.find('[data-withdrawn="true"]').exists()).toBe(false)
+
+    await wrapper.get('[aria-label="Show withdrawn"]').setValue(true)
+    expect(wrapper.emitted('update:showWithdrawn')).toEqual([[true]])
+
+    await wrapper.setProps({ showWithdrawn: true })
+    const ghost = wrapper.get('[data-withdrawn="true"]')
+    expect(ghost.classes()).toContain('sticky--withdrawn')
+    expect(ghost.attributes('aria-label')).toBe('event: Order placed')
+  })
+
+  it('reveals a withdrawn timeline event as a ghost at last placement', () => {
+    const wrapper = mount(BoardWall, {
+      props: {
+        showWithdrawn: true,
+        blocks: [
+          {
+            id: 'eA',
+            kind: 'domain-event',
+            label: 'Loan recorded',
+            withdrawn: true,
+            placement: 'timeline',
+          },
+        ],
+        timeline: {
+          tracks: [{ eventIds: ['eA'], ranks: { eA: 0 } }],
+          edges: [],
+          attachments: {},
+          pivotal: [],
+        } as unknown as TimelineLayout,
+      },
+    })
+
+    expect(wrapper.findAll('[aria-label="Backlog"] .sticky')).toHaveLength(0)
+    const nodes = wrapper.findComponent({ name: 'VueFlow' }).props('nodes') as {
+      id: string
+      data: { withdrawn: boolean }
+    }[]
+    expect(nodes).toHaveLength(1)
+    expect(nodes[0]?.id).toBe('eA')
+    expect(nodes[0]?.data.withdrawn).toBe(true)
   })
 })
