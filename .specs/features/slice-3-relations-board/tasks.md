@@ -426,11 +426,11 @@ does not add/remove sites for `Order placed`.
 **Requirement**: S3-26
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] sequenced A→B: A's references include a `follows` site and `readable-account`; B likewise
-- [ ] after changing A's label in the input, the site **set** (kind+path) is unchanged; displayed
+- [x] sequenced A→B: A's references include a `follows` site and `readable-account`; B likewise
+- [x] after changing A's label in the input, the site **set** (kind+path) is unchanged; displayed
       labels are not part of `path`
-- [ ] nested-label substring fixture from Slice 2 still passes
-- [ ] Gate check passes: `pnpm test`
+- [x] nested-label substring fixture from Slice 2 still passes
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(artifacts): reference list names follows and causedBy endpoints`
 

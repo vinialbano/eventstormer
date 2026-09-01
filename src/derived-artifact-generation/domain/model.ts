@@ -13,6 +13,11 @@ export interface AccountFollowsEdge {
   successor: BuildingBlockId
 }
 
+export interface AccountCausedByEdge {
+  cause: BuildingBlockId
+  effect: BuildingBlockId
+}
+
 interface AccountQuote {
   id: string
   text: string
@@ -26,10 +31,11 @@ export interface AccountInput {
   blocks: AccountBlock[]
   quotes: AccountQuote[]
   follows?: AccountFollowsEdge[]
+  causedBy?: AccountCausedByEdge[]
 }
 
 export interface ReferenceSite {
-  kind: 'readable-account'
+  kind: 'readable-account' | 'follows' | 'caused-by'
   path: string
 }
 

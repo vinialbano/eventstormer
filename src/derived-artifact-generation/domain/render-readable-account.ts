@@ -1,5 +1,11 @@
 import type { BuildingBlockId } from '~/plumbing/ids.ts'
-import type { AccountBlock, AccountDocument, AccountFollowsEdge, AccountInput } from './model.ts'
+import type {
+  AccountBlock,
+  AccountDocument,
+  AccountFollowsEdge,
+  AccountInput,
+  ReferenceSite,
+} from './model.ts'
 
 const kindWord = (kind: AccountBlock['kind']): 'Event' | 'Actor' | 'System' => {
   switch (kind) {
@@ -169,14 +175,36 @@ ${quotes}
  * Deterministic Markdown walk of the snapshot. Placed events appear in
  * follows order under Timeline and relations; building-block lines remain
  * for every kind. Quoted evidence is inserted verbatim and never follows
- * a reword.
+ * a reword. Relation sites are keyed by endpoint ids so a reword does not
+ * change the site set.
  */
 export const renderReadableAccount = (input: AccountInput): AccountDocument => {
-  const references = new Map(
+  const references = new Map<BuildingBlockId, ReferenceSite[]>(
     input.blocks.map((block) => [
       block.id,
       [{ kind: 'readable-account' as const, path: 'building-blocks' }],
     ]),
   )
+  const pushSite = (id: BuildingBlockId, site: ReferenceSite): void => {
+    const existing = references.get(id)
+    if (existing) existing.push(site)
+    else references.set(id, [site])
+  }
+  for (const edge of input.follows ?? []) {
+    const site: ReferenceSite = {
+      kind: 'follows',
+      path: `${edge.predecessor}>${edge.successor}`,
+    }
+    pushSite(edge.predecessor, site)
+    pushSite(edge.successor, site)
+  }
+  for (const edge of input.causedBy ?? []) {
+    const site: ReferenceSite = {
+      kind: 'caused-by',
+      path: `${edge.cause}>${edge.effect}`,
+    }
+    pushSite(edge.cause, site)
+    pushSite(edge.effect, site)
+  }
   return { markdown: toMarkdown(input), references }
 }

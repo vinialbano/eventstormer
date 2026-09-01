@@ -47,6 +47,7 @@ const documentFor = (
       narratorCount: source.value.narratorCount,
       blocks: toAccountBlocks(snapshot.blocks),
       follows: snapshot.follows,
+      causedBy: snapshot.causedBy,
       quotes: source.value.quotes,
     }),
   }
