@@ -153,11 +153,11 @@ touch the write model.
 **Requirement**: S3-02, S3-04, S3-14, S3-15, S3-16
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `sequence` A→B then A→C yields two successors of A (pinned literals)
-- [ ] `insert-between(A,C,B)` yields A→C and C→B and **not** A→B; a third successor of A remains
-- [ ] withdraw of an event with follows on both sides leaves **no** edge between the neighbours
-- [ ] withdraw of an actor that caused two events leaves those events with empty causes
-- [ ] Gate check passes: `pnpm test`
+- [x] `sequence` A→B then A→C yields two successors of A (pinned literals)
+- [x] `insert-between(A,C,B)` yields A→C and C→B and **not** A→B; a third successor of A remains
+- [x] withdraw of an event with follows on both sides leaves **no** edge between the neighbours
+- [x] withdraw of an actor that caused two events leaves those events with empty causes
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): evolve follows and causedBy; withdraw severs incident edges`
 
