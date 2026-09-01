@@ -13,7 +13,7 @@ export interface AccountFollowsEdge {
   successor: BuildingBlockId
 }
 
-export interface AccountCausedByEdge {
+interface AccountCausedByEdge {
   cause: BuildingBlockId
   effect: BuildingBlockId
 }

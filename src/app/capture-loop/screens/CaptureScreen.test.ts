@@ -95,7 +95,9 @@ describe('CaptureScreen', () => {
     fetchMock = vi.fn((url: string) => {
       if (url.endsWith('/board')) {
         boardCalls.push(url)
-        return Promise.resolve(new Response(JSON.stringify({ position: -1, blocks: [] }), { status: 200 }))
+        return Promise.resolve(
+          new Response(JSON.stringify({ position: -1, blocks: [], follows: [], causedBy: [] }), { status: 200 }),
+        )
       }
       if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
       return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
@@ -137,8 +139,11 @@ describe('CaptureScreen', () => {
                   label: 'Order placed',
                   withdrawn: true,
                   placement: 'backlog',
+                  pivotal: false,
                 },
               ],
+              follows: [],
+              causedBy: [],
             }),
             { status: 200 },
           ),
@@ -152,7 +157,14 @@ describe('CaptureScreen', () => {
     await flushPromises()
 
     expect(wrapper.getComponent(BoardWall).props('blocks')).toEqual([
-      { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: true },
+      {
+        id: 'b1',
+        kind: 'domain-event',
+        label: 'Order placed',
+        withdrawn: true,
+        placement: 'backlog',
+        pivotal: false,
+      },
     ])
     expect(wrapper.getComponent(BoardWall).props()).toMatchObject({
       workshopId: 'w1',
@@ -168,7 +180,9 @@ describe('CaptureScreen', () => {
       urls.push(url)
       if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
       if (url.endsWith('/board')) {
-        return Promise.resolve(new Response(JSON.stringify({ position: 1, blocks: [] }), { status: 200 }))
+        return Promise.resolve(
+          new Response(JSON.stringify({ position: 1, blocks: [], follows: [], causedBy: [] }), { status: 200 }),
+        )
       }
       if (url.endsWith('/readable-account')) {
         return Promise.resolve(

@@ -1,19 +1,24 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
 import { postBoardOperation } from '../dock/mutations.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import RewordConfirm from './RewordConfirm.vue'
+import TimelinePane from './TimelinePane.vue'
 import { isTypingSurface } from './typing-surface.ts'
 
 /**
- * The board wall — a full-screen EventStorming surface. Slice 1 renders the
- * backlog area only (ADR-006: the layout is the pure `layoutBoard`; this file is
- * the swappable renderer). A pending proposal is never drawn here — the dashed
- * ghost is reword-only.
+ * The board wall — a full-screen EventStorming surface. The backlog is the
+ * pure `layoutBoard` renderer; placed events render in the timeline pane from
+ * domain ranks.
  */
+
+const EMPTY_TIMELINE: TimelineLayout = { tracks: [], edges: [], attachments: {}, pivotal: [] }
+
 const props = defineProps<{
   blocks: BoardBlockInput[]
+  timeline?: TimelineLayout
   workshopId?: string
   accepter?: string
   revision?: number
@@ -132,7 +137,26 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onWindowKeydown)
 })
 
-const layout = computed(() => layoutBoard(props.blocks, viewport.value))
+const timeline = computed(() => props.timeline ?? EMPTY_TIMELINE)
+const timelineEventIds = computed(
+  () => new Set(timeline.value.tracks.flatMap((track) => track.eventIds.map(String))),
+)
+const attachedIds = computed(() => {
+  const ids = new Set<string>()
+  for (const causes of Object.values(timeline.value.attachments)) {
+    for (const id of causes) ids.add(id)
+  }
+  return ids
+})
+const backlogBlocks = computed(() =>
+  props.blocks.filter((block) => {
+    if (block.placement === 'timeline') return false
+    if (timelineEventIds.value.has(block.id)) return false
+    if (attachedIds.value.has(block.id)) return false
+    return true
+  }),
+)
+const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
 
 // The focal moment (DESIGN.md §6): a block that has just landed on the wall
 // gets a brief settle + fading highlight, then it is just part of the wall.
@@ -364,6 +388,20 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         </template>
       </li>
     </ul>
+
+    <div
+      class="wall__timeline"
+      role="region"
+      aria-label="Timeline"
+      :style="{
+        left: `${layout.frame.x + layout.frame.w + 24}px`,
+        top: `${layout.timeGuide.y1 + 24}px`,
+        width: `${Math.max(280, layout.canvas.w - layout.frame.x - layout.frame.w - 80)}px`,
+        height: `${Math.max(240, layout.canvas.h - layout.timeGuide.y1 - 80)}px`,
+      }"
+    >
+      <TimelinePane :blocks="blocks" :timeline="timeline" />
+    </div>
   </div>
 </template>
 
@@ -414,6 +452,11 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.wall__timeline {
+  position: absolute;
+  z-index: 1;
 }
 
 .sticky {

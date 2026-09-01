@@ -475,12 +475,12 @@ if Vue Flow ships)
 **Requirement**: S3-17, S3-18, S3-21, S3-24
 **Tools**: MCP: `plugin-context7-plugin-context7` (Vue Flow 1.48) · Skill: `impeccable`
 **Done when**:
-- [ ] two sequenced events render left-to-right; a branch shows two successors
-- [ ] actor chips sit on the event node, not on the time axis
-- [ ] Vue Flow `nodes-draggable` is false (component test or DOM assertion)
-- [ ] spike outcome recorded in the commit message (Vue Flow kept **or** grid fallback)
-- [ ] `playwright-cli open` on a board with two placed events: **zero** console errors
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] two sequenced events render left-to-right; a branch shows two successors
+- [x] actor chips sit on the event node, not on the time axis
+- [x] Vue Flow `nodes-draggable` is false (component test or DOM assertion)
+- [x] spike outcome recorded in the commit message (Vue Flow kept **or** grid fallback)
+- [x] `playwright-cli open` on a board with two placed events: **zero** console errors
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: unit · **Gate**: build
 **Commit**: `feat(app): render the timeline from domain ranks` (note fallback in body if used)
 

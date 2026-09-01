@@ -8,8 +8,6 @@ describe('layoutBoard', () => {
     const layout = layoutBoard([], VIEWPORT)
 
     expect(layout.backlog).toEqual([])
-    expect(layout.placed).toEqual([])
-    expect(layout.arrows).toEqual([])
     // 3 cells + 2 gaps + 2 * 16 pad = 3*132 + 2*16 + 32 = 460
     expect(layout.frame).toEqual({ x: 40, y: 40, w: 460, h: 194, label: 'backlog' })
     expect(layout.canvas).toEqual({ w: 1280, h: 800 })

@@ -72,6 +72,7 @@ export default defineConfig({
           name: 'app',
           environment: 'jsdom',
           include: ['src/app/**/*.test.ts'],
+          setupFiles: ['src/app/test-setup.ts'],
         },
       },
       {

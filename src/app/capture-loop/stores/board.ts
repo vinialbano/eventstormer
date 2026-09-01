@@ -26,7 +26,7 @@ const toLayoutSnapshot = (http: BoardSnapshot): LayoutSnapshot =>
         },
       ]),
     ),
-  }) as LayoutSnapshot
+  }) as unknown as LayoutSnapshot
 
 /**
  * The `board` store — cold-loads from `/workshops/:id/board` (ADR-007). The

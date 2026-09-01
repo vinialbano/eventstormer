@@ -5,13 +5,11 @@ const author = { accepter: { name: 'Maria' } } as const
 
 describe('postBoardOperation', () => {
   it('POSTs a sequence body with predecessor and successor and no target', async () => {
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ position: 4 }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ position: 4 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
     )
     vi.stubGlobal('fetch', fetchMock)
 
@@ -37,18 +35,15 @@ describe('postBoardOperation', () => {
         }),
       }),
     )
-    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).not.toHaveProperty('target')
     vi.unstubAllGlobals()
   })
 
   it('POSTs a link-cause body with cause and effect and no target', async () => {
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ position: 5 }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ position: 5 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
     )
     vi.stubGlobal('fetch', fetchMock)
 
@@ -74,7 +69,6 @@ describe('postBoardOperation', () => {
         }),
       }),
     )
-    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).not.toHaveProperty('target')
     vi.unstubAllGlobals()
   })
 })

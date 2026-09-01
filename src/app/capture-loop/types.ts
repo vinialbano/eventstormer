@@ -70,7 +70,7 @@ export interface ProposalCard {
   buildingBlockId?: string
 }
 
-export interface BoardBlock {
+interface BoardBlock {
   id: string
   kind: string
   label: string

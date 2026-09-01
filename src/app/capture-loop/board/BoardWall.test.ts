@@ -1,6 +1,7 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import BoardWall from './BoardWall.vue'
 import RewordConfirm from './RewordConfirm.vue'
 
@@ -356,5 +357,37 @@ describe('BoardWall', () => {
     expect(wrapper.find('.sticky--reword').exists()).toBe(true)
     expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(false)
     vi.unstubAllGlobals()
+  })
+
+  it('renders placed events on the timeline, not in the backlog, with actor chips on the event', () => {
+    const wrapper = mount(BoardWall, {
+      props: {
+        blocks: [
+          { id: 'eA', kind: 'domain-event', label: 'Loan recorded', placement: 'timeline', pivotal: true },
+          { id: 'eB', kind: 'domain-event', label: 'Book returned', placement: 'timeline' },
+          { id: 'eC', kind: 'domain-event', label: 'Still loose', placement: 'backlog' },
+          { id: 'a1', kind: 'actor', label: 'Clerk', placement: 'backlog' },
+        ],
+        timeline: {
+          tracks: [{ eventIds: ['eA', 'eB'], ranks: { eA: 0, eB: 1 } }],
+          edges: [{ predecessor: 'eA', successor: 'eB' }],
+          attachments: { eA: ['a1'] },
+          pivotal: ['eA'],
+        } as unknown as TimelineLayout,
+      },
+    })
+
+    const backlog = wrapper.findAll('[aria-label="Backlog"] .sticky')
+    expect(backlog.map((sticky) => sticky.text())).toEqual(['Still loose'])
+    const nodes = wrapper.findComponent({ name: 'VueFlow' }).props('nodes') as {
+      id: string
+      data: { attachments: { label: string }[]; pivotal: boolean }
+    }[]
+    expect(nodes.map((node) => node.id).toSorted()).toEqual(['eA', 'eB'])
+    expect(nodes.find((node) => node.id === 'eA')?.data.attachments).toEqual([
+      { id: 'a1', kind: 'actor', label: 'Clerk' },
+    ])
+    expect(nodes.find((node) => node.id === 'eA')?.data.pivotal).toBe(true)
+    expect(wrapper.findComponent({ name: 'VueFlow' }).props('nodesDraggable')).toBe(false)
   })
 })

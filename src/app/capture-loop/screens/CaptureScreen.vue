@@ -34,6 +34,8 @@ const blocks = computed(() =>
     kind: block.kind,
     label: block.label,
     withdrawn: block.withdrawn,
+    placement: block.placement,
+    pivotal: block.pivotal,
     speaker: block.provenance?.accepter.name,
   })),
 )
@@ -84,6 +86,7 @@ onMounted(loadAll)
   <div class="screen">
     <BoardWall
       :blocks="blocks"
+      :timeline="board.timeline"
       :workshop-id="id"
       :accepter="session.creatorName"
       :revision="board.snapshot.position"

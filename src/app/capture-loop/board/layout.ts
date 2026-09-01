@@ -1,10 +1,8 @@
 /**
  * The board wall layout — a pure function, no Vue, no DOM (ADR-006: the board
- * renderer is framework-free and swappable). Slice 1 lays out the **backlog
- * only**: a titled frame top-left and its stickies flowed left→right,
- * top→bottom in fixed cells. The timeline, sequence arrows and pivotal bars are
- * slice 3 — `placed` and `arrows` are already in the return type so nothing
- * downstream changes shape when slice 3 fills them.
+ * renderer is framework-free and swappable). Lays out the **backlog only**: a
+ * titled frame top-left and its stickies flowed left→right, top→bottom in
+ * fixed cells. Timeline ranks and edges come from `computeTimelineLayout`.
  */
 
 export interface BoardBlockInput {
@@ -13,6 +11,8 @@ export interface BoardBlockInput {
   label: string
   withdrawn?: boolean | undefined
   speaker?: string | undefined
+  placement?: 'backlog' | 'timeline' | undefined
+  pivotal?: boolean | undefined
 }
 
 interface LayoutViewport {
@@ -43,14 +43,10 @@ interface BoardLayout {
   /** The `time →` guide line, drawn hand-style by the renderer. */
   timeGuide: { x1: number; y1: number; x2: number; y2: number }
   backlog: StickyRect[]
-  /** Slice 3. */
-  placed: StickyRect[]
-  /** Slice 3. */
-  arrows: never[]
 }
 
 const WALL_INSET = 40
-const CELL = 132
+export const CELL = 132
 const GAP = 16
 const FRAME_PAD = 16
 const FRAME_TITLE_H = 30
@@ -104,7 +100,5 @@ export const layoutBoard = (
       y2: guideY,
     },
     backlog,
-    placed: [],
-    arrows: [],
   }
 }
