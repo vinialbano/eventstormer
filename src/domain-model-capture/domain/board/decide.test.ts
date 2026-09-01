@@ -52,8 +52,6 @@ const followsIsAcyclic = (follows: Map<BuildingBlockId, Set<BuildingBlockId>>): 
 
 const NOT_IMPLEMENTED: OperationKind[] = [
   'raise-hot-spot',
-  'link-cause',
-  'unlink-cause',
   'annotate',
   'unannotate',
   'mark-pivotal',
@@ -518,6 +516,110 @@ describe('decide — insert-between', () => {
     }
     expect(writeModel.follows.get(bid('eA'))).toEqual(new Set([bid('eB')]))
     expect(writeModel.follows.get(bid('eC'))).toEqual(new Set([bid('eA')]))
+  })
+})
+
+describe('decide — link-cause / unlink-cause', () => {
+  const actorAndEvent = [
+    { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+    { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+  ]
+
+  it('accepts actor→event and system→event as a single link-cause', () => {
+    const actorModel = given(actorAndEvent)
+    const actorLink = decide(actorModel, op({ kind: 'link-cause', cause: 'a1', effect: 'eA' }))
+    expect(isOk(actorLink)).toBe(true)
+    if (isOk(actorLink)) {
+      expect(actorLink.value).toEqual([op({ kind: 'link-cause', cause: 'a1', effect: 'eA' })])
+    }
+    const systemModel = given([
+      { kind: 'identify-system', id: 's1', label: 'ledger' },
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+    ])
+    const systemLink = decide(systemModel, op({ kind: 'link-cause', cause: 's1', effect: 'eA' }))
+    expect(isOk(systemLink)).toBe(true)
+    if (isOk(systemLink)) {
+      expect(systemLink.value).toEqual([op({ kind: 'link-cause', cause: 's1', effect: 'eA' })])
+    }
+  })
+
+  it('rejects event→event, actor→actor, and event→actor as kind-permission', () => {
+    const writeModel = given([
+      ...actorAndEvent,
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'identify-actor', id: 'a2', label: 'member' },
+    ])
+    const pairings = [
+      { cause: 'eA', effect: 'eB' },
+      { cause: 'a1', effect: 'a2' },
+      { cause: 'eA', effect: 'a1' },
+    ]
+    for (const pairing of pairings) {
+      const result = decide(writeModel, op({ kind: 'link-cause', ...pairing }))
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+    }
+  })
+
+  it('rejects a duplicate link-cause as already-related', () => {
+    const writeModel = given([
+      ...actorAndEvent,
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'link-cause', cause: 'a1', effect: 'eA' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'already-related', classification: 'systemic' })
+    }
+  })
+
+  it('unlinks an existing pair as a single unlink-cause', () => {
+    const writeModel = given([
+      ...actorAndEvent,
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' })])
+    }
+  })
+
+  it('rejects unlink-cause of an unknown pair as missing-edge', () => {
+    const writeModel = given(actorAndEvent)
+    const result = decide(writeModel, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
+    }
+  })
+
+  it('rejects missing or withdrawn endpoints with existing rejection kinds', () => {
+    const missing = decide(emptyWriteModel(), op({ kind: 'link-cause', cause: 'a9', effect: 'e9' }))
+    expect(isErr(missing)).toBe(true)
+    if (isErr(missing)) {
+      expect(missing.error).toEqual({
+        kind: 'unknown-target',
+        classification: 'systemic',
+        target: 'a9',
+      })
+    }
+    const withdrawnCause = given([
+      ...actorAndEvent,
+      { kind: 'withdraw', target: 'a1' },
+    ])
+    const withdrawn = decide(
+      withdrawnCause,
+      op({ kind: 'link-cause', cause: 'a1', effect: 'eA' }),
+    )
+    expect(isErr(withdrawn)).toBe(true)
+    if (isErr(withdrawn)) {
+      expect(withdrawn.error).toEqual({
+        kind: 'withdrawn-target',
+        classification: 'systemic',
+        target: 'a1',
+      })
+    }
   })
 })
 

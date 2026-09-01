@@ -262,10 +262,10 @@ pairings → `kind-permission`. `unlink-cause` of a missing pair → `missing-ed
 **Requirement**: S3-11, S3-12, S3-13
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] actor→event accepted; event→event, actor→actor, event→actor rejected `kind-permission`
-- [ ] duplicate link → `already-related`; unlink of unknown pair → `missing-edge`
-- [ ] withdrawn/missing endpoints rejected with existing kinds
-- [ ] Gate check passes: `pnpm test`
+- [x] actor→event accepted; event→event, actor→actor, event→actor rejected `kind-permission`
+- [x] duplicate link → `already-related`; unlink of unknown pair → `missing-edge`
+- [x] withdrawn/missing endpoints rejected with existing kinds
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): decide causedBy only from actor or system to event`
 

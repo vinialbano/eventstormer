@@ -288,6 +288,49 @@ const decideInsertBetween = (
   return ok([operation])
 }
 
+const isCauseKind = (kind: WriteBlock['kind']): boolean => kind === 'actor' || kind === 'system'
+
+const decideLinkCause = (writeModel: BoardWriteModel, operation: OpOf<'link-cause'>): Decision => {
+  const cause = lookupActive(writeModel, operation.cause)
+  if (!cause.ok) return cause
+  const effect = lookupActive(writeModel, operation.effect)
+  if (!effect.ok) return effect
+  if (!isCauseKind(cause.value.kind) || effect.value.kind !== 'domain-event') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'causedBy only links an actor or system to a domain event',
+    })
+  }
+  if (writeModel.causedBy.get(operation.effect)?.has(operation.cause) === true) {
+    return err({ kind: 'already-related', classification: 'systemic' })
+  }
+  return ok([operation])
+}
+
+const decideUnlinkCause = (
+  writeModel: BoardWriteModel,
+  operation: OpOf<'unlink-cause'>,
+): Decision => {
+  const cause = lookupActive(writeModel, operation.cause)
+  if (!cause.ok) return cause
+  const effect = lookupActive(writeModel, operation.effect)
+  if (!effect.ok) return effect
+  if (!isCauseKind(cause.value.kind) || effect.value.kind !== 'domain-event') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'causedBy only links an actor or system to a domain event',
+    })
+  }
+  if (writeModel.causedBy.get(operation.effect)?.has(operation.cause) !== true) {
+    return err({ kind: 'missing-edge', classification: 'systemic' })
+  }
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -338,9 +381,13 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
     case 'insert-between':
       return decideInsertBetween(writeModel, operation)
 
-    case 'raise-hot-spot':
     case 'link-cause':
+      return decideLinkCause(writeModel, operation)
+
     case 'unlink-cause':
+      return decideUnlinkCause(writeModel, operation)
+
+    case 'raise-hot-spot':
     case 'annotate':
     case 'unannotate':
     case 'mark-pivotal':
