@@ -16,7 +16,7 @@ watch([() => account.html, body], () => {
 
 <template>
   <aside class="account" role="region" aria-labelledby="account-title">
-    <h2 id="account-title" class="sr-only">Readable account</h2>
+    <h2 id="account-title" class="account__title">Readable account</h2>
     <div ref="body" class="account__body" />
   </aside>
 </template>
@@ -37,14 +37,17 @@ watch([() => account.html, body], () => {
   font-family: var(--font-ui);
   color: var(--color-text);
 }
+.account__title {
+  margin: 0 36px 14px 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
 .account__body {
   font-size: 0.9375rem;
   line-height: 1.45;
 }
 .account__body :deep(h1) {
-  margin: 0 0 12px;
-  font-size: 1.125rem;
-  font-weight: 800;
+  display: none;
 }
 .account__body :deep(h2) {
   margin: 18px 0 8px;
@@ -57,16 +60,5 @@ watch([() => account.html, body], () => {
   border-left: 1px solid var(--color-line);
   background-color: var(--color-surface-sunk);
   color: var(--color-text);
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 </style>

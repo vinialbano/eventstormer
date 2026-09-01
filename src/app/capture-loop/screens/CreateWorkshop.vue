@@ -75,9 +75,9 @@ const create = async (): Promise<void> => {
 }
 .create__title {
   margin: 0 0 6px;
-  font-family: var(--font-marker);
+  font-family: var(--font-ui);
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 .create__sub {
   margin: 0 0 20px;
@@ -115,7 +115,7 @@ const create = async (): Promise<void> => {
 }
 .create__go:hover:not(:disabled) {
   background-color: var(--color-event-strong);
-  color: #fff;
+  color: var(--color-event-ink);
 }
 .create__go:disabled {
   opacity: 0.45;

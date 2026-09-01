@@ -29,6 +29,7 @@ const measure = (): void => {
 }
 
 const selectedId = ref<string | null>(null)
+const withdrawAskId = ref<string | null>(null)
 const editingId = ref<string | null>(null)
 const draft = ref('')
 const labelError = ref('')
@@ -40,6 +41,7 @@ const bindDraftInput = (element: unknown): void => {
 
 const selectSticky = (id: string): void => {
   selectedId.value = id
+  if (withdrawAskId.value !== id) withdrawAskId.value = null
 }
 
 const cancelReword = (): void => {
@@ -79,6 +81,10 @@ const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise
 const dismissEsc = (): void => {
   if (confirmOpen.value) {
     confirmOpen.value = false
+    return
+  }
+  if (withdrawAskId.value !== null) {
+    withdrawAskId.value = null
     return
   }
   cancelReword()
@@ -267,7 +273,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         :data-kind="s.kind"
         :data-withdrawn="s.withdrawn ? 'true' : 'false'"
         tabindex="0"
-        :aria-label="`${kindWord(s.kind)}: ${s.label}`"
+        :aria-label="s.speaker === undefined ? `${kindWord(s.kind)}: ${s.label}` : `${kindWord(s.kind)}: ${s.label}, added by ${s.speaker}`"
         :style="{
           left: `${s.x}px`,
           top: `${s.y}px`,
@@ -296,13 +302,22 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
           </svg>
         </button>
         <button
-          v-if="showsActiveControls(s.id, s.withdrawn)"
+          v-if="showsActiveControls(s.id, s.withdrawn) && withdrawAskId !== s.id"
           type="button"
           class="sticky__status"
           aria-label="Withdraw"
-          @click.stop="postEdit('withdraw', s.id)"
+          @click.stop="withdrawAskId = s.id"
         >
           Withdraw
+        </button>
+        <button
+          v-if="showsActiveControls(s.id, s.withdrawn) && withdrawAskId === s.id"
+          type="button"
+          class="sticky__status"
+          aria-label="Confirm withdraw"
+          @click.stop="postEdit('withdraw', s.id)"
+        >
+          Withdraw this name
         </button>
         <button
           v-if="showsReinstate(s.id, s.withdrawn)"
@@ -343,7 +358,10 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
             @confirmed="onRewordConfirmed"
           />
         </template>
-        <span v-else class="sticky__label">{{ s.label }}</span>
+        <template v-else>
+          <span class="sticky__label">{{ s.label }}</span>
+          <span v-if="s.speaker" class="sticky__who">{{ s.speaker }}</span>
+        </template>
       </li>
     </ul>
   </div>
@@ -419,6 +437,13 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
   font-weight: 700;
   line-height: 1.15;
   overflow-wrap: anywhere;
+}
+.sticky__who {
+  margin-top: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .sticky:focus-visible {

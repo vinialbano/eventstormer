@@ -50,7 +50,7 @@ Tokens (defined in `src/app/style.css` via Tailwind v4 `@theme`):
 | `--color-line` | `#e7e0d2` | 1px hairlines between panels/rows |
 | `--color-event` | `#f28c28` | EventStorming orange — event stickies **and** the action colour |
 | `--color-event-strong` | `#d9741a` | orange pressed / focus ring |
-| `--color-event-ink` | `#7a3d05` | text on an orange surface (≥ 4.5:1) |
+| `--color-event-ink` | `#5c2e04` | text on an orange surface (≥ 4.5:1) |
 | `--color-actor` | `#f2c744` | actor building-block fill (sticky + kind pill) |
 | `--color-actor-ink` | `#574400` | text on an actor surface (≥ 4.5:1) |
 | `--color-system` | `#e2a0bd` | system building-block fill (sticky + kind pill) |

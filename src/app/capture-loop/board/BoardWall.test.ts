@@ -29,6 +29,16 @@ describe('BoardWall', () => {
     expect(wrapper.get('[role="list"]').attributes('data-empty')).toBe('false')
   })
 
+  it('names whose words a sticky is when a speaker is present', () => {
+    const wrapper = mount(BoardWall, {
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', speaker: 'Maria' }],
+      },
+    })
+    expect(wrapper.get('.sticky__who').text()).toBe('Maria')
+    expect(wrapper.get('.sticky').attributes('aria-label')).toBe('event: Order placed, added by Maria')
+  })
+
   it('renders the empty framed wall with no stickies when the board is empty', () => {
     const wrapper = mount(BoardWall, { props: { blocks: [] } })
 
@@ -225,6 +235,10 @@ describe('BoardWall', () => {
     })
     await wrapper.get('.sticky').trigger('focus')
     await wrapper.get('[aria-label="Withdraw"]').trigger('click')
+    await flushPromises()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    await wrapper.get('[aria-label="Confirm withdraw"]').trigger('click')
     await flushPromises()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)

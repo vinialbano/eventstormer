@@ -18,5 +18,8 @@ describe('renderAccountHtml', () => {
     expect(quotes).toHaveLength(1)
     expect(quotes[0]).not.toContain('Event:')
     expect(html).toContain('Event: Book borrowed')
+    expect(html.indexOf('Quoted evidence')).toBeLessThan(html.indexOf('Building blocks'))
+    expect(html).not.toContain('Stakeholder check')
+    expect(html).not.toContain('Coverage')
   })
 })

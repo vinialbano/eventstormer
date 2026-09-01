@@ -72,6 +72,7 @@ test('create → scope → accept → reword → withdraw → reinstate', async 
 
   await reworded.click()
   await page.getByRole('button', { name: 'Withdraw' }).click()
+  await page.getByRole('button', { name: 'Confirm withdraw' }).click()
   await expect(reworded).toHaveAttribute('data-withdrawn', 'true')
   await reworded.click()
   await page.getByRole('button', { name: 'Reinstate' }).click()

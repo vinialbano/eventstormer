@@ -2,6 +2,7 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProposalCard, SessionView } from '../types.ts'
+import { useBoardStore } from '../stores/board.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
 import FacilitatorDock from './FacilitatorDock.vue'
@@ -64,6 +65,8 @@ describe('FacilitatorDock', () => {
 
     expect(wrapper.findAll('.dock__cluster')).toHaveLength(1)
     expect(wrapper.findAll('.pc--active')).toHaveLength(2)
+    expect(wrapper.text()).toContain('You said: A customer places an order.')
+    expect(wrapper.text()).toContain('This name is not in what you said — check it before you add it.')
     // two acceptable cards in the cluster -> Accept all
     expect(wrapper.get('.dock__acceptall').text()).toBe('Accept all')
   })
@@ -86,6 +89,26 @@ describe('FacilitatorDock', () => {
     proposals.cards = [card({ disposition: 'APPLIED' })]
     await wrapper.vm.$nextTick()
     expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
+  })
+
+  it('updates an applied receipt when the board label is reworded', () => {
+    seed(view(), [card({ disposition: 'APPLIED', buildingBlockId: 'b1', label: 'Order placed' })])
+    const board = useBoardStore()
+    board.snapshot = {
+      position: 2,
+      blocks: [
+        {
+          id: 'b1',
+          kind: 'domain-event',
+          label: 'Invoice sent',
+          withdrawn: false,
+          placement: 'backlog',
+        },
+      ],
+    }
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    expect(wrapper.get('.pc--receipt').text()).toContain('Invoice sent — added by Maria')
+    expect(wrapper.get('.pc--receipt').text()).not.toContain('Order placed')
   })
 
   it('submits a contribution through the composer', async () => {
@@ -149,7 +172,9 @@ describe('FacilitatorDock', () => {
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
     expect(wrapper.find('.dock__scope').exists()).toBe(true)
-    await wrapper.get('.dock__scope .btn--danger').trigger('click')
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Reject')?.trigger('click')
     expect(wrapper.find('.dock__scope').exists()).toBe(false)
     expect(fetchMock).not.toHaveBeenCalled()
   })
@@ -302,7 +327,9 @@ describe('FacilitatorDock', () => {
     const { proposals } = seed(view(), [card()])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
-    const reject = wrapper.findAll('button').find((button) => button.text() === 'Reject')
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    const reject = named('Reject')
     if (reject === undefined) throw new Error('expected a Reject button')
     await reject.trigger('click')
     await flushPromises()
@@ -320,7 +347,9 @@ describe('FacilitatorDock', () => {
     seed(view(), [card()])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
-    const edit = wrapper.findAll('button').find((button) => button.text() === 'Edit')
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    const edit = named('Edit')
     if (edit === undefined) throw new Error('expected an Edit button')
     await edit.trigger('click')
     await wrapper.get('input').setValue('Invoice sent')
@@ -339,7 +368,9 @@ describe('FacilitatorDock', () => {
     const { proposals } = seed(view(), [card()])
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
 
-    const hold = wrapper.findAll('button').find((button) => button.text() === 'Hold')
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    const hold = named('Hold')
     if (hold === undefined) throw new Error('expected a Hold button')
     await hold.trigger('click')
     await flushPromises()
@@ -365,5 +396,15 @@ describe('FacilitatorDock', () => {
     expect(pill.text()).toContain('Facilitator')
     expect(pill.get('.dock__count').text()).toBe('2')
     expect(pill.find('.dock__dot').exists()).toBe(true)
+  })
+
+  it('hides the pending count on the collapsed pill when nothing is waiting', async () => {
+    seed(view(), [card({ disposition: 'APPLIED' })])
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    await wrapper.get('.dock__min').trigger('click')
+
+    expect(wrapper.get('.dock__pill').text()).toBe('Facilitator')
+    expect(wrapper.find('.dock__count').exists()).toBe(false)
   })
 })

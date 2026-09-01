@@ -76,6 +76,7 @@ interface BoardBlock {
   label: string
   withdrawn: boolean
   placement: 'backlog'
+  provenance?: { accepter: { name: string } } | undefined
 }
 
 export interface BoardSnapshot {

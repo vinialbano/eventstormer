@@ -34,6 +34,7 @@ const blocks = computed(() =>
     kind: block.kind,
     label: block.label,
     withdrawn: block.withdrawn,
+    speaker: block.provenance?.accepter.name,
   })),
 )
 const needsSession = computed(() => loaded.value && !session.sessionOpen)
@@ -106,7 +107,7 @@ onMounted(loadAll)
       :aria-expanded="accountOpen"
       @click="toggleAccount"
     >
-      Account
+      Readable account
     </button>
     <ReadableAccountDrawer v-if="accountOpen" />
     <div id="reword-portal" class="screen__reword-portal" />
@@ -156,8 +157,9 @@ onMounted(loadAll)
 }
 .screen__gatetitle {
   margin: 0 0 6px;
-  font-family: var(--font-marker);
+  font-family: var(--font-ui);
   font-size: 1.375rem;
+  font-weight: 800;
 }
 .screen__gatetext {
   margin: 0 0 18px;

@@ -20,6 +20,8 @@ const props = defineProps<{
   accepter?: string | undefined
   busy?: boolean | undefined
   noHold?: boolean | undefined
+  /** The contribution this card was proposed from — quoted so Accept is not a reflex. */
+  sourceText?: string | undefined
 }>()
 
 const pillClass = computed(() =>
@@ -35,6 +37,7 @@ const emit = defineEmits<{
 }>()
 
 const editing = ref(false)
+const moreOpen = ref(false)
 const draft = ref('')
 const inputElement = ref<HTMLInputElement | null>(null)
 
@@ -62,6 +65,15 @@ const state = computed<'receipt' | 'dismissed' | 'lapsed' | 'active'>(() => {
 })
 const applying = computed(() => props.busy || props.disposition === 'ACCEPTED')
 const failed = computed(() => props.disposition === 'APPLY_FAILED')
+
+const sourceQuote = computed(() => {
+  const source = props.sourceText?.trim()
+  return source === undefined || source.length === 0 ? null : source
+})
+const nameInSource = computed(() => {
+  if (sourceQuote.value === null) return true
+  return sourceQuote.value.toLocaleLowerCase().includes(props.label.trim().toLocaleLowerCase())
+})
 </script>
 
 <template>
@@ -93,6 +105,10 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
       >
     </label>
     <p v-else class="pc__label">{{ label }}</p>
+    <p v-if="sourceQuote !== null" class="pc__said">You said: {{ sourceQuote }}</p>
+    <p v-if="sourceQuote !== null && !nameInSource" class="pc__mismatch">
+      This name is not in what you said — check it before you add it.
+    </p>
 
     <p v-if="failed && applyFailedReason" class="pc__reason">Couldn’t add it: {{ applyFailedReason }}</p>
 
@@ -107,8 +123,6 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
       <button type="button" class="btn btn--primary" @click="emit('accept')">
         {{ failed ? 'Try again' : 'Accept' }}
       </button>
-      <button type="button" class="btn btn--outline" @click="startEdit">Edit</button>
-      <button type="button" class="btn btn--outline btn--danger" @click="emit('reject')">Reject</button>
       <button
         v-if="held"
         type="button"
@@ -118,13 +132,25 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
         Unpark
       </button>
       <button
-        v-else-if="!noHold"
         type="button"
         class="btn btn--outline"
-        @click="emit('hold')"
+        :aria-expanded="moreOpen"
+        @click="moreOpen = !moreOpen"
       >
-        Hold
+        Not this
       </button>
+      <template v-if="moreOpen">
+        <button type="button" class="btn btn--outline" @click="startEdit">Edit</button>
+        <button type="button" class="btn btn--outline btn--danger" @click="emit('reject')">Reject</button>
+        <button
+          v-if="!held && !noHold"
+          type="button"
+          class="btn btn--outline"
+          @click="emit('hold')"
+        >
+          Hold
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -197,11 +223,24 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
 }
 
 .pc__label {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   font-family: var(--font-marker);
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--color-text);
+}
+.pc__said {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  color: var(--color-text-soft);
+  line-height: 1.4;
+}
+.pc__mismatch {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.4;
 }
 .pc__reason {
   margin: 0 0 10px;
@@ -249,7 +288,7 @@ const failed = computed(() => props.disposition === 'APPLY_FAILED')
 }
 .btn--primary:hover {
   background-color: var(--color-event-strong);
-  color: #fff;
+  color: var(--color-event-ink);
 }
 .btn--outline {
   background-color: var(--color-surface);
