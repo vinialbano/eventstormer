@@ -58,7 +58,7 @@ describe('RewordConfirm', () => {
     vi.unstubAllGlobals()
   })
 
-  it('GETs references on open and does not POST until confirm', async () => {
+  it('GETs references on open, names the popover Reword impact, and does not POST until confirm', async () => {
     mountConfirm()
     await flushPromises()
 
@@ -67,13 +67,6 @@ describe('RewordConfirm', () => {
     expect(popover().getAttribute('aria-label')).toBe('Reword impact')
     expect(popover().textContent).toContain('Readable account · Building blocks')
     expect(popover().closest('.wall')).toBeNull()
-  })
-
-  it('names the popover Reword impact and the confirm button Confirm reword', async () => {
-    mountConfirm()
-    await flushPromises()
-
-    expect(popover().getAttribute('aria-label')).toBe('Reword impact')
     expect(buttonNamed('Confirm reword')).toBeDefined()
   })
 

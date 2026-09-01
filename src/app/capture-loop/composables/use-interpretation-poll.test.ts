@@ -120,3 +120,16 @@ it('refetchNow refreshes both polled stores', async () => {
   expect(urls).toContain('/api/sessions/s1/proposals')
   scope.stop()
 })
+
+it('clears timers when the effect scope stops', async () => {
+  current = viewWith('set', ['interpreting'])
+  const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>
+  const { poll, scope } = await setup()
+  fetchMock.mockClear()
+
+  scope.stop()
+  expect(poll.polling.value).toBe(false)
+
+  await vi.advanceTimersByTimeAsync(200)
+  expect(fetchMock).not.toHaveBeenCalled()
+})

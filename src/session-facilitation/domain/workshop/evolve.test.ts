@@ -34,6 +34,10 @@ describe('Workshop.evolve', () => {
       workshopId,
       statement: 'Library lending across branches.',
     }
-    expect(evolve(afterStart, scopeSet)).toBe(afterStart)
+    expect(evolve(afterStart, scopeSet)).toEqual({
+      started: true,
+      format: 'big-picture',
+      creatorName: 'Dana',
+    })
   })
 })

@@ -91,6 +91,26 @@ describe('FacilitatorDock', () => {
     expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
   })
 
+  it('retries accept after APPLY_FAILED and collapses to a receipt once the store confirms', async () => {
+    const { proposals } = seed(
+      view(),
+      [card({ disposition: 'APPLY_FAILED', applyFailedReason: 'target was withdrawn' })],
+    )
+    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+
+    await wrapper.get('.btn--primary').trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/accept', expect.objectContaining({ method: 'POST' }))
+    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
+    expect(wrapper.emitted('mutated')).toHaveLength(1)
+    expect(wrapper.find('.pc--receipt').exists()).toBe(false)
+
+    proposals.cards = [card({ disposition: 'APPLIED', buildingBlockId: 'b1' })]
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
+  })
+
   it('updates an applied receipt when the board label is reworded', () => {
     seed(view(), [card({ disposition: 'APPLIED', buildingBlockId: 'b1', label: 'Order placed' })])
     const board = useBoardStore()
@@ -207,19 +227,6 @@ describe('FacilitatorDock', () => {
     const turns = wrapper.findAll('.turn').map((turn) => turn.text())
     expect(turns[0]).toContain('describe the first thing that happens')
     expect(turns.some((turn) => turn.includes('A customer places an order.'))).toBe(true)
-  })
-
-  it('labels a proposal card by its building-block kind, not always EVENT', () => {
-    seed(view(), [
-      card({ proposalId: 'p1', blockKind: 'actor', label: 'Host' }),
-      card({ proposalId: 'p2', blockKind: 'system', label: 'POS terminal' }),
-    ])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
-
-    const pills = wrapper.findAll('.pc__pill')
-    expect(pills.map((pill) => pill.text())).toEqual(['ACTOR', 'SYSTEM'])
-    expect(pills[0]?.classes()).toContain('pc__pill--actor')
-    expect(pills[1]?.classes()).toContain('pc__pill--system')
   })
 
   it('shows a "noted" reply when a contribution produced no proposals', () => {

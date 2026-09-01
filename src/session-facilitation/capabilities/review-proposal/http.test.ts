@@ -86,6 +86,26 @@ describe('POST /proposals/:id/{edit,reject,hold,unhold}', () => {
     const response = await post('/proposals/p_missing/reject')
     expect(response.status).toBe(404)
   })
+
+  it('edit with a label longer than 200 characters → 400', async () => {
+    seedProposal('p_1')
+    const response = await post('/proposals/p_1/edit', { label: 'x'.repeat(201) })
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'label-too-long' })
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
+
+  it('edit with a malformed body → 400', async () => {
+    seedProposal('p_1')
+    const response = await routes().request('/proposals/p_1/edit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ notLabel: 'Loan recorded' }),
+    })
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'invalid-body' })
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
 })
 
 describe('GET /sessions/:id/proposals', () => {

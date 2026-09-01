@@ -1,11 +1,28 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import BoardWall from './BoardWall.vue'
 import RewordConfirm from './RewordConfirm.vue'
 
+const stubMatchMedia = (matches: boolean): void => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockReturnValue({
+      matches,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }),
+  )
+}
+
 enableAutoUnmount(afterEach)
+beforeEach(() => {
+  stubMatchMedia(false)
+})
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('BoardWall', () => {
   it('renders one backlog sticky per applied block, labelled by kind + text', () => {
@@ -101,6 +118,62 @@ describe('BoardWall', () => {
     expect(wrapper.find('.sticky--reword').exists()).toBe(false)
     expect(wrapper.get('.sticky').text()).toContain('Order confirmed')
     expect(wrapper.find('input[type="text"]').exists()).toBe(false)
+  })
+
+  it('adds sticky--fresh when a block arrives after mount and skips it with reduced motion', async () => {
+    const wrapper = mount(BoardWall, {
+      props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
+    })
+    await nextTick()
+    expect(wrapper.get('.sticky').classes()).not.toContain('sticky--fresh')
+
+    await wrapper.setProps({
+      blocks: [
+        { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false },
+        { id: 'b2', kind: 'domain-event', label: 'Order confirmed', withdrawn: false },
+      ],
+    })
+    await nextTick()
+
+    const fresh = wrapper.findAll('.sticky').find((sticky) => sticky.text().includes('Order confirmed'))
+    expect(fresh?.classes()).toContain('sticky--fresh')
+
+    wrapper.unmount()
+    vi.unstubAllGlobals()
+    stubMatchMedia(true)
+
+    const reduced = mount(BoardWall, {
+      props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
+    })
+    await nextTick()
+    await reduced.setProps({
+      blocks: [
+        { id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false },
+        { id: 'b2', kind: 'domain-event', label: 'Order confirmed', withdrawn: false },
+      ],
+    })
+    await nextTick()
+    expect(reduced.findAll('.sticky').find((sticky) => sticky.text().includes('Order confirmed'))?.classes()).not.toContain(
+      'sticky--fresh',
+    )
+  })
+
+  it('opens the confirm popover when Enter is pressed inside the dashed-ghost field', async () => {
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
+    })
+    await wrapper.get('.sticky').trigger('focus')
+    await wrapper.get('[aria-label="Reword"]').trigger('click')
+    await nextTick()
+
+    const field = wrapper.get('input[type="text"]')
+    await field.setValue('Order acknowledged')
+    field.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await nextTick()
+
+    expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(true)
+    expect(wrapper.get('.sticky').classes()).toContain('sticky--reword')
   })
 
   it('opens the dashed-ghost from Enter on a focused sticky', async () => {

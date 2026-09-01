@@ -18,6 +18,13 @@ test('create → scope → accept → reword → withdraw → reinstate → plac
   page,
 }) => {
   test.setTimeout(120_000)
+  const consoleIssues: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error' || message.type() === 'warning') {
+      consoleIssues.push(`${message.type()}: ${message.text()}`)
+    }
+  })
+
   await page.goto('/')
 
   await page.getByLabel('Your name').fill('Maria')
@@ -51,9 +58,9 @@ test('create → scope → accept → reword → withdraw → reinstate → plac
 
   const backlog = page.getByRole('list', { name: 'Backlog' })
   for (const label of [originalLabel, sequencedLabel, 'Member registered']) {
-    const proposal = page.getByText(label, { exact: true })
-    await expect(proposal).toBeVisible({ timeout: 20_000 })
-    await proposal.locator('..').getByRole('button', { name: 'Accept' }).click()
+    await expect(page.getByText(label, { exact: true })).toBeVisible({ timeout: 20_000 })
+    const card = page.locator('.dock__cardslot').filter({ has: page.getByText(label, { exact: true }) })
+    await card.getByRole('button', { name: 'Accept' }).click()
     await expect(backlog.getByLabel(`event: ${label}`)).toBeVisible({ timeout: 20_000 })
   }
 
@@ -101,6 +108,12 @@ test('create → scope → accept → reword → withdraw → reinstate → plac
   await expect(backlog.getByLabel(`event: ${sequencedLabel}`)).toHaveCount(0)
   await expect(backlog.getByRole('listitem')).toHaveCount(1)
 
+  await page.reload()
+  await page.getByRole('button', { name: 'Collapse the dock' }).click()
+  await expect(timeline.getByText(rewordedLabel, { exact: true })).toBeVisible({ timeout: 20_000 })
+  await expect(timeline.getByText(sequencedLabel, { exact: true })).toBeVisible({ timeout: 20_000 })
+  await expect(backlog.getByRole('listitem')).toHaveCount(1)
+
   await timeline.getByText(sequencedLabel, { exact: true }).click()
   await page.getByRole('button', { name: 'Reword' }).click()
   const timelineDraft = page.getByRole('textbox', { name: 'Reword label' })
@@ -122,4 +135,6 @@ test('create → scope → accept → reword → withdraw → reinstate → plac
   await expect(walk).toContainText(`Event: ${sequencedReword}`)
   const walkText = await walk.innerText()
   expect(walkText.indexOf(rewordedLabel)).toBeLessThan(walkText.indexOf(sequencedReword))
+
+  expect(consoleIssues).toEqual([])
 })

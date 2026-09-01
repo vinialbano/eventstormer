@@ -272,4 +272,27 @@ describe('anthropic adapter — askOpening', () => {
     if (isErr(outcome)) expect(outcome.error).toEqual({ kind: 'provider-down' })
     expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5', 'claude-haiku-4-5'])
   })
+
+  it('retries once with the error fed back, then returns schema-invalid — never laddering', async () => {
+    const { generate, models } = scripted([result({ not: 'an opening' })])
+    const { facilitator } = depsWith(generate)
+
+    const outcome = await facilitator.askOpening({ instructions: 'sys', prompt: 'new session' })
+
+    expect(isErr(outcome)).toBe(true)
+    if (isErr(outcome)) expect(outcome.error.kind).toBe('schema-invalid')
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
+    expect(readLog()).toHaveLength(2)
+    expect(readLog()[0]?.parseResult).not.toBe('ok')
+  })
+
+  it('succeeds when the single retry produces a valid opening', async () => {
+    const { generate, models } = scripted([result({ bad: true }), result(VALID_OPENING)])
+    const { facilitator } = depsWith(generate)
+
+    const outcome = await facilitator.askOpening({ instructions: 'sys', prompt: 'new session' })
+
+    expect(isOk(outcome)).toBe(true)
+    expect(models).toEqual(['claude-sonnet-5', 'claude-sonnet-5'])
+  })
 })

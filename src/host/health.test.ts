@@ -2,12 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { testClient } from 'hono/testing'
 import { healthRoutes } from './health.ts'
 
-describe('health', () => {
-  it('reports the op schema version this build replays', async () => {
-    // testClient only type-checks because the routes above are chained.
+describe('healthRoutes', () => {
+  // Full mount + payload contract: `createRoutes — the mounted /api surface` in routes.test.ts.
+  it('chains GET /health so testClient infers the handler', async () => {
     const response = await testClient(healthRoutes).health.$get()
-
     expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ status: 'ok', opSchemaVersion: 1 })
   })
 })

@@ -59,6 +59,13 @@ describe('BoardWall semantic edits', () => {
     vi.spyOn(mutations, 'postBoardOperation').mockResolvedValue({ position: 9 })
   })
 
+  it('POSTs nothing when an actor is dropped on the empty timeline pane', async () => {
+    const wrapper = mountWall()
+    dropOn(wrapper.get('[aria-label="Timeline"]').element, { id: 'a1', kind: 'actor' })
+    await flushPromises()
+    expect(posted()).not.toHaveBeenCalled()
+  })
+
   it('POSTs place from a backlog drop onto the empty timeline pane', async () => {
     const wrapper = mountWall()
     dropOn(wrapper.get('[aria-label="Timeline"]').element, { id: 'eC', kind: 'domain-event' })
@@ -173,6 +180,23 @@ describe('BoardWall semantic edits', () => {
       'w1',
       expect.objectContaining({ kind: 'mark-pivotal', target: 'eC' }),
     )
+  })
+
+  it('does not emit board-dirty when a board POST fails', async () => {
+    posted().mockRejectedValueOnce(new HttpError(500, { error: 'server error' }))
+    const wrapper = mountWall()
+    const rejection = new Promise<unknown>((resolve) => {
+      const onRejection = (reason: unknown): void => {
+        process.off('unhandledRejection', onRejection)
+        resolve(reason)
+      }
+      process.on('unhandledRejection', onRejection)
+    })
+    dropOn(wrapper.get('[aria-label="Timeline"]').element, { id: 'eC', kind: 'domain-event' })
+    const reason = await Promise.race([rejection, flushPromises()])
+    expect(reason).toBeInstanceOf(HttpError)
+    expect(posted()).toHaveBeenCalledTimes(1)
+    expect(wrapper.emitted('board-dirty')).toBeUndefined()
   })
 
   it('shows a cycle 422 inline with labels from the snapshot', async () => {

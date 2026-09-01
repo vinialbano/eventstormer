@@ -104,6 +104,26 @@ describe('project (read-model fold)', () => {
     expect(snap.follows).toEqual([])
   })
 
+  it('unsequence removes the follows edge and leaves placements on the timeline', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eC', label: 'c' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eB', successor: 'eC' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eB'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eC'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([
+      { predecessor: bid('eA'), successor: bid('eB') },
+      { predecessor: bid('eB'), successor: bid('eC') },
+    ])
+    snap = project(snap, op({ kind: 'unsequence', predecessor: 'eA', successor: 'eB' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eB'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eC'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([{ predecessor: bid('eB'), successor: bid('eC') }])
+  })
+
   it('unplace returns a sequenced event to the backlog and drops follows involving it', () => {
     let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
     snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))

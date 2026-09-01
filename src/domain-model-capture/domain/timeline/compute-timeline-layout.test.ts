@@ -30,6 +30,28 @@ describe('computeTimelineLayout', () => {
     })
   })
 
+  it('ranks a linear chain A→B→C as 0, 1, 2', () => {
+    const snapshot = snapshotOf([
+      { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'Book returned' },
+      { kind: 'capture-domain-event', id: 'eC', label: 'Fine assessed' },
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      { kind: 'sequence', predecessor: 'eB', successor: 'eC' },
+    ])
+
+    const layout = computeTimelineLayout(snapshot)
+    expect(layout.tracks).toEqual([
+      {
+        eventIds: [bid('eA'), bid('eB'), bid('eC')],
+        ranks: { eA: 0, eB: 1, eC: 2 },
+      },
+    ])
+    expect(layout.edges).toEqual([
+      { predecessor: bid('eA'), successor: bid('eB') },
+      { predecessor: bid('eB'), successor: bid('eC') },
+    ])
+  })
+
   it('keeps both distinct successors of one event on the same track', () => {
     const snapshot = snapshotOf([
       { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
@@ -79,6 +101,24 @@ describe('computeTimelineLayout', () => {
     expect(layout.tracks[0]?.eventIds).toEqual([bid('eA')])
     expect(layout.tracks[0]?.eventIds).not.toContain(bid('a1'))
     expect(layout.attachments).toEqual({ eA: [bid('a1')] })
+  })
+
+  it('omits a withdrawn cause from attachments', () => {
+    const snapshot = snapshotOf([
+      { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
+      { kind: 'identify-actor', id: 'a1', label: 'Clerk' },
+      { kind: 'place', target: 'eA' },
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+    ])
+    const a1 = snapshot.blocks.get(bid('a1'))
+    if (!a1) throw new Error('expected actor a1')
+    const withdrawn = {
+      ...snapshot,
+      blocks: new Map(snapshot.blocks).set(bid('a1'), { ...a1, withdrawn: true }),
+      causedBy: [{ cause: bid('a1'), effect: bid('eA') }],
+    }
+
+    expect(computeTimelineLayout(withdrawn).attachments).toEqual({})
   })
 
   it('omits a withdrawn placed event unless includeWithdrawn is true', () => {
