@@ -59,7 +59,7 @@ describe('TimelinePane', () => {
     expect(left.draggable).toBe(false)
   })
 
-  it('shows both branch successors and actor chips on the event, not as axis nodes', () => {
+  it('shows both branch successors and does not place the actor as an axis node', () => {
     const wrapper = mount(TimelinePane, {
       props: {
         timeline: branched,
@@ -81,7 +81,8 @@ describe('TimelinePane', () => {
     if (source === undefined || first === undefined || second === undefined) {
       throw new Error('missing branch nodes')
     }
-    expect(source.data?.attachments).toEqual([{ id: 'a1', kind: 'actor', label: 'Clerk' }])
+    // Chip payload is asserted in use-dagre-layout.test.ts; Vue Flow's
+    // #node-event slot does not render in jsdom.
     expect(source.data?.pivotal).toBe(true)
     expect(first.position.x).toBeGreaterThan(source.position.x)
     expect(second.position.x).toBeGreaterThan(source.position.x)

@@ -364,7 +364,7 @@ describe('BoardWall', () => {
     vi.unstubAllGlobals()
   })
 
-  it('renders placed events on the timeline, not in the backlog, with actor chips on the event', () => {
+  it('keeps an unattached actor in the backlog while an attached cause leaves it', () => {
     const wrapper = mount(BoardWall, {
       props: {
         blocks: [
@@ -372,6 +372,7 @@ describe('BoardWall', () => {
           { id: 'eB', kind: 'domain-event', label: 'Book returned', placement: 'timeline' },
           { id: 'eC', kind: 'domain-event', label: 'Still loose', placement: 'backlog' },
           { id: 'a1', kind: 'actor', label: 'Clerk', placement: 'backlog' },
+          { id: 'a2', kind: 'actor', label: 'Waiter', placement: 'backlog' },
         ],
         timeline: {
           tracks: [{ eventIds: ['eA', 'eB'], ranks: { eA: 0, eB: 1 } }],
@@ -382,18 +383,16 @@ describe('BoardWall', () => {
       },
     })
 
-    const backlog = wrapper.findAll('[aria-label="Backlog"] .sticky')
-    expect(backlog.map((sticky) => sticky.text())).toEqual(['Still loose'])
+    const backlog = wrapper.get('[aria-label="Backlog"]')
+    expect(backlog.get('[aria-label="event: Still loose"]').text()).toContain('Still loose')
+    expect(backlog.get('[aria-label="actor: Waiter"]').text()).toContain('Waiter')
+    expect(backlog.find('[aria-label="actor: Clerk"]').exists()).toBe(false)
     const nodes = wrapper.findComponent({ name: 'VueFlow' }).props('nodes') as {
       id: string
-      data: { attachments: { label: string }[]; pivotal: boolean }
+      data: { pivotal: boolean }
     }[]
     expect(nodes.map((node) => node.id).toSorted()).toEqual(['eA', 'eB'])
-    expect(nodes.find((node) => node.id === 'eA')?.data.attachments).toEqual([
-      { id: 'a1', kind: 'actor', label: 'Clerk' },
-    ])
     expect(nodes.find((node) => node.id === 'eA')?.data.pivotal).toBe(true)
-    expect(wrapper.findComponent({ name: 'VueFlow' }).props('nodesDraggable')).toBe(false)
   })
 
   it('hides withdrawn stickies by default and reveals ghosts when Show withdrawn is on', async () => {

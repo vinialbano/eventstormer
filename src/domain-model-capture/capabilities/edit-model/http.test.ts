@@ -22,6 +22,13 @@ const capture = (deps: EditModelDeps, id: string, label: string) =>
     Operation.parse({ author, kind: 'capture-domain-event', id, label }),
   )
 
+const identify = (deps: EditModelDeps, id: string, label: string) =>
+  applyOperation(
+    deps,
+    workshopId,
+    Operation.parse({ author, kind: 'identify-actor', id, label }),
+  )
+
 const postOp = (deps: EditModelDeps, body: unknown, id: string = workshopId) =>
   editModelRoutes(deps).request(`/workshops/${id}/board/operations`, {
     method: 'POST',
@@ -93,6 +100,169 @@ describe('POST /workshops/:id/board/operations', () => {
         expect.objectContaining({ id: 'eB', placement: 'timeline' }),
       ]),
     )
+  })
+
+  it.each([
+    {
+      name: 'place puts the captured event on the timeline',
+      seed: (deps: EditModelDeps) => {
+        capture(deps, 'e1', 'Loan recorded')
+      },
+      body: { v: 1, kind: 'place' as const, target: 'e1', author },
+      position: 1,
+      logLength: 2,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.blocks).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'e1', placement: 'timeline' }),
+          ]),
+        )
+      },
+    },
+    {
+      name: 'unplace returns an isolated event to the backlog',
+      seed: (deps: EditModelDeps) => {
+        capture(deps, 'e1', 'Loan recorded')
+        applyOperation(deps, workshopId, Operation.parse({ author, kind: 'place', target: 'e1' }))
+      },
+      body: { v: 1, kind: 'unplace' as const, target: 'e1', author },
+      position: 2,
+      logLength: 3,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.blocks).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'e1', placement: 'backlog' }),
+          ]),
+        )
+      },
+    },
+    {
+      name: 'unsequence drops the follows edge',
+      seed: (deps: EditModelDeps) => {
+        capture(deps, 'eA', 'Loan recorded')
+        capture(deps, 'eB', 'Book returned')
+        applyOperation(
+          deps,
+          workshopId,
+          Operation.parse({ author, kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+        )
+      },
+      body: { v: 1, kind: 'unsequence' as const, predecessor: 'eA', successor: 'eB', author },
+      position: 3,
+      logLength: 4,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.follows).toEqual([])
+      },
+    },
+    {
+      name: 'insert-between replaces A→B with A→C and C→B and places C',
+      seed: (deps: EditModelDeps) => {
+        capture(deps, 'eA', 'Loan recorded')
+        capture(deps, 'eB', 'Book returned')
+        capture(deps, 'eC', 'Fine assessed')
+        applyOperation(
+          deps,
+          workshopId,
+          Operation.parse({ author, kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+        )
+      },
+      body: {
+        v: 1,
+        kind: 'insert-between' as const,
+        predecessor: 'eA',
+        inserted: 'eC',
+        successor: 'eB',
+        author,
+      },
+      position: 4,
+      logLength: 5,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.follows).toEqual([
+          { predecessor: 'eA', successor: 'eC' },
+          { predecessor: 'eC', successor: 'eB' },
+        ])
+        expect(board.follows).not.toContainEqual({ predecessor: 'eA', successor: 'eB' })
+        expect(board.blocks).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'eC', placement: 'timeline' }),
+          ]),
+        )
+      },
+    },
+    {
+      name: 'link-cause publishes the causedBy edge',
+      seed: (deps: EditModelDeps) => {
+        identify(deps, 'a1', 'Clerk')
+        capture(deps, 'eA', 'Loan recorded')
+      },
+      body: { v: 1, kind: 'link-cause' as const, cause: 'a1', effect: 'eA', author },
+      position: 2,
+      logLength: 3,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.causedBy).toEqual([{ cause: 'a1', effect: 'eA' }])
+      },
+    },
+    {
+      name: 'unlink-cause removes the causedBy edge',
+      seed: (deps: EditModelDeps) => {
+        identify(deps, 'a1', 'Clerk')
+        capture(deps, 'eA', 'Loan recorded')
+        applyOperation(
+          deps,
+          workshopId,
+          Operation.parse({ author, kind: 'link-cause', cause: 'a1', effect: 'eA' }),
+        )
+      },
+      body: { v: 1, kind: 'unlink-cause' as const, cause: 'a1', effect: 'eA', author },
+      position: 3,
+      logLength: 4,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.causedBy).toEqual([])
+      },
+    },
+    {
+      name: 'mark-pivotal sets pivotal true',
+      seed: (deps: EditModelDeps) => {
+        capture(deps, 'eA', 'Loan recorded')
+      },
+      body: { v: 1, kind: 'mark-pivotal' as const, target: 'eA', author },
+      position: 1,
+      logLength: 2,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.blocks).toEqual(
+          expect.arrayContaining([expect.objectContaining({ id: 'eA', pivotal: true })]),
+        )
+      },
+    },
+    {
+      name: 'unmark-pivotal sets pivotal false',
+      seed: (deps: EditModelDeps) => {
+        capture(deps, 'eA', 'Loan recorded')
+        applyOperation(
+          deps,
+          workshopId,
+          Operation.parse({ author, kind: 'mark-pivotal', target: 'eA' }),
+        )
+      },
+      body: { v: 1, kind: 'unmark-pivotal' as const, target: 'eA', author },
+      position: 2,
+      logLength: 3,
+      assertBoard: (board: ReturnType<typeof readBoardSnapshot>) => {
+        expect(board.blocks).toEqual(
+          expect.arrayContaining([expect.objectContaining({ id: 'eA', pivotal: false })]),
+        )
+      },
+    },
+  ])('$name', async ({ seed, body, position, logLength, assertBoard }) => {
+    const deps = depsFor()
+    seed(deps)
+
+    const response = await postOp(deps, body)
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ position })
+    expect(logOf(deps)).toHaveLength(logLength)
+
+    assertBoard(readBoardSnapshot({ store: deps.store }, workshopId))
   })
 
   it('rejects raise-hot-spot with 422 not-implemented-in-slice and does not append', async () => {

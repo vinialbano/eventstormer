@@ -69,7 +69,7 @@ describe('BoardWall semantic edits', () => {
     )
   })
 
-  it('POSTs sequence from a handle-connect and does not POST on pan', async () => {
+  it('POSTs sequence from a handle-connect', async () => {
     const wrapper = mountWall()
     connect(wrapper, 'eA', 'eB')
     await flushPromises()
@@ -77,9 +77,17 @@ describe('BoardWall semantic edits', () => {
       'w1',
       expect.objectContaining({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
     )
-    const calls = posted().mock.calls.length
-    expect(wrapper.findComponent({ name: 'VueFlow' }).props()).not.toHaveProperty('onMove')
-    expect(posted()).toHaveBeenCalledTimes(calls)
+  })
+
+  it('does not POST on pan or zoom of the timeline pane', async () => {
+    const wrapper = mountWall()
+    const vueFlow = wrapper.findComponent({ name: 'VueFlow' })
+    const emit = (vueFlow.vm as { $emit: (event: string) => void }).$emit
+    emit('move')
+    emit('viewportChange')
+    emit('viewport-change')
+    await flushPromises()
+    expect(posted()).not.toHaveBeenCalled()
   })
 
   it('POSTs sequence, link-cause, and insert-between from the matching drop sites', async () => {

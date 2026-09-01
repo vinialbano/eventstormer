@@ -48,7 +48,7 @@ describe('project (read-model fold)', () => {
     expect(snap.blocks.size).toBe(2) // no dedupe, though the two shared a label
   })
 
-  it('withdraw flips withdrawn to true; reinstate returns a naked active block (AT-17)', () => {
+  it('withdraw flips withdrawn to true; reinstate returns a naked active block', () => {
     let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
     const captured = snap.blocks.get(bid('e1'))
     snap = project(snap, op({ kind: 'withdraw', target: 'e1' }))

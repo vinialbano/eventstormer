@@ -1,6 +1,7 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import type { SessionView } from '../types.ts'
 import BoardWall from '../board/BoardWall.vue'
@@ -115,7 +116,7 @@ describe('CaptureScreen', () => {
     wrapper.unmount()
   })
 
-  it('passes a withdrawn snapshot block to the wall with withdrawn true', async () => {
+  it('hides a withdrawn snapshot block until Show withdrawn is on', async () => {
     fetchMock = vi.fn((url: string) => {
       if (url.endsWith('/session')) {
         return Promise.resolve(
@@ -156,21 +157,15 @@ describe('CaptureScreen', () => {
     const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
     await flushPromises()
 
-    expect(wrapper.getComponent(BoardWall).props('blocks')).toEqual([
-      {
-        id: 'b1',
-        kind: 'domain-event',
-        label: 'Order placed',
-        withdrawn: true,
-        placement: 'backlog',
-        pivotal: false,
-      },
-    ])
-    expect(wrapper.getComponent(BoardWall).props()).toMatchObject({
-      workshopId: 'w1',
-      accepter: 'Maria',
-      revision: 1,
-    })
+    expect(wrapper.find('[data-withdrawn="true"]').exists()).toBe(false)
+
+    await wrapper.get('[aria-label="Show withdrawn"]').setValue(true)
+    await flushPromises()
+    await nextTick()
+
+    const ghost = wrapper.get('[data-withdrawn="true"]')
+    expect(ghost.attributes('aria-label')).toBe('event: Order placed')
+    expect(ghost.text()).toContain('Order placed')
     wrapper.unmount()
   })
 

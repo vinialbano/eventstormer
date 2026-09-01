@@ -2,6 +2,7 @@ import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import type { BuildingBlockId } from '~/plumbing/ids.ts'
 import { Operation } from '../schema/index.ts'
+import { evolve } from './evolve.ts'
 import { emptySnapshot } from './model.ts'
 import { project } from './project.ts'
 import { replay, replayWriteModel } from './replay.ts'
@@ -145,12 +146,50 @@ describe('replay', () => {
     expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
   })
 
+  it('replayWriteModel records follows and causedBy from sequence and link-cause', () => {
+    const writeModel = replayWriteModel([
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'paid' }),
+      op({ kind: 'identify-actor', id: 'a1', label: 'clerk' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+      op({ kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+    ])
+    expect(writeModel.follows.get(bid('e1'))).toEqual(new Set([bid('e2')]))
+    expect(writeModel.causedBy.get(bid('e1'))).toEqual(new Set([bid('a1')]))
+    expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: false })
+  })
+
+  it('replayWriteModel after withdraw has no incident follows or causedBy edges', () => {
+    const writeModel = replayWriteModel([
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'paid' }),
+      op({ kind: 'identify-actor', id: 'a1', label: 'clerk' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+      op({ kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+      op({ kind: 'withdraw', target: 'e1' }),
+    ])
+    expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+    expect(writeModel.follows.size).toBe(0)
+    expect(writeModel.causedBy.size).toBe(0)
+  })
+
   // Consistency property only — not an independent oracle. Both sides share
   // `project`; a fold that silently drops a field still passes here.
   it('replay(log ++ [op]) deep-equals project(replay(log), op)', () => {
     fc.assert(
       fc.property(fc.array(fc.constantFrom(...POOL)), fc.constantFrom(...POOL), (log, next) => {
         expect(replay([...log, next])).toEqual(project(replay(log), next))
+      }),
+    )
+  })
+
+  // Twin of the snapshot property. Catches replayWriteModel drifting off
+  // evolve (for example deriving the write model from a snapshot and dropping
+  // adjacency). Edge contents are pinned by the goldens above, not here.
+  it('replayWriteModel(log ++ [op]) deep-equals evolve(replayWriteModel(log), op)', () => {
+    fc.assert(
+      fc.property(fc.array(fc.constantFrom(...POOL)), fc.constantFrom(...POOL), (log, next) => {
+        expect(replayWriteModel([...log, next])).toEqual(evolve(replayWriteModel(log), next))
       }),
     )
   })

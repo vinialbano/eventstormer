@@ -139,11 +139,6 @@ describe('decide — reword', () => {
 })
 
 describe('decide — withdraw / reinstate', () => {
-  it('withdraws a present target', () => {
-    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
-    expect(isOk(decide(writeModel, op({ kind: 'withdraw', target: 'e1' })))).toBe(true)
-  })
-
   it('withdraws a present event with no edges as a single withdraw', () => {
     const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'order placed' }])
     const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
@@ -164,30 +159,36 @@ describe('decide — withdraw / reinstate', () => {
     }
   })
 
-  it('withdraws an actor that caused two events as withdraw then two unlink-cause', () => {
-    const writeModel = given([
-      { kind: 'identify-actor', id: 'a1', label: 'clerk' },
-      { kind: 'capture-domain-event', id: 'e1', label: 'one' },
-      { kind: 'capture-domain-event', id: 'e2', label: 'two' },
-      { kind: 'link-cause', cause: 'a1', effect: 'e1' },
-      { kind: 'link-cause', cause: 'a1', effect: 'e2' },
-    ])
-    const result = decide(writeModel, op({ kind: 'withdraw', target: 'a1' }))
-    expect(isOk(result)).toBe(true)
-    if (isOk(result)) {
-      expect(result.value).toHaveLength(3)
-      expect(result.value.map((item) => item.kind)).toEqual([
-        'withdraw',
-        'unlink-cause',
-        'unlink-cause',
+  it.each([
+    { capture: 'identify-actor' as const, id: 'a1', label: 'clerk' },
+    { capture: 'identify-system' as const, id: 's1', label: 'ledger' },
+  ])(
+    'withdraws a $capture that caused two events as withdraw then two unlink-cause',
+    ({ capture, id, label }) => {
+      const writeModel = given([
+        { kind: capture, id, label },
+        { kind: 'capture-domain-event', id: 'e1', label: 'one' },
+        { kind: 'capture-domain-event', id: 'e2', label: 'two' },
+        { kind: 'link-cause', cause: id, effect: 'e1' },
+        { kind: 'link-cause', cause: id, effect: 'e2' },
       ])
-      expect(result.value).toEqual([
-        op({ kind: 'withdraw', target: 'a1' }),
-        op({ kind: 'unlink-cause', cause: 'a1', effect: 'e1' }),
-        op({ kind: 'unlink-cause', cause: 'a1', effect: 'e2' }),
-      ])
-    }
-  })
+      const result = decide(writeModel, op({ kind: 'withdraw', target: id }))
+      expect(isOk(result)).toBe(true)
+      if (isOk(result)) {
+        expect(result.value).toHaveLength(3)
+        expect(result.value.map((item) => item.kind)).toEqual([
+          'withdraw',
+          'unlink-cause',
+          'unlink-cause',
+        ])
+        expect(result.value).toEqual([
+          op({ kind: 'withdraw', target: id }),
+          op({ kind: 'unlink-cause', cause: id, effect: 'e1' }),
+          op({ kind: 'unlink-cause', cause: id, effect: 'e2' }),
+        ])
+      }
+    },
+  )
 
   it('withdraws an event with follows and no causes as a single withdraw', () => {
     const writeModel = given([
@@ -226,8 +227,7 @@ describe('decide — withdraw / reinstate', () => {
     if (isErr(result)) expect(result.error.kind).toBe('unknown-target')
   })
 
-  // AT-17: a reinstate returns the operation naked — no relation restored
-  // (there are none to restore in Slice 0).
+  // Reinstate of a withdrawn block is a single reinstate op.
   it('reinstates a withdrawn target', () => {
     const writeModel = given([
       { kind: 'capture-domain-event', id: 'e1', label: 'x' },
@@ -347,6 +347,31 @@ describe('decide — place / unplace', () => {
     if (isOk(result)) expect(result.value).toEqual([op({ kind: 'unplace', target: 'e1' })])
   })
 
+  it.each([
+    {
+      name: 'unplace of a withdrawn event',
+      priors: [
+        { kind: 'capture-domain-event', id: 'e1', label: 'x' },
+        { kind: 'withdraw', target: 'e1' },
+      ],
+      operation: { kind: 'unplace', target: 'e1' },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'e1' },
+    },
+    {
+      name: 'unplace of an unknown target',
+      priors: [],
+      operation: { kind: 'unplace', target: 'e9' },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+  ])('rejects $name and leaves the graph unchanged', ({ priors, operation, error }) => {
+    const writeModel = given(priors)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op(operation))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toEqual(error)
+    expect(writeModel).toEqual(before)
+  })
+
   it('never accepts place or unplace on a non-event', () => {
     const kinds: BuildingBlockKind[] = ['actor', 'system', 'hot-spot', 'domain-event']
     for (const kind of kinds) {
@@ -459,6 +484,98 @@ describe('decide — sequence / unsequence', () => {
     const result = decide(writeModel, op({ kind: 'sequence', predecessor: 'a1', successor: 'eA' }))
     expect(isErr(result)).toBe(true)
     if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  const twoEvents = [
+    { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+    { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+  ]
+
+  // Probe an endpoint that is not the first id each kind reads — a skip on
+  // successor or inserted would still pass if we only named the predecessor.
+  it.each([
+    {
+      name: 'sequence of a withdrawn successor',
+      priors: [...twoEvents, { kind: 'withdraw', target: 'eB' }],
+      operation: { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eB' },
+    },
+    {
+      name: 'sequence of an unknown predecessor',
+      priors: [{ kind: 'capture-domain-event', id: 'eB', label: 'b' }],
+      operation: { kind: 'sequence', predecessor: 'e9', successor: 'eB' },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+    {
+      name: 'unsequence of a withdrawn successor',
+      priors: [
+        ...twoEvents,
+        { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+        { kind: 'withdraw', target: 'eB' },
+      ],
+      operation: { kind: 'unsequence', predecessor: 'eA', successor: 'eB' },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eB' },
+    },
+    {
+      name: 'unsequence of an unknown predecessor',
+      priors: [{ kind: 'capture-domain-event', id: 'eB', label: 'b' }],
+      operation: { kind: 'unsequence', predecessor: 'e9', successor: 'eB' },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+    {
+      name: 'insert-between of a withdrawn inserted event',
+      priors: [
+        ...twoEvents,
+        { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+        { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+        { kind: 'withdraw', target: 'eC' },
+      ],
+      operation: {
+        kind: 'insert-between',
+        predecessor: 'eA',
+        inserted: 'eC',
+        successor: 'eB',
+      },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eC' },
+    },
+    {
+      name: 'insert-between of an unknown successor',
+      priors: [
+        ...twoEvents,
+        { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+        { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      ],
+      operation: {
+        kind: 'insert-between',
+        predecessor: 'eA',
+        inserted: 'eC',
+        successor: 'e9',
+      },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+    {
+      name: 'insert-between of a withdrawn predecessor',
+      priors: [
+        ...twoEvents,
+        { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+        { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+        { kind: 'withdraw', target: 'eA' },
+      ],
+      operation: {
+        kind: 'insert-between',
+        predecessor: 'eA',
+        inserted: 'eC',
+        successor: 'eB',
+      },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eA' },
+    },
+  ])('rejects $name and leaves the graph unchanged', ({ priors, operation, error }) => {
+    const writeModel = given(priors)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op(operation))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toEqual(error)
+    expect(writeModel).toEqual(before)
   })
 
   it('no accepted operation sequence leaves a follows cycle', () => {
@@ -659,6 +776,67 @@ describe('decide — link-cause / unlink-cause', () => {
       })
     }
   })
+
+  // Probe the effect — a skip on that lookup would still pass if we only named the cause.
+  it.each([
+    {
+      name: 'link-cause of a withdrawn effect',
+      priors: [
+        { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+        { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+        { kind: 'withdraw', target: 'eA' },
+      ],
+      operation: { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eA' },
+    },
+    {
+      name: 'link-cause of an unknown effect',
+      priors: [
+        { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+        { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      ],
+      operation: { kind: 'link-cause', cause: 'a1', effect: 'e9' },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+  ])('rejects $name and leaves the graph unchanged', ({ priors, operation, error }) => {
+    const writeModel = given(priors)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op(operation))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toEqual(error)
+    expect(writeModel).toEqual(before)
+  })
+
+  // Probe the effect — a skip on that lookup would still pass if we only named the cause.
+  it.each([
+    {
+      name: 'unlink-cause of a withdrawn effect',
+      priors: [
+        { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+        { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+        { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+        { kind: 'withdraw', target: 'eA' },
+      ],
+      operation: { kind: 'unlink-cause', cause: 'a1', effect: 'eA' },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eA' },
+    },
+    {
+      name: 'unlink-cause of an unknown effect',
+      priors: [
+        { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+        { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      ],
+      operation: { kind: 'unlink-cause', cause: 'a1', effect: 'e9' },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+  ])('rejects $name and leaves the graph unchanged', ({ priors, operation, error }) => {
+    const writeModel = given(priors)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op(operation))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toEqual(error)
+    expect(writeModel).toEqual(before)
+  })
 })
 
 describe('decide — mark-pivotal / unmark-pivotal', () => {
@@ -691,6 +869,13 @@ describe('decide — mark-pivotal / unmark-pivotal', () => {
     if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
   })
 
+  it('rejects unmark-pivotal of an actor as kind-permission', () => {
+    const writeModel = given([{ kind: 'identify-actor', id: 'a1', label: 'clerk' }])
+    const result = decide(writeModel, op({ kind: 'unmark-pivotal', target: 'a1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
   it('rejects mark-pivotal of a withdrawn event', () => {
     const writeModel = given([
       { kind: 'capture-domain-event', id: 'eA', label: 'a' },
@@ -717,6 +902,31 @@ describe('decide — mark-pivotal / unmark-pivotal', () => {
         target: 'e9',
       })
     }
+  })
+
+  it.each([
+    {
+      name: 'unmark-pivotal of a withdrawn event',
+      priors: [
+        { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+        { kind: 'withdraw', target: 'eA' },
+      ],
+      operation: { kind: 'unmark-pivotal', target: 'eA' },
+      error: { kind: 'withdrawn-target', classification: 'systemic', target: 'eA' },
+    },
+    {
+      name: 'unmark-pivotal of an unknown target',
+      priors: [],
+      operation: { kind: 'unmark-pivotal', target: 'e9' },
+      error: { kind: 'unknown-target', classification: 'systemic', target: 'e9' },
+    },
+  ])('rejects $name and leaves the graph unchanged', ({ priors, operation, error }) => {
+    const writeModel = given(priors)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op(operation))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toEqual(error)
+    expect(writeModel).toEqual(before)
   })
 })
 
