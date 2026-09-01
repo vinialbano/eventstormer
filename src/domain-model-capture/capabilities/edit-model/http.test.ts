@@ -5,6 +5,7 @@ import { replay } from '../../domain/board/replay.ts'
 import { Operation } from '../../domain/schema/index.ts'
 import { applyOperation } from '../../infrastructure/apply-operation.ts'
 import { boardStream } from '../../infrastructure/board-stream.ts'
+import { readBoardSnapshot } from '../../api.ts'
 import type { EditModelDeps } from './deps.ts'
 import { editModelRoutes } from './http.ts'
 
@@ -68,16 +69,41 @@ describe('POST /workshops/:id/board/operations', () => {
     })
   })
 
-  it('rejects sequence with 422 not-implemented-in-slice and does not append', async () => {
+  it('appends sequence, bumps position, and GET board shows the follows edge', async () => {
     const deps = depsFor()
-    capture(deps, 'b_1', 'Loan recorded')
-    capture(deps, 'b_2', 'Book returned')
+    capture(deps, 'eA', 'Loan recorded')
+    capture(deps, 'eB', 'Book returned')
 
     const response = await postOp(deps, {
       v: 1,
       kind: 'sequence',
-      predecessor: 'b_1',
-      successor: 'b_2',
+      predecessor: 'eA',
+      successor: 'eB',
+      author,
+    })
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ position: 2 })
+    expect(logOf(deps)).toHaveLength(3)
+
+    const board = readBoardSnapshot({ store: deps.store }, workshopId)
+    expect(board.follows).toEqual([{ predecessor: 'eA', successor: 'eB' }])
+    expect(board.blocks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'eA', placement: 'timeline' }),
+        expect.objectContaining({ id: 'eB', placement: 'timeline' }),
+      ]),
+    )
+  })
+
+  it('rejects raise-hot-spot with 422 not-implemented-in-slice and does not append', async () => {
+    const deps = depsFor()
+    capture(deps, 'b_1', 'Loan recorded')
+
+    const response = await postOp(deps, {
+      v: 1,
+      kind: 'raise-hot-spot',
+      id: 'h_1',
+      label: 'Unclear fee',
       author,
     })
     expect(response.status).toBe(422)
@@ -85,7 +111,43 @@ describe('POST /workshops/:id/board/operations', () => {
       error: 'not-implemented-in-slice',
       classification: 'systemic',
     })
-    expect(logOf(deps)).toHaveLength(2)
+    expect(logOf(deps)).toHaveLength(1)
+  })
+
+  it('rejects a cycling sequence with 422 cycle and the offending path', async () => {
+    const deps = depsFor()
+    capture(deps, 'eA', 'Loan recorded')
+    capture(deps, 'eB', 'Book returned')
+    capture(deps, 'eC', 'Fine assessed')
+    await postOp(deps, {
+      v: 1,
+      kind: 'sequence',
+      predecessor: 'eA',
+      successor: 'eB',
+      author,
+    })
+    await postOp(deps, {
+      v: 1,
+      kind: 'sequence',
+      predecessor: 'eB',
+      successor: 'eC',
+      author,
+    })
+
+    const response = await postOp(deps, {
+      v: 1,
+      kind: 'sequence',
+      predecessor: 'eC',
+      successor: 'eA',
+      author,
+    })
+    expect(response.status).toBe(422)
+    await expect(response.json()).resolves.toEqual({
+      error: 'cycle',
+      classification: 'systemic',
+      path: ['eC', 'eA', 'eB', 'eC'],
+    })
+    expect(logOf(deps)).toHaveLength(5)
   })
 
   it('rejects an empty label with 422 empty-label, not 400', async () => {

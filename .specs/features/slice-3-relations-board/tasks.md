@@ -384,10 +384,10 @@ Cycle → 422 `{ error: 'cycle', classification: 'systemic', path }`. Replace th
 **Requirement**: S3-05, S3-29
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] POST `sequence` 200 + position bump; GET board shows the edge
-- [ ] POST `raise-hot-spot` 422 `not-implemented-in-slice`
-- [ ] POST cycling sequence 422 `cycle` with `path`
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] POST `sequence` 200 + position bump; GET board shows the edge
+- [x] POST `raise-hot-spot` 422 `not-implemented-in-slice`
+- [x] POST cycling sequence 422 `cycle` with `path`
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: integration · **Gate**: build
 **Commit**: `feat(capture): accept relation operations on the board POST`
 

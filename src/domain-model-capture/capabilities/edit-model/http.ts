@@ -5,7 +5,20 @@ import { applyOperation } from '../../infrastructure/apply-operation.ts'
 import { boardStream } from '../../infrastructure/board-stream.ts'
 import type { EditModelDeps } from './deps.ts'
 
-const F06_KINDS = new Set(['reword', 'withdraw', 'reinstate'])
+const F06_KINDS = new Set([
+  'reword',
+  'withdraw',
+  'reinstate',
+  'place',
+  'unplace',
+  'sequence',
+  'unsequence',
+  'insert-between',
+  'link-cause',
+  'unlink-cause',
+  'mark-pivotal',
+  'unmark-pivotal',
+])
 const MAX_LABEL_LENGTH = 10_000
 
 interface Rejected {
@@ -44,9 +57,10 @@ const parseBody = (raw: unknown): { operation: Operation } | Rejected => {
 }
 
 /**
- * `POST /workshops/:id/board/operations` — reword, withdraw, and reinstate.
- * Other frozen kinds are 422; an empty board stream is 404. Label is trimmed
- * before the operation is parsed so a blank label is 422, not a schema 400.
+ * `POST /workshops/:id/board/operations` — reword, withdraw, reinstate, place,
+ * sequence, insert-between, cause links, and pivotal marks. Hot-spot kinds
+ * are 422; an empty board stream is 404. Label is trimmed before the
+ * operation is parsed so a blank label is 422, not a schema 400.
  */
 export const editModelRoutes = (deps: EditModelDeps) =>
   new Hono().post('/workshops/:id/board/operations', async (context) => {
@@ -61,7 +75,13 @@ export const editModelRoutes = (deps: EditModelDeps) =>
     const applied = applyOperation(deps, workshopId, parsed.operation)
     if (!applied.ok) {
       return context.json(
-        { error: applied.error.kind, classification: 'systemic' as const },
+        'path' in applied.error
+          ? {
+              error: applied.error.kind,
+              classification: 'systemic' as const,
+              path: applied.error.path,
+            }
+          : { error: applied.error.kind, classification: 'systemic' as const },
         422,
       )
     }
