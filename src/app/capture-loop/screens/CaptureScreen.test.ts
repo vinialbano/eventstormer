@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
-import type { SessionView } from '../types.ts'
+import type { BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
 import BoardWall from '../board/BoardWall.vue'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import CaptureScreen from './CaptureScreen.vue'
@@ -88,6 +88,110 @@ describe('CaptureScreen', () => {
     )
     expect(wrapper.find('.screen__gate').exists()).toBe(false)
     expect(wrapper.find('.dock').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('accepts a proposal, refetches session and board, and lands the sticky on the wall', async () => {
+    const proposalCards: ProposalCard[] = [
+      {
+        proposalId: 'p1',
+        contributionId: 'c1',
+        blockKind: 'domain-event',
+        label: 'Order placed',
+        bar: 'strict',
+        disposition: 'PROPOSED',
+        held: false,
+        overflow: false,
+      },
+    ]
+    let boardSnapshot: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [] }
+    const activeSession = (): SessionView =>
+      sessionView({
+        contributions: [{ contributionId: 'c1', status: 'derived' }],
+        transcript: [
+          {
+            kind: 'contribution',
+            speaker: 'Maria',
+            text: 'A customer places an order.',
+            at: 't1',
+            contributionId: 'c1',
+          },
+        ],
+      })
+
+    fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith('/accept') && init?.method === 'POST') {
+        boardSnapshot = {
+          position: 1,
+          blocks: [
+            {
+              id: 'b1',
+              kind: 'domain-event',
+              label: 'Order placed',
+              withdrawn: false,
+              placement: 'backlog',
+              pivotal: false,
+              provenance: { accepter: { name: 'Maria' } },
+            },
+          ],
+          follows: [],
+          causedBy: [],
+        }
+        proposalCards[0] = {
+          proposalId: 'p1',
+          contributionId: 'c1',
+          blockKind: 'domain-event',
+          label: 'Order placed',
+          bar: 'strict',
+          disposition: 'APPLIED',
+          held: false,
+          overflow: false,
+          buildingBlockId: 'b1',
+        }
+        return Promise.resolve(new Response('{}', { status: 200 }))
+      }
+      if (url.endsWith('/session')) {
+        return Promise.resolve(new Response(JSON.stringify(activeSession()), { status: 200 }))
+      }
+      if (url.endsWith('/board')) {
+        return Promise.resolve(new Response(JSON.stringify(boardSnapshot), { status: 200 }))
+      }
+      if (url.endsWith('/proposals')) {
+        return Promise.resolve(new Response(JSON.stringify({ proposals: proposalCards }), { status: 200 }))
+      }
+      if (url.endsWith('/readable-account')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ position: -1, markdown: '# Readable account\n' }), { status: 200 }),
+        )
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(wrapper.find('.sticky').exists()).toBe(false)
+    const boardCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/board')).length
+    const sessionCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/session')).length
+    const proposalCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/proposals')).length
+
+    await wrapper.get('.pc--active .btn--primary').trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/accept', expect.objectContaining({ method: 'POST' }))
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/board')).length).toBe(boardCallsBefore + 1)
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/session')).length).toBe(
+      sessionCallsBefore + 1,
+    )
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/proposals')).length).toBe(
+      proposalCallsBefore + 1,
+    )
+
+    const sticky = wrapper.get('.sticky')
+    expect(sticky.text()).toContain('Order placed')
+    expect(sticky.attributes('aria-label')).toBe('event: Order placed, added by Maria')
+    expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
     wrapper.unmount()
   })
 

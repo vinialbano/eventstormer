@@ -36,6 +36,15 @@ const ops: Operation[] = [
   Operation.parse({ author, kind: 'reword', target: 'e1', label: 'order was placed' }),
   Operation.parse({ author, kind: 'withdraw', target: 'e2' }),
 ]
+
+const topologyOps: Operation[] = [
+  Operation.parse({ author, kind: 'capture-domain-event', id: 'e1', label: 'order placed' }),
+  Operation.parse({ author, kind: 'capture-domain-event', id: 'e2', label: 'order paid' }),
+  Operation.parse({ author, kind: 'identify-actor', id: 'a1', label: 'clerk' }),
+  Operation.parse({ author, kind: 'place', target: 'e1' }),
+  Operation.parse({ author, kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+  Operation.parse({ author, kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+]
 const asInput = (op: Operation): StoredOperationInput => ({
   at,
   opVersion: OP_SCHEMA_VERSION,
@@ -75,6 +84,57 @@ describe('persistence round-trip', () => {
             kind: 'domain-event',
             label: 'order paid',
             withdrawn: true,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+      ]),
+    })
+  })
+
+  it('follows, causedBy, and placement survive a simulated process restart', () => {
+    const path = freshDbPath()
+
+    const first = createSqliteEventStore(path)
+    first.append(stream, -1, topologyOps.map(asInput))
+
+    const second = createSqliteEventStore(path)
+    const fromDisk = replay(second.read(stream).map((row) => Operation.parse(row.operation)))
+
+    expect(fromDisk).toEqual({
+      position: 5,
+      follows: [{ predecessor: bid('e1'), successor: bid('e2') }],
+      causedBy: [{ cause: bid('a1'), effect: bid('e1') }],
+      blocks: new Map([
+        [
+          bid('e1'),
+          {
+            kind: 'domain-event',
+            label: 'order placed',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('e2'),
+          {
+            kind: 'domain-event',
+            label: 'order paid',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('a1'),
+          {
+            kind: 'actor',
+            label: 'clerk',
+            withdrawn: false,
             placement: 'backlog',
             pivotal: false,
             provenance: author,

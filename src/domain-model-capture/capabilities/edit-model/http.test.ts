@@ -36,6 +36,13 @@ const postOp = (deps: EditModelDeps, body: unknown, id: string = workshopId) =>
     body: JSON.stringify(body),
   })
 
+const postRaw = (deps: EditModelDeps, body: string, id: string = workshopId) =>
+  editModelRoutes(deps).request(`/workshops/${id}/board/operations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body,
+  })
+
 const logOf = (deps: EditModelDeps) => deps.store.read(boardStream(workshopId))
 
 const snapshotOf = (deps: EditModelDeps) =>
@@ -343,6 +350,30 @@ describe('POST /workshops/:id/board/operations', () => {
 
     const response = await postOp(deps, rewordBody('x'.repeat(10_001)))
     expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'label-too-long' })
+    expect(logOf(deps)).toHaveLength(1)
+  })
+
+  it.each([
+  {
+    name: 'malformed JSON',
+    body: '{not json',
+  },
+  {
+    name: 'a non-object body',
+    body: JSON.stringify([]),
+  },
+  {
+    name: 'a schema-fail payload',
+    body: JSON.stringify({ v: 1, kind: 'reword' }),
+  },
+])('rejects $name with 400 invalid-body and does not append', async ({ body }) => {
+    const deps = depsFor()
+    capture(deps, 'b_1', 'Loan recorded')
+
+    const response = await postRaw(deps, body)
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'invalid-body' })
     expect(logOf(deps)).toHaveLength(1)
   })
 

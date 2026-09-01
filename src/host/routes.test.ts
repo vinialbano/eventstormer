@@ -2,9 +2,10 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { EventStore } from '~/plumbing/event-store/port.ts'
 import { applyOperation, Operation } from '../domain-model-capture/api.ts'
-import type { WorkshopId } from '../plumbing/ids.ts'
-import { loadConfig } from './config.ts'
+import type { ContributionId, ProposalId, SessionId, WorkshopId } from '../plumbing/ids.ts'
+import { loadConfig, type HostConfig } from './config.ts'
 import { createRoutes } from './routes.ts'
 
 let directory: string
@@ -35,6 +36,70 @@ const createWorkshop = async (app: ReturnType<typeof createRoutes>): Promise<Wor
   return workshopId as WorkshopId
 }
 
+const author = { accepter: { name: 'Dana' } }
+const at = '2026-08-30T12:00:00.000Z'
+
+const postBoardOperation = async (
+  app: ReturnType<typeof createRoutes>,
+  workshopId: WorkshopId,
+  body: unknown,
+): Promise<Response> =>
+  app.request(`/api/workshops/${workshopId}/board/operations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+const seedProposal = (
+  store: EventStore,
+  sessionId: SessionId,
+  proposalId: ProposalId,
+  label: string,
+): void => {
+  store.append(
+    { context: 'session-facilitation', aggregate: 'proposal', id: proposalId },
+    -1,
+    [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Building Block Proposed',
+          proposalId,
+          sessionId,
+          contributionId: 'c_1' as ContributionId,
+          blockKind: 'domain-event',
+          label,
+          bar: 'strict',
+          at,
+        },
+      },
+    ],
+  )
+}
+
+const captureBlockViaAccept = async (
+  config: HostConfig,
+  app: ReturnType<typeof createRoutes>,
+  workshopId: WorkshopId,
+  label: string,
+): Promise<string> => {
+  const sessionResponse = await app.request(`/api/workshops/${workshopId}/sessions`, { method: 'POST' })
+  expect(sessionResponse.status).toBe(202)
+  const { sessionId } = (await sessionResponse.json()) as { sessionId: string }
+
+  seedProposal(config.store, sessionId as SessionId, 'p_1' as ProposalId, label)
+
+  const acceptResponse = await app.request('/api/proposals/p_1/accept', { method: 'POST' })
+  expect(acceptResponse.status).toBe(200)
+  const acceptBody = (await acceptResponse.json()) as { proposal: { buildingBlockId?: string } }
+  const buildingBlockId = acceptBody.proposal.buildingBlockId
+  if (buildingBlockId === undefined) throw new Error('expected buildingBlockId after accept')
+
+  return buildingBlockId
+}
+
 describe('createRoutes — the mounted /api surface', () => {
   it('serves health under /api', async () => {
     const response = await wired().app.request('/api/health')
@@ -56,30 +121,32 @@ describe('createRoutes — the mounted /api surface', () => {
   it('serves POST /api/workshops/:id/board/operations through the capture api', async () => {
     const { config, app } = wired()
     const workshopId = await createWorkshop(app)
-    applyOperation(
-      { store: config.store, clock: config.clock },
-      workshopId,
-      Operation.parse({
-        author: { accepter: { name: 'Dana' } },
-        kind: 'capture-domain-event',
-        id: 'b_1',
-        label: 'Loan recorded',
-      }),
+    const buildingBlockId = await captureBlockViaAccept(config, app, workshopId, 'Loan recorded')
+
+    const reword = await postBoardOperation(app, workshopId, {
+      v: 1,
+      kind: 'reword',
+      target: buildingBlockId,
+      label: 'Loan was recorded',
+      author,
+    })
+    expect(reword.status).toBe(200)
+    await expect(reword.json()).resolves.toEqual({ position: 1 })
+
+    const board = await app.request(`/api/workshops/${workshopId}/board`)
+    expect(board.status).toBe(200)
+    const boardBody = (await board.json()) as { blocks: { id: string; label: string }[] }
+    expect(boardBody.blocks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: buildingBlockId, label: 'Loan was recorded' }),
+      ]),
     )
 
-    const response = await app.request(`/api/workshops/${workshopId}/board/operations`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        v: 1,
-        kind: 'reword',
-        target: 'b_1',
-        label: 'Loan was recorded',
-        author: { accepter: { name: 'Dana' } },
-      }),
-    })
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ position: 1 })
+    const account = await app.request(`/api/workshops/${workshopId}/readable-account`)
+    expect(account.status).toBe(200)
+    const accountBody = (await account.json()) as { markdown: string }
+    expect(accountBody.markdown).toContain('- Event: Loan was recorded')
+    expect(accountBody.markdown).not.toContain('- Event: Loan recorded')
   })
 
   it('serves both artifact GETs: empty board is 200 and references list the building-blocks site', async () => {

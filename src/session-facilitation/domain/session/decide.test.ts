@@ -194,6 +194,31 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
     if (isOk(result)) expect(result.value).toEqual([])
   })
 
+  it('emits Contribution Interpretation Failed the first time, ok([]) the second', () => {
+    const first = decide(replay(startedStream), {
+      type: 'Fail Interpretation',
+      sessionId,
+      contributionId: toContributionId('c_1'),
+      reason: 'schema-invalid after one retry',
+      at,
+    })
+    expect(isOk(first) && first.value).toHaveLength(1)
+
+    const seen = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Contribution Interpretation Failed', sessionId, contributionId: toContributionId('c_1'), reason: 'schema-invalid after one retry' },
+    ])
+    const second = decide(seen, {
+      type: 'Fail Interpretation',
+      sessionId,
+      contributionId: toContributionId('c_1'),
+      reason: 'schema-invalid after one retry',
+      at,
+    })
+    expect(isOk(second)).toBe(true)
+    if (isOk(second)) expect(second.value).toEqual([])
+  })
+
   it('Interpret Contribution on a CLOSED session is ok([]) — a late model call writes nothing', () => {
     const closed = replay([
       ...startedStream,

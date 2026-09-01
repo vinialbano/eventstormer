@@ -5,6 +5,7 @@ import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
 import { isErr, isOk } from '~/plumbing/result.ts'
 import { replay } from '../domain/board/replay.ts'
 import { Operation } from '../domain/schema/index.ts'
+import { readBoardSnapshot } from '../api.ts'
 import { applyOperation, type ApplyOperationDeps } from './apply-operation.ts'
 import { boardStream } from './board-stream.ts'
 
@@ -276,6 +277,60 @@ describe('applyOperation — relation kinds map an id and do not throw', () => {
     expect(
       store.read(boardStream(workshopId)).slice(-3).map((row) => Operation.parse(row.operation).kind),
     ).toEqual(['withdraw', 'unlink-cause', 'unlink-cause'])
+  })
+
+  it('unplaces a sequenced event as one append of three operations', () => {
+    const store = createMemoryEventStore()
+    const deps = depsFor(store)
+    applyOperation(deps, workshopId, captureOp('eA', 'Loan recorded'))
+    applyOperation(deps, workshopId, captureOp('eB', 'Book returned'))
+    applyOperation(deps, workshopId, captureOp('eC', 'Fine assessed'))
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'sequence', predecessor: 'eC', successor: 'eA' }),
+    )
+
+    let appendCalls = 0
+    let lastBatchSize = 0
+    const counting: EventStore = {
+      read: (stream) => store.read(stream),
+      append: (stream, position, ops) => {
+        appendCalls += 1
+        lastBatchSize = ops.length
+        return store.append(stream, position, ops)
+      },
+    }
+
+    const before = store.read(boardStream(workshopId)).length
+    const result = applyOperation(
+      depsFor(counting),
+      workshopId,
+      Operation.parse({ author, kind: 'unplace', target: 'eA' }),
+    )
+
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value.resultingBuildingBlockId).toBe('eA')
+    expect(appendCalls).toBe(1)
+    expect(lastBatchSize).toBe(3)
+    expect(store.read(boardStream(workshopId))).toHaveLength(before + 3)
+    expect(
+      store.read(boardStream(workshopId)).slice(-3).map((row) => Operation.parse(row.operation).kind),
+    ).toEqual(['unsequence', 'unsequence', 'unplace'])
+
+    const board = readBoardSnapshot({ store }, workshopId)
+    expect(board.follows).toEqual([])
+    expect(board.blocks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'eA', placement: 'backlog' }),
+        expect.objectContaining({ id: 'eB', placement: 'timeline' }),
+      ]),
+    )
   })
 })
 

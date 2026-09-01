@@ -169,6 +169,51 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
     expect(interpretCalls).toBe(0)
   })
 
+  it('re-derives a free Question Asked from ledger-only askQuestion fields with zero model calls', () => {
+    const qFollow = 'q_follow' as QuestionId
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Made',
+          sessionId,
+          contributionId: 'c_1',
+          speaker: 'Dana',
+          body: 'members can borrow books',
+          source: 'typed',
+          at,
+        },
+      },
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_1',
+          tracks: [],
+          askQuestionId: qFollow,
+          askQuestionText: 'What happens right after a member joins?',
+          at,
+        },
+      },
+    ])
+
+    reconcilePendingDerivations(deps())
+
+    const questions = only('Question Asked')
+    expect(questions).toHaveLength(1)
+    expect(questions[0]).toMatchObject({
+      kind: 'free',
+      questionId: qFollow,
+      text: 'What happens right after a member joins?',
+    })
+    expect(interpretCalls).toBe(0)
+  })
+
   it('is idempotent — a second reconcile adds no events and makes no model calls', () => {
     ledgerWithoutDerivation()
     reconcilePendingDerivations(deps())
