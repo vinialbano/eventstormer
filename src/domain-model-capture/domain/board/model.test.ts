@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { err, isErr } from '~/plumbing/result.ts'
-import { emptySnapshot, emptyWriteModel, type Rejection } from './model.ts'
+import type { BuildingBlockId } from '~/plumbing/ids.ts'
+import {
+  emptySnapshot,
+  emptyWriteModel,
+  type BuildingBlockKind,
+  type SnapshotBlock,
+  type WriteBlock,
+} from './model.ts'
+
+const bid = (value: string): BuildingBlockId => value as BuildingBlockId
 
 describe('Board model', () => {
   it('emptyWriteModel has empty blocks, follows, and causedBy', () => {
@@ -24,18 +32,48 @@ describe('Board model', () => {
     expect(emptySnapshot()).not.toBe(emptySnapshot())
   })
 
-  it('a Rejection is a valid Result error and carries a systemic classification', () => {
-    const rejection: Rejection = {
-      kind: 'unknown-target',
-      classification: 'systemic',
-      target: 'e9',
+  it('the write model carries only kind and withdrawn — not label, placement, or provenance', () => {
+    const writeBlock: WriteBlock = { kind: 'domain-event', withdrawn: false }
+    const snapshotBlock: SnapshotBlock = {
+      kind: 'domain-event',
+      label: 'order placed',
+      withdrawn: false,
+      placement: 'backlog',
+      pivotal: false,
+      provenance: { accepter: { name: 'Dana' } },
     }
-    const result = err(rejection)
+    expect(writeBlock).not.toHaveProperty('label')
+    expect(writeBlock).not.toHaveProperty('placement')
+    expect(snapshotBlock.label).toBe('order placed')
+    expect(snapshotBlock.placement).toBe('backlog')
+  })
 
-    expect(isErr(result)).toBe(true)
-    if (isErr(result)) {
-      expect(result.error.kind).toBe('unknown-target')
-      expect(result.error.classification).toBe('systemic')
+  it('follows edges are event-to-event; causedBy edges are cause-to-effect', () => {
+    const snapshot = emptySnapshot()
+    const follows = [
+      ...snapshot.follows,
+      { predecessor: bid('e1'), successor: bid('e2') },
+    ]
+    const causedBy = [
+      ...snapshot.causedBy,
+      { cause: bid('a1'), effect: bid('e1') },
+    ]
+    expect(follows[0]).toEqual({ predecessor: bid('e1'), successor: bid('e2') })
+    expect(causedBy[0]).toEqual({ cause: bid('a1'), effect: bid('e1') })
+  })
+
+  it('all four Building Block kinds are representable in the discriminated union', () => {
+    const kinds: BuildingBlockKind[] = ['domain-event', 'actor', 'system', 'hot-spot']
+    for (const kind of kinds) {
+      const block: SnapshotBlock = {
+        kind,
+        label: 'x',
+        withdrawn: false,
+        placement: 'backlog',
+        pivotal: false,
+        provenance: { accepter: { name: 'Dana' } },
+      }
+      expect(block.kind).toBe(kind)
     }
   })
 })

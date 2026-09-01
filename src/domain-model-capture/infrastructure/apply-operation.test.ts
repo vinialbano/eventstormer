@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
-import { isErr, isOk } from '~/plumbing/result.ts'
+import { err, isErr, isOk } from '~/plumbing/result.ts'
+import type { AppendConflict } from '~/plumbing/event-store/port.ts'
 import { replay } from '../domain/board/replay.ts'
 import { Operation } from '../domain/schema/index.ts'
 import { readBoardSnapshot } from '../api.ts'
@@ -331,6 +332,25 @@ describe('applyOperation — relation kinds map an id and do not throw', () => {
         expect.objectContaining({ id: 'eB', placement: 'timeline' }),
       ]),
     )
+  })
+})
+
+describe('applyOperation — stale-position retry budget', () => {
+  it('throws after MAX_RETRIES when append always returns stale-position', () => {
+    const base = createMemoryEventStore()
+    const alwaysStale: EventStore = {
+      read: (stream) => base.read(stream),
+      append: () =>
+        err<AppendConflict>({
+          kind: 'stale-position',
+          actual: 0,
+          classification: 'transient',
+        }),
+    }
+
+    expect(() =>
+      applyOperation(depsFor(alwaysStale), workshopId, captureOp('b_1', 'Loan recorded')),
+    ).toThrow('applyOperation: exceeded stale-position retry budget')
   })
 })
 

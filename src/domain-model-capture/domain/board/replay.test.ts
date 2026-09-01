@@ -93,6 +93,71 @@ describe('replay', () => {
     })
   })
 
+  it('place, unplace, and insert-between publish the expected timeline topology', () => {
+    const log = [
+      op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }),
+      op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }),
+      op({ kind: 'capture-domain-event', id: 'eC', label: 'c' }),
+      op({ kind: 'capture-domain-event', id: 'eD', label: 'd' }),
+      op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+      op({ kind: 'sequence', predecessor: 'eA', successor: 'eD' }),
+      op({ kind: 'place', target: 'eC' }),
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+      op({ kind: 'unplace', target: 'eA' }),
+    ]
+    expect(replay(log)).toEqual({
+      position: 8,
+      follows: [{ predecessor: bid('eC'), successor: bid('eB') }],
+      causedBy: [],
+      blocks: new Map([
+        [
+          bid('eA'),
+          {
+            kind: 'domain-event',
+            label: 'a',
+            withdrawn: false,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('eB'),
+          {
+            kind: 'domain-event',
+            label: 'b',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('eC'),
+          {
+            kind: 'domain-event',
+            label: 'c',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('eD'),
+          {
+            kind: 'domain-event',
+            label: 'd',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+      ]),
+    })
+  })
+
   it('produces the expected snapshot after sequencing two events', () => {
     const log = [
       op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),

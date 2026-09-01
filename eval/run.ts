@@ -120,7 +120,7 @@ const printRow = (row: EvalRow): void => {
   console.log(`${row.caseId} ${row.assertion}: ${String(row.passed)}/${String(row.runs)}`)
 }
 
-const scoreFixture = (
+export const scoreFixture = (
   fixture: EvalFixture,
   outcomes: readonly (FacilitationTrack[] | undefined)[],
 ): EvalRow[] => {

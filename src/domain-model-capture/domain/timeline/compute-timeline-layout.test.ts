@@ -30,6 +30,30 @@ describe('computeTimelineLayout', () => {
     })
   })
 
+  it('forms two tracks from two disconnected sequenced components', () => {
+    const snapshot = snapshotOf([
+      { kind: 'capture-domain-event', id: 'e1', label: 'Loan recorded' },
+      { kind: 'capture-domain-event', id: 'e2', label: 'Book returned' },
+      { kind: 'sequence', predecessor: 'e1', successor: 'e2' },
+      { kind: 'capture-domain-event', id: 'e3', label: 'Fine assessed' },
+      { kind: 'capture-domain-event', id: 'e4', label: 'Fine paid' },
+      { kind: 'sequence', predecessor: 'e3', successor: 'e4' },
+    ])
+
+    expect(computeTimelineLayout(snapshot)).toEqual({
+      tracks: [
+        { eventIds: [bid('e1'), bid('e2')], ranks: { e1: 0, e2: 1 } },
+        { eventIds: [bid('e3'), bid('e4')], ranks: { e3: 0, e4: 1 } },
+      ],
+      edges: [
+        { predecessor: bid('e1'), successor: bid('e2') },
+        { predecessor: bid('e3'), successor: bid('e4') },
+      ],
+      attachments: {},
+      pivotal: [],
+    })
+  })
+
   it('ranks a linear chain A→B→C as 0, 1, 2', () => {
     const snapshot = snapshotOf([
       { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
@@ -87,6 +111,20 @@ describe('computeTimelineLayout', () => {
       attachments: {},
       pivotal: [],
     })
+  })
+
+  it('lists a system under the event it caused and never in eventIds', () => {
+    const snapshot = snapshotOf([
+      { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
+      { kind: 'identify-system', id: 's1', label: 'Catalogue' },
+      { kind: 'place', target: 'eA' },
+      { kind: 'link-cause', cause: 's1', effect: 'eA' },
+    ])
+
+    const layout = computeTimelineLayout(snapshot)
+    expect(layout.tracks[0]?.eventIds).toEqual([bid('eA')])
+    expect(layout.tracks[0]?.eventIds).not.toContain(bid('s1'))
+    expect(layout.attachments).toEqual({ eA: [bid('s1')] })
   })
 
   it('lists an actor under the event it caused and never in eventIds', () => {

@@ -53,6 +53,8 @@ describe('CaptureScreen', () => {
     await flushPromises()
 
     expect(wrapper.find('.wall').exists()).toBe(true)
+    expect(wrapper.findAll('.sticky')).toHaveLength(0)
+    expect(wrapper.get('[role="list"]').attributes('data-empty')).toBe('true')
     expect(wrapper.get('.screen__gate').text()).toContain('Start session')
     // no dock while there is no open session
     expect(wrapper.find('.dock').exists()).toBe(false)

@@ -184,6 +184,13 @@ describe('Proposal.decide — reject and apply outcomes', () => {
     }
   })
 
+  it('Reject Proposal on REJECTED is an idempotent no-op', () => {
+    const rejected = replay([proposed, { v: 1, at, type: 'Proposal Rejected', proposalId }])
+    const result = decide(rejected, { type: 'Reject Proposal', proposalId, at })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
   it('Record Operation Applied on ACCEPTED emits Operation Applied, then ok([])', () => {
     const first = decide(replay([proposed, proposalAccepted]), {
       type: 'Record Operation Applied',

@@ -104,10 +104,14 @@ describe('GET /workshops/:id/session', () => {
     const response = await makeContributionRoutes(deps()).request(`/workshops/${workshopId}/session`)
     expect(response.status).toBe(200)
     const view = (await response.json()) as {
+      sessionId: string
+      sessionOpen: boolean
       scope: { status: string }
       contributions: { contributionId: string; status: string }[]
       fullyDerived: boolean
     }
+    expect(view.sessionId).toBe(sessionId)
+    expect(view.sessionOpen).toBe(true)
     expect(view.scope.status).toBe('none')
     expect(view.contributions.map((cn) => cn.status)).toEqual(['pending', 'pending'])
     expect(view.contributions.some((cn) => cn.contributionId === contributionId)).toBe(true)
