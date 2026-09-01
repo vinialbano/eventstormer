@@ -62,7 +62,7 @@ describe('project (read-model fold)', () => {
     expect(snap.position).toBe(-1)
     snap = project(snap, op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
     expect(snap.position).toBe(0)
-    snap = project(snap, op({ kind: 'place', target: 'e1' })) // not folded, still advances
+    snap = project(snap, op({ kind: 'place', target: 'e1' }))
     expect(snap.position).toBe(1)
   })
 
@@ -77,5 +77,113 @@ describe('project (read-model fold)', () => {
     const snap = project(emptySnapshot(), op({ kind: 'reword', target: 'missing', label: 'x' }))
     expect(snap.blocks.size).toBe(0)
     expect(snap.position).toBe(0)
+  })
+
+  it('sequence puts both events on the timeline and records the follows edge', () => {
+    const captureA = op({ kind: 'capture-domain-event', id: 'eA', label: 'a' })
+    const captureB = op({ kind: 'capture-domain-event', id: 'eB', label: 'b' })
+    const sequence = op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' })
+    const log = [captureA, captureB, sequence]
+    expect(log.map((item) => item.kind)).toEqual([
+      'capture-domain-event',
+      'capture-domain-event',
+      'sequence',
+    ])
+    let snap = emptySnapshot()
+    for (const item of log) snap = project(snap, item)
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eB'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([{ predecessor: bid('eA'), successor: bid('eB') }])
+  })
+
+  it('place puts a captured event on the timeline as its own track', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('backlog')
+    snap = project(snap, op({ kind: 'place', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([])
+  })
+
+  it('unplace returns a sequenced event to the backlog and drops follows involving it', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([{ predecessor: bid('eA'), successor: bid('eB') }])
+    snap = project(snap, op({ kind: 'unplace', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('backlog')
+    expect(snap.blocks.get(bid('eB'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([])
+  })
+
+  it('insert-between places the three events and replaces A→B with A→C and C→B', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eC', label: 'c' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eD', label: 'd' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eA', successor: 'eD' }))
+    snap = project(
+      snap,
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+    )
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eB'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eC'))?.placement).toBe('timeline')
+    expect(snap.follows).toEqual([
+      { predecessor: bid('eA'), successor: bid('eD') },
+      { predecessor: bid('eA'), successor: bid('eC') },
+      { predecessor: bid('eC'), successor: bid('eB') },
+    ])
+  })
+
+  it('mark-pivotal then unmark-pivotal flips pivotal false to true to false', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    expect(snap.blocks.get(bid('eA'))?.pivotal).toBe(false)
+    snap = project(snap, op({ kind: 'mark-pivotal', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))?.pivotal).toBe(true)
+    snap = project(snap, op({ kind: 'unmark-pivotal', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))?.pivotal).toBe(false)
+  })
+
+  it('link-cause publishes the causedBy edge; unlink-cause removes it', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'identify-actor', id: 'a1', label: 'clerk' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'link-cause', cause: 'a1', effect: 'eA' }))
+    expect(snap.causedBy).toEqual([{ cause: bid('a1'), effect: bid('eA') }])
+    snap = project(snap, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
+    expect(snap.causedBy).toEqual([])
+  })
+
+  it('withdraw drops incident published edges so withdrawn ids are absent', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))
+    snap = project(snap, op({ kind: 'identify-actor', id: 'a1', label: 'clerk' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
+    snap = project(snap, op({ kind: 'link-cause', cause: 'a1', effect: 'eA' }))
+    snap = project(snap, op({ kind: 'withdraw', target: 'eA' }))
+    expect(snap.follows).toEqual([])
+    expect(snap.causedBy).toEqual([])
+    expect(snap.blocks.get(bid('eA'))?.withdrawn).toBe(true)
+  })
+
+  it('reinstate returns a previously placed pivotal event to a naked backlog', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))
+    snap = project(snap, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
+    snap = project(snap, op({ kind: 'mark-pivotal', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+    expect(snap.blocks.get(bid('eA'))?.pivotal).toBe(true)
+    snap = project(snap, op({ kind: 'withdraw', target: 'eA' }))
+    snap = project(snap, op({ kind: 'reinstate', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))).toEqual({
+      kind: 'domain-event',
+      label: 'a',
+      withdrawn: false,
+      placement: 'backlog',
+      pivotal: false,
+      provenance: author,
+    })
+    expect(snap.follows).toEqual([])
   })
 })

@@ -14,10 +14,21 @@ const bid = (value: string): BuildingBlockId => value as BuildingBlockId
 const POOL: Operation[] = [
   op({ kind: 'capture-domain-event', id: 'e1', label: 'a' }),
   op({ kind: 'capture-domain-event', id: 'e2', label: 'b' }),
+  op({ kind: 'capture-domain-event', id: 'e3', label: 'c' }),
   op({ kind: 'identify-actor', id: 'a1', label: 'server' }),
+  op({ kind: 'identify-system', id: 's1', label: 'ledger' }),
   op({ kind: 'reword', target: 'e1', label: 'a-reworded' }),
   op({ kind: 'withdraw', target: 'e1' }),
   op({ kind: 'reinstate', target: 'e1' }),
+  op({ kind: 'place', target: 'e1' }),
+  op({ kind: 'unplace', target: 'e1' }),
+  op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+  op({ kind: 'unsequence', predecessor: 'e1', successor: 'e2' }),
+  op({ kind: 'insert-between', predecessor: 'e1', inserted: 'e3', successor: 'e2' }),
+  op({ kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+  op({ kind: 'unlink-cause', cause: 'a1', effect: 'e1' }),
+  op({ kind: 'mark-pivotal', target: 'e1' }),
+  op({ kind: 'unmark-pivotal', target: 'e1' }),
 ]
 
 describe('replay', () => {
@@ -78,6 +89,43 @@ describe('replay', () => {
       placement: 'backlog',
       pivotal: false,
       provenance: author,
+    })
+  })
+
+  it('produces the expected snapshot after sequencing two events', () => {
+    const log = [
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'paid' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+    ]
+    expect(replay(log)).toEqual({
+      position: 2,
+      follows: [{ predecessor: bid('e1'), successor: bid('e2') }],
+      causedBy: [],
+      blocks: new Map([
+        [
+          bid('e1'),
+          {
+            kind: 'domain-event',
+            label: 'placed',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('e2'),
+          {
+            kind: 'domain-event',
+            label: 'paid',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+      ]),
     })
   })
 

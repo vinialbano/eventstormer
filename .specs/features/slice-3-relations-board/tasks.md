@@ -177,11 +177,11 @@ sequence snapshot as **literals** (not only replay≡project).
 **Requirement**: S3-01, S3-07, S3-16, S3-23, S3-28
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] log `[capture A, capture B, sequence A→B]` snapshot: both `placement: 'timeline'`; log does **not** contain `place`
-- [ ] `unplace A` after that → A `backlog`, no follows involving A
-- [ ] `mark-pivotal A` then `unmark-pivotal A` pins `pivotal` false→true→false with a **distinct** middle assertion
-- [ ] `replay(log ++ [op]) === project(replay(log), op)` still holds on the enlarged POOL
-- [ ] Gate check passes: `pnpm test`
+- [x] log `[capture A, capture B, sequence A→B]` snapshot: both `placement: 'timeline'`; log does **not** contain `place`
+- [x] `unplace A` after that → A `backlog`, no follows involving A
+- [x] `mark-pivotal A` then `unmark-pivotal A` pins `pivotal` false→true→false with a **distinct** middle assertion
+- [x] `replay(log ++ [op]) === project(replay(log), op)` still holds on the enlarged POOL
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): project placement and pivotal from relation operations`
 
