@@ -6,6 +6,7 @@ import { Operation, type OperationKind } from '../schema/index.ts'
 import { decide } from './decide.ts'
 import { evolve } from './evolve.ts'
 import { type BoardWriteModel, emptyWriteModel, type BuildingBlockKind } from './model.ts'
+import { replay } from './replay.ts'
 
 const bid = (value: string): BuildingBlockId => value as BuildingBlockId
 
@@ -51,7 +52,6 @@ const followsIsAcyclic = (follows: Map<BuildingBlockId, Set<BuildingBlockId>>): 
 
 const NOT_IMPLEMENTED: OperationKind[] = [
   'raise-hot-spot',
-  'insert-between',
   'link-cause',
   'unlink-cause',
   'annotate',
@@ -437,6 +437,7 @@ describe('decide — sequence / unsequence', () => {
       op({ kind: 'sequence', predecessor: 'e2', successor: 'e1' }),
       op({ kind: 'unsequence', predecessor: 'e1', successor: 'e2' }),
       op({ kind: 'unsequence', predecessor: 'e2', successor: 'e3' }),
+      op({ kind: 'insert-between', predecessor: 'e1', inserted: 'e3', successor: 'e2' }),
       op({ kind: 'place', target: 'e1' }),
       op({ kind: 'unplace', target: 'e2' }),
     ]
@@ -451,6 +452,72 @@ describe('decide — sequence / unsequence', () => {
         expect(followsIsAcyclic(writeModel.follows)).toBe(true)
       }),
     )
+  })
+})
+
+describe('decide — insert-between', () => {
+  it('inserts C between A and B as one op and leaves A→D', () => {
+    const log = [
+      op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }),
+      op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }),
+      op({ kind: 'capture-domain-event', id: 'eC', label: 'c' }),
+      op({ kind: 'capture-domain-event', id: 'eD', label: 'd' }),
+      op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+      op({ kind: 'sequence', predecessor: 'eA', successor: 'eD' }),
+    ]
+    const writeModel = log.reduce((model, item) => evolve(model, item), emptyWriteModel())
+    const insert = op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' })
+    const result = decide(writeModel, insert)
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([insert])
+    const snap = replay([...log, insert])
+    expect(snap.follows).toEqual([
+      { predecessor: bid('eA'), successor: bid('eD') },
+      { predecessor: bid('eA'), successor: bid('eC') },
+      { predecessor: bid('eC'), successor: bid('eB') },
+    ])
+    expect(snap.follows).not.toContainEqual({ predecessor: bid('eA'), successor: bid('eB') })
+    expect(snap.blocks.get(bid('eC'))?.placement).toBe('timeline')
+  })
+
+  it('rejects insert-between when A→B is absent as missing-edge', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+    ])
+    const result = decide(
+      writeModel,
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+    )
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
+    }
+  })
+
+  it('rejects insert-between when C can reach A as a cycle', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+      { kind: 'sequence', predecessor: 'eC', successor: 'eA' },
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+    ])
+    const result = decide(
+      writeModel,
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+    )
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'cycle',
+        classification: 'systemic',
+        path: [bid('eA'), bid('eC'), bid('eA')],
+      })
+    }
+    expect(writeModel.follows.get(bid('eA'))).toEqual(new Set([bid('eB')]))
+    expect(writeModel.follows.get(bid('eC'))).toEqual(new Set([bid('eA')]))
   })
 })
 

@@ -244,9 +244,9 @@ untouched (asserted via evolve/project, already T2/T3).
 **Requirement**: S3-04, S3-05
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] A→B plus extra A→D, insert C between A and B → decide returns `[insert-between]`; snapshot has A→C, C→B, A→D, not A→B
-- [ ] insert when A→B absent → `missing-edge`; C that can reach A → `cycle`
-- [ ] Gate check passes: `pnpm test`
+- [x] A→B plus extra A→D, insert C between A and B → decide returns `[insert-between]`; snapshot has A→C, C→B, A→D, not A→B
+- [x] insert when A→B absent → `missing-edge`; C that can reach A → `cycle`
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): decide insert-between as one cycle-checked operation`
 

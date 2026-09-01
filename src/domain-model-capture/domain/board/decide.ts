@@ -22,10 +22,11 @@ const lookupActive = (
   return ok(block)
 }
 
-const requireActiveEvent = (
+const requireDomainEvent = (
   writeModel: BoardWriteModel,
   target: BuildingBlockId,
   operation: string,
+  reason: string,
 ): Result<WriteBlock, Rejection> => {
   const block = lookupActive(writeModel, target)
   if (!block.ok) return block
@@ -34,11 +35,23 @@ const requireActiveEvent = (
       kind: 'kind-permission',
       classification: 'systemic',
       operation,
-      reason: 'only a domain event may be placed or unplaced',
+      reason,
     })
   }
   return block
 }
+
+const requireActiveEvent = (
+  writeModel: BoardWriteModel,
+  target: BuildingBlockId,
+  operation: string,
+): Result<WriteBlock, Rejection> =>
+  requireDomainEvent(
+    writeModel,
+    target,
+    operation,
+    'only a domain event may be placed or unplaced',
+  )
 
 const pathFromTo = (
   follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
@@ -154,18 +167,20 @@ const decideUnplace = (writeModel: BoardWriteModel, operation: OpOf<'unplace'>):
 }
 
 const decideSequence = (writeModel: BoardWriteModel, operation: OpOf<'sequence'>): Decision => {
-  const predecessor = lookupActive(writeModel, operation.predecessor)
+  const predecessor = requireDomainEvent(
+    writeModel,
+    operation.predecessor,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
   if (!predecessor.ok) return predecessor
-  const successor = lookupActive(writeModel, operation.successor)
+  const successor = requireDomainEvent(
+    writeModel,
+    operation.successor,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
   if (!successor.ok) return successor
-  if (predecessor.value.kind !== 'domain-event' || successor.value.kind !== 'domain-event') {
-    return err({
-      kind: 'kind-permission',
-      classification: 'systemic',
-      operation: operation.kind,
-      reason: 'only domain events may be sequenced',
-    })
-  }
   if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) === true) {
     return err({ kind: 'already-related', classification: 'systemic' })
   }
@@ -175,21 +190,101 @@ const decideSequence = (writeModel: BoardWriteModel, operation: OpOf<'sequence'>
 }
 
 const decideUnsequence = (writeModel: BoardWriteModel, operation: OpOf<'unsequence'>): Decision => {
-  const predecessor = lookupActive(writeModel, operation.predecessor)
+  const predecessor = requireDomainEvent(
+    writeModel,
+    operation.predecessor,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
   if (!predecessor.ok) return predecessor
-  const successor = lookupActive(writeModel, operation.successor)
+  const successor = requireDomainEvent(
+    writeModel,
+    operation.successor,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
   if (!successor.ok) return successor
-  if (predecessor.value.kind !== 'domain-event' || successor.value.kind !== 'domain-event') {
-    return err({
-      kind: 'kind-permission',
-      classification: 'systemic',
-      operation: operation.kind,
-      reason: 'only domain events may be sequenced',
-    })
-  }
   if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true) {
     return err({ kind: 'missing-edge', classification: 'systemic' })
   }
+  return ok([operation])
+}
+
+const cloneFollows = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+): Map<BuildingBlockId, Set<BuildingBlockId>> =>
+  new Map([...follows].map(([id, related]) => [id, new Set(related)]))
+
+const deleteFollowsEdge = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+  predecessor: BuildingBlockId,
+  successor: BuildingBlockId,
+): void => {
+  const successors = follows.get(predecessor)
+  if (!successors) return
+  successors.delete(successor)
+  if (successors.size === 0) follows.delete(predecessor)
+}
+
+const addFollowsEdge = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+  predecessor: BuildingBlockId,
+  successor: BuildingBlockId,
+): void => {
+  const successors = follows.get(predecessor)
+  if (successors) successors.add(successor)
+  else follows.set(predecessor, new Set([successor]))
+}
+
+const insertBetweenCycle = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+  predecessor: BuildingBlockId,
+  inserted: BuildingBlockId,
+  successor: BuildingBlockId,
+): BuildingBlockId[] | undefined => {
+  const reduced = cloneFollows(follows)
+  deleteFollowsEdge(reduced, predecessor, successor)
+  const viaInserted = cyclePathIfAdded(reduced, predecessor, inserted)
+  if (viaInserted) return viaInserted
+  addFollowsEdge(reduced, predecessor, inserted)
+  return cyclePathIfAdded(reduced, inserted, successor)
+}
+
+const decideInsertBetween = (
+  writeModel: BoardWriteModel,
+  operation: OpOf<'insert-between'>,
+): Decision => {
+  const predecessor = requireDomainEvent(
+    writeModel,
+    operation.predecessor,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
+  if (!predecessor.ok) return predecessor
+  const inserted = requireDomainEvent(
+    writeModel,
+    operation.inserted,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
+  if (!inserted.ok) return inserted
+  const successor = requireDomainEvent(
+    writeModel,
+    operation.successor,
+    operation.kind,
+    'only domain events may be sequenced',
+  )
+  if (!successor.ok) return successor
+  if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true) {
+    return err({ kind: 'missing-edge', classification: 'systemic' })
+  }
+  const path = insertBetweenCycle(
+    writeModel.follows,
+    operation.predecessor,
+    operation.inserted,
+    operation.successor,
+  )
+  if (path) return err({ kind: 'cycle', classification: 'systemic', path })
   return ok([operation])
 }
 
@@ -240,8 +335,10 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
     case 'unsequence':
       return decideUnsequence(writeModel, operation)
 
-    case 'raise-hot-spot':
     case 'insert-between':
+      return decideInsertBetween(writeModel, operation)
+
+    case 'raise-hot-spot':
     case 'link-cause':
     case 'unlink-cause':
     case 'annotate':
