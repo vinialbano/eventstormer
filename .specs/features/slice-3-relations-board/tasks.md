@@ -201,10 +201,10 @@ assigns `follows` / pivotal / `place` to a non-event.
 **Requirement**: S3-07, S3-08, S3-09, S3-28
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `place` event → `ok([place])`; `place` actor → `kind-permission`
-- [ ] `unplace` of A with A→B and C→A → batch contains two `unsequence` then `unplace`; neighbours not sequenced to each other
-- [ ] kind-permission property (or exhaustive loop) green
-- [ ] Gate check passes: `pnpm test`
+- [x] `place` event → `ok([place])`; `place` actor → `kind-permission`
+- [x] `unplace` of A with A→B and C→A → batch contains two `unsequence` then `unplace`; neighbours not sequenced to each other
+- [x] kind-permission property (or exhaustive loop) green
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): decide place and unplace; unplace severs follows`
 

@@ -74,7 +74,7 @@ export const emptySnapshot = (): BoardSnapshot => ({
 })
 
 /**
- * Why an operation was rejected. Every Slice 0 rejection is *systemic* — a human
+ * Why an operation was rejected. Every rejection is *systemic* — a human
  * fixes the input, it is never auto-retried. Transient failures (a
  * stale expected position) live on the EventStore's `AppendConflict`, not here.
  */
@@ -87,3 +87,7 @@ export type Rejection =
   | { kind: 'already-withdrawn'; classification: 'systemic'; target: string }
   | { kind: 'withdrawn-target'; classification: 'systemic'; target: string }
   | { kind: 'not-implemented-in-slice'; classification: 'systemic'; operation: string }
+  | { kind: 'cycle'; classification: 'systemic'; path: BuildingBlockId[] }
+  | { kind: 'kind-permission'; classification: 'systemic'; operation: string; reason: string }
+  | { kind: 'already-related'; classification: 'systemic' }
+  | { kind: 'missing-edge'; classification: 'systemic' }

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import type { BuildingBlockId } from '~/plumbing/ids.ts'
 import { isErr, isOk } from '~/plumbing/result.ts'
 import { Operation, type OperationKind } from '../schema/index.ts'
 import { decide } from './decide.ts'
 import { evolve } from './evolve.ts'
-import { type BoardWriteModel, emptyWriteModel } from './model.ts'
+import { type BoardWriteModel, emptyWriteModel, type BuildingBlockKind } from './model.ts'
+
+const bid = (value: string): BuildingBlockId => value as BuildingBlockId
 
 const author = { accepter: { name: 'Dana' } }
 const op = (raw: Record<string, unknown>): Operation => Operation.parse({ author, ...raw })
@@ -14,8 +17,6 @@ const given = (priors: Record<string, unknown>[]): BoardWriteModel =>
 
 const NOT_IMPLEMENTED: OperationKind[] = [
   'raise-hot-spot',
-  'place',
-  'unplace',
   'sequence',
   'unsequence',
   'insert-between',
@@ -186,6 +187,116 @@ describe('decide — withdraw / reinstate', () => {
     const result = decide(emptyWriteModel(), op({ kind: 'reinstate', target: 'e9' }))
     expect(isErr(result)).toBe(true)
     if (isErr(result)) expect(result.error.kind).toBe('unknown-target')
+  })
+})
+
+describe('decide — place / unplace', () => {
+  it('places a domain event as a single place operation', () => {
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    const result = decide(writeModel, op({ kind: 'place', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'place', target: 'e1' })])
+    }
+  })
+
+  it('accepts a second place of an already-placed event', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'x' },
+      { kind: 'place', target: 'e1' },
+    ])
+    const result = decide(writeModel, op({ kind: 'place', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'place', target: 'e1' })])
+  })
+
+  it('rejects place of an actor as kind-permission', () => {
+    const writeModel = given([{ kind: 'identify-actor', id: 'a1', label: 'clerk' }])
+    const result = decide(writeModel, op({ kind: 'place', target: 'a1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'kind-permission',
+        classification: 'systemic',
+        operation: 'place',
+        reason: 'only a domain event may be placed or unplaced',
+      })
+    }
+  })
+
+  it('rejects place of an unknown target', () => {
+    const result = decide(emptyWriteModel(), op({ kind: 'place', target: 'e9' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'unknown-target',
+        classification: 'systemic',
+        target: 'e9',
+      })
+    }
+  })
+
+  it('rejects place of a withdrawn event', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'x' },
+      { kind: 'withdraw', target: 'e1' },
+    ])
+    const result = decide(writeModel, op({ kind: 'place', target: 'e1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'withdrawn-target',
+        classification: 'systemic',
+        target: 'e1',
+      })
+    }
+  })
+
+  it('unplaces a sequenced event by unsequencing incident edges then unplace', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      { kind: 'sequence', predecessor: 'eC', successor: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'unplace', target: 'eA' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value.map((item) => item.kind)).toEqual(['unsequence', 'unsequence', 'unplace'])
+      expect(result.value).toEqual([
+        op({ kind: 'unsequence', predecessor: 'eA', successor: 'eB' }),
+        op({ kind: 'unsequence', predecessor: 'eC', successor: 'eA' }),
+        op({ kind: 'unplace', target: 'eA' }),
+      ])
+    }
+  })
+
+  it('unplaces an isolated event as a single unplace', () => {
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
+    const result = decide(writeModel, op({ kind: 'unplace', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'unplace', target: 'e1' })])
+  })
+
+  it('never accepts place or unplace on a non-event', () => {
+    const kinds: BuildingBlockKind[] = ['actor', 'system', 'hot-spot', 'domain-event']
+    for (const kind of kinds) {
+      const writeModel: BoardWriteModel = {
+        blocks: new Map([[bid('x1'), { kind, withdrawn: false }]]),
+        follows: new Map(),
+        causedBy: new Map(),
+      }
+      for (const operationKind of ['place', 'unplace'] as const) {
+        const result = decide(writeModel, op({ kind: operationKind, target: 'x1' }))
+        if (kind === 'domain-event') {
+          expect(isOk(result)).toBe(true)
+        } else {
+          expect(isErr(result)).toBe(true)
+          if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+        }
+      }
+    }
   })
 })
 
