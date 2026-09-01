@@ -405,10 +405,10 @@ track in follows order; coverage line "Timeline and relations" is a real walk, n
 **Requirement**: S3-27
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] two sequenced events appear in follows order in the Markdown (pinned string)
-- [ ] coverage does not contain `Timeline and relations: not run`
-- [ ] quoted evidence byte-identical when only a label in `blocks` changes
-- [ ] Gate check passes: `pnpm test`
+- [x] two sequenced events appear in follows order in the Markdown (pinned string)
+- [x] coverage does not contain `Timeline and relations: not run`
+- [x] quoted evidence byte-identical when only a label in `blocks` changes
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(artifacts): readable account walks placed events in follows order`
 

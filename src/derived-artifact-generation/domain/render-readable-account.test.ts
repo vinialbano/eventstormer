@@ -127,4 +127,69 @@ Scope: (not set)
 
     expect(markdown).toContain('- Event (withdrawn): Loan recorded')
   })
+
+  it('walks two sequenced events in follows order and drops the not-run coverage line', () => {
+    const loanId = 'eA' as BuildingBlockId
+    const bookId = 'eB' as BuildingBlockId
+    const sequenced = (loanLabel: string): AccountInput => ({
+      position: 2,
+      format: 'big-picture',
+      scope: null,
+      narratorCount: 1,
+      blocks: [
+        { id: loanId, kind: 'domain-event', label: loanLabel, withdrawn: false, placement: 'timeline' },
+        { id: bookId, kind: 'domain-event', label: 'Book returned', withdrawn: false, placement: 'timeline' },
+      ],
+      follows: [{ predecessor: loanId, successor: bookId }],
+      quotes: [{ id: 'c_1', text: 'The Order sat in the basket.' }],
+    })
+
+    const before = renderReadableAccount(sequenced('Loan recorded'))
+    const after = renderReadableAccount(sequenced('Loan was recorded'))
+
+    expect(before.markdown).toBe(`# Readable account
+Format: Big Picture
+Narrators: 1
+Scope: (not set)
+
+## Coverage
+- Stakeholder check: not run
+- Chosen problem: not run
+
+## Timeline and relations
+- Event: Loan recorded
+  - Event: Book returned
+
+## Building blocks
+- Event: Loan recorded
+- Event: Book returned
+
+## Quoted evidence
+> The Order sat in the basket.
+`)
+    expect(before.markdown).not.toContain('Timeline and relations: not run')
+    expect(after.markdown).toBe(`# Readable account
+Format: Big Picture
+Narrators: 1
+Scope: (not set)
+
+## Coverage
+- Stakeholder check: not run
+- Chosen problem: not run
+
+## Timeline and relations
+- Event: Loan was recorded
+  - Event: Book returned
+
+## Building blocks
+- Event: Loan was recorded
+- Event: Book returned
+
+## Quoted evidence
+> The Order sat in the basket.
+`)
+    expect(before.markdown.slice(before.markdown.indexOf('## Quoted evidence'))).toBe(
+      after.markdown.slice(after.markdown.indexOf('## Quoted evidence')),
+    )
+  })
 })
