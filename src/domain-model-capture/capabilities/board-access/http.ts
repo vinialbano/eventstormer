@@ -6,7 +6,9 @@ import { readBoardSnapshot } from './read-board-snapshot.ts'
 /**
  * `GET /workshops/:id/board` — the full board snapshot for the client `board`
  * store, rebuilt from the operation log (F01). A `Map` is not JSON, so
- * `blocks` is serialised as an array carrying each block's id.
+ * `blocks` is serialised as an array carrying each block's id. Topology
+ * (`follows`, `causedBy`) and per-block `placement` / `pivotal` travel with
+ * the body; ranks do not.
  *
  * Chained router (Hono RPC / `testClient` type inference depends on it).
  */

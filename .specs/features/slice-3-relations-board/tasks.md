@@ -365,9 +365,9 @@ isolated; **this task updates the server DTO tests**; SPA types in T16)
 **Requirement**: S3-10, S3-20
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] GET board after sequence returns the follows pair and both `placement: 'timeline'`
-- [ ] empty-stream GET still 404; `readBoardSnapshot` empty log has empty follows/causedBy
-- [ ] Gate check passes: `pnpm test`
+- [x] GET board after sequence returns the follows pair and both `placement: 'timeline'`
+- [x] empty-stream GET still 404; `readBoardSnapshot` empty log has empty follows/causedBy
+- [x] Gate check passes: `pnpm test`
 **Tests**: integration · **Gate**: quick
 **Commit**: `feat(capture): board snapshot publishes relations and placement`
 
