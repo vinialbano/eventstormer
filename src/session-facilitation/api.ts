@@ -29,6 +29,8 @@ export { createInFlightGuard } from './capabilities/interpret-contribution/in-fl
 export type { InFlightGuard, InterpretContributionDeps } from './capabilities/interpret-contribution/deps.ts'
 
 export { applySessionFacilitationMigrations } from './infrastructure/migrations.ts'
+export { readArtifactSource } from './infrastructure/read-artifact-source.ts'
+export type { SessionIndexDb } from './infrastructure/session-index.ts'
 export { createAnthropicFacilitator } from './infrastructure/facilitator/anthropic-adapter.ts'
 export type { Facilitator } from './infrastructure/facilitator/port.ts'
 export type { TrackIdMint } from './infrastructure/facilitator/map.ts'

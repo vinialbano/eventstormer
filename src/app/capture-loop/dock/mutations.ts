@@ -26,3 +26,12 @@ export const submitContribution = (sessionId: string, text: string): Promise<unk
 
 export const setScope = (workshopId: string, statement: string): Promise<unknown> =>
   postJson(`/api/workshops/${workshopId}/scope`, { statement })
+
+export type BoardEdit = {
+  v: 1
+  author: { accepter: { name: string } }
+  target: string
+} & ({ kind: 'reword'; label: string } | { kind: 'withdraw' } | { kind: 'reinstate' })
+
+export const postBoardOperation = (workshopId: string, operation: BoardEdit): Promise<unknown> =>
+  postJson(`/api/workshops/${workshopId}/board/operations`, operation)

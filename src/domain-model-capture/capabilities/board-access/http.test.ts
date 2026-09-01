@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { WorkshopId } from '~/plumbing/ids.ts'
 import { Operation } from '../../domain/schema/index.ts'
-import { applyOperation } from './apply-operation.ts'
+import { applyOperation } from '../../infrastructure/apply-operation.ts'
 import type { BoardAccessDeps } from './deps.ts'
 import { boardAccessRoutes } from './http.ts'
 

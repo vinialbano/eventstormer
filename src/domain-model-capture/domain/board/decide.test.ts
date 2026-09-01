@@ -91,12 +91,64 @@ describe('decide — reword', () => {
     ])
     expect(isOk(decide(writeModel, op({ kind: 'reword', target: 'e1', label: 'same' })))).toBe(true)
   })
+
+  it('rejects a reword of a withdrawn target', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'order placed' },
+      { kind: 'withdraw', target: 'e1' },
+    ])
+    const result = decide(writeModel, op({ kind: 'reword', target: 'e1', label: 'order was placed' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'withdrawn-target',
+        classification: 'systemic',
+        target: 'e1',
+      })
+    }
+  })
 })
 
 describe('decide — withdraw / reinstate', () => {
   it('withdraws a present target', () => {
     const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'x' }])
     expect(isOk(decide(writeModel, op({ kind: 'withdraw', target: 'e1' })))).toBe(true)
+  })
+
+  it('withdraws a present event with no edges as a single withdraw', () => {
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'e1', label: 'order placed' }])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toHaveLength(1)
+      expect(result.value[0]).toMatchObject({ kind: 'withdraw', target: 'e1' })
+    }
+  })
+
+  it('withdraws a present actor with no edges as a single withdraw', () => {
+    const writeModel = given([{ kind: 'identify-actor', id: 'a1', label: 'member' }])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'a1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toHaveLength(1)
+      expect(result.value[0]).toMatchObject({ kind: 'withdraw', target: 'a1' })
+    }
+  })
+
+  it('rejects a withdraw of an already-withdrawn target', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'order placed' },
+      { kind: 'withdraw', target: 'e1' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'already-withdrawn',
+        classification: 'systemic',
+        target: 'e1',
+      })
+    }
   })
 
   it('rejects a withdraw of an unknown target', () => {

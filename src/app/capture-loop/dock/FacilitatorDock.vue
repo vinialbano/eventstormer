@@ -2,6 +2,7 @@
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
 import { computed, nextTick, ref } from 'vue'
 import type { ProposalCard as ProposalCardData } from '../types.ts'
+import { useBoardStore } from '../stores/board.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
 import ConversationTurn from './ConversationTurn.vue'
@@ -39,6 +40,12 @@ const emit = defineEmits<{ mutated: []; 'board-dirty': [] }>()
 
 const session = useSessionStore()
 const proposals = useProposalsStore()
+const board = useBoardStore()
+
+const liveLabel = (card: ProposalCardData): string => {
+  if (card.buildingBlockId === undefined) return card.label
+  return board.snapshot.blocks.find((block) => block.id === card.buildingBlockId)?.label ?? card.label
+}
 
 const open = ref(true)
 const drawerOpen = ref(false)
@@ -68,7 +75,7 @@ const byContribution = computed(() => {
 
 type FeedItem =
   | { type: 'turn'; key: string; kind: 'contribution' | 'question' | 'notice'; speaker: string; text: string }
-  | { type: 'cluster'; key: string; cards: ProposalCardData[] }
+  | { type: 'cluster'; key: string; cards: ProposalCardData[]; sourceText: string }
 
 const contribStatus = computed(
   () => new Map((session.view?.contributions ?? []).map((contribution) => [contribution.contributionId, contribution.status])),
@@ -91,7 +98,7 @@ const feed = computed<FeedItem[]>(() => {
 
     const cards = byContribution.value.get(turn.contributionId)
     if (cards !== undefined && cards.length > 0) {
-      items.push({ type: 'cluster', key: `c${turn.contributionId}`, cards })
+      items.push({ type: 'cluster', key: `c${turn.contributionId}`, cards, sourceText: turn.text })
       continue
     }
     // No proposals for this contribution. Give the facilitator a visible reply
@@ -190,7 +197,7 @@ const onJump = async (proposalId: string): Promise<void> => {
   <CollapsibleRoot v-model:open="open" class="dock" :class="{ 'dock--wide': drawerOpen }">
     <CollapsibleTrigger v-if="!open" class="dock__pill">
       Facilitator
-      <span class="dock__count">{{ pendingCount }}</span>
+      <span v-if="pendingCount > 0" class="dock__count">{{ pendingCount }}</span>
       <span v-if="anyHeld" class="dock__dot" aria-label="parked proposals" />
     </CollapsibleTrigger>
 
@@ -256,12 +263,13 @@ const onJump = async (proposalId: string): Promise<void> => {
                   <ProposalCard
                     :kind-label="kindLabel(card.blockKind)"
                     :pill-kind="card.blockKind"
-                    :label="card.label"
+                    :label="liveLabel(card)"
                     :disposition="card.disposition"
                     :held="card.held"
                     :bar="card.bar"
                     :apply-failed-reason="card.applyFailedReason"
                     :accepter="accepter"
+                    :source-text="item.sourceText"
                     @accept="onAccept(card.proposalId)"
                     @reject="onReject(card.proposalId)"
                     @hold="onHold(card.proposalId)"

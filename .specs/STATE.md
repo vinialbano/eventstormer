@@ -40,19 +40,23 @@ capture.
 | AD-024 | **Slice 1 `session-facilitation` capabilities are per-action, not one `capture-loop` slice:** `start-workshop`, `set-scope`, `start-session`, `make-contribution`, `review-proposal` (accept/edit/reject/hold/unhold — one use case), `close-session`, and `interpret-contribution` (tick-invoked). Each owns its Hono router (or, for `interpret-contribution`, its tick functions), all mounted/exposed through `session-facilitation/api.ts`. They share only `session-facilitation/domain/` (the 3 aggregates, the event SSOT, the read models incl. `sessionProposalIds`, the `InterpretedTrack` schema) and `session-facilitation/infrastructure/` (`session-index`, the `Facilitator` port). | ADR-010's slice-1 row already names them separately (`start-workshop`, `make-contribution`, `review-proposal`); Slice 2 adds `edit-model` as a new slice. A single mega-slice makes `no-cross-slice-imports` guard nothing and leaves the cross-context accept path un-isolated (plan-review round 2, arch M1). | 2026-08-30 | Slice 1 |
 | AD-026 | **Identifiers are spelled out in full, project abbreviations included — `wm` is `writeModel`.** The `id-length` (`min: 2`) + `unicorn/name-replacements` rules from PR #49 under-enforce this: a 2-character project shorthand that isn't an English abbreviation the plugin knows (`wm`, `op`, `bid`) passes both. So the convention is carried by review and this precedent, not only by lint. `@typescript-eslint/no-shadow` + `no-self-compare` are also `error` (PR #49 review) — a shadowed inner binding once turned an identity check into an `x === x` tautology that dropped a domain event. | 2026-08-31 | PR #49 + all later code |
 | AD-027 | **CI merge gate is `pnpm check` + `pnpm build` + `pnpm test:e2e`.** `pnpm check` and pre-push stay without Playwright and without `pnpm eval`. Pre-push runs `pnpm check` (lint included). Eval is `pnpm eval`, out of CI, against the real model (ADR-008). `package.json` `"test"` must name `--project domain --project app` so a third Vitest `eval` project cannot sneak onto the merge gate. | CI used to claim identity with `pnpm check` while omitting lint on pre-push and omitting the one capture-loop E2E everywhere. Iron Law 4: the real SPA+Hono+sqlite path gates merge; local Stop stays fast. | 2026-08-31 | test-suite-hardening; all later CI / eval work |
+| AD-028 | Slice 2 does **not** extend the Board write model with `follows` / `causedBy` / annotation adjacency; `decide(withdraw)` emits a single `withdraw`. F01 cascades land in Slice 3 (#40: `unlink-cause` per referencing event) and Slice 4 (#41: `withdraw` on annotating hot spots) as batch-atomic follow-ons from the same `decide` (AD-006). Slice 2 ticket ACs naming those cascades are vacuously true. | User decision 2026-08-31 at Slice 2 Specify. AD-005 already deferred adjacency to those slices; implementing it in the money shot would smuggle #40/#41 into F06/F10. Comments on the issues. | 2026-08-31 | Slice 2 (vacuous); Slice 3; Slice 4 |
+| AD-029 | A query whose answer is a **derived artifact** (the live readable account, the rendered-reference list) lives in `derived-artifact-generation`, even when the URL is `/workshops/:id/board/blocks/:blockId/references`. `domain-model-capture` never imports that Supporting context. `host/` mounts DAG's router at the ARCHITECTURE.md path. | Conformist arrow is Capture → DAG. Putting the reference list in `edit-model` would invert Core → Supporting. Slice 3/4 extend `listReferences`, they do not move the route. | 2026-08-31 | Slice 2; Slice 3–5 artifact reads |
+| AD-030 | Slice 2 does **not** add `OperationId` or accept-chain crash-window reconciliation. Stored `buildingBlockId` + `duplicate-id` already closes accept-retry. F06 is one Board append. **Supersedes** AD-017's leftover "reconciliation stays Slice 2" clause and AD-011's "candidate: Slice 2 apply round-trip". AD-011 otherwise stands (`OperationId` omitted from v:1 until a slice earns it). | Spec out-of-scope 2026-08-31; earn-it. | 2026-08-31 | Slice 2 (out); later slice that proves it needs `OperationId` |
 
 ---
 
 ## Handoff
 
-- **Feature**: `pr-51-review-fixes` (`.specs/features/pr-51-review-fixes/`)
-- **Phase / Task**: Execute complete. Verifier **PASS**.
-- **Completed**: R1 `eeabbf5` · R2 `f12a3a0` · R3 `14d07da`; Verifier 11/11 ACs, 404 tests, 1/1 killable mutant killed
+- **Feature**: `slice-2-money-shot` (`.specs/features/slice-2-money-shot/`) — GitHub #39
+- **Phase / Task**: Execute complete + Verifier **PASS** (`84792ea`)
+- **Completed**: T1–T17; 26/26 ACs verified; 467 tests; 3/3 mutants killed; `minor` changeset;
+  `package.json` still `0.2.0`
 - **In-progress**: none
-- **Next step**: Push `test/suite-hardening` so PR #51 picks up the three commits. Human: live `pnpm eval` with a key, then `pnpm eval --report`. Slice 5 (#42) still owns the full 8-case eval.
+- **Next step**: Interactive UAT if wanted; PR when you ask. Branch is local only.
 - **Blockers**: none
-- **Uncommitted files**: none (skill vendor files `.agents/` / `testing-boss` / `skills-lock.json` stay local)
-- **Branch**: `test/suite-hardening` off `main`
+- **Uncommitted files**: none
+- **Branch**: `slice-2-money-shot` off `main`
 
 ---
 

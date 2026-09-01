@@ -11,6 +11,8 @@ export interface BoardBlockInput {
   id: string
   kind: string
   label: string
+  withdrawn?: boolean | undefined
+  speaker?: string | undefined
 }
 
 interface LayoutViewport {
@@ -29,8 +31,10 @@ interface StickyRect extends Rect {
   id: string
   kind: string
   label: string
+  withdrawn: boolean
   /** Deterministic degrees of tilt, seeded from the id (−1.4°…1.1°). */
   tilt: number
+  speaker?: string | undefined
 }
 
 interface BoardLayout {
@@ -77,6 +81,8 @@ export const layoutBoard = (
     id: block.id,
     kind: block.kind,
     label: block.label,
+    withdrawn: block.withdrawn === true,
+    speaker: block.speaker,
     x: frameX + FRAME_PAD + (index % MAX_COLS) * (CELL + GAP),
     y: frameY + FRAME_TITLE_H + FRAME_PAD + Math.floor(index / MAX_COLS) * (CELL + GAP),
     w: CELL,

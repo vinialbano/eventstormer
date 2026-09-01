@@ -2,7 +2,8 @@ import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
 import type { BuildingBlockKind } from '../../domain/board/model.ts'
 import { replay } from '../../domain/board/replay.ts'
 import { Operation } from '../../domain/schema/index.ts'
-import { type BoardAccessDeps, boardStream } from './deps.ts'
+import { boardStream } from '../../infrastructure/board-stream.ts'
+import type { BoardAccessDeps } from './deps.ts'
 
 export interface BuildingBlockRow {
   id: BuildingBlockId

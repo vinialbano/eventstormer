@@ -60,7 +60,9 @@ one screen.
 - **Reword in place (F06):** select a committed sticky → a pencil affordance appears →
   clicking it (or `Enter` / `E` on a focused sticky) turns the sticky into a **full
   dashed ghost** (dashed border, paler fill) with editable text and **✓ / ✕** controls;
-  `Enter` saves, `Esc` cancels. This dashed-ghost treatment is used **only** for editing an
+  `Esc` / ✕ restore the previous label and append nothing. `Enter` **inside the
+  dashed-ghost** opens the confirm popover (it does not silent-save). Confirming a new
+  label is that second step. This dashed-ghost treatment is used **only** for editing an
   existing sticky — never for proposals.
 - **Focal moment:** an accepted proposal card becomes a sticky on the wall — the
   words-into-model beat. Newest sticky briefly distinguished (settle + fading highlight),
@@ -75,13 +77,15 @@ one screen.
 
 - **Fidelity:** production-ready screen — one screen, all its states — plus a static HTML
   reference mockup as the build target.
-- **Breadth:** the capture screen only. Not the separate "what are we mapping?" opening
-  screen, not artifact exports, not session close.
+- **Breadth:** the capture screen only, including the live **readable-account drawer**
+  on the right edge. Not the separate "what are we mapping?" opening screen, not
+  artifact exports, not session close.
 - **Slice-1 reality vs. reference comps:** slice 1 ships the **backlog** (accepted events
   land unplaced); the timeline arrangement with arrows and pivotal bars shown in the comps
   is the **slice-3** target the design must not preclude. Drag-to-place is slice 3.
 - **Untouched / must not break:** server-confirmed model, HTTP-only SPA, `**/domain/**`
-  framework-free, plain `fetch` POST, 3 Pinia stores each cold-loadable from one GET.
+  framework-free, plain `fetch` POST, 4 Pinia stores (`session`, `proposals`, `board`,
+  `account`) each cold-loadable from one GET.
 - **Anti-goals:** a Miro/FigJam infinite-canvas editor; a chat app with the model in a
   drawer; message bubbles that let proposals scroll away unnoticed; **ghost/dashed stickies
   for pending proposals** (rejected — clutters the board and raises the teaching burden for
@@ -119,8 +123,9 @@ one screen.
 - **Topology:** desktop-first. Below ~1024px the dock becomes a bottom sheet over the wall;
   the wall is never dropped — seeing the model form is the point.
 - **Affordances:** Accept / Edit / Reject / Hold per card; `Accept all` per cluster and
-  `Accept all remaining` in the drawer; pencil-to-reword on a selected sticky; drag-to-place
-  is slice 3.
+  `Accept all remaining` in the drawer; pencil-to-reword on a selected sticky;
+  **Withdraw** on a selected active sticky and **Reinstate** on a selected ghost; a
+  **Readable account** toggle for the right-edge drawer; drag-to-place is slice 3.
 - **Feedback:** accepted card → sticky with a brief settle + fading highlight and a
   transcript receipt; reject collapses to `✕ Dismissed …`; the Pending handle count updates
   live.

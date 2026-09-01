@@ -1,15 +1,24 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
+import { postBoardOperation } from '../dock/mutations.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
+import RewordConfirm from './RewordConfirm.vue'
+import { isTypingSurface } from './typing-surface.ts'
 
 /**
  * The board wall — a full-screen EventStorming surface. Slice 1 renders the
  * backlog area only (ADR-006: the layout is the pure `layoutBoard`; this file is
- * the swappable renderer). A pending proposal is NEVER drawn here — no ghost
- * sticky (that treatment is reword-only, slice 3).
+ * the swappable renderer). A pending proposal is never drawn here — the dashed
+ * ghost is reword-only.
  */
-const props = defineProps<{ blocks: BoardBlockInput[] }>()
+const props = defineProps<{
+  blocks: BoardBlockInput[]
+  workshopId?: string
+  accepter?: string
+  revision?: number
+}>()
+const emit = defineEmits<{ 'board-dirty': [] }>()
 
 const viewport = ref({ w: 1280, h: 800 })
 const measure = (): void => {
@@ -18,12 +27,109 @@ const measure = (): void => {
     h: Math.max(320, window.innerHeight),
   }
 }
+
+const selectedId = ref<string | null>(null)
+const withdrawAskId = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+const draft = ref('')
+const labelError = ref('')
+const confirmOpen = ref(false)
+const draftInput = ref<HTMLInputElement | null>(null)
+const bindDraftInput = (element: unknown): void => {
+  draftInput.value = element instanceof HTMLInputElement ? element : null
+}
+
+const selectSticky = (id: string): void => {
+  selectedId.value = id
+  if (withdrawAskId.value !== id) withdrawAskId.value = null
+}
+
+const cancelReword = (): void => {
+  confirmOpen.value = false
+  editingId.value = null
+  draft.value = ''
+  labelError.value = ''
+}
+
+const requestConfirm = (): void => {
+  if (draft.value.trim().length === 0) {
+    labelError.value = "Name can't be empty."
+    return
+  }
+  labelError.value = ''
+  confirmOpen.value = true
+}
+
+const onRewordConfirmed = (): void => {
+  emit('board-dirty')
+  cancelReword()
+}
+
+const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise<void> => {
+  const workshopId = props.workshopId
+  const accepter = props.accepter
+  if (workshopId === undefined || workshopId.length === 0 || accepter === undefined) return
+  await postBoardOperation(workshopId, {
+    v: 1,
+    kind,
+    target,
+    author: { accepter: { name: accepter } },
+  })
+  emit('board-dirty')
+}
+
+const dismissEsc = (): void => {
+  if (confirmOpen.value) {
+    confirmOpen.value = false
+    return
+  }
+  if (withdrawAskId.value !== null) {
+    withdrawAskId.value = null
+    return
+  }
+  cancelReword()
+}
+
+const startReword = async (id: string): Promise<void> => {
+  const block = props.blocks.find((candidate) => candidate.id === id)
+  if (block === undefined || block.withdrawn === true) return
+  editingId.value = id
+  draft.value = block.label
+  await nextTick()
+  draftInput.value?.focus()
+  draftInput.value?.select()
+}
+
+const onWindowKeydown = (event: KeyboardEvent): void => {
+  if (isTypingSurface(event.target)) {
+    if (event.key === 'Escape' && editingId.value !== null) {
+      event.preventDefault()
+      dismissEsc()
+    }
+    if (event.key === 'Enter' && editingId.value !== null) {
+      event.preventDefault()
+      requestConfirm()
+    }
+    return
+  }
+  if (event.key === 'Escape') {
+    dismissEsc()
+    return
+  }
+  if (editingId.value !== null || selectedId.value === null) return
+  if (event.key !== 'e' && event.key !== 'E' && event.key !== 'Enter') return
+  event.preventDefault()
+  void startReword(selectedId.value)
+}
+
 onMounted(() => {
   measure()
   window.addEventListener('resize', measure)
+  window.addEventListener('keydown', onWindowKeydown)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', measure)
+  window.removeEventListener('keydown', onWindowKeydown)
 })
 
 const layout = computed(() => layoutBoard(props.blocks, viewport.value))
@@ -64,6 +170,11 @@ const KIND_LABEL: Record<string, string> = {
   system: 'system',
 }
 const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
+
+const showsActiveControls = (id: string, withdrawn: boolean): boolean =>
+  selectedId.value === id && editingId.value !== id && !withdrawn
+const showsReinstate = (id: string, withdrawn: boolean): boolean =>
+  selectedId.value === id && withdrawn
 </script>
 
 <template>
@@ -153,10 +264,16 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
         v-for="s in layout.backlog"
         :key="s.id"
         class="sticky"
-        :class="{ 'sticky--fresh': fresh.has(s.id) }"
+        :class="{
+          'sticky--fresh': fresh.has(s.id),
+          'sticky--withdrawn': s.withdrawn,
+          'sticky--selected': selectedId === s.id && editingId !== s.id,
+          'sticky--reword': editingId === s.id,
+        }"
         :data-kind="s.kind"
+        :data-withdrawn="s.withdrawn ? 'true' : 'false'"
         tabindex="0"
-        :aria-label="`${kindWord(s.kind)}: ${s.label}`"
+        :aria-label="s.speaker === undefined ? `${kindWord(s.kind)}: ${s.label}` : `${kindWord(s.kind)}: ${s.label}, added by ${s.speaker}`"
         :style="{
           left: `${s.x}px`,
           top: `${s.y}px`,
@@ -164,8 +281,87 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
           height: `${s.h}px`,
           '--tilt': `${s.tilt}deg`,
         }"
+        @focus="selectSticky(s.id)"
+        @click="selectSticky(s.id)"
       >
-        <span class="sticky__label">{{ s.label }}</span>
+        <button
+          v-if="showsActiveControls(s.id, s.withdrawn)"
+          type="button"
+          class="sticky__pencil"
+          aria-label="Reword"
+          @click.stop="startReword(s.id)"
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path
+              d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <button
+          v-if="showsActiveControls(s.id, s.withdrawn) && withdrawAskId !== s.id"
+          type="button"
+          class="sticky__status"
+          aria-label="Withdraw"
+          @click.stop="withdrawAskId = s.id"
+        >
+          Withdraw
+        </button>
+        <button
+          v-if="showsActiveControls(s.id, s.withdrawn) && withdrawAskId === s.id"
+          type="button"
+          class="sticky__status"
+          aria-label="Confirm withdraw"
+          @click.stop="postEdit('withdraw', s.id)"
+        >
+          Withdraw this name
+        </button>
+        <button
+          v-if="showsReinstate(s.id, s.withdrawn)"
+          type="button"
+          class="sticky__status"
+          aria-label="Reinstate"
+          @click.stop="postEdit('reinstate', s.id)"
+        >
+          Reinstate
+        </button>
+
+        <template v-if="editingId === s.id">
+          <label class="sticky__edit">
+            <span class="sr-only">Reword label</span>
+            <input
+              :ref="bindDraftInput"
+              v-model="draft"
+              class="sticky__input"
+              type="text"
+              @keydown.enter.prevent="requestConfirm"
+            >
+          </label>
+          <p v-if="labelError" class="sticky__error">{{ labelError }}</p>
+          <div class="sticky__ghostbtns">
+            <button type="button" class="sticky__keep" aria-label="Keep wording" @click.stop="requestConfirm">
+              ✓
+            </button>
+            <button type="button" class="sticky__cancel" aria-label="Cancel" @click.stop="cancelReword">✕</button>
+          </div>
+          <RewordConfirm
+            :open="confirmOpen"
+            :workshop-id="workshopId ?? ''"
+            :block-id="s.id"
+            :label="draft.trim()"
+            :revision="revision ?? -1"
+            :accepter="accepter ?? ''"
+            @update:open="confirmOpen = $event"
+            @confirmed="onRewordConfirmed"
+          />
+        </template>
+        <template v-else>
+          <span class="sticky__label">{{ s.label }}</span>
+          <span v-if="s.speaker" class="sticky__who">{{ s.speaker }}</span>
+        </template>
       </li>
     </ul>
   </div>
@@ -232,8 +428,8 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
   box-shadow: var(--shadow-sticky);
   transform: rotate(var(--tilt, 0deg));
 }
-.sticky[data-kind='actor'] { background-color: var(--color-actor); }
-.sticky[data-kind='system'] { background-color: var(--color-system); }
+.sticky[data-kind='actor'] { background-color: var(--color-actor); color: var(--color-actor-ink); }
+.sticky[data-kind='system'] { background-color: var(--color-system); color: var(--color-system-ink); }
 
 .sticky__label {
   font-family: var(--font-marker);
@@ -242,10 +438,172 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
+.sticky__who {
+  margin-top: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
 
 .sticky:focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 3px;
+}
+
+.sticky--selected {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
+.sticky--withdrawn {
+  background-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-paper));
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px rgb(43 39 35 / 0.12);
+  text-decoration: line-through;
+}
+.sticky--withdrawn[data-kind='actor'],
+.sticky--withdrawn[data-kind='system'] {
+  background-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-paper));
+  color: var(--color-ink);
+}
+
+.sticky--reword {
+  background-color: color-mix(in srgb, var(--color-event) 38%, var(--color-paper));
+  box-shadow: none;
+  outline: 2px dashed var(--color-event);
+  outline-offset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 8px 6px;
+}
+.sticky--reword[data-kind='actor'] {
+  background-color: color-mix(in srgb, var(--color-actor) 38%, var(--color-paper));
+  outline-color: var(--color-actor);
+}
+.sticky--reword[data-kind='system'] {
+  background-color: color-mix(in srgb, var(--color-system) 38%, var(--color-paper));
+  outline-color: var(--color-system);
+}
+
+.sticky__pencil {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+.sticky__pencil:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
+}
+
+.sticky__status {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sticky__status:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
+}
+
+.sticky__edit {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.sticky__input {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-marker);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  color: inherit;
+  resize: none;
+}
+.sticky__input:focus {
+  outline: none;
+}
+
+.sticky__ghostbtns {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.sticky__error {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+.sticky__keep,
+.sticky__cancel {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.sticky__keep {
+  background-color: var(--color-event);
+  color: var(--color-event-ink);
+}
+.sticky__cancel {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.sticky__keep:focus-visible,
+.sticky__cancel:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .sticky--fresh {

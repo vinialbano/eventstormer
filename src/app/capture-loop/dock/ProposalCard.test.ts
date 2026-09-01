@@ -5,12 +5,20 @@ import ProposalCard from './ProposalCard.vue'
 const base = { kindLabel: 'EVENT', label: 'Order placed', accepter: 'Maria' } as const
 
 describe('ProposalCard', () => {
-  it('offers Accept / Edit / Reject / Hold on a fresh proposal', () => {
+  it('offers Accept and Not this on a fresh proposal, and stages the rest', async () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED' } })
-    const labels = wrapper.findAll('button').map((button) => button.text())
-    expect(labels).toEqual(['Accept', 'Edit', 'Reject', 'Hold'])
+    expect(wrapper.findAll('button').map((button) => button.text())).toEqual(['Accept', 'Not this'])
     void wrapper.get('.btn--primary').trigger('click')
     expect(wrapper.emitted('accept')).toHaveLength(1)
+
+    await wrapper.get('button.btn--outline').trigger('click')
+    expect(wrapper.findAll('button').map((button) => button.text())).toEqual([
+      'Accept',
+      'Not this',
+      'Edit',
+      'Reject',
+      'Hold',
+    ])
   })
 
   it('colours the kind pill by pillKind, and leaves it on the event pair when absent', () => {
@@ -45,6 +53,7 @@ describe('ProposalCard', () => {
     const labels = wrapper.findAll('button').map((button) => button.text())
     expect(labels).toContain('Unpark')
     expect(labels).not.toContain('Hold')
+    expect(labels).toContain('Not this')
     void wrapper.get('.pc__ribbon')
   })
 
@@ -56,9 +65,36 @@ describe('ProposalCard', () => {
     expect(wrapper.get('.btn--primary').text()).toBe('Try again')
   })
 
+  it('quotes the contribution and stays quiet when the name is in what she said', () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...base,
+        disposition: 'PROPOSED',
+        sourceText: 'Book borrowed when a member takes a book from the library.',
+        label: 'Book borrowed',
+      },
+    })
+    expect(wrapper.text()).toContain('You said: Book borrowed when a member takes a book from the library.')
+    expect(wrapper.text()).not.toContain('not in what you said')
+  })
+
+  it('names the mismatch when the proposed name is not in the contribution', () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...base,
+        disposition: 'PROPOSED',
+        sourceText: 'Book borrowed when a member takes a book from the library.',
+        label: 'Member registered',
+      },
+    })
+    expect(wrapper.text()).toContain('This name is not in what you said — check it before you add it.')
+  })
+
   it('edits inline and emits the trimmed new label', async () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED' } })
-    await wrapper.get('button.btn--outline').trigger('click')
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Edit')?.trigger('click')
     const input = wrapper.get('input')
     await input.setValue('  Order confirmed  ')
     await input.trigger('keydown.enter')
