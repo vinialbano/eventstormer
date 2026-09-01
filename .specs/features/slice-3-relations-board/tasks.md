@@ -223,11 +223,11 @@ if the file would exceed cohesion)
 **Requirement**: S3-01, S3-02, S3-03, S3-05, S3-28
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] A→B then A→C both accepted; both successors retained
-- [ ] C→A after A→B→C rejected `{ kind: 'cycle', path }` matching a pinned id list; graph unchanged
-- [ ] duplicate A→B → `already-related`; unsequence of a missing pair → `missing-edge`
-- [ ] cycle property green
-- [ ] Gate check passes: `pnpm test`
+- [x] A→B then A→C both accepted; both successors retained
+- [x] C→A after A→B→C rejected `{ kind: 'cycle', path }` matching a pinned id list; graph unchanged
+- [x] duplicate A→B → `already-related`; unsequence of a missing pair → `missing-edge`
+- [x] cycle property green
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): decide sequence with whole-graph cycle rejection`
 

@@ -1,3 +1,4 @@
+import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import type { BuildingBlockId } from '~/plumbing/ids.ts'
 import { isErr, isOk } from '~/plumbing/result.ts'
@@ -15,10 +16,41 @@ const op = (raw: Record<string, unknown>): Operation => Operation.parse({ author
 const given = (priors: Record<string, unknown>[]): BoardWriteModel =>
   priors.reduce((writeModel, raw) => evolve(writeModel, op(raw)), emptyWriteModel())
 
+const inboundCounts = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+): { nodes: Set<BuildingBlockId>; inbound: Map<BuildingBlockId, number> } => {
+  const nodes = new Set<BuildingBlockId>()
+  const inbound = new Map<BuildingBlockId, number>()
+  for (const [predecessor, successors] of follows) {
+    nodes.add(predecessor)
+    if (!inbound.has(predecessor)) inbound.set(predecessor, 0)
+    for (const successor of successors) {
+      nodes.add(successor)
+      inbound.set(successor, (inbound.get(successor) ?? 0) + 1)
+    }
+  }
+  return { nodes, inbound }
+}
+
+const followsIsAcyclic = (follows: Map<BuildingBlockId, Set<BuildingBlockId>>): boolean => {
+  const { nodes, inbound } = inboundCounts(follows)
+  const ready = [...nodes].filter((id) => (inbound.get(id) ?? 0) === 0)
+  let visited = 0
+  while (ready.length > 0) {
+    const current = ready.shift()
+    if (!current) break
+    visited += 1
+    for (const successor of follows.get(current) ?? []) {
+      const remaining = (inbound.get(successor) ?? 1) - 1
+      inbound.set(successor, remaining)
+      if (remaining === 0) ready.push(successor)
+    }
+  }
+  return visited === nodes.size
+}
+
 const NOT_IMPLEMENTED: OperationKind[] = [
   'raise-hot-spot',
-  'sequence',
-  'unsequence',
   'insert-between',
   'link-cause',
   'unlink-cause',
@@ -297,6 +329,128 @@ describe('decide — place / unplace', () => {
         }
       }
     }
+  })
+})
+
+describe('decide — sequence / unsequence', () => {
+  const threeEvents = [
+    { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+    { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+    { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+  ]
+
+  it('accepts A→B then A→C and retains both successors', () => {
+    const afterFirst = given([...threeEvents, { kind: 'sequence', predecessor: 'eA', successor: 'eB' }])
+    const second = decide(afterFirst, op({ kind: 'sequence', predecessor: 'eA', successor: 'eC' }))
+    expect(isOk(second)).toBe(true)
+    if (!isOk(second)) return
+    expect(second.value).toEqual([op({ kind: 'sequence', predecessor: 'eA', successor: 'eC' })])
+    const folded = second.value.reduce(evolve, afterFirst)
+    expect(folded.follows.get(bid('eA'))).toEqual(new Set([bid('eB'), bid('eC')]))
+  })
+
+  it('rejects C→A after A→B→C as a cycle with a pinned path; graph unchanged', () => {
+    const writeModel = given([
+      ...threeEvents,
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      { kind: 'sequence', predecessor: 'eB', successor: 'eC' },
+    ])
+    const result = decide(writeModel, op({ kind: 'sequence', predecessor: 'eC', successor: 'eA' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'cycle',
+        classification: 'systemic',
+        path: [bid('eC'), bid('eA'), bid('eB'), bid('eC')],
+      })
+    }
+    expect(writeModel.follows.get(bid('eA'))).toEqual(new Set([bid('eB')]))
+    expect(writeModel.follows.get(bid('eB'))).toEqual(new Set([bid('eC')]))
+    expect(writeModel.follows.get(bid('eC'))).toBeUndefined()
+  })
+
+  it('rejects a self-loop as a cycle', () => {
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'eA', label: 'a' }])
+    const result = decide(writeModel, op({ kind: 'sequence', predecessor: 'eA', successor: 'eA' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'cycle',
+        classification: 'systemic',
+        path: [bid('eA'), bid('eA')],
+      })
+    }
+  })
+
+  it('rejects a duplicate A→B as already-related', () => {
+    const writeModel = given([
+      ...threeEvents,
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+    ])
+    const result = decide(writeModel, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'already-related', classification: 'systemic' })
+    }
+  })
+
+  it('rejects unsequence of a missing pair as missing-edge', () => {
+    const writeModel = given(threeEvents)
+    const result = decide(writeModel, op({ kind: 'unsequence', predecessor: 'eA', successor: 'eB' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
+    }
+  })
+
+  it('unsequences an existing edge as a single unsequence', () => {
+    const writeModel = given([
+      ...threeEvents,
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+    ])
+    const result = decide(writeModel, op({ kind: 'unsequence', predecessor: 'eA', successor: 'eB' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'unsequence', predecessor: 'eA', successor: 'eB' })])
+    }
+  })
+
+  it('rejects sequence of an actor as kind-permission', () => {
+    const writeModel = given([
+      { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+    ])
+    const result = decide(writeModel, op({ kind: 'sequence', predecessor: 'a1', successor: 'eA' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  it('no accepted operation sequence leaves a follows cycle', () => {
+    const pool: Operation[] = [
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'a' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'b' }),
+      op({ kind: 'capture-domain-event', id: 'e3', label: 'c' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+      op({ kind: 'sequence', predecessor: 'e2', successor: 'e3' }),
+      op({ kind: 'sequence', predecessor: 'e3', successor: 'e1' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e3' }),
+      op({ kind: 'sequence', predecessor: 'e2', successor: 'e1' }),
+      op({ kind: 'unsequence', predecessor: 'e1', successor: 'e2' }),
+      op({ kind: 'unsequence', predecessor: 'e2', successor: 'e3' }),
+      op({ kind: 'place', target: 'e1' }),
+      op({ kind: 'unplace', target: 'e2' }),
+    ]
+    fc.assert(
+      fc.property(fc.array(fc.constantFrom(...pool), { maxLength: 30 }), (log) => {
+        let writeModel = emptyWriteModel()
+        for (const candidate of log) {
+          const decision = decide(writeModel, candidate)
+          if (!isOk(decision)) continue
+          for (const applied of decision.value) writeModel = evolve(writeModel, applied)
+        }
+        expect(followsIsAcyclic(writeModel.follows)).toBe(true)
+      }),
+    )
   })
 })
 

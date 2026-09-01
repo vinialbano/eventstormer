@@ -12,15 +12,24 @@ const unknownTarget = (target: string): Decision =>
 const withdrawnTarget = (target: string): Decision =>
   err({ kind: 'withdrawn-target', classification: 'systemic', target })
 
+const lookupActive = (
+  writeModel: BoardWriteModel,
+  target: BuildingBlockId,
+): Result<WriteBlock, Rejection> => {
+  const block = writeModel.blocks.get(target)
+  if (!block) return err({ kind: 'unknown-target', classification: 'systemic', target })
+  if (block.withdrawn) return err({ kind: 'withdrawn-target', classification: 'systemic', target })
+  return ok(block)
+}
+
 const requireActiveEvent = (
   writeModel: BoardWriteModel,
   target: BuildingBlockId,
   operation: string,
 ): Result<WriteBlock, Rejection> => {
-  const block = writeModel.blocks.get(target)
-  if (!block) return err({ kind: 'unknown-target', classification: 'systemic', target })
-  if (block.withdrawn) return err({ kind: 'withdrawn-target', classification: 'systemic', target })
-  if (block.kind !== 'domain-event') {
+  const block = lookupActive(writeModel, target)
+  if (!block.ok) return block
+  if (block.value.kind !== 'domain-event') {
     return err({
       kind: 'kind-permission',
       classification: 'systemic',
@@ -28,7 +37,41 @@ const requireActiveEvent = (
       reason: 'only a domain event may be placed or unplaced',
     })
   }
-  return ok(block)
+  return block
+}
+
+const pathFromTo = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+  from: BuildingBlockId,
+  to: BuildingBlockId,
+): BuildingBlockId[] | undefined => {
+  if (from === to) return [from]
+  const pending: BuildingBlockId[][] = [[from]]
+  const seen = new Set<BuildingBlockId>([from])
+  while (pending.length > 0) {
+    const path = pending.shift()
+    if (!path) break
+    const last = path.at(-1)
+    if (!last) break
+    for (const next of follows.get(last) ?? []) {
+      if (seen.has(next)) continue
+      const extended = [...path, next]
+      if (next === to) return extended
+      seen.add(next)
+      pending.push(extended)
+    }
+  }
+  return undefined
+}
+
+const cyclePathIfAdded = (
+  follows: Map<BuildingBlockId, Set<BuildingBlockId>>,
+  predecessor: BuildingBlockId,
+  successor: BuildingBlockId,
+): BuildingBlockId[] | undefined => {
+  const existing = pathFromTo(follows, successor, predecessor)
+  if (!existing) return undefined
+  return [predecessor, ...existing]
 }
 
 const incidentUnsequences = (
@@ -110,6 +153,46 @@ const decideUnplace = (writeModel: BoardWriteModel, operation: OpOf<'unplace'>):
   ])
 }
 
+const decideSequence = (writeModel: BoardWriteModel, operation: OpOf<'sequence'>): Decision => {
+  const predecessor = lookupActive(writeModel, operation.predecessor)
+  if (!predecessor.ok) return predecessor
+  const successor = lookupActive(writeModel, operation.successor)
+  if (!successor.ok) return successor
+  if (predecessor.value.kind !== 'domain-event' || successor.value.kind !== 'domain-event') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'only domain events may be sequenced',
+    })
+  }
+  if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) === true) {
+    return err({ kind: 'already-related', classification: 'systemic' })
+  }
+  const path = cyclePathIfAdded(writeModel.follows, operation.predecessor, operation.successor)
+  if (path) return err({ kind: 'cycle', classification: 'systemic', path })
+  return ok([operation])
+}
+
+const decideUnsequence = (writeModel: BoardWriteModel, operation: OpOf<'unsequence'>): Decision => {
+  const predecessor = lookupActive(writeModel, operation.predecessor)
+  if (!predecessor.ok) return predecessor
+  const successor = lookupActive(writeModel, operation.successor)
+  if (!successor.ok) return successor
+  if (predecessor.value.kind !== 'domain-event' || successor.value.kind !== 'domain-event') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'only domain events may be sequenced',
+    })
+  }
+  if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true) {
+    return err({ kind: 'missing-edge', classification: 'systemic' })
+  }
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -151,9 +234,13 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
     case 'unplace':
       return decideUnplace(writeModel, operation)
 
-    case 'raise-hot-spot':
     case 'sequence':
+      return decideSequence(writeModel, operation)
+
     case 'unsequence':
+      return decideUnsequence(writeModel, operation)
+
+    case 'raise-hot-spot':
     case 'insert-between':
     case 'link-cause':
     case 'unlink-cause':
