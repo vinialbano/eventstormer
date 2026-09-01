@@ -322,10 +322,10 @@ causedBy causes under each event. Plant: app ↛ `domain/board/decide.ts`; confi
 **Requirement**: S3-17, S3-18, S3-19
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] goldens: two tracks; one event with two **distinct** successors; orphan placed event; actor not in `eventIds`
-- [ ] withdrawn event omitted unless `includeWithdrawn: true`
-- [ ] planted `src/app` import of `decide.ts` fails depcruise; reverted
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] goldens: two tracks; one event with two **distinct** successors; orphan placed event; actor not in `eventIds`
+- [x] withdrawn event omitted unless `includeWithdrawn: true`
+- [x] planted `src/app` import of `decide.ts` fails depcruise; reverted
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: unit · **Gate**: build
 **Commit**: `feat(board): framework-free timeline ranks and follows edges`
 

@@ -16,6 +16,10 @@ export { readBoardSnapshot } from './capabilities/board-access/read-board-snapsh
 export { decide } from './domain/board/decide.ts'
 export { evolve } from './domain/board/evolve.ts'
 export {
+  computeTimelineLayout,
+  type TimelineLayout,
+} from './domain/timeline/compute-timeline-layout.ts'
+export {
   type Author,
   type BoardSnapshot,
   type BoardWriteModel,
