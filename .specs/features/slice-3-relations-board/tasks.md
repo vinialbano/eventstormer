@@ -448,10 +448,10 @@ changes.
 **Requirement**: S3-20, S3-25
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] store test: default `showWithdrawn === false`; toggling does not call fetch
-- [ ] `postBoardOperation` type-checks `sequence` / `link-cause` bodies
-- [ ] layout is invoked with `includeWithdrawn` matching the flag
-- [ ] Gate check passes: `pnpm test`
+- [x] store test: default `showWithdrawn === false`; toggling does not call fetch
+- [x] `postBoardOperation` type-checks `sequence` / `link-cause` bodies
+- [x] layout is invoked with `includeWithdrawn` matching the flag
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(app): board store carries relations and a hide-withdrawn filter`
 

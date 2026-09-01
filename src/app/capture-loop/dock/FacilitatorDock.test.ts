@@ -103,8 +103,11 @@ describe('FacilitatorDock', () => {
           label: 'Invoice sent',
           withdrawn: false,
           placement: 'backlog',
+          pivotal: false,
         },
       ],
+      follows: [],
+      causedBy: [],
     }
     const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
     expect(wrapper.get('.pc--receipt').text()).toContain('Invoice sent — added by Maria')
