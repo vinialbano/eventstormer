@@ -9,26 +9,12 @@ import {
   startWorkshopRoutes,
   type SessionIndexDb,
 } from '~/session-facilitation/api.ts'
+import { emptyAccountMarkdown } from '../../domain/empty-account-markdown.ts'
 import type { ReadableAccountDeps } from './deps.ts'
 import { readableAccountRoutes } from './http.ts'
 
 const clock = () => '2026-08-30T12:00:00.000Z'
 const author = { accepter: { name: 'Dana' } }
-
-const emptyMarkdown = `# Readable account
-Format: Big Picture
-Narrators: 0
-Scope: (not set)
-
-## Coverage
-- Stakeholder check: not run
-- Chosen problem: not run
-- Timeline and relations: not run
-
-## Building blocks
-
-## Quoted evidence
-`
 
 const loanRecordedMarkdown = `# Readable account
 Format: Big Picture
@@ -115,7 +101,7 @@ describe('GET /workshops/:id/readable-account', () => {
 
     const response = await getAccount(deps, workshopId)
     expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ position: -1, markdown: emptyMarkdown })
+    await expect(response.json()).resolves.toEqual({ position: -1, markdown: emptyAccountMarkdown })
   })
 
   it('returns 404 for an unknown workshop', async () => {

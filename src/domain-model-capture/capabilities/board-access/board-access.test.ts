@@ -23,4 +23,12 @@ describe('readBuildingBlocks — minimal shape', () => {
       { id: 's_1', kind: 'system', label: 'Catalogue' },
     ])
   })
+
+  it('still lists a withdrawn building block', () => {
+    const deps = depsFor(createMemoryEventStore())
+    applyOperation(deps, workshopId, Operation.parse({ author, kind: 'identify-actor', id: 'a_1', label: 'Member' }))
+    applyOperation(deps, workshopId, Operation.parse({ author, kind: 'withdraw', target: 'a_1' }))
+
+    expect(readBuildingBlocks(deps, workshopId)).toEqual([{ id: 'a_1', kind: 'actor', label: 'Member' }])
+  })
 })

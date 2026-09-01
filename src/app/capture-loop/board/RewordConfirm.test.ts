@@ -1,4 +1,5 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import RewordConfirm from './RewordConfirm.vue'
 
@@ -137,5 +138,62 @@ describe('RewordConfirm', () => {
       fetchMock.mock.calls.filter((call) => typeof call[0] === 'string' && call[0].includes('/references')),
     ).toHaveLength(2)
     expect(postsOf(fetchMock)).toHaveLength(0)
+  })
+
+  it('disables Confirm reword until the references GET resolves and ignores a click in flight', async () => {
+    let resolveReferences: ((value: Response) => void) | undefined
+    fetchMock = vi.fn((url: string) => {
+      if (url.includes('/references')) {
+        return new Promise<Response>((resolve) => {
+          resolveReferences = resolve
+        })
+      }
+      return Promise.resolve(json({ position: 4 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    mountConfirm()
+    await nextTick()
+
+    const confirm = buttonNamed('Confirm reword')
+    expect(confirm.disabled).toBe(true)
+    confirm.click()
+    await flushPromises()
+    expect(postsOf(fetchMock)).toHaveLength(0)
+
+    resolveReferences?.(json(sites))
+    await flushPromises()
+
+    expect(buttonNamed('Confirm reword').disabled).toBe(false)
+  })
+
+  it('disables Confirm reword while a revision refetch is in flight', async () => {
+    const wrapper = mountConfirm()
+    await flushPromises()
+    expect(buttonNamed('Confirm reword').disabled).toBe(false)
+
+    let resolveReferences: ((value: Response) => void) | undefined
+    fetchMock = vi.fn((url: string) => {
+      if (url.includes('/references')) {
+        return new Promise<Response>((resolve) => {
+          resolveReferences = resolve
+        })
+      }
+      return Promise.resolve(json({ position: 4 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await wrapper.setProps({ revision: 4 })
+    await nextTick()
+
+    const confirm = buttonNamed('Confirm reword')
+    expect(confirm.disabled).toBe(true)
+    confirm.click()
+    await flushPromises()
+    expect(postsOf(fetchMock)).toHaveLength(0)
+
+    resolveReferences?.(json(sites))
+    await flushPromises()
+    expect(buttonNamed('Confirm reword').disabled).toBe(false)
   })
 })

@@ -26,20 +26,28 @@ const emit = defineEmits<{
 
 const sites = ref<ReferenceSite[]>([])
 const loadError = ref(false)
+const loading = ref(false)
+const loaded = ref(false)
 const posting = ref(false)
 
 const siteLine = (site: ReferenceSite): string =>
   site.path === 'building-blocks' ? 'Readable account · Building blocks' : site.path
 
 const loadReferences = async (): Promise<void> => {
+  loading.value = true
+  loaded.value = false
   loadError.value = false
   try {
     sites.value = await getJson<ReferenceSite[]>(
       `/api/workshops/${props.workshopId}/board/blocks/${props.blockId}/references`,
     )
+    loaded.value = true
   } catch {
     loadError.value = true
+    loaded.value = false
     sites.value = []
+  } finally {
+    loading.value = false
   }
 }
 
@@ -70,7 +78,7 @@ const onOpenChange = (next: boolean): void => {
 }
 
 const confirm = async (): Promise<void> => {
-  if (loadError.value || posting.value) return
+  if (loadError.value || posting.value || loading.value || !loaded.value) return
   posting.value = true
   try {
     await postBoardOperation(props.workshopId, {
@@ -101,21 +109,25 @@ const confirm = async (): Promise<void> => {
         @open-auto-focus.prevent
         @interact-outside.prevent
       >
-        <div aria-label="Reword impact" role="dialog">
-          <p class="reword-pop__lead">This name appears in:</p>
-          <p v-if="loadError" class="reword-pop__error">
+        <div aria-label="Reword impact" class="reword-impact" role="dialog">
+          <p class="reword-impact__lead">This name appears in:</p>
+          <p v-if="loadError" class="reword-impact__error">
             Couldn't list where this appears — retry or cancel.
           </p>
-          <ul v-else class="reword-pop__sites">
-            <li v-for="(site, index) in sites" :key="`${site.path}-${String(index)}`">
+          <ul v-else class="reword-impact__sites">
+            <li
+              v-for="(site, index) in sites"
+              :key="`${site.path}-${String(index)}`"
+              class="reword-impact__site"
+            >
               {{ siteLine(site) }}
             </li>
           </ul>
-          <div class="reword-pop__actions">
+          <div class="reword-impact__actions">
             <button
               v-if="loadError"
               type="button"
-              class="reword-pop__btn reword-pop__btn--quiet"
+              class="reword-impact__btn reword-impact__btn--quiet"
               @click="loadReferences"
             >
               Retry
@@ -123,13 +135,13 @@ const confirm = async (): Promise<void> => {
             <button
               v-else
               type="button"
-              class="reword-pop__btn reword-pop__btn--go"
-              :disabled="posting"
+              class="reword-impact__btn reword-impact__btn--go"
+              :disabled="posting || loading || !loaded"
               @click="confirm"
             >
               Confirm reword
             </button>
-            <button type="button" class="reword-pop__btn reword-pop__btn--quiet" @click="close">
+            <button type="button" class="reword-impact__btn reword-impact__btn--quiet" @click="close">
               Cancel
             </button>
           </div>
@@ -146,56 +158,73 @@ const confirm = async (): Promise<void> => {
   height: 1px;
   pointer-events: none;
 }
-.reword-pop {
-  width: min(320px, calc(100vw - 32px));
-  padding: 14px 16px;
+:deep(.reword-pop) {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.reword-impact {
+  box-sizing: border-box;
+  width: min(300px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid var(--color-paper-edge);
   border-radius: var(--radius-card);
   background-color: var(--color-surface);
   color: var(--color-text);
   box-shadow: var(--shadow-panel);
   font-family: var(--font-ui);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
-.reword-pop__lead {
-  margin: 0 0 8px;
+.reword-impact__lead {
+  margin: 0 0 6px;
   font-weight: 700;
 }
-.reword-pop__error {
-  margin: 0 0 12px;
+.reword-impact__error {
+  margin: 0 0 10px;
   color: var(--color-danger);
 }
-.reword-pop__sites {
-  margin: 0 0 12px;
-  padding-left: 1.1em;
+.reword-impact__sites {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
 }
-.reword-pop__actions {
+.reword-impact__site {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background-color: var(--color-surface-sunk);
+}
+.reword-impact__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
-.reword-pop__btn {
+.reword-impact__btn {
   font: inherit;
   font-weight: 700;
-  height: 36px;
-  padding: 0 14px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: var(--radius-control);
   cursor: pointer;
 }
-.reword-pop__btn--go {
+.reword-impact__btn--go {
   border: none;
   background-color: var(--color-event);
   color: var(--color-event-ink);
 }
-.reword-pop__btn--quiet {
+.reword-impact__btn--quiet {
   border: 1px solid var(--color-line);
   background-color: var(--color-surface);
   color: var(--color-text);
 }
-.reword-pop__btn:focus-visible {
+.reword-impact__btn:focus-visible {
   outline: 2px solid var(--color-event-strong);
   outline-offset: 2px;
 }
-.reword-pop__btn:disabled {
+.reword-impact__btn:disabled {
   opacity: 0.5;
 }
 </style>

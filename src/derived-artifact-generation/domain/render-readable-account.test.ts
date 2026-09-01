@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildingBlockId } from '~/plumbing/ids.ts'
+import { emptyAccountMarkdown } from './empty-account-markdown.ts'
 import type { AccountInput } from './model.ts'
 import { renderReadableAccount } from './render-readable-account.ts'
 
@@ -17,21 +18,6 @@ const emptyInput: AccountInput = {
   blocks: [],
   quotes: [],
 }
-
-const emptyMarkdown = `# Readable account
-Format: Big Picture
-Narrators: 0
-Scope: (not set)
-
-## Coverage
-- Stakeholder check: not run
-- Chosen problem: not run
-- Timeline and relations: not run
-
-## Building blocks
-
-## Quoted evidence
-`
 
 const nestedLabels = (orderLabel: string): AccountInput => ({
   position: 1,
@@ -54,7 +40,7 @@ describe('renderReadableAccount', () => {
   })
 
   it('pins the empty-model markdown to the heading contract with empty lists', () => {
-    expect(renderReadableAccount(emptyInput).markdown).toBe(emptyMarkdown)
+    expect(renderReadableAccount(emptyInput).markdown).toBe(emptyAccountMarkdown)
   })
 
   it('states coverage as not run, not none or zero', () => {

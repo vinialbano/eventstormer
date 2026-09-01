@@ -2,6 +2,7 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import BoardWall from './BoardWall.vue'
+import RewordConfirm from './RewordConfirm.vue'
 
 enableAutoUnmount(afterEach)
 
@@ -299,5 +300,47 @@ describe('BoardWall', () => {
 
     expect(wrapper.find('.sticky--reword').exists()).toBe(false)
     expect(wrapper.find('input').exists()).toBe(false)
+  })
+
+  it('Esc from the ghost input closes the confirm popover and keeps the dashed-ghost', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/references')) {
+        return Promise.resolve(
+          new Response(JSON.stringify([{ kind: 'readable-account', path: 'building-blocks' }]), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        )
+      }
+      return Promise.resolve(new Response(JSON.stringify({ position: 2 }), { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(BoardWall, {
+      attachTo: document.body,
+      props: {
+        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
+        workshopId: 'w1',
+        accepter: 'Maria',
+        revision: 1,
+      },
+    })
+    await wrapper.get('.sticky').trigger('focus')
+    await wrapper.get('[aria-label="Reword"]').trigger('click')
+    await wrapper.get('.sticky__keep').trigger('click')
+    await nextTick()
+    await flushPromises()
+
+    expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(true)
+
+    const field = wrapper.get('input')
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    Object.defineProperty(escape, 'target', { value: field.element })
+    window.dispatchEvent(escape)
+    await nextTick()
+
+    expect(wrapper.find('.sticky--reword').exists()).toBe(true)
+    expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(false)
+    vi.unstubAllGlobals()
   })
 })

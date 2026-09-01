@@ -277,7 +277,6 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         }"
         @focus="selectSticky(s.id)"
         @click="selectSticky(s.id)"
-        @keydown="onWindowKeydown"
       >
         <button
           v-if="showsActiveControls(s.id, s.withdrawn)"
