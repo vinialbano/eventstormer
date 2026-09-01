@@ -1,10 +1,24 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
+import { HttpError } from '../client.ts'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
 import { postBoardOperation } from '../dock/mutations.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import RewordConfirm from './RewordConfirm.vue'
+import {
+  cycleLine,
+  decodeDragged,
+  DRAG_MIME,
+  dropSiteFromElement,
+  encodeDragged,
+  isCycleRejection,
+  isEventKind,
+  relationFromConnect,
+  relationFromDrop,
+  type DraggedBlock,
+  type RelationEdit,
+} from './semantic-edit.ts'
 import TimelinePane from './TimelinePane.vue'
 import { isTypingSurface } from './typing-surface.ts'
 
@@ -34,19 +48,29 @@ const measure = (): void => {
 }
 
 const selectedId = ref<string | null>(null)
+const lastPlacedId = ref<string | null>(null)
+const dragging = ref<DraggedBlock | null>(null)
 const withdrawAskId = ref<string | null>(null)
 const editingId = ref<string | null>(null)
 const draft = ref('')
 const labelError = ref('')
+const relationError = ref('')
 const confirmOpen = ref(false)
 const draftInput = ref<HTMLInputElement | null>(null)
 const bindDraftInput = (element: unknown): void => {
   draftInput.value = element instanceof HTMLInputElement ? element : null
 }
 
+const timeline = computed(() => props.timeline ?? EMPTY_TIMELINE)
+const timelineEventIds = computed(
+  () => new Set(timeline.value.tracks.flatMap((track) => track.eventIds.map(String))),
+)
+
 const selectSticky = (id: string): void => {
   selectedId.value = id
   if (withdrawAskId.value !== id) withdrawAskId.value = null
+  const block = props.blocks.find((candidate) => candidate.id === id)
+  if (block?.placement === 'timeline' || timelineEventIds.value.has(id)) lastPlacedId.value = id
 }
 
 const cancelReword = (): void => {
@@ -70,18 +94,101 @@ const onRewordConfirmed = (): void => {
   cancelReword()
 }
 
-const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise<void> => {
+const applyEdit = async (edit: RelationEdit): Promise<void> => {
   const workshopId = props.workshopId
   const accepter = props.accepter
   if (workshopId === undefined || workshopId.length === 0 || accepter === undefined) return
-  await postBoardOperation(workshopId, {
-    v: 1,
-    kind,
-    target,
-    author: { accepter: { name: accepter } },
-  })
-  emit('board-dirty')
+  try {
+    await postBoardOperation(workshopId, {
+      v: 1,
+      ...edit,
+      author: { accepter: { name: accepter } },
+    })
+    relationError.value = ''
+    emit('board-dirty')
+  } catch (caught) {
+    if (caught instanceof HttpError && caught.status === 422 && isCycleRejection(caught.body)) {
+      relationError.value = cycleLine(
+        caught.body.path,
+        new Map(props.blocks.map((block) => [block.id, block.label])),
+      )
+      return
+    }
+    throw caught
+  }
 }
+
+const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise<void> => {
+  await applyEdit({ kind, target })
+}
+
+const onConnectEvents = (payload: { source: string; target: string }): void => {
+  const edit = relationFromConnect(payload.source, payload.target)
+  if (edit === undefined) return
+  void applyEdit(edit)
+}
+
+const onBacklogDragStart = (event: DragEvent, block: BoardBlockInput): void => {
+  const payload = { id: block.id, kind: block.kind }
+  dragging.value = payload
+  event.dataTransfer?.setData(DRAG_MIME, encodeDragged(payload))
+}
+
+const onTimelineDrop = (event: DragEvent): void => {
+  event.preventDefault()
+  const dragged = decodeDragged(event.dataTransfer?.getData(DRAG_MIME) ?? '') ?? dragging.value ?? undefined
+  dragging.value = null
+  if (dragged === undefined) return
+  const edit = relationFromDrop(dragged, dropSiteFromElement(event.target))
+  if (edit === undefined) return
+  void applyEdit(edit)
+}
+
+const selectedBlock = computed(() => props.blocks.find((block) => block.id === selectedId.value))
+const selectedIsLiveEvent = computed(() => {
+  const block = selectedBlock.value
+  return block !== undefined && isEventKind(block.kind) && block.withdrawn !== true
+})
+const selectedOnTimeline = computed(() => {
+  const id = selectedId.value
+  if (id === null) return false
+  return selectedBlock.value?.placement === 'timeline' || timelineEventIds.value.has(id)
+})
+const canPlace = computed(() => selectedIsLiveEvent.value && !selectedOnTimeline.value)
+const canUnplace = computed(() => selectedIsLiveEvent.value && selectedOnTimeline.value)
+const canSequenceAfter = computed(
+  () => canPlace.value && lastPlacedId.value !== null && lastPlacedId.value !== selectedId.value,
+)
+const canMarkPivotal = computed(() => selectedIsLiveEvent.value && selectedBlock.value?.pivotal !== true)
+const canUnmarkPivotal = computed(() => selectedIsLiveEvent.value && selectedBlock.value?.pivotal === true)
+
+const placeSelected = (): void => {
+  const id = selectedId.value
+  if (id === null) return
+  void applyEdit({ kind: 'place', target: id })
+}
+const unplaceSelected = (): void => {
+  const id = selectedId.value
+  if (id === null) return
+  void applyEdit({ kind: 'unplace', target: id })
+}
+const sequenceSelectedAfter = (): void => {
+  const predecessor = lastPlacedId.value
+  const successor = selectedId.value
+  if (predecessor === null || successor === null) return
+  void applyEdit({ kind: 'sequence', predecessor, successor })
+}
+const markSelectedPivotal = (): void => {
+  const id = selectedId.value
+  if (id === null) return
+  void applyEdit({ kind: 'mark-pivotal', target: id })
+}
+const unmarkSelectedPivotal = (): void => {
+  const id = selectedId.value
+  if (id === null) return
+  void applyEdit({ kind: 'unmark-pivotal', target: id })
+}
+
 
 const dismissEsc = (): void => {
   if (confirmOpen.value) {
@@ -137,10 +244,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onWindowKeydown)
 })
 
-const timeline = computed(() => props.timeline ?? EMPTY_TIMELINE)
-const timelineEventIds = computed(
-  () => new Set(timeline.value.tracks.flatMap((track) => track.eventIds.map(String))),
-)
 const attachedIds = computed(() => {
   const ids = new Set<string>()
   for (const causes of Object.values(timeline.value.attachments)) {
@@ -297,6 +400,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         :data-kind="s.kind"
         :data-withdrawn="s.withdrawn ? 'true' : 'false'"
         tabindex="0"
+        :draggable="!s.withdrawn"
         :aria-label="s.speaker === undefined ? `${kindWord(s.kind)}: ${s.label}` : `${kindWord(s.kind)}: ${s.label}, added by ${s.speaker}`"
         :style="{
           left: `${s.x}px`,
@@ -307,6 +411,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         }"
         @focus="selectSticky(s.id)"
         @click="selectSticky(s.id)"
+        @dragstart="onBacklogDragStart($event, s)"
       >
         <button
           v-if="showsActiveControls(s.id, s.withdrawn)"
@@ -389,6 +494,62 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
       </li>
     </ul>
 
+    <p
+      v-if="relationError"
+      class="wall__cycle"
+      role="alert"
+      :style="{
+        left: `${layout.frame.x}px`,
+        top: `${layout.frame.y + layout.frame.h + 52}px`,
+      }"
+    >
+      {{ relationError }}
+    </p>
+    <div
+      v-if="selectedId !== null && editingId === null"
+      class="wall__actions"
+      role="toolbar"
+      aria-label="Sticky actions"
+      :style="{
+        left: `${layout.frame.x}px`,
+        top: `${layout.frame.y + layout.frame.h + 12}px`,
+      }"
+    >
+      <button v-if="canPlace" type="button" class="wall__action" aria-label="Place on timeline" @click="placeSelected">
+        Place on timeline
+      </button>
+      <button v-if="canUnplace" type="button" class="wall__action" aria-label="Unplace" @click="unplaceSelected">
+        Unplace
+      </button>
+      <button
+        v-if="canSequenceAfter"
+        type="button"
+        class="wall__action"
+        aria-label="Sequence after"
+        @click="sequenceSelectedAfter"
+      >
+        Sequence after
+      </button>
+      <button
+        v-if="canMarkPivotal"
+        type="button"
+        class="wall__action"
+        aria-label="Mark pivotal"
+        @click="markSelectedPivotal"
+      >
+        Mark pivotal
+      </button>
+      <button
+        v-if="canUnmarkPivotal"
+        type="button"
+        class="wall__action"
+        aria-label="Unmark pivotal"
+        @click="unmarkSelectedPivotal"
+      >
+        Unmark
+      </button>
+    </div>
+
     <div
       class="wall__timeline"
       role="region"
@@ -399,8 +560,15 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         width: `${Math.max(280, layout.canvas.w - layout.frame.x - layout.frame.w - 80)}px`,
         height: `${Math.max(240, layout.canvas.h - layout.timeGuide.y1 - 80)}px`,
       }"
+      @dragover.prevent
+      @drop="onTimelineDrop"
     >
-      <TimelinePane :blocks="blocks" :timeline="timeline" />
+      <TimelinePane
+        :blocks="blocks"
+        :timeline="timeline"
+        @connect-events="onConnectEvents"
+        @select="selectSticky"
+      />
     </div>
   </div>
 </template>
@@ -457,6 +625,47 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
 .wall__timeline {
   position: absolute;
   z-index: 1;
+}
+
+.wall__cycle {
+  position: absolute;
+  z-index: 3;
+  max-width: 36rem;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-event-ink);
+  background-color: var(--color-event);
+  box-shadow: var(--shadow-card);
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+}
+
+.wall__actions {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wall__action {
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wall__action:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
 }
 
 .sticky {

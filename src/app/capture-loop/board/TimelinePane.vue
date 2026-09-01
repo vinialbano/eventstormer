@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Handle, Position, VueFlow } from '@vue-flow/core'
+import { Handle, Position, VueFlow, type Connection } from '@vue-flow/core'
 import { computed } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import { CELL, tiltFor, type BoardBlockInput } from './layout.ts'
@@ -8,6 +8,11 @@ import { layoutTimeline, type EventNodeData } from './use-dagre-layout.ts'
 const props = defineProps<{
   blocks: BoardBlockInput[]
   timeline: TimelineLayout
+}>()
+
+const emit = defineEmits<{
+  'connect-events': [payload: { source: string; target: string }]
+  select: [id: string]
 }>()
 
 const blockMap = computed(
@@ -27,6 +32,17 @@ const blockMap = computed(
 
 const graph = computed(() => layoutTimeline(props.timeline, blockMap.value))
 const cellSize = `${String(CELL)}px`
+
+const onConnect = (connection: Connection): void => {
+  emit('connect-events', { source: connection.source, target: connection.target })
+}
+
+const onNodeClick = (click: { node: { id: string } }): void => {
+  emit('select', click.node.id)
+}
+
+defineExpose({ onConnect })
+
 </script>
 
 <template>
@@ -37,11 +53,14 @@ const cellSize = `${String(CELL)}px`
     :nodes-draggable="false"
     :nodes-connectable="true"
     :edges-updatable="false"
+    :auto-connect="false"
     :fit-view-on-init="true"
     :min-zoom="0.4"
     :max-zoom="1.6"
     :default-edge-options="{ type: 'default' }"
     pan-on-scroll
+    @connect="onConnect"
+    @node-click="onNodeClick"
   >
     <template #node-event="nodeProps">
       <div
@@ -51,8 +70,10 @@ const cellSize = `${String(CELL)}px`
           'event-node--pivotal': (nodeProps.data as EventNodeData).pivotal,
         }"
         :data-kind="'domain-event'"
+        :data-event-id="nodeProps.id"
         :data-withdrawn="(nodeProps.data as EventNodeData).withdrawn ? 'true' : 'false'"
         :style="{ width: cellSize, '--tilt': `${tiltFor(nodeProps.id)}deg` }"
+        @click.stop="emit('select', nodeProps.id)"
       >
         <Handle class="event-node__handle" type="target" :position="Position.Left" />
         <span

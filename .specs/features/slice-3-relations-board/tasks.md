@@ -499,10 +499,10 @@ with labels resolved from the snapshot. Selected-sticky **Mark pivotal** / **Unm
 **Requirement**: S3-22, S3-10, S3-23, S3-11
 **Tools**: MCP: NONE · Skill: `impeccable` · `playwright-cli`
 **Done when**:
-- [ ] jsdom: drop/connect helpers POST the pinned kinds (mock `postBoardOperation`)
-- [ ] pan/zoom does not call POST
-- [ ] `playwright-cli`: place one event from backlog onto the timeline; **zero** console errors
-- [ ] Gate check passes: `pnpm test`
+- [x] jsdom: drop/connect helpers POST the pinned kinds (mock `postBoardOperation`)
+- [x] pan/zoom does not call POST
+- [x] `playwright-cli`: place one event from backlog onto the timeline; **zero** console errors
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(app): semantic drag and connect append relation operations`
 

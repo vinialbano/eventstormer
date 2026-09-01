@@ -48,6 +48,7 @@ describe('TimelinePane', () => {
 
     const vueFlow = wrapper.findComponent({ name: 'VueFlow' })
     expect(vueFlow.props('nodesDraggable')).toBe(false)
+    expect(vueFlow.props('autoConnect')).toBe(false)
     const nodes = flowNodes(wrapper)
     const left = nodes.find((node) => node.id === 'eA')
     const right = nodes.find((node) => node.id === 'eB')
