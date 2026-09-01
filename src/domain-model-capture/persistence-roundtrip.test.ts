@@ -55,6 +55,8 @@ describe('persistence round-trip', () => {
 
     expect(fromDisk).toEqual({
       position: 3,
+      follows: [],
+      causedBy: [],
       blocks: new Map([
         [
           bid('e1'),
@@ -63,6 +65,7 @@ describe('persistence round-trip', () => {
             label: 'order was placed',
             withdrawn: false,
             placement: 'backlog',
+            pivotal: false,
             provenance: author,
           },
         ],
@@ -73,6 +76,7 @@ describe('persistence round-trip', () => {
             label: 'order paid',
             withdrawn: true,
             placement: 'backlog',
+            pivotal: false,
             provenance: author,
           },
         ],

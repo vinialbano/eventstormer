@@ -34,6 +34,7 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       label: op.label,
       withdrawn: false,
       placement: 'backlog',
+      pivotal: false,
       provenance: op.author,
     })
   } else if (op.kind === 'reword') {
@@ -47,5 +48,5 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
     if (block) blocks.set(op.target, { ...block, withdrawn: false })
   }
 
-  return { blocks, position }
+  return { blocks, follows: snapshot.follows, causedBy: snapshot.causedBy, position }
 }

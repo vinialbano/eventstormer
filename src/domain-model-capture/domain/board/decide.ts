@@ -9,7 +9,7 @@ const unknownTarget = (target: string): Decision =>
   err({ kind: 'unknown-target', classification: 'systemic', target })
 
 const decideReword = (writeModel: BoardWriteModel, operation: OpOf<'reword'>): Decision => {
-  const block = writeModel.get(operation.target)
+  const block = writeModel.blocks.get(operation.target)
   if (!block) return unknownTarget(operation.target)
   if (block.withdrawn) {
     return err({ kind: 'withdrawn-target', classification: 'systemic', target: operation.target })
@@ -21,7 +21,7 @@ const decideReword = (writeModel: BoardWriteModel, operation: OpOf<'reword'>): D
 }
 
 const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>): Decision => {
-  const block = writeModel.get(operation.target)
+  const block = writeModel.blocks.get(operation.target)
   if (!block) return unknownTarget(operation.target)
   if (block.withdrawn) {
     return err({ kind: 'already-withdrawn', classification: 'systemic', target: operation.target })
@@ -30,7 +30,7 @@ const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>
 }
 
 const decideReinstate = (writeModel: BoardWriteModel, operation: OpOf<'reinstate'>): Decision => {
-  const block = writeModel.get(operation.target)
+  const block = writeModel.blocks.get(operation.target)
   if (!block) return unknownTarget(operation.target)
   if (!block.withdrawn) {
     return err({ kind: 'not-withdrawn', classification: 'systemic', target: operation.target })
@@ -62,7 +62,7 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
     case 'capture-domain-event':
     case 'identify-actor':
     case 'identify-system':
-      return writeModel.has(operation.id)
+      return writeModel.blocks.has(operation.id)
         ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
         : ok([operation])
 

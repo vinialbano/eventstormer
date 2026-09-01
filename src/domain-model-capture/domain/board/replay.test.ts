@@ -34,6 +34,8 @@ describe('replay', () => {
     ]
     expect(replay(log)).toEqual({
       position: 3,
+      follows: [],
+      causedBy: [],
       blocks: new Map([
         [
           bid('e1'),
@@ -42,6 +44,7 @@ describe('replay', () => {
             label: 'order was placed',
             withdrawn: false,
             placement: 'backlog',
+            pivotal: false,
             provenance: author,
           },
         ],
@@ -52,6 +55,7 @@ describe('replay', () => {
             label: 'order paid',
             withdrawn: true,
             placement: 'backlog',
+            pivotal: false,
             provenance: author,
           },
         ],
@@ -72,6 +76,7 @@ describe('replay', () => {
       label: 'placed',
       withdrawn: true,
       placement: 'backlog',
+      pivotal: false,
       provenance: author,
     })
   })
@@ -89,7 +94,7 @@ describe('replay', () => {
       op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }),
       op({ kind: 'withdraw', target: 'e1' }),
     ])
-    expect(writeModel.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+    expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
   })
 
   // Consistency property only — not an independent oracle. Both sides share

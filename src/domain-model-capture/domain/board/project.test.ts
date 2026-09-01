@@ -22,8 +22,11 @@ describe('project (read-model fold)', () => {
         label: 'order placed',
         withdrawn: false,
         placement: 'backlog',
+        pivotal: false,
         provenance: author,
       })
+      expect(snap.follows).toEqual([])
+      expect(snap.causedBy).toEqual([])
     }
   })
 

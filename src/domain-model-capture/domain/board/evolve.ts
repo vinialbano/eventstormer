@@ -1,27 +1,38 @@
+import type { BuildingBlockId } from '~/plumbing/ids.ts'
 import type { Operation } from '../schema/index.ts'
 import type { BoardWriteModel } from './model.ts'
 
+const cloneAdjacency = (
+  adjacency: Map<BuildingBlockId, Set<BuildingBlockId>>,
+): Map<BuildingBlockId, Set<BuildingBlockId>> =>
+  new Map([...adjacency].map(([id, related]) => [id, new Set(related)]))
+
+const cloneWriteModel = (writeModel: BoardWriteModel): BoardWriteModel => ({
+  blocks: new Map(writeModel.blocks),
+  follows: cloneAdjacency(writeModel.follows),
+  causedBy: cloneAdjacency(writeModel.causedBy),
+})
+
 /**
- * The write-model fold — pure, returns a new map, never mutates its
- * argument. Slice 0's write model only tracks `{ kind, withdrawn }`, so only
- * capture / withdraw / reinstate change it; `reword` and the 14 not-yet-handled
- * operations leave it untouched. Slices 3–4 fold `follows` / `causedBy` here.
+ * The write-model fold — pure, returns a new struct, never mutates its
+ * argument. Capture / withdraw / reinstate update `blocks`; `reword` and
+ * operations this fold does not handle leave it unchanged.
  */
 export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteModel => {
-  const next: BoardWriteModel = new Map(writeModel)
+  const next = cloneWriteModel(writeModel)
 
   if (op.kind === 'capture-domain-event') {
-    next.set(op.id, { kind: 'domain-event', withdrawn: false })
+    next.blocks.set(op.id, { kind: 'domain-event', withdrawn: false })
   } else if (op.kind === 'identify-actor') {
-    next.set(op.id, { kind: 'actor', withdrawn: false })
+    next.blocks.set(op.id, { kind: 'actor', withdrawn: false })
   } else if (op.kind === 'identify-system') {
-    next.set(op.id, { kind: 'system', withdrawn: false })
+    next.blocks.set(op.id, { kind: 'system', withdrawn: false })
   } else if (op.kind === 'withdraw') {
-    const block = next.get(op.target)
-    if (block) next.set(op.target, { ...block, withdrawn: true })
+    const block = next.blocks.get(op.target)
+    if (block) next.blocks.set(op.target, { ...block, withdrawn: true })
   } else if (op.kind === 'reinstate') {
-    const block = next.get(op.target)
-    if (block) next.set(op.target, { ...block, withdrawn: false })
+    const block = next.blocks.get(op.target)
+    if (block) next.blocks.set(op.target, { ...block, withdrawn: false })
   }
 
   return next

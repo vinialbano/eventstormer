@@ -30,6 +30,7 @@ describe('GET /workshops/:id/board', () => {
           label: 'Loan recorded',
           withdrawn: false,
           placement: 'backlog',
+          pivotal: false,
           provenance: { accepter: { name: 'Dana' } },
         },
       ],
