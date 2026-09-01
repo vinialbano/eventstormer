@@ -133,13 +133,34 @@ const decideReword = (writeModel: BoardWriteModel, operation: OpOf<'reword'>): D
   return ok([operation])
 }
 
+const referencingEffects = (
+  writeModel: BoardWriteModel,
+  cause: BuildingBlockId,
+): BuildingBlockId[] => {
+  const effects: BuildingBlockId[] = []
+  for (const [effect, causes] of writeModel.causedBy) {
+    if (causes.has(cause)) effects.push(effect)
+  }
+  return effects.toSorted((left, right) => left.localeCompare(right))
+}
+
 const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>): Decision => {
   const block = writeModel.blocks.get(operation.target)
   if (!block) return unknownTarget(operation.target)
   if (block.withdrawn) {
     return err({ kind: 'already-withdrawn', classification: 'systemic', target: operation.target })
   }
-  return ok([operation])
+  if (block.kind !== 'actor' && block.kind !== 'system') return ok([operation])
+  const unlinks: OpOf<'unlink-cause'>[] = referencingEffects(writeModel, operation.target).map(
+    (effect) => ({
+      kind: 'unlink-cause',
+      cause: operation.target,
+      effect,
+      author: operation.author,
+      v: operation.v,
+    }),
+  )
+  return ok([operation, ...unlinks])
 }
 
 const decideReinstate = (writeModel: BoardWriteModel, operation: OpOf<'reinstate'>): Decision => {

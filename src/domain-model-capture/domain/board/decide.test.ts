@@ -164,6 +164,46 @@ describe('decide — withdraw / reinstate', () => {
     }
   })
 
+  it('withdraws an actor that caused two events as withdraw then two unlink-cause', () => {
+    const writeModel = given([
+      { kind: 'identify-actor', id: 'a1', label: 'clerk' },
+      { kind: 'capture-domain-event', id: 'e1', label: 'one' },
+      { kind: 'capture-domain-event', id: 'e2', label: 'two' },
+      { kind: 'link-cause', cause: 'a1', effect: 'e1' },
+      { kind: 'link-cause', cause: 'a1', effect: 'e2' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'a1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toHaveLength(3)
+      expect(result.value.map((item) => item.kind)).toEqual([
+        'withdraw',
+        'unlink-cause',
+        'unlink-cause',
+      ])
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'a1' }),
+        op({ kind: 'unlink-cause', cause: 'a1', effect: 'e1' }),
+        op({ kind: 'unlink-cause', cause: 'a1', effect: 'e2' }),
+      ])
+    }
+  })
+
+  it('withdraws an event with follows and no causes as a single withdraw', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'capture-domain-event', id: 'eM', label: 'm' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'sequence', predecessor: 'eA', successor: 'eM' },
+      { kind: 'sequence', predecessor: 'eM', successor: 'eB' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'eM' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'withdraw', target: 'eM' })])
+    }
+  })
+
   it('rejects a withdraw of an already-withdrawn target', () => {
     const writeModel = given([
       { kind: 'capture-domain-event', id: 'e1', label: 'order placed' },

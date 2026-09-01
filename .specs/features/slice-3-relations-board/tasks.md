@@ -301,9 +301,9 @@ dropped in evolve). Pin the two-event actor test from the #40 comment.
 **Requirement**: S3-14, S3-15
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] actor causing E1 and E2 → array length 3, kinds `withdraw`, `unlink-cause`, `unlink-cause`; both effect ids present
-- [ ] event with follows, no causes → `[withdraw]` only
-- [ ] Gate check passes: `pnpm test`
+- [x] actor causing E1 and E2 → array length 3, kinds `withdraw`, `unlink-cause`, `unlink-cause`; both effect ids present
+- [x] event with follows, no causes → `[withdraw]` only
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): withdraw of a cause batch-unlinks referencing events`
 
