@@ -146,6 +146,7 @@ const onTimelineDrop = (event: DragEvent): void => {
 }
 
 const selectedBlock = computed(() => props.blocks.find((block) => block.id === selectedId.value))
+const editingBlock = computed(() => props.blocks.find((block) => block.id === editingId.value))
 const selectedIsLiveEvent = computed(() => {
   const block = selectedBlock.value
   return block !== undefined && isEventKind(block.kind) && block.withdrawn !== true
@@ -166,7 +167,13 @@ const canUnmarkPivotal = computed(() => selectedIsLiveEvent.value && selectedBlo
 const placeSelected = (): void => {
   const id = selectedId.value
   if (id === null) return
+  lastPlacedId.value = id
   void applyEdit({ kind: 'place', target: id })
+}
+const rewordSelected = (): void => {
+  const id = selectedId.value
+  if (id === null) return
+  void startReword(id)
 }
 const unplaceSelected = (): void => {
   const id = selectedId.value
@@ -545,6 +552,15 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         Unplace
       </button>
       <button
+        v-if="canUnplace"
+        type="button"
+        class="wall__action"
+        aria-label="Reword"
+        @click="rewordSelected"
+      >
+        Reword
+      </button>
+      <button
         v-if="canSequenceAfter"
         type="button"
         class="wall__action"
@@ -571,6 +587,44 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
       >
         Unmark
       </button>
+    </div>
+    <div
+      v-if="editingId !== null && selectedOnTimeline && editingBlock !== undefined"
+      class="wall__reword"
+      :style="{
+        left: `${layout.frame.x}px`,
+        top: `${layout.frame.y + layout.frame.h + 44}px`,
+      }"
+    >
+      <div class="sticky sticky--event sticky--reword">
+        <label class="sticky__edit">
+          <span class="sr-only">Reword label</span>
+          <input
+            :ref="bindDraftInput"
+            v-model="draft"
+            class="sticky__input"
+            type="text"
+            @keydown.enter.prevent="requestConfirm"
+          >
+        </label>
+        <p v-if="labelError" class="sticky__error">{{ labelError }}</p>
+        <div class="sticky__ghostbtns">
+          <button type="button" class="sticky__keep" aria-label="Keep wording" @click.stop="requestConfirm">
+            ✓
+          </button>
+          <button type="button" class="sticky__cancel" aria-label="Cancel" @click.stop="cancelReword">✕</button>
+        </div>
+        <RewordConfirm
+          :open="confirmOpen"
+          :workshop-id="workshopId ?? ''"
+          :block-id="editingId"
+          :label="draft.trim()"
+          :revision="revision ?? -1"
+          :accepter="accepter ?? ''"
+          @update:open="confirmOpen = $event"
+          @confirmed="onRewordConfirmed"
+        />
+      </div>
     </div>
 
     <div
@@ -706,6 +760,15 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
 .wall__action:focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+.wall__reword {
+  position: absolute;
+  z-index: 4;
+  width: 132px;
+}
+.wall__reword .sticky {
+  position: relative;
 }
 
 .sticky {

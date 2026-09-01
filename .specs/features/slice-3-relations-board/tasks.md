@@ -556,9 +556,9 @@ assert a `follows` site / follows-order walk, quoted contribution unchanged.
 **Requirement**: S3-20, S3-26, S3-27
 **Tools**: MCP: NONE · Skill: `playwright-cli`
 **Done when**:
-- [ ] `pnpm test:e2e` green
-- [ ] still **one** spec file
-- [ ] Gate check passes: `pnpm test && pnpm test:e2e`
+- [x] `pnpm test:e2e` green
+- [x] still **one** spec file
+- [x] Gate check passes: `pnpm test && pnpm test:e2e`
 **Tests**: e2e · **Gate**: full
 **Commit**: `test(e2e): place and sequence events on the capture-loop wall`
 
