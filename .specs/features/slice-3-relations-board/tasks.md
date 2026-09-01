@@ -577,9 +577,9 @@ diverged further.
 **Requirement**: S3-29, S3-32
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `minor` changeset present; `package.json` version untouched
-- [ ] #40 has the sequence-placement clarification
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] `minor` changeset present; `package.json` version untouched
+- [x] #40 has the sequence-placement clarification
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: none · **Gate**: build
 **Commit**: `chore(release): minor changeset for relations and the board`
 
