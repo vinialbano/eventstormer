@@ -331,6 +331,34 @@ const decideUnlinkCause = (
   return ok([operation])
 }
 
+const decideMarkPivotal = (
+  writeModel: BoardWriteModel,
+  operation: OpOf<'mark-pivotal'>,
+): Decision => {
+  const required = requireDomainEvent(
+    writeModel,
+    operation.target,
+    operation.kind,
+    'only a domain event may be marked pivotal',
+  )
+  if (!required.ok) return required
+  return ok([operation])
+}
+
+const decideUnmarkPivotal = (
+  writeModel: BoardWriteModel,
+  operation: OpOf<'unmark-pivotal'>,
+): Decision => {
+  const required = requireDomainEvent(
+    writeModel,
+    operation.target,
+    operation.kind,
+    'only a domain event may be marked pivotal',
+  )
+  if (!required.ok) return required
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -387,11 +415,15 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
     case 'unlink-cause':
       return decideUnlinkCause(writeModel, operation)
 
+    case 'mark-pivotal':
+      return decideMarkPivotal(writeModel, operation)
+
+    case 'unmark-pivotal':
+      return decideUnmarkPivotal(writeModel, operation)
+
     case 'raise-hot-spot':
     case 'annotate':
     case 'unannotate':
-    case 'mark-pivotal':
-    case 'unmark-pivotal':
     case 'resolve':
     case 'reopen':
       return err({

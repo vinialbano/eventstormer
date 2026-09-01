@@ -281,10 +281,10 @@ pairings → `kind-permission`. `unlink-cause` of a missing pair → `missing-ed
 **Requirement**: S3-23
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] mark/unmark event → one-op arrays; actor → `kind-permission`; withdrawn → `withdrawn-target`
-- [ ] remaining not-implemented list is only hot-spot kinds (`raise-hot-spot` `annotate`
+- [x] mark/unmark event → one-op arrays; actor → `kind-permission`; withdrawn → `withdrawn-target`
+- [x] remaining not-implemented list is only hot-spot kinds (`raise-hot-spot` `annotate`
       `unannotate` `resolve` `reopen`)
-- [ ] Gate check passes: `pnpm test`
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit · **Gate**: quick
 **Commit**: `feat(board): decide mark-pivotal and unmark-pivotal on events only`
 

@@ -54,8 +54,6 @@ const NOT_IMPLEMENTED: OperationKind[] = [
   'raise-hot-spot',
   'annotate',
   'unannotate',
-  'mark-pivotal',
-  'unmark-pivotal',
   'resolve',
   'reopen',
 ]
@@ -623,6 +621,65 @@ describe('decide — link-cause / unlink-cause', () => {
   })
 })
 
+describe('decide — mark-pivotal / unmark-pivotal', () => {
+  it('marks and unmarks a domain event as one-op arrays', () => {
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'eA', label: 'a' }])
+    const marked = decide(writeModel, op({ kind: 'mark-pivotal', target: 'eA' }))
+    expect(isOk(marked)).toBe(true)
+    if (isOk(marked)) expect(marked.value).toEqual([op({ kind: 'mark-pivotal', target: 'eA' })])
+    const unmarked = decide(writeModel, op({ kind: 'unmark-pivotal', target: 'eA' }))
+    expect(isOk(unmarked)).toBe(true)
+    if (isOk(unmarked)) {
+      expect(unmarked.value).toEqual([op({ kind: 'unmark-pivotal', target: 'eA' })])
+    }
+  })
+
+  it('accepts mark-pivotal of an already-pivotal event', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'mark-pivotal', target: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'mark-pivotal', target: 'eA' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'mark-pivotal', target: 'eA' })])
+  })
+
+  it('rejects mark-pivotal of an actor as kind-permission', () => {
+    const writeModel = given([{ kind: 'identify-actor', id: 'a1', label: 'clerk' }])
+    const result = decide(writeModel, op({ kind: 'mark-pivotal', target: 'a1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  it('rejects mark-pivotal of a withdrawn event', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'withdraw', target: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'mark-pivotal', target: 'eA' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'withdrawn-target',
+        classification: 'systemic',
+        target: 'eA',
+      })
+    }
+  })
+
+  it('rejects mark-pivotal of an unknown target', () => {
+    const result = decide(emptyWriteModel(), op({ kind: 'mark-pivotal', target: 'e9' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({
+        kind: 'unknown-target',
+        classification: 'systemic',
+        target: 'e9',
+      })
+    }
+  })
+})
+
 describe('decide — schema and not-implemented rejections', () => {
   it('rejects an operation that fails schema validation, emitting nothing', () => {
     const result = decide(emptyWriteModel(), { kind: 'withdraw', author } as unknown as Operation)
@@ -635,6 +692,13 @@ describe('decide — schema and not-implemented rejections', () => {
   })
 
   it('rejects every not-yet-implemented kind explicitly, never silently', () => {
+    expect(NOT_IMPLEMENTED).toEqual([
+      'raise-hot-spot',
+      'annotate',
+      'unannotate',
+      'resolve',
+      'reopen',
+    ])
     for (const kind of NOT_IMPLEMENTED) {
       const result = decide(emptyWriteModel(), op(sampleFor(kind)))
       expect(isErr(result)).toBe(true)
