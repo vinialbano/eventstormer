@@ -538,8 +538,8 @@ already reserved.
 **Requirement**: S3-30
 **Tools**: MCP: NONE · Skill: `impeccable`
 **Done when**:
-- [ ] brief no longer says the timeline is a slice-3 future; hide-withdrawn and semantic drop are documented
-- [ ] Gate check passes: `pnpm check && pnpm build`
+- [x] brief no longer says the timeline is a slice-3 future; hide-withdrawn and semantic drop are documented
+- [x] Gate check passes: `pnpm check && pnpm build`
 **Tests**: none · **Gate**: build
 **Commit**: `docs(app): capture-loop brief covers the timeline wall`
 

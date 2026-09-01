@@ -23,7 +23,7 @@ export type DropSite =
 
 export const isEventKind = (kind: string): boolean => kind === 'domain-event'
 
-export const isCauseKind = (kind: string): boolean => kind === 'actor' || kind === 'system'
+const isCauseKind = (kind: string): boolean => kind === 'actor' || kind === 'system'
 
 export const encodeDragged = (block: DraggedBlock): string => JSON.stringify(block)
 
