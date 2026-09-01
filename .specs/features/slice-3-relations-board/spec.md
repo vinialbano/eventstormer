@@ -311,40 +311,40 @@ changeset file exists.
 
 | ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| S3-01 | P1 Sequence (one `sequence`; snapshot places endpoints) | Design | Pending |
-| S3-02 | P1 Sequence (two successors / both branches) | Design | Pending |
-| S3-03 | P1 Sequence (cycle named, graph unchanged) | Design | Pending |
-| S3-04 | P1 Sequence (insert-between atomic; other successors untouched) | Design | Pending |
-| S3-05 | P1 Sequence (missing-edge / duplicate / kind / withdrawn / unknown) | Design | Pending |
-| S3-06 | P1 Place (unplaced → backlog only) | Execute | T1 |
-| S3-07 | P1 Place (place → orphan track) | Design | Pending |
-| S3-08 | P1 Place (unplace severs follows, no rejoin) | Design | Pending |
-| S3-09 | P1 Place (kind-permission / withdrawn / unknown) | Design | Pending |
-| S3-10 | P1 Place (pan/zoom stores nothing) | Design | Pending |
-| S3-11 | P1 Causes (link-cause; actor under event) | Design | Pending |
-| S3-12 | P1 Causes (illegal pairing / duplicate / withdrawn) | Design | Pending |
-| S3-13 | P1 Causes (unlink-cause; backlog if no remaining placed effect) | Design | Pending |
-| S3-14 | P1 Causes (withdraw actor/system → batch unlink-cause × N) | Design | Pending |
-| S3-15 | P1 Causes (withdraw event: only withdraw; no rejoin) | Design | Pending |
-| S3-16 | P1 Causes (reinstate naked) | Design | Pending |
-| S3-17 | P1 Board (follows order; separate tracks) | Design | Pending |
-| S3-18 | P1 Board (visible split) | Design | Pending |
-| S3-19 | P1 Board (`computeTimelineLayout` framework-free, no pixels) | Design | Pending |
-| S3-20 | P1 Board (live refetch any source) | Design | Pending |
-| S3-21 | P1 Board (Vue Flow spike / grid fallback; fixed sticky width) | Design | Pending |
-| S3-22 | P1 Board (semantic drag-to-place / keyboard equivalent) | Design | Pending |
-| S3-23 | P2 Pivotal (exactly one op; reversible; events only) | Design | Pending |
-| S3-24 | P2 Pivotal (visual landmark) | Design | Pending |
-| S3-25 | P2 Hide-withdrawn default + reveal ghosts | Design | Pending |
-| S3-26 | P2 References include relation endpoints; substring AC holds | Design | Pending |
-| S3-27 | P2 Account follows-order walk; coverage line; quotes frozen | Design | Pending |
-| S3-28 | P3 fast-check cycle + kind-permission + incremental replay | Design | Pending |
-| S3-29 | P3 `minor` changeset; hot-spot kinds still 422 | Design | Pending |
-| S3-30 | cross (`impeccable` shape of timeline / drop / toggle on capture-loop) | Design | Pending |
-| S3-31 | cross (`applyOperation` must not throw on ops without `id`/`target`) | Design | Pending |
-| S3-32 | cross (comments on #41 / #42 / #43 — already posted; keep in sync if Design diverges) | Design | Pending |
+| S3-01 | P1 Sequence (one `sequence`; snapshot places endpoints) | Execute | ✅ Verified |
+| S3-02 | P1 Sequence (two successors / both branches) | Execute | ✅ Verified |
+| S3-03 | P1 Sequence (cycle named, graph unchanged) | Execute | ✅ Verified |
+| S3-04 | P1 Sequence (insert-between atomic; other successors untouched) | Execute | ✅ Verified |
+| S3-05 | P1 Sequence (missing-edge / duplicate / kind / withdrawn / unknown) | Execute | ✅ Verified |
+| S3-06 | P1 Place (unplaced → backlog only) | Execute | ✅ Verified |
+| S3-07 | P1 Place (place → orphan track) | Execute | ✅ Verified |
+| S3-08 | P1 Place (unplace severs follows, no rejoin) | Execute | ✅ Verified |
+| S3-09 | P1 Place (kind-permission / withdrawn / unknown) | Execute | ✅ Verified |
+| S3-10 | P1 Place (pan/zoom stores nothing) | Execute | ✅ Verified |
+| S3-11 | P1 Causes (link-cause; actor under event) | Execute | ✅ Verified |
+| S3-12 | P1 Causes (illegal pairing / duplicate / withdrawn) | Execute | ✅ Verified |
+| S3-13 | P1 Causes (unlink-cause; backlog if no remaining placed effect) | Execute | ✅ Verified |
+| S3-14 | P1 Causes (withdraw actor/system → batch unlink-cause × N) | Execute | ✅ Verified |
+| S3-15 | P1 Causes (withdraw event: only withdraw; no rejoin) | Execute | ✅ Verified |
+| S3-16 | P1 Causes (reinstate naked) | Execute | ✅ Verified |
+| S3-17 | P1 Board (follows order; separate tracks) | Execute | ✅ Verified |
+| S3-18 | P1 Board (visible split) | Execute | ✅ Verified |
+| S3-19 | P1 Board (`computeTimelineLayout` framework-free, no pixels) | Execute | ✅ Verified |
+| S3-20 | P1 Board (live refetch any source) | Execute | ✅ Verified |
+| S3-21 | P1 Board (Vue Flow spike / grid fallback; fixed sticky width) | Execute | ✅ Verified |
+| S3-22 | P1 Board (semantic drag-to-place / keyboard equivalent) | Execute | ✅ Verified |
+| S3-23 | P2 Pivotal (exactly one op; reversible; events only) | Execute | ✅ Verified |
+| S3-24 | P2 Pivotal (visual landmark) | Execute | ✅ Verified |
+| S3-25 | P2 Hide-withdrawn default + reveal ghosts | Execute | ✅ Verified |
+| S3-26 | P2 References include relation endpoints; substring AC holds | Execute | ✅ Verified |
+| S3-27 | P2 Account follows-order walk; coverage line; quotes frozen | Execute | ✅ Verified |
+| S3-28 | P3 fast-check cycle + kind-permission + incremental replay | Execute | ✅ Verified |
+| S3-29 | P3 `minor` changeset; hot-spot kinds still 422 | Execute | ✅ Verified |
+| S3-30 | cross (`impeccable` shape of timeline / drop / toggle on capture-loop) | Execute | ✅ Verified |
+| S3-31 | cross (`applyOperation` must not throw on ops without `id`/`target`) | Execute | ✅ Verified |
+| S3-32 | cross (comments on #41 / #42 / #43 — already posted; keep in sync if Design diverges) | Execute | ✅ Verified |
 
-**Coverage:** 32 requirement IDs, 0 mapped to tasks (Tasks phase next). Spec **Edge Cases**
+**Coverage:** 32 requirement IDs, all Verified. Spec **Edge Cases**
 fold into existing IDs: self-loop → S3-03; stale-position → S3-31/AD-022; batch atomicity →
 S3-08/S3-14; stale popover → S3-26 (Slice 2 rule); empty timeline → S3-06; empty-log
 GET → S3-20.

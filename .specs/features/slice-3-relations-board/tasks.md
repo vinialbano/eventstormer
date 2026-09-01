@@ -17,7 +17,7 @@ discrimination sensor).
 **Context**: `.specs/features/slice-3-relations-board/context.md`
 **Decisions**: `.specs/STATE.md` AD-005, AD-006, AD-008, AD-009, AD-022, AD-024, AD-026,
 AD-028, AD-029, AD-030, **AD-031**
-**Status**: In Progress — T1 complete
+**Status**: Execute complete + Verifier PASS
 
 Every task obeys the Execution Contract: tests derive from the spec's ACs (never mirror the
 implementation); the gate passes before a task is done; one atomic commit per task; never weaken
