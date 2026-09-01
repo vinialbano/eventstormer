@@ -342,11 +342,11 @@ causedBy causes under each event. Plant: app ↛ `domain/board/decide.ts`; confi
 **Requirement**: S3-14, S3-31
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `applyOperation(sequence)` succeeds and does not throw (test that would 500 today)
-- [ ] `applyOperation(insert-between)` / `link-cause` succeed
-- [ ] actor-withdraw with two effects: store log gains 3 ops in one append
-- [ ] capture kinds still return `operation.id`
-- [ ] Gate check passes: `pnpm test`
+- [x] `applyOperation(sequence)` succeeds and does not throw (test that would 500 today)
+- [x] `applyOperation(insert-between)` / `link-cause` succeed
+- [x] actor-withdraw with two effects: store log gains 3 ops in one append
+- [x] capture kinds still return `operation.id`
+- [x] Gate check passes: `pnpm test`
 **Tests**: unit + integration · **Gate**: quick
 **Commit**: `fix(capture): applyOperation maps relation ops without throwing`
 
