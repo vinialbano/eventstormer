@@ -61,6 +61,14 @@ const dropIncidentCausedBy = (causedBy: CausedByEdge[], id: BuildingBlockId): Ca
 const isLive = (blocks: Map<BuildingBlockId, SnapshotBlock>, id: BuildingBlockId): boolean =>
   blocks.get(id)?.withdrawn !== true
 
+const countHotSpots = (blocks: Map<BuildingBlockId, SnapshotBlock>): number => {
+  let count = 0
+  for (const block of blocks.values()) {
+    if (block.kind === 'hot-spot' && !block.withdrawn) count += 1
+  }
+  return count
+}
+
 const publishFollows = (
   follows: FollowsEdge[],
   blocks: Map<BuildingBlockId, SnapshotBlock>,
@@ -150,8 +158,25 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       patchBlock(blocks, op.target, { pivotal: false })
       break
     case 'raise-hot-spot':
+      blocks.set(op.id, {
+        kind: 'hot-spot',
+        label: op.label,
+        withdrawn: false,
+        placement: 'backlog',
+        pivotal: false,
+        provenance: op.author,
+        modelAffecting: op.modelAffecting,
+        annotates: null,
+        resolved: false,
+        reference: null,
+      })
+      break
     case 'annotate':
+      patchBlock(blocks, op.hotSpot, { annotates: op.target })
+      break
     case 'unannotate':
+      patchBlock(blocks, op.hotSpot, { annotates: null })
+      break
     case 'resolve':
     case 'reopen':
       break
@@ -161,7 +186,7 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
     blocks,
     follows: publishFollows(follows, blocks),
     causedBy: publishCausedBy(causedBy, blocks),
-    hotSpotCount: 0,
+    hotSpotCount: countHotSpots(blocks),
     position,
   }
 }

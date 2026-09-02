@@ -196,6 +196,55 @@ describe('project (read-model fold)', () => {
     expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
   })
 
+  it('raise-hot-spot adds a backlog hot-spot block, open and annotating nothing, and counts it', () => {
+    const snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    expect(snap.blocks.get(bid('h1'))).toEqual({
+      kind: 'hot-spot',
+      label: 'timeouts',
+      withdrawn: false,
+      placement: 'backlog',
+      pivotal: false,
+      provenance: author,
+      modelAffecting: true,
+      annotates: null,
+      resolved: false,
+      reference: null,
+    })
+    expect(snap.hotSpotCount).toBe(1)
+  })
+
+  it('raise-hot-spot carries an explicit modelAffecting:false through the projection', () => {
+    const snap = project(
+      emptySnapshot(),
+      op({ kind: 'raise-hot-spot', id: 'h1', label: 'note', modelAffecting: false }),
+    )
+    expect(snap.blocks.get(bid('h1'))?.modelAffecting).toBe(false)
+  })
+
+  it('project over [raise, annotate] points the hot spot at the target id and counts one', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBe(bid('e1'))
+    expect(snap.hotSpotCount).toBe(1)
+  })
+
+  it('unannotate clears the annotation back to null', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    snap = project(snap, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBeNull()
+  })
+
+  it('a withdrawn hot spot is not in the count', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h2', label: 'ownership' }))
+    expect(snap.hotSpotCount).toBe(2)
+    snap = project(snap, op({ kind: 'withdraw', target: 'h1' }))
+    expect(snap.hotSpotCount).toBe(1)
+  })
+
   it('reinstate returns a previously placed pivotal event to a naked backlog', () => {
     let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
     snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))
