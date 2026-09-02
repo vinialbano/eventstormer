@@ -1,6 +1,5 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
-import { HttpError } from '../../client.ts'
-import { postBoardOperation } from '../../transport/board.ts'
+import { HttpError, postBoardOperation } from '../../transport/board.ts'
 import type { BoardBlockInput } from '../layout.ts'
 import {
   cycleLine,

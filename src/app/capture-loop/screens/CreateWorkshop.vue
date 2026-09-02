@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { postJson } from '../client.ts'
+import { createWorkshop } from '../transport/workshop.ts'
 
 /**
  * The one field that stands between a person and a workshop: their display
@@ -19,9 +19,7 @@ const create = async (): Promise<void> => {
   busy.value = true
   error.value = null
   try {
-    const { workshopId } = await postJson<{ workshopId: string; url: string }>('/api/workshops', {
-      creatorName,
-    })
+    const { workshopId } = await createWorkshop(creatorName)
     await router.push(`/workshops/${workshopId}`)
   } catch {
     error.value = 'Could not start the workshop. Try again.'

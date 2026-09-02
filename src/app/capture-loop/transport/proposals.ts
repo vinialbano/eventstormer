@@ -1,4 +1,8 @@
-import { postJson } from '../client.ts'
+import { getJson, postJson } from '../client.ts'
+import type { ProposalCard } from '../types.ts'
+
+export const fetchProposals = (sessionId: string): Promise<{ proposals: ProposalCard[] }> =>
+  getJson<{ proposals: ProposalCard[] }>(`/api/sessions/${sessionId}/proposals`)
 
 export const acceptProposal = (proposalId: string): Promise<unknown> =>
   postJson(`/api/proposals/${proposalId}/accept`)

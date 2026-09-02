@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { renderAccountHtml } from '../account/render-account-html.ts'
-import { getJson } from '../client.ts'
+import { fetchReadableAccount } from '../transport/account.ts'
 import type { AccountSnapshot } from '../types.ts'
 
 /**
@@ -21,9 +21,7 @@ export const useAccountStore = defineStore('account', () => {
     if (workshopId.value === null) return
     loading.value = true
     try {
-      document.value = await getJson<AccountSnapshot>(
-        `/api/workshops/${workshopId.value}/readable-account`,
-      )
+      document.value = await fetchReadableAccount(workshopId.value)
       error.value = null
     } catch (caught) {
       error.value = caught instanceof Error ? caught.message : 'load failed'

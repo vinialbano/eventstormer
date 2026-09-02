@@ -136,6 +136,62 @@ module.exports = {
     },
 
     {
+      name: 'board-public-api-only',
+      severity: 'error',
+      comment:
+        'The board is a deep module. Shell, dock, stores, and other capture-loop code import ' +
+        'only board/index.ts — never composables, interactions, or presentation internals.',
+      from: {
+        path: '^src/app/capture-loop/',
+        pathNot: ['^src/app/capture-loop/board/', '\\.test\\.ts$'],
+      },
+      to: {
+        path: '^src/app/capture-loop/board/',
+        pathNot: '^src/app/capture-loop/board/index\\.ts$',
+      },
+    },
+
+    {
+      name: 'no-cross-board-interaction-imports',
+      severity: 'error',
+      comment:
+        'Board interactions are isolated deep modules. Each interaction folder may import only ' +
+        'its own files — not sibling interactions or other board internals (composables, ' +
+        'presentation, layout). BoardWall wires them together.',
+      from: { path: '^src/app/capture-loop/board/interactions/([^/]+)/' },
+      to: {
+        path: '^src/app/capture-loop/board/',
+        pathNot: '^src/app/capture-loop/board/interactions/$1/',
+      },
+    },
+
+    {
+      name: 'dock-no-board-internals',
+      severity: 'error',
+      comment:
+        'The facilitator dock composes against the board public API only. It must not reach into ' +
+        'board composables, interactions, or presentation — the shell passes props and events.',
+      from: { path: '^src/app/capture-loop/dock/', pathNot: '\\.test\\.ts$' },
+      to: {
+        path: '^src/app/capture-loop/board/',
+        pathNot: '^src/app/capture-loop/board/index\\.ts$',
+      },
+    },
+
+    {
+      name: 'capture-loop-client-via-transport',
+      severity: 'error',
+      comment:
+        'Only transport/ calls client.ts. Stores, screens, board internals, and dock route every ' +
+        'HTTP read and write through a transport adapter grouped by concern.',
+      from: {
+        path: '^src/app/capture-loop/',
+        pathNot: ['^src/app/capture-loop/transport/', '^src/app/capture-loop/client\\.ts$'],
+      },
+      to: { path: '^src/app/capture-loop/client\\.ts$' },
+    },
+
+    {
       name: 'no-cross-slice-imports',
       severity: 'error',
       comment:

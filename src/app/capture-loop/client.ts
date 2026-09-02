@@ -1,8 +1,6 @@
 /**
- * The one place the capture screen speaks HTTP. Every store cold-loads through
- * `getJson`; every mutation is a plain `postJson`. Named `client.ts`, never
- * `http.ts` / `data.ts` — those names belong to server route and data-access
- * files, and `ui-does-not-import-server-code` forbids the app importing one.
+ * The one HTTP primitive for the capture screen. Only `transport/` imports this
+ * module; stores, screens, board, and dock call transport adapters instead.
  */
 
 export class HttpError extends Error {

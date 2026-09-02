@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, toRef, watch } from 'vue'
 import ReadableAccountDrawer from '../account/ReadableAccountDrawer.vue'
-import BoardWall from '../board/BoardWall.vue'
+import { BoardWall, type BoardBlockInput } from '../board/index.ts'
 import { useInterpretationPoll } from '../composables/use-interpretation-poll.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import { useAccountStore } from '../stores/account.ts'
@@ -31,7 +31,7 @@ const startingSession = ref(false)
 const loaded = ref(false)
 const accountOpen = ref(false)
 
-const blocks = computed(() =>
+const blocks = computed((): BoardBlockInput[] =>
   board.snapshot.blocks.map((block) => ({
     id: block.id,
     kind: block.kind,

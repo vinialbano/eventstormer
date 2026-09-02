@@ -1,6 +1,5 @@
 import { nextTick, ref, watch, type Ref } from 'vue'
 import { postBoardOperation } from '../../../transport/board.ts'
-import type { BoardBlockInput } from '../../layout.ts'
 import {
   confirmLoadFailed,
   confirmLoadSucceeded,
@@ -11,8 +10,14 @@ import {
 } from './reword-confirm.ts'
 import { type FetchBlockReferences } from './reword-references.ts'
 
+interface RewordBlockView {
+  id: string
+  label: string
+  withdrawn?: boolean | undefined
+}
+
 interface RewordBlockOptions {
-  blocks: Ref<BoardBlockInput[]>
+  blocks: Ref<RewordBlockView[]>
   workshopId: Ref<string | undefined>
   accepter: Ref<string | undefined>
   revision: Ref<number | undefined>
