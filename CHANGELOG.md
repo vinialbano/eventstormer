@@ -1,5 +1,31 @@
 # eventstormer
 
+## 0.4.0
+
+### Minor Changes
+
+- [#60](https://github.com/vinialbano/eventstormer/pull/60) [`fe39406`](https://github.com/vinialbano/eventstormer/commit/fe3940691c90ae34ebe1c45dc397ae89cd1dff8c) Thanks [@vinialbano](https://github.com/vinialbano)! - Place and sequence events on the EventStorming timeline, attach who or what
+  caused them, hide withdrawn stickies by default, and read the account in
+  follows order.
+
+### Patch Changes
+
+- [#74](https://github.com/vinialbano/eventstormer/pull/74) [`975792a`](https://github.com/vinialbano/eventstormer/commit/975792a2b3a01487a74efe144d8ae1ca45a77ff3) Thanks [@vinialbano](https://github.com/vinialbano)! - Establish the board deep-module public API and enforce frontend architecture rules via dependency-cruiser.
+
+- [#70](https://github.com/vinialbano/eventstormer/pull/70) [`c9d36dc`](https://github.com/vinialbano/eventstormer/commit/c9d36dc77e69c936e96bd7440d6df84d04f533f1) Thanks [@vinialbano](https://github.com/vinialbano)! - Extract board interaction composables from BoardWall (#63) — selection, mutations, reword draft, and fresh-sticky animation.
+
+- [#72](https://github.com/vinialbano/eventstormer/pull/72) [`d44f718`](https://github.com/vinialbano/eventstormer/commit/d44f718e392d5314458bcd1d5be6abc2d6e2f513) Thanks [@vinialbano](https://github.com/vinialbano)! - Split BoardWall and TimelinePane presentation into focused components with shared sticky chrome.
+
+- [#75](https://github.com/vinialbano/eventstormer/pull/75) [`2eb65aa`](https://github.com/vinialbano/eventstormer/commit/2eb65aa7160fa7981a48fa33d95d7de5286577f7) Thanks [@vinialbano](https://github.com/vinialbano)! - Remove the capture-loop transport shim and document folder boundaries for agents.
+
+- [#87](https://github.com/vinialbano/eventstormer/pull/87) [`6cbb8bf`](https://github.com/vinialbano/eventstormer/commit/6cbb8bfe3ef5616b9d2e5f3eb0b67d0342f44937) Thanks [@vinialbano](https://github.com/vinialbano)! - Migrate capture-loop to ADR-012 zone topology: shell orchestration, board interaction split, zone AGENTS.md, and composable colocation.
+
+- [#69](https://github.com/vinialbano/eventstormer/pull/69) [`c22723e`](https://github.com/vinialbano/eventstormer/commit/c22723ef976cdf7a818348ac65b74d9d76732696) Thanks [@vinialbano](https://github.com/vinialbano)! - Capture-loop transport seam: group POST adapters under `transport/`, decouple dock from board store, consolidate reword portal ownership, move withdrawn toggle to view-state.
+
+- [#71](https://github.com/vinialbano/eventstormer/pull/71) [`5584a5e`](https://github.com/vinialbano/eventstormer/commit/5584a5e3f35c3aad1654e98961128ccdfefa45eb) Thanks [@vinialbano](https://github.com/vinialbano)! - Extract facilitator dock feed assembly, proposal review, and contribution capture into dedicated composables and interaction modules. Behaviour unchanged.
+
+- [#73](https://github.com/vinialbano/eventstormer/pull/73) [`1171596`](https://github.com/vinialbano/eventstormer/commit/1171596d802571004de9e8c4d49af687e34c90da) Thanks [@vinialbano](https://github.com/vinialbano)! - Extract the board reword two-step flow into a dedicated interaction module with a framework-free reference adapter and confirm state machine.
+
 ## 0.3.0
 
 ### Minor Changes
