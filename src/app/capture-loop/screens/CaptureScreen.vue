@@ -2,12 +2,8 @@
 import { computed, onMounted, ref, toRef, watch } from 'vue'
 import ReadableAccountDrawer from '../account/ReadableAccountDrawer.vue'
 import { BoardWall, type BoardBlockInput } from '../board/index.ts'
-import { useInterpretationPoll } from '../composables/use-interpretation-poll.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
-import { useAccountStore } from '../stores/account.ts'
-import { useBoardStore } from '../stores/board.ts'
-import { useProposalsStore } from '../stores/proposals.ts'
-import { useSessionStore } from '../stores/session.ts'
+import { useCaptureOrchestration } from '../shell/composables/use-capture-orchestration.ts'
 import { startSession as postStartSession } from '../transport/session.ts'
 import { useBoardViewState } from '../view-state/board-view.ts'
 
@@ -19,13 +15,10 @@ import { useBoardViewState } from '../view-state/board-view.ts'
  */
 const props = defineProps<{ id: string }>()
 
-const session = useSessionStore()
-const proposals = useProposalsStore()
-const board = useBoardStore()
+const orch = useCaptureOrchestration(toRef(props, 'id'))
+const { session, board, account } = orch
 const boardView = useBoardViewState(toRef(board, 'snapshot'))
 const { showWithdrawn, timeline } = boardView
-const account = useAccountStore()
-const poll = useInterpretationPoll()
 
 const startingSession = ref(false)
 const loaded = ref(false)
@@ -47,19 +40,15 @@ const blockLabels = computed(() =>
 )
 const needsSession = computed(() => loaded.value && !session.sessionOpen)
 
-const loadAll = async (): Promise<void> => {
-  await session.load(props.id)
-  // The board stream 404s until the first operation is applied — fetch it only
-  // when the session view says something has been derived, and after every
-  // accept (brief §3: the wall is fetched post-accept, never eagerly).
-  if ((session.view?.contributions.length ?? 0) > 0) await board.load(props.id)
+const coldLoad = async (): Promise<void> => {
+  await orch.coldLoad()
   loaded.value = true
 }
 
 watch(
   () => [session.sessionId, session.sessionOpen] as const,
-  async ([sessionId, open]) => {
-    if (sessionId !== null && open) await proposals.load(sessionId)
+  async () => {
+    if (orch.shouldLoadProposals()) await orch.loadProposals()
   },
   { immediate: true },
 )
@@ -69,15 +58,11 @@ const startSession = async (): Promise<void> => {
   startingSession.value = true
   try {
     await postStartSession(props.id)
-    await loadAll()
+    await coldLoad()
   } finally {
     startingSession.value = false
   }
 }
-
-const onMutated = (): Promise<void> => poll.refetchNow()
-const onBoardDirty = (): Promise<void> =>
-  Promise.all([board.load(props.id), account.load(props.id)]).then(() => undefined)
 
 const toggleAccount = (): Promise<void> => {
   accountOpen.value = !accountOpen.value
@@ -85,7 +70,7 @@ const toggleAccount = (): Promise<void> => {
   return Promise.resolve()
 }
 
-onMounted(loadAll)
+onMounted(coldLoad)
 </script>
 
 <template>
@@ -98,7 +83,7 @@ onMounted(loadAll)
       :accepter="session.creatorName"
       :revision="board.snapshot.position"
       class="screen__wall"
-      @board-dirty="onBoardDirty"
+      @board-dirty="orch.onBoardDirty"
       @update:show-withdrawn="showWithdrawn = $event"
     />
 
@@ -108,8 +93,8 @@ onMounted(loadAll)
       :session-id="session.sessionId"
       :accepter="session.creatorName"
       :block-labels="blockLabels"
-      @mutated="onMutated"
-      @board-dirty="onBoardDirty"
+      @mutated="orch.onMutated"
+      @board-dirty="orch.onBoardDirty"
     />
 
     <button
