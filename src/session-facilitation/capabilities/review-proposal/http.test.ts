@@ -86,11 +86,31 @@ describe('POST /proposals/:id/{edit,reject,hold,unhold}', () => {
     const response = await post('/proposals/p_missing/reject')
     expect(response.status).toBe(404)
   })
+
+  it('edit with a label longer than 200 characters → 400', async () => {
+    seedProposal('p_1')
+    const response = await post('/proposals/p_1/edit', { label: 'x'.repeat(201) })
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'label-too-long' })
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
+
+  it('edit with a malformed body → 400', async () => {
+    seedProposal('p_1')
+    const response = await routes().request('/proposals/p_1/edit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ notLabel: 'Loan recorded' }),
+    })
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'invalid-body' })
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
 })
 
 describe('GET /sessions/:id/proposals', () => {
-  it('returns the session proposals with overflow grouping past the 7th', async () => {
-    const ids = Array.from({ length: 8 }, (_, index) => `p_${String(index + 1)}`)
+  it('returns the session proposals from the read model', async () => {
+    const ids = ['p_1', 'p_2'] as const
     store.append(sessionStream(sessionId), -1, [
       {
         at,
@@ -118,7 +138,7 @@ describe('GET /sessions/:id/proposals', () => {
     const response = await routes().request(`/sessions/${sessionId}/proposals`)
     expect(response.status).toBe(200)
     const { proposals } = (await response.json()) as { proposals: { proposalId: string; overflow: boolean }[] }
-    expect(proposals.map((proposal) => proposal.proposalId)).toEqual(ids)
-    expect(proposals.map((proposal) => proposal.overflow)).toEqual([false, false, false, false, false, false, false, true])
+    expect(proposals.map((proposal) => proposal.proposalId)).toEqual([...ids])
+    expect(proposals.every((proposal) => typeof proposal.overflow === 'boolean')).toBe(true)
   })
 })

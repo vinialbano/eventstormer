@@ -7,6 +7,10 @@ interface JsonSchemaNode {
   anyOf?: JsonSchemaNode[]
 }
 
+// Full-shape drift is caught by the snapshot below. Targeted invariants are
+// pinned as literals so a regression names the failure without opening the
+// snapshot diff. Broader compatibility is also verified via the mutation-sensor
+// workflow in docs/testing.md (separate worktree — never the shared checkout).
 describe('anthropicOperationSchema (compatibility sensor)', () => {
   const schema = anthropicOperationSchema()
   const json = JSON.stringify(schema)
@@ -32,7 +36,43 @@ describe('anthropicOperationSchema (compatibility sensor)', () => {
     expect(anthropicOperationSchema()).toEqual(schema)
   })
 
-  it('matches the derived shape snapshot', () => {
+  it('pins structural invariants alongside the derived shape snapshot', () => {
+    expect(schema).toEqual(
+      expect.objectContaining({
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+      }),
+    )
+    const anyOf = (schema as JsonSchemaNode).anyOf ?? []
+    const kindConst = (variant: JsonSchemaNode): string | undefined => {
+      const kind = variant.properties?.kind
+      return typeof kind === 'object' && kind !== null && 'const' in kind
+        ? String(kind.const)
+        : undefined
+    }
+    expect(anyOf.map(kindConst).toSorted()).toEqual(
+      [
+        'annotate',
+        'capture-domain-event',
+        'identify-actor',
+        'identify-system',
+        'insert-between',
+        'link-cause',
+        'mark-pivotal',
+        'place',
+        'raise-hot-spot',
+        'reinstate',
+        'reopen',
+        'resolve',
+        'reword',
+        'sequence',
+        'unannotate',
+        'unlink-cause',
+        'unmark-pivotal',
+        'unplace',
+        'unsequence',
+        'withdraw',
+      ].toSorted(),
+    )
     expect(schema).toMatchSnapshot()
   })
 })

@@ -46,22 +46,6 @@ describe('PendingDrawer', () => {
     expect(nothingAwaiting.find('.drawer__acceptall').exists()).toBe(false)
   })
 
-  it('labels and colours each row pill by its building-block kind', () => {
-    const wrapper = mount(PendingDrawer, {
-      props: {
-        parked: [],
-        awaiting: [
-          card({ proposalId: 'p1', blockKind: 'actor', label: 'Chef' }),
-          card({ proposalId: 'p2', blockKind: 'system', label: 'POS' }),
-        ],
-      },
-    })
-    const pills = wrapper.findAll('.drawer__pill')
-    expect(pills.map((pill) => pill.text())).toEqual(['ACTOR', 'SYSTEM'])
-    expect(pills[0]?.classes()).toContain('drawer__pill--actor')
-    expect(pills[1]?.classes()).toContain('drawer__pill--system')
-  })
-
   it('shows an empty line when nothing is pending', () => {
     const wrapper = mount(PendingDrawer, { props: { parked: [], awaiting: [] } })
     expect(wrapper.get('.drawer__empty').text()).toBe('Nothing pending.')

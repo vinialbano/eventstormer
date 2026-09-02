@@ -92,4 +92,25 @@ describe('proposalsView', () => {
     )
     expect(cards.map((card) => card.overflow)).toEqual([false, false, false, false, false, false, false, true, true])
   })
+
+  it('includes buildingBlockId once a proposal is accepted', () => {
+    const events: ProposalEvent[] = [
+      birth(pid('p_1')),
+      {
+        v: 1,
+        at,
+        type: 'Proposal Accepted',
+        proposalId: pid('p_1'),
+        accepter: 'Dana',
+        buildingBlockId: 'bb_1' as BuildingBlockId,
+      },
+    ]
+    const [card] = proposalsView(interpretedWith([pid('p_1')]), [{ proposalId: pid('p_1'), events }])
+    expect(card?.buildingBlockId).toBe('bb_1')
+  })
+
+  it('skips a proposal stream with no birth event', () => {
+    const cards = proposalsView(interpretedWith([pid('p_1')]), [{ proposalId: pid('p_1'), events: [] }])
+    expect(cards).toEqual([])
+  })
 })

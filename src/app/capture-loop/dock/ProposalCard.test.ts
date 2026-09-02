@@ -49,12 +49,12 @@ describe('ProposalCard', () => {
 
   it('shows a parked chip and an Unpark action when held', () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED', held: true } })
-    expect(wrapper.text()).toContain('parked')
+    expect(wrapper.get('.pc__parked').text()).toBe('parked')
+    wrapper.get('.pc--held')
     const labels = wrapper.findAll('button').map((button) => button.text())
     expect(labels).toContain('Unpark')
     expect(labels).not.toContain('Hold')
     expect(labels).toContain('Not this')
-    void wrapper.get('.pc__ribbon')
   })
 
   it('surfaces the apply-failed reason and a retry, never a silent drop', () => {

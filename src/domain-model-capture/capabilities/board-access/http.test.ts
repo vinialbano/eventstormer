@@ -30,9 +30,12 @@ describe('GET /workshops/:id/board', () => {
           label: 'Loan recorded',
           withdrawn: false,
           placement: 'backlog',
+          pivotal: false,
           provenance: { accepter: { name: 'Dana' } },
         },
       ],
+      follows: [],
+      causedBy: [],
     })
   })
 
@@ -43,4 +46,5 @@ describe('GET /workshops/:id/board', () => {
     })
     expect(response.status).toBe(404)
   })
+
 })

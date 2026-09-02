@@ -16,8 +16,36 @@ export interface ApplyResult {
   nextPosition: number
 }
 
-const resultingBuildingBlockId = (operation: Operation): BuildingBlockId =>
-  'id' in operation ? operation.id : (operation as { target: BuildingBlockId }).target
+const resultingBuildingBlockId = (operation: Operation): BuildingBlockId => {
+  switch (operation.kind) {
+    case 'capture-domain-event':
+    case 'identify-actor':
+    case 'identify-system':
+    case 'raise-hot-spot':
+      return operation.id
+    case 'reword':
+    case 'withdraw':
+    case 'reinstate':
+    case 'place':
+    case 'unplace':
+    case 'annotate':
+    case 'mark-pivotal':
+    case 'unmark-pivotal':
+    case 'resolve':
+    case 'reopen':
+      return operation.target
+    case 'sequence':
+    case 'unsequence':
+      return operation.successor
+    case 'insert-between':
+      return operation.inserted
+    case 'link-cause':
+    case 'unlink-cause':
+      return operation.effect
+    case 'unannotate':
+      return operation.hotSpot
+  }
+}
 
 /**
  * The sole writer of a workshop's board stream. It takes **no**

@@ -370,8 +370,8 @@ describe('interpretContribution — a later session sees prior summaries', () =>
     await interpretContribution(dependencies)
 
     expect(captured).toContain('## Prior sessions')
-    expect(captured).toContain('Session 1:')
-    expect(captured).toContain('Session 2:')
+    expect(captured).toContain('Session 1: 0 blocks added, 1 contributions, 0 questions left open.')
+    expect(captured).toContain('Session 2: 0 blocks added, 1 contributions, 0 questions left open.')
   })
 })
 

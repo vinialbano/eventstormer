@@ -27,6 +27,11 @@ describe('sharesContentWord', () => {
   it('is false when the label and segment share no content word', () => {
     expect(sharesContentWord('ticket fired', 'The chef plated the dish.')).toBe(false)
   })
+
+  it('is false when neither side yields a content word', () => {
+    expect(sharesContentWord('', 'no shared tokens here')).toBe(false)
+    expect(sharesContentWord('a b', 'x y')).toBe(false)
+  })
 })
 
 describe('isPastTenseLabel', () => {
@@ -36,6 +41,16 @@ describe('isPastTenseLabel', () => {
 
   it('is false for an irregular past that does not end in ed — built', () => {
     expect(isPastTenseLabel('built')).toBe(false)
+  })
+
+  it('is false for empty or whitespace-only labels', () => {
+    expect(isPastTenseLabel('')).toBe(false)
+    expect(isPastTenseLabel('   ')).toBe(false)
+  })
+
+  it('treats -ed suffix adjectives as past tense — known false positives red, seed', () => {
+    expect(isPastTenseLabel('red')).toBe(true)
+    expect(isPastTenseLabel('seed')).toBe(true)
   })
 })
 

@@ -42,21 +42,23 @@ capture.
 | AD-027 | **CI merge gate is `pnpm check` + `pnpm build` + `pnpm test:e2e`.** `pnpm check` and pre-push stay without Playwright and without `pnpm eval`. Pre-push runs `pnpm check` (lint included). Eval is `pnpm eval`, out of CI, against the real model (ADR-008). `package.json` `"test"` must name `--project domain --project app` so a third Vitest `eval` project cannot sneak onto the merge gate. | CI used to claim identity with `pnpm check` while omitting lint on pre-push and omitting the one capture-loop E2E everywhere. Iron Law 4: the real SPA+Hono+sqlite path gates merge; local Stop stays fast. | 2026-08-31 | test-suite-hardening; all later CI / eval work |
 | AD-028 | Slice 2 does **not** extend the Board write model with `follows` / `causedBy` / annotation adjacency; `decide(withdraw)` emits a single `withdraw`. F01 cascades land in Slice 3 (#40: `unlink-cause` per referencing event) and Slice 4 (#41: `withdraw` on annotating hot spots) as batch-atomic follow-ons from the same `decide` (AD-006). Slice 2 ticket ACs naming those cascades are vacuously true. | User decision 2026-08-31 at Slice 2 Specify. AD-005 already deferred adjacency to those slices; implementing it in the money shot would smuggle #40/#41 into F06/F10. Comments on the issues. | 2026-08-31 | Slice 2 (vacuous); Slice 3; Slice 4 |
 | AD-029 | A query whose answer is a **derived artifact** (the live readable account, the rendered-reference list) lives in `derived-artifact-generation`, even when the URL is `/workshops/:id/board/blocks/:blockId/references`. `domain-model-capture` never imports that Supporting context. `host/` mounts DAG's router at the ARCHITECTURE.md path. | Conformist arrow is Capture → DAG. Putting the reference list in `edit-model` would invert Core → Supporting. Slice 3/4 extend `listReferences`, they do not move the route. | 2026-08-31 | Slice 2; Slice 3–5 artifact reads |
-| AD-030 | Slice 2 does **not** add `OperationId` or accept-chain crash-window reconciliation. Stored `buildingBlockId` + `duplicate-id` already closes accept-retry. F06 is one Board append. **Supersedes** AD-017's leftover "reconciliation stays Slice 2" clause and AD-011's "candidate: Slice 2 apply round-trip". AD-011 otherwise stands (`OperationId` omitted from v:1 until a slice earns it). | Spec out-of-scope 2026-08-31; earn-it. | 2026-08-31 | Slice 2 (out); later slice that proves it needs `OperationId` |
+| AD-031 | Slice 3 does **not** extend `FacilitationTurnSchema`. Remaining Board ops and the timeline are **direct F06/F07**. Facilitator relation / `mark-pivotal` proposal tracks and the reword-hold-back gate land in Slice 4 (#41); eval of those behaviours in Slice 5 (#42); ADR-010 / ARCHITECTURE.md slice-table wording in Slice 6 (#43). | Ticket #40 ACs never mention the facilitator; the Anthropic projection is against the 24-optional ceiling (AD-015); "model has structure" is what Slice 3 creates. User delegated 2026-08-31; comments on #40–#43. | 2026-08-31 | Slice 3 (out); Slice 4–6 |
 
 ---
 
 ## Handoff
 
-- **Feature**: `slice-2-money-shot` (`.specs/features/slice-2-money-shot/`) — GitHub #39
-- **Phase / Task**: Execute complete + Verifier **PASS** (`84792ea`)
-- **Completed**: T1–T17; 26/26 ACs verified; 467 tests; 3/3 mutants killed; `minor` changeset;
-  `package.json` still `0.2.0`
+- **Feature**: `slice-3-relations-board` (`.specs/features/slice-3-relations-board/`) — GitHub #40
+- **Phase / Task**: Execute complete + Verifier PASS
+- **Completed**: T1–T22 through `d293252`; validation.md PASS (32/32 ACs, 3/3 mutants
+  killed). Sequence-family withdrawn/unknown rejections and write-model incremental
+  replay are in `decide.test.ts` / `replay.test.ts`. Vue Flow kept. #40
+  sequence-placement comment posted
 - **In-progress**: none
-- **Next step**: Interactive UAT if wanted; PR when you ask. Branch is local only.
+- **Next step**: optional interactive UAT. Open PR when ready
 - **Blockers**: none
-- **Uncommitted files**: none
-- **Branch**: `slice-2-money-shot` off `main`
+- **Uncommitted files**: spec close-out, lessons, assertion-gap tests
+- **Branch**: `slice-3-relations-board`
 
 ---
 

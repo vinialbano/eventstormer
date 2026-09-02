@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 8,
+  "next_id": 10,
   "lessons": [
     {
       "id": "L-001",
@@ -130,6 +130,42 @@
       ],
       "created": "2026-08-31T12:00:00Z",
       "last_seen": "2026-08-31T12:00:00Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::when a shared guard covers several operation kinds assert the named rejection on each kind the spec lists not only on a representative kind",
+      "text": "When a shared guard covers several operation kinds, assert the named rejection on each kind the spec lists, not only on a representative kind.",
+      "signal": "spec_precision_gap",
+      "scope": "domain/board/decide",
+      "status": "candidate",
+      "features": [
+        "slice-3-relations-board"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "S3-05 (.specs/features/slice-3-relations-board/validation.md:55) (domain/board/decide)"
+      ],
+      "created": "2026-09-01T11:57:08Z",
+      "last_seen": "2026-09-01T11:57:08Z"
+    },
+    {
+      "id": "L-009",
+      "key": "spec_precision_gap::when incremental replay is specified for both snapshot and write model folds assert both replay equals project and replaywritemodel equals evolve not only the snapshot twin",
+      "text": "When incremental-replay is specified for both snapshot and write-model folds, assert both replay equals project and replayWriteModel equals evolve, not only the snapshot twin.",
+      "signal": "spec_precision_gap",
+      "scope": "domain/fold-tests",
+      "status": "candidate",
+      "features": [
+        "slice-3-relations-board"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "S3-28 (.specs/features/slice-3-relations-board/validation.md:111) (domain/fold-tests)"
+      ],
+      "created": "2026-09-01T11:57:08Z",
+      "last_seen": "2026-09-01T11:57:08Z"
     }
   ]
 }

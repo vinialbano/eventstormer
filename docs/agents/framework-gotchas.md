@@ -25,5 +25,3 @@ signal rather than a wall of false positives:
 
 - `vue-router@5.2.0`
 - `@hono/node-server@2.1.1`
-- `@vue-flow/core@1.48.2`
-- `@dagrejs/dagre@3.1.1`

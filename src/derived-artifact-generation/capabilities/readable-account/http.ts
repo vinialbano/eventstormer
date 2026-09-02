@@ -8,11 +8,25 @@ import { renderReadableAccount } from '../../domain/render-readable-account.ts'
 import type { ReadableAccountDeps } from './deps.ts'
 
 const toAccountBlocks = (
-  blocks: { id: AccountBlock['id']; kind: string; label: string; withdrawn: boolean }[],
+  blocks: {
+    id: AccountBlock['id']
+    kind: string
+    label: string
+    withdrawn: boolean
+    placement: 'backlog' | 'timeline'
+  }[],
 ): AccountBlock[] =>
   blocks.flatMap((block) => {
     if (block.kind === 'domain-event' || block.kind === 'actor' || block.kind === 'system') {
-      return [{ id: block.id, kind: block.kind, label: block.label, withdrawn: block.withdrawn }]
+      return [
+        {
+          id: block.id,
+          kind: block.kind,
+          label: block.label,
+          withdrawn: block.withdrawn,
+          placement: block.placement,
+        },
+      ]
     }
     return []
   })
@@ -32,6 +46,8 @@ const documentFor = (
       scope: source.value.scope,
       narratorCount: source.value.narratorCount,
       blocks: toAccountBlocks(snapshot.blocks),
+      follows: snapshot.follows,
+      causedBy: snapshot.causedBy,
       quotes: source.value.quotes,
     }),
   }

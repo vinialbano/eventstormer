@@ -34,6 +34,8 @@ const blocks = computed(() =>
     kind: block.kind,
     label: block.label,
     withdrawn: block.withdrawn,
+    placement: block.placement,
+    pivotal: block.pivotal,
     speaker: block.provenance?.accepter.name,
   })),
 )
@@ -84,11 +86,14 @@ onMounted(loadAll)
   <div class="screen">
     <BoardWall
       :blocks="blocks"
+      :timeline="board.timeline"
+      :show-withdrawn="board.showWithdrawn"
       :workshop-id="id"
       :accepter="session.creatorName"
       :revision="board.snapshot.position"
       class="screen__wall"
       @board-dirty="onBoardDirty"
+      @update:show-withdrawn="board.showWithdrawn = $event"
     />
 
     <FacilitatorDock

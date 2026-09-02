@@ -108,6 +108,21 @@ module.exports = {
     },
 
     {
+      name: 'app-imports-capture-only-via-timeline',
+      severity: 'error',
+      comment:
+        'The SPA may import domain-model-capture only from domain/timeline/ — the published ' +
+        'rank/edge read interface. Importing decide, api.ts, or infrastructure would pull the ' +
+        'write model or Hono/sqlite into the client bundle. Hide-withdrawn is a local view ' +
+        'filter, so ranks are recomputed from GET topology, never from a precomputed layout.',
+      from: { path: '^src/app/' },
+      to: {
+        path: '^src/domain-model-capture/',
+        pathNot: '^src/domain-model-capture/domain/timeline/',
+      },
+    },
+
+    {
       name: 'no-cross-store-imports',
       severity: 'error',
       comment:

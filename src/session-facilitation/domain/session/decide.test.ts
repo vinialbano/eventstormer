@@ -194,6 +194,31 @@ describe('Session.decide — Interpret / Fail (interpret-once ledger)', () => {
     if (isOk(result)) expect(result.value).toEqual([])
   })
 
+  it('emits Contribution Interpretation Failed the first time, ok([]) the second', () => {
+    const first = decide(replay(startedStream), {
+      type: 'Fail Interpretation',
+      sessionId,
+      contributionId: toContributionId('c_1'),
+      reason: 'schema-invalid after one retry',
+      at,
+    })
+    expect(isOk(first) && first.value).toHaveLength(1)
+
+    const seen = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Contribution Interpretation Failed', sessionId, contributionId: toContributionId('c_1'), reason: 'schema-invalid after one retry' },
+    ])
+    const second = decide(seen, {
+      type: 'Fail Interpretation',
+      sessionId,
+      contributionId: toContributionId('c_1'),
+      reason: 'schema-invalid after one retry',
+      at,
+    })
+    expect(isOk(second)).toBe(true)
+    if (isOk(second)) expect(second.value).toEqual([])
+  })
+
   it('Interpret Contribution on a CLOSED session is ok([]) — a late model call writes nothing', () => {
     const closed = replay([
       ...startedStream,
@@ -295,6 +320,35 @@ describe('Session.decide — Answer Question', () => {
     })
     expect(isErr(result)).toBe(true)
     if (isErr(result)) expect(result.error.kind).toBe('question-already-resolved')
+  })
+
+  // decideAnswerQuestion omits the closed guard — only unknown/already-resolved reject.
+  it('still resolves an open question on a CLOSED session', () => {
+    const closed = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'phase?' },
+      { v: 1, at, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [toQuestionId('q_1')] },
+    ])
+    const result = decide(closed, {
+      type: 'Answer Question',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_1'),
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Question Answered',
+          sessionId,
+          questionId: 'q_1',
+          byContributionId: 'c_1',
+        },
+      ])
+    }
   })
 })
 

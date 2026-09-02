@@ -160,7 +160,28 @@ describe('SessionEvent SSOT — other variants', () => {
     })
   })
 
-  it('Contribution Interpreted carries the stored tracks and an optional askQuestionId', () => {
+  it('Contribution Interpreted carries the stored tracks and optional askQuestion fields', () => {
+    const interpreted = {
+      v: 1,
+      at,
+      type: 'Contribution Interpreted',
+      sessionId: 's_1',
+      contributionId: 'c_1',
+      tracks: [
+        { track: 'propose-building-block', proposalId: 'p_1', blockKind: 'actor', label: 'Member', bar: 'strict' },
+      ],
+      askQuestionId: 'q_1',
+      askQuestionText: 'What happens right after a member joins?',
+    }
+    expect(SessionEvent.parse(interpreted)).toMatchObject({
+      type: 'Contribution Interpreted',
+      tracks: [{ track: 'propose-building-block', proposalId: 'p_1' }],
+      askQuestionId: 'q_1',
+      askQuestionText: 'What happens right after a member joins?',
+    })
+  })
+
+  it('Contribution Interpreted omits askQuestion fields when not present', () => {
     const interpreted = {
       v: 1,
       at,
@@ -171,10 +192,13 @@ describe('SessionEvent SSOT — other variants', () => {
         { track: 'propose-building-block', proposalId: 'p_1', blockKind: 'actor', label: 'Member', bar: 'strict' },
       ],
     }
-    expect(SessionEvent.parse(interpreted)).toMatchObject({
+    const parsed = SessionEvent.parse(interpreted)
+    expect(parsed).toMatchObject({
       type: 'Contribution Interpreted',
       tracks: [{ track: 'propose-building-block', proposalId: 'p_1' }],
     })
+    expect(parsed).not.toHaveProperty('askQuestionId')
+    expect(parsed).not.toHaveProperty('askQuestionText')
   })
 })
 

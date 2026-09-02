@@ -14,6 +14,8 @@ describe('readBoardSnapshot', () => {
     expect(readBoardSnapshot({ store: createMemoryEventStore() }, workshopId)).toEqual({
       position: -1,
       blocks: [],
+      follows: [],
+      causedBy: [],
     })
   })
 
@@ -34,6 +36,36 @@ describe('readBoardSnapshot', () => {
         label: 'Loan recorded',
         withdrawn: true,
       }),
+    )
+  })
+
+  it('publishes a follows pair and timeline placement after sequence', () => {
+    const store = createMemoryEventStore()
+    const deps = { store, clock }
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'capture-domain-event', id: 'eB', label: 'Book returned' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+    )
+
+    const snapshot = readBoardSnapshot({ store }, workshopId)
+    expect(snapshot.follows).toEqual([{ predecessor: 'eA', successor: 'eB' }])
+    expect(snapshot.causedBy).toEqual([])
+    expect(snapshot.blocks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'eA', placement: 'timeline', pivotal: false }),
+        expect.objectContaining({ id: 'eB', placement: 'timeline', pivotal: false }),
+      ]),
     )
   })
 })

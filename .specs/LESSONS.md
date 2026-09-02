@@ -53,8 +53,20 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-007 — When an idempotency/no-op guard ANDs several equality clauses (id AND field-a AND field-b), add a test that varies each non-id clause independently; a test that only varies the id leaves the other clauses undiscriminated and flipping their `===` to `!==` survives.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `session-facilitation/capabilities;idempotency;tests` · harmful: 0
 - features: pr-49-review-fixes
-- evidence: src/session-facilitation/capabilities/interpret-contribution/interpret.ts:132 — mutant c (`priorEvent.note === track.note` → `!==`) survived
+- evidence: src/session-facilitation/capabilities/interpret-contribution/interpret.ts:132 — mutant c (priorEvent.note === track.note -> !==) survived
 - last seen: 2026-08-31T12:00:00Z
+
+### L-008 — When a shared guard covers several operation kinds, assert the named rejection on each kind the spec lists, not only on a representative kind.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `domain/board/decide` · harmful: 0
+- features: slice-3-relations-board
+- evidence: S3-05 (.specs/features/slice-3-relations-board/validation.md:55) (domain/board/decide)
+- last seen: 2026-09-01T11:57:08Z
+
+### L-009 — When incremental-replay is specified for both snapshot and write-model folds, assert both replay equals project and replayWriteModel equals evolve, not only the snapshot twin.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `domain/fold-tests` · harmful: 0
+- features: slice-3-relations-board
+- evidence: S3-28 (.specs/features/slice-3-relations-board/validation.md:111) (domain/fold-tests)
+- last seen: 2026-09-01T11:57:08Z
 
 ## Quarantined (failed when applied — ignore)
 

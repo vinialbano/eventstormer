@@ -2,6 +2,7 @@ import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import type { BuildingBlockId } from '~/plumbing/ids.ts'
 import { Operation } from '../schema/index.ts'
+import { evolve } from './evolve.ts'
 import { emptySnapshot } from './model.ts'
 import { project } from './project.ts'
 import { replay, replayWriteModel } from './replay.ts'
@@ -14,10 +15,21 @@ const bid = (value: string): BuildingBlockId => value as BuildingBlockId
 const POOL: Operation[] = [
   op({ kind: 'capture-domain-event', id: 'e1', label: 'a' }),
   op({ kind: 'capture-domain-event', id: 'e2', label: 'b' }),
+  op({ kind: 'capture-domain-event', id: 'e3', label: 'c' }),
   op({ kind: 'identify-actor', id: 'a1', label: 'server' }),
+  op({ kind: 'identify-system', id: 's1', label: 'ledger' }),
   op({ kind: 'reword', target: 'e1', label: 'a-reworded' }),
   op({ kind: 'withdraw', target: 'e1' }),
   op({ kind: 'reinstate', target: 'e1' }),
+  op({ kind: 'place', target: 'e1' }),
+  op({ kind: 'unplace', target: 'e1' }),
+  op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+  op({ kind: 'unsequence', predecessor: 'e1', successor: 'e2' }),
+  op({ kind: 'insert-between', predecessor: 'e1', inserted: 'e3', successor: 'e2' }),
+  op({ kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+  op({ kind: 'unlink-cause', cause: 'a1', effect: 'e1' }),
+  op({ kind: 'mark-pivotal', target: 'e1' }),
+  op({ kind: 'unmark-pivotal', target: 'e1' }),
 ]
 
 describe('replay', () => {
@@ -34,6 +46,8 @@ describe('replay', () => {
     ]
     expect(replay(log)).toEqual({
       position: 3,
+      follows: [],
+      causedBy: [],
       blocks: new Map([
         [
           bid('e1'),
@@ -42,6 +56,7 @@ describe('replay', () => {
             label: 'order was placed',
             withdrawn: false,
             placement: 'backlog',
+            pivotal: false,
             provenance: author,
           },
         ],
@@ -52,6 +67,7 @@ describe('replay', () => {
             label: 'order paid',
             withdrawn: true,
             placement: 'backlog',
+            pivotal: false,
             provenance: author,
           },
         ],
@@ -72,7 +88,110 @@ describe('replay', () => {
       label: 'placed',
       withdrawn: true,
       placement: 'backlog',
+      pivotal: false,
       provenance: author,
+    })
+  })
+
+  it('place, unplace, and insert-between publish the expected timeline topology', () => {
+    const log = [
+      op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }),
+      op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }),
+      op({ kind: 'capture-domain-event', id: 'eC', label: 'c' }),
+      op({ kind: 'capture-domain-event', id: 'eD', label: 'd' }),
+      op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }),
+      op({ kind: 'sequence', predecessor: 'eA', successor: 'eD' }),
+      op({ kind: 'place', target: 'eC' }),
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+      op({ kind: 'unplace', target: 'eA' }),
+    ]
+    expect(replay(log)).toEqual({
+      position: 8,
+      follows: [{ predecessor: bid('eC'), successor: bid('eB') }],
+      causedBy: [],
+      blocks: new Map([
+        [
+          bid('eA'),
+          {
+            kind: 'domain-event',
+            label: 'a',
+            withdrawn: false,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('eB'),
+          {
+            kind: 'domain-event',
+            label: 'b',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('eC'),
+          {
+            kind: 'domain-event',
+            label: 'c',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('eD'),
+          {
+            kind: 'domain-event',
+            label: 'd',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+      ]),
+    })
+  })
+
+  it('produces the expected snapshot after sequencing two events', () => {
+    const log = [
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'paid' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+    ]
+    expect(replay(log)).toEqual({
+      position: 2,
+      follows: [{ predecessor: bid('e1'), successor: bid('e2') }],
+      causedBy: [],
+      blocks: new Map([
+        [
+          bid('e1'),
+          {
+            kind: 'domain-event',
+            label: 'placed',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('e2'),
+          {
+            kind: 'domain-event',
+            label: 'paid',
+            withdrawn: false,
+            placement: 'timeline',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+      ]),
     })
   })
 
@@ -89,7 +208,34 @@ describe('replay', () => {
       op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }),
       op({ kind: 'withdraw', target: 'e1' }),
     ])
-    expect(writeModel.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+    expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+  })
+
+  it('replayWriteModel records follows and causedBy from sequence and link-cause', () => {
+    const writeModel = replayWriteModel([
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'paid' }),
+      op({ kind: 'identify-actor', id: 'a1', label: 'clerk' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+      op({ kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+    ])
+    expect(writeModel.follows.get(bid('e1'))).toEqual(new Set([bid('e2')]))
+    expect(writeModel.causedBy.get(bid('e1'))).toEqual(new Set([bid('a1')]))
+    expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: false })
+  })
+
+  it('replayWriteModel after withdraw has no incident follows or causedBy edges', () => {
+    const writeModel = replayWriteModel([
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'placed' }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'paid' }),
+      op({ kind: 'identify-actor', id: 'a1', label: 'clerk' }),
+      op({ kind: 'sequence', predecessor: 'e1', successor: 'e2' }),
+      op({ kind: 'link-cause', cause: 'a1', effect: 'e1' }),
+      op({ kind: 'withdraw', target: 'e1' }),
+    ])
+    expect(writeModel.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: true })
+    expect(writeModel.follows.size).toBe(0)
+    expect(writeModel.causedBy.size).toBe(0)
   })
 
   // Consistency property only — not an independent oracle. Both sides share
@@ -98,6 +244,17 @@ describe('replay', () => {
     fc.assert(
       fc.property(fc.array(fc.constantFrom(...POOL)), fc.constantFrom(...POOL), (log, next) => {
         expect(replay([...log, next])).toEqual(project(replay(log), next))
+      }),
+    )
+  })
+
+  // Twin of the snapshot property. Catches replayWriteModel drifting off
+  // evolve (for example deriving the write model from a snapshot and dropping
+  // adjacency). Edge contents are pinned by the goldens above, not here.
+  it('replayWriteModel(log ++ [op]) deep-equals evolve(replayWriteModel(log), op)', () => {
+    fc.assert(
+      fc.property(fc.array(fc.constantFrom(...POOL)), fc.constantFrom(...POOL), (log, next) => {
+        expect(replayWriteModel([...log, next])).toEqual(evolve(replayWriteModel(log), next))
       }),
     )
   })

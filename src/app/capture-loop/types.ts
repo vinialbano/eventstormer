@@ -75,13 +75,16 @@ interface BoardBlock {
   kind: string
   label: string
   withdrawn: boolean
-  placement: 'backlog'
+  placement: 'backlog' | 'timeline'
+  pivotal: boolean
   provenance?: { accepter: { name: string } } | undefined
 }
 
 export interface BoardSnapshot {
   position: number
   blocks: BoardBlock[]
+  follows: { predecessor: string; successor: string }[]
+  causedBy: { cause: string; effect: string }[]
 }
 
 export interface AccountSnapshot {

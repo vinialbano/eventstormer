@@ -145,6 +145,43 @@ describe('POST /sessions/:id/close', () => {
     expect(proposalDisposition('p_1')).toBe('LAPSED')
   })
 
+  it('leaves REJECTED proposals terminal — close sweep does not lapse them', async () => {
+    store.append(sessionStream(sessionId), 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_2',
+          tracks: [
+            {
+              track: 'propose-building-block',
+              proposalId: 'p_rejected',
+              blockKind: 'domain-event',
+              label: 'Block p_rejected',
+              bar: 'strict',
+            },
+          ],
+          at,
+        },
+      },
+    ])
+    seedProposal('p_rejected', [
+      { v: 1, at, type: 'Proposal Rejected', proposalId: 'p_rejected' as ProposalId },
+    ])
+
+    await close()
+
+    expect(proposalDisposition('p_rejected')).toBe('REJECTED')
+    const lapsed = store
+      .read(proposalStream('p_rejected' as ProposalId))
+      .map((row) => ProposalEvent.parse(row.operation))
+      .some((event) => event.type === 'Proposal Lapsed')
+    expect(lapsed).toBe(false)
+  })
+
   it('404s for an unknown session', async () => {
     const response = await close('s_missing' as SessionId)
     expect(response.status).toBe(404)

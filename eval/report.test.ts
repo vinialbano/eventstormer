@@ -30,9 +30,24 @@ outro`)
       'README is missing <!-- eval:results --> / <!-- /eval:results --> markers',
     )
   })
+
+  it('throws when the end marker precedes the start marker', () => {
+    const reversed = `outro
+<!-- /eval:results -->
+placeholder
+<!-- eval:results -->
+intro`
+    expect(() => spliceEvalResults(reversed, TABLE)).toThrow(
+      'README is missing <!-- eval:results --> / <!-- /eval:results --> markers',
+    )
+  })
 })
 
 describe('formatEvalTable', () => {
+  it('renders only the header when there are no rows', () => {
+    expect(formatEvalTable([])).toBe('| Case | Assertion | Passed |\n| --- | --- | --- |')
+  })
+
   it('renders each assertion as k/N with no aggregate pass-rate', () => {
     const markdown = formatEvalTable([
       { caseId: 'kind', assertion: 'kind', passed: 4, runs: 5 },

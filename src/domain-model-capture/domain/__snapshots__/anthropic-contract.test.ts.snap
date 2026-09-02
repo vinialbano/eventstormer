@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`anthropicOperationSchema (compatibility sensor) > matches the derived shape snapshot 1`] = `
+exports[`anthropicOperationSchema (compatibility sensor) > pins structural invariants alongside the derived shape snapshot 1`] = `
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "anyOf": [

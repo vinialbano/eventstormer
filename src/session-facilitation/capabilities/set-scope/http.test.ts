@@ -76,4 +76,12 @@ describe('POST /workshops/:id/scope', () => {
     expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({ error: 'not-started' })
   })
+
+  it('rejects a statement longer than 10 000 characters with a 400 typed body', async () => {
+    const store = seededStore()
+    const response = await postScope(store, 'x'.repeat(10_001))
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'statement-too-long' })
+    expect(scopeSet(store)).toEqual([])
+  })
 })

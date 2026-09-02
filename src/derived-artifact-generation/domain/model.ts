@@ -5,6 +5,17 @@ export interface AccountBlock {
   kind: 'domain-event' | 'actor' | 'system'
   label: string
   withdrawn: boolean
+  placement?: 'backlog' | 'timeline'
+}
+
+export interface AccountFollowsEdge {
+  predecessor: BuildingBlockId
+  successor: BuildingBlockId
+}
+
+interface AccountCausedByEdge {
+  cause: BuildingBlockId
+  effect: BuildingBlockId
 }
 
 interface AccountQuote {
@@ -19,10 +30,12 @@ export interface AccountInput {
   narratorCount: number
   blocks: AccountBlock[]
   quotes: AccountQuote[]
+  follows?: AccountFollowsEdge[]
+  causedBy?: AccountCausedByEdge[]
 }
 
 export interface ReferenceSite {
-  kind: 'readable-account'
+  kind: 'readable-account' | 'follows' | 'caused-by'
   path: string
 }
 
