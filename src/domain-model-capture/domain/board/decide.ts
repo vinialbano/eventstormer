@@ -421,6 +421,48 @@ const decideUnannotate = (writeModel: BoardWriteModel, operation: OpOf<'unannota
   return ok([operation])
 }
 
+const requireLiveHotSpot = (
+  writeModel: BoardWriteModel,
+  target: BuildingBlockId,
+  operation: string,
+  reason: string,
+): Result<WriteBlock, Rejection> => {
+  const block = lookupActive(writeModel, target)
+  if (!block.ok) return block
+  if (block.value.kind !== 'hot-spot') {
+    return err({ kind: 'kind-permission', classification: 'systemic', operation, reason })
+  }
+  return block
+}
+
+const decideResolve = (writeModel: BoardWriteModel, operation: OpOf<'resolve'>): Decision => {
+  const hotSpot = requireLiveHotSpot(
+    writeModel,
+    operation.target,
+    operation.kind,
+    'only a hot spot may be resolved',
+  )
+  if (!hotSpot.ok) return hotSpot
+  if (writeModel.hotSpotResolved.get(operation.target) === true) {
+    return err({ kind: 'already-resolved', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
+const decideReopen = (writeModel: BoardWriteModel, operation: OpOf<'reopen'>): Decision => {
+  const hotSpot = requireLiveHotSpot(
+    writeModel,
+    operation.target,
+    operation.kind,
+    'only a hot spot may be reopened',
+  )
+  if (!hotSpot.ok) return hotSpot
+  if (writeModel.hotSpotResolved.get(operation.target) !== true) {
+    return err({ kind: 'not-resolved', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -493,11 +535,9 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
       return decideUnannotate(writeModel, operation)
 
     case 'resolve':
+      return decideResolve(writeModel, operation)
+
     case 'reopen':
-      return err({
-        kind: 'not-implemented-in-slice',
-        classification: 'systemic',
-        operation: operation.kind,
-      })
+      return decideReopen(writeModel, operation)
   }
 }

@@ -107,14 +107,22 @@ const unmarkPivotal = z.object({
   kind: z.literal('unmark-pivotal'),
   target: BuildingBlockId,
 })
-const resolve = z.object({
-  ...opBase,
-  kind: z.literal('resolve'),
-  target: BuildingBlockId,
-  // Required: a missing `reference` key fails `.parse`. Shape is
-  // deliberately unconstrained — a recorded value, not a live pointer.
-  reference: z.unknown(),
-})
+const resolve = z
+  .object({
+    ...opBase,
+    kind: z.literal('resolve'),
+    target: BuildingBlockId,
+    // Required: an absent `reference` key fails `.parse` (Zod treats an
+    // `unknown` object key as required). Shape is deliberately unconstrained
+    // — a recorded value, not a live pointer. `null` is a value; `undefined`
+    // is not — the refine rejects a present-but-undefined key so "resolve
+    // carries no reference" is always a schema violation.
+    reference: z.unknown(),
+  })
+  .refine((value) => value.reference !== undefined, {
+    error: 'resolve requires a reference key carrying a recorded value',
+    path: ['reference'],
+  })
 const reopen = z.object({ ...opBase, kind: z.literal('reopen'), target: BuildingBlockId })
 
 export const Operation = z.discriminatedUnion('kind', [

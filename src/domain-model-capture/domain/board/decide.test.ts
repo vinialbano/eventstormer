@@ -50,7 +50,9 @@ const followsIsAcyclic = (follows: Map<BuildingBlockId, Set<BuildingBlockId>>): 
   return visited === nodes.size
 }
 
-const NOT_IMPLEMENTED: OperationKind[] = ['resolve', 'reopen']
+// Every frozen v1 operation kind now has a real decider branch — the list
+// `switch-exhaustiveness-check` once forced open is closed.
+const NOT_IMPLEMENTED: OperationKind[] = []
 
 describe('decide — capture', () => {
   it('emits the capture operation for each kind-specific variant', () => {
@@ -1017,6 +1019,88 @@ describe('decide — raise-hot-spot / annotate / unannotate', () => {
   })
 })
 
+describe('decide — resolve / reopen', () => {
+  const openHotSpot = [
+    { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+    { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+  ]
+
+  it('resolves a live open hot spot as a single resolve', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: 'added a retry' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'resolve', target: 'h1', reference: 'added a retry' })])
+    }
+  })
+
+  it('accepts a resolve whose reference is null — null is a recorded value', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: null }))
+    expect(isOk(result)).toBe(true)
+  })
+
+  it('rejects a resolve with no reference key as a schema violation, write model unchanged', () => {
+    const writeModel = given(openHotSpot)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, { kind: 'resolve', target: 'h1', author } as unknown as Operation)
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('schema')
+    expect(writeModel).toEqual(before)
+  })
+
+  it('rejects a resolve whose reference key is present but undefined as a schema violation', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, {
+      kind: 'resolve',
+      target: 'h1',
+      reference: undefined,
+      author,
+    } as unknown as Operation)
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('schema')
+  })
+
+  it('rejects a resolve targeting a non-hot-spot as kind-permission', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'e1', reference: 'x' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  it('rejects a second resolve of an already-resolved hot spot as already-resolved', () => {
+    const writeModel = given([...openHotSpot, { kind: 'resolve', target: 'h1', reference: 'first' }])
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: 'second' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'already-resolved', classification: 'systemic', target: 'h1' })
+    }
+  })
+
+  it('reopens a resolved hot spot as a single reopen', () => {
+    const writeModel = given([...openHotSpot, { kind: 'resolve', target: 'h1', reference: 'first' }])
+    const result = decide(writeModel, op({ kind: 'reopen', target: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'reopen', target: 'h1' })])
+  })
+
+  it('rejects reopen of an open hot spot as not-resolved', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'reopen', target: 'h1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'not-resolved', classification: 'systemic', target: 'h1' })
+    }
+  })
+
+  it('rejects reopen of a non-hot-spot as kind-permission', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'reopen', target: 'e1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+})
+
 describe('decide — schema and not-implemented rejections', () => {
   it('rejects an operation that fails schema validation, emitting nothing', () => {
     const result = decide(emptyWriteModel(), { kind: 'withdraw', author } as unknown as Operation)
@@ -1028,24 +1112,46 @@ describe('decide — schema and not-implemented rejections', () => {
     }
   })
 
-  it('rejects every not-yet-implemented kind explicitly, never silently', () => {
-    expect(NOT_IMPLEMENTED).toEqual(['resolve', 'reopen'])
-    for (const kind of NOT_IMPLEMENTED) {
+  it('no frozen operation kind is left unimplemented', () => {
+    expect(NOT_IMPLEMENTED).toEqual([])
+    for (const kind of ALL_KINDS) {
       const result = decide(emptyWriteModel(), op(sampleFor(kind)))
-      expect(isErr(result)).toBe(true)
-      if (isErr(result)) {
-        expect(result.error).toEqual({
-          kind: 'not-implemented-in-slice',
-          classification: 'systemic',
-          operation: kind,
-        })
-      }
+      // Some kinds succeed on an empty model, some reject — but none is the
+      // never-silently placeholder.
+      if (isErr(result)) expect(result.error.kind).not.toBe('not-implemented-in-slice')
     }
   })
 })
 
+const ALL_KINDS: OperationKind[] = [
+  'capture-domain-event',
+  'identify-actor',
+  'identify-system',
+  'reword',
+  'withdraw',
+  'reinstate',
+  'raise-hot-spot',
+  'place',
+  'unplace',
+  'sequence',
+  'unsequence',
+  'insert-between',
+  'link-cause',
+  'unlink-cause',
+  'annotate',
+  'unannotate',
+  'mark-pivotal',
+  'unmark-pivotal',
+  'resolve',
+  'reopen',
+]
+
 /** A minimal valid payload for a not-yet-implemented operation kind. */
 const EXTRA_FIELDS: Partial<Record<OperationKind, Record<string, unknown>>> = {
+  'capture-domain-event': { id: 'e1', label: 'x' },
+  'identify-actor': { id: 'a1', label: 'x' },
+  'identify-system': { id: 's1', label: 'x' },
+  reword: { target: 'e1', label: 'x' },
   'raise-hot-spot': { id: 'h1', label: 'x' },
   sequence: { predecessor: 'e1', successor: 'e2' },
   unsequence: { predecessor: 'e1', successor: 'e2' },
