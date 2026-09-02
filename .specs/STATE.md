@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `board-interaction-composables` (`.specs/features/board-interaction-composables/`) — GitHub #63
+- **Feature**: `dock-modularization` (`.specs/features/dock-modularization/`) — GitHub #64
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: four composables extracted; `BoardWall.vue` script slimmed; `pnpm check` green (656 tests)
+- **Completed**: feed composable + `DockFeed.vue`; review-proposal and contribute interactions; slim shell
 - **In-progress**: none
-- **Next step**: open PR for #63
+- **Next step**: open PR for #64
 - **Blockers**: none
-- **Branch**: `board-interaction-composables`
+- **Branch**: `dock-modularization`
 
 ---
 
