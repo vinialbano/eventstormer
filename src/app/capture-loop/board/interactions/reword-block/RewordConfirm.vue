@@ -1,63 +1,23 @@
 <script setup lang="ts">
 import { PopoverAnchor, PopoverContent, PopoverPortal, PopoverRoot } from 'reka-ui'
-import { ref, watch } from 'vue'
-import { getJson } from '../client.ts'
-import { postBoardOperation } from '../transport/board.ts'
+import {
+  canConfirmReword,
+  confirmIsBusy,
+  type RewordConfirmPhase,
+} from './reword-confirm.ts'
+import { referenceSiteLine } from './reword-references.ts'
 
-interface ReferenceSite {
-  kind: string
-  path: string
-}
-
-const props = defineProps<{
+defineProps<{
   open: boolean
-  workshopId: string
-  blockId: string
-  label: string
-  revision: number
-  accepter: string
+  phase: RewordConfirmPhase
 }>()
 
 const emit = defineEmits<{
   'update:open': [open: boolean]
-  confirmed: []
+  confirm: []
   cancel: []
+  retry: []
 }>()
-
-const sites = ref<ReferenceSite[]>([])
-const loadError = ref(false)
-const loading = ref(false)
-const loaded = ref(false)
-const posting = ref(false)
-
-const siteLine = (site: ReferenceSite): string =>
-  site.path === 'building-blocks' ? 'Readable account · Building blocks' : site.path
-
-const loadReferences = async (): Promise<void> => {
-  loading.value = true
-  loaded.value = false
-  loadError.value = false
-  try {
-    sites.value = await getJson<ReferenceSite[]>(
-      `/api/workshops/${props.workshopId}/board/blocks/${props.blockId}/references`,
-    )
-    loaded.value = true
-  } catch {
-    loadError.value = true
-    loaded.value = false
-    sites.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(
-  () => [props.open, props.revision, props.blockId] as const,
-  ([isOpen]) => {
-    if (isOpen) void loadReferences()
-  },
-  { immediate: true },
-)
 
 const close = (): void => {
   emit('update:open', false)
@@ -66,24 +26,6 @@ const close = (): void => {
 
 const onOpenChange = (next: boolean): void => {
   if (!next) close()
-}
-
-const confirm = async (): Promise<void> => {
-  if (loadError.value || posting.value || loading.value || !loaded.value) return
-  posting.value = true
-  try {
-    await postBoardOperation(props.workshopId, {
-      v: 1,
-      kind: 'reword',
-      target: props.blockId,
-      label: props.label,
-      author: { accepter: { name: props.accepter } },
-    })
-    emit('confirmed')
-    emit('update:open', false)
-  } finally {
-    posting.value = false
-  }
 }
 </script>
 
@@ -102,24 +44,24 @@ const confirm = async (): Promise<void> => {
       >
         <div aria-label="Reword impact" class="reword-impact" role="dialog">
           <p class="reword-impact__lead">This name appears in:</p>
-          <p v-if="loadError" class="reword-impact__error">
+          <p v-if="phase.kind === 'error'" class="reword-impact__error">
             Couldn't list where this appears — retry or cancel.
           </p>
           <ul v-else class="reword-impact__sites">
             <li
-              v-for="(site, index) in sites"
+              v-for="(site, index) in phase.kind === 'ready' || phase.kind === 'posting' ? phase.sites : []"
               :key="`${site.path}-${String(index)}`"
               class="reword-impact__site"
             >
-              {{ siteLine(site) }}
+              {{ referenceSiteLine(site) }}
             </li>
           </ul>
           <div class="reword-impact__actions">
             <button
-              v-if="loadError"
+              v-if="phase.kind === 'error'"
               type="button"
               class="reword-impact__btn reword-impact__btn--quiet"
-              @click="loadReferences"
+              @click="emit('retry')"
             >
               Retry
             </button>
@@ -127,8 +69,8 @@ const confirm = async (): Promise<void> => {
               v-else
               type="button"
               class="reword-impact__btn reword-impact__btn--go"
-              :disabled="posting || loading || !loaded"
-              @click="confirm"
+              :disabled="confirmIsBusy(phase) || !canConfirmReword(phase)"
+              @click="emit('confirm')"
             >
               Confirm reword
             </button>

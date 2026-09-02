@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import RewordConfirm from '../RewordConfirm.vue'
+import RewordConfirm from '../interactions/reword-block/RewordConfirm.vue'
+import type { RewordConfirmPhase } from '../interactions/reword-block/reword-confirm.ts'
 import './sticky-chrome.css'
 
 interface BacklogSticky {
@@ -31,10 +32,8 @@ defineProps<{
   draft: string
   labelError: string | null
   confirmOpen: boolean
+  confirmPhase: RewordConfirmPhase
   bindDraftInput: (element: unknown) => void
-  workshopId?: string | undefined
-  revision?: number | undefined
-  accepter?: string | undefined
   showsActiveControls: (id: string, withdrawn: boolean, editingId: string | null) => boolean
   showsReinstate: (id: string, withdrawn: boolean) => boolean
 }>()
@@ -49,7 +48,8 @@ const emit = defineEmits<{
   'request-confirm': []
   'cancel-reword': []
   'update:confirm-open': [open: boolean]
-  'reword-confirmed': []
+  confirm: []
+  retry: []
   'update:draft': [value: string]
 }>()
 
@@ -161,13 +161,11 @@ const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
         </div>
         <RewordConfirm
           :open="confirmOpen"
-          :workshop-id="workshopId ?? ''"
-          :block-id="sticky.id"
-          :label="draft.trim()"
-          :revision="revision ?? -1"
-          :accepter="accepter ?? ''"
+          :phase="confirmPhase"
           @update:open="emit('update:confirm-open', $event)"
-          @confirmed="emit('reword-confirmed')"
+          @confirm="emit('confirm')"
+          @cancel="emit('cancel-reword')"
+          @retry="emit('retry')"
         />
       </template>
       <template v-else>

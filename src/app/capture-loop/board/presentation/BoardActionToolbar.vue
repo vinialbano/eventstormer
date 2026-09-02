@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import RewordConfirm from '../RewordConfirm.vue'
+import RewordConfirm from '../interactions/reword-block/RewordConfirm.vue'
+import type { RewordConfirmPhase } from '../interactions/reword-block/reword-confirm.ts'
 import './sticky-chrome.css'
 
 defineProps<{
@@ -15,9 +16,7 @@ defineProps<{
   draft: string
   labelError: string | null
   confirmOpen: boolean
-  workshopId?: string | undefined
-  revision?: number | undefined
-  accepter?: string | undefined
+  confirmPhase: RewordConfirmPhase
   bindDraftInput: (element: unknown) => void
   canPlace: boolean
   canUnplace: boolean
@@ -38,7 +37,8 @@ const emit = defineEmits<{
   'unmark-selected-pivotal': []
   'request-confirm': []
   'cancel-reword': []
-  'reword-confirmed': []
+  confirm: []
+  retry: []
 }>()
 
 const onShowWithdrawnChange = (event: Event): void => {
@@ -153,13 +153,11 @@ const onShowWithdrawnChange = (event: Event): void => {
       </div>
       <RewordConfirm
         :open="confirmOpen"
-        :workshop-id="workshopId ?? ''"
-        :block-id="editingId ?? ''"
-        :label="draft.trim()"
-        :revision="revision ?? -1"
-        :accepter="accepter ?? ''"
+        :phase="confirmPhase"
         @update:open="emit('update:confirm-open', $event)"
-        @confirmed="emit('reword-confirmed')"
+        @confirm="emit('confirm')"
+        @cancel="emit('cancel-reword')"
+        @retry="emit('retry')"
       />
     </div>
   </div>

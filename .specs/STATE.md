@@ -48,17 +48,17 @@ capture.
 
 ## Handoff
 
-- **Feature**: `board-wall-presentation` (`.specs/features/board-wall-presentation/`) — GitHub #65
+- **Feature**: `reword-block-interaction` (`.specs/features/reword-block-interaction/`) — GitHub #66
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: presentation components + shared sticky chrome; slim BoardWall coordinator
+- **Completed**: reword-block interaction module (adapter, state machine, composable, popover UI)
 - **In-progress**: none
-- **Next step**: open PR for #65
+- **Next step**: open PR for #66
 - **Blockers**: none
-- **Branch**: `board-wall-presentation` (worktree: `eventstormer-worktrees/board-wall-presentation`)
+- **Branch**: `reword-block-interaction`
 
 ---
 
-**Prior feature:** `slice-3-relations-board` (`.specs/features/slice-3-relations-board/`) — GitHub #40
+**Prior feature:** `board-wall-presentation` (`.specs/features/board-wall-presentation/`) — GitHub #65
 **Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
 **Phase:** slice-1 EXECUTE complete + Verifier PASS. **Follow-up: `slice-1-review-fixes`** —
 the PR #46 automated-review fix batch (spec + validation in
