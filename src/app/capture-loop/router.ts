@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import CaptureScreen from './screens/CaptureScreen.vue'
-import CreateWorkshop from './screens/CreateWorkshop.vue'
+import CaptureScreen from './shell/CaptureScreen.vue'
+import CreateWorkshop from './shell/CreateWorkshop.vue'
 
 /**
  * Two routes, declared by hand — there is no filesystem routing anywhere in
