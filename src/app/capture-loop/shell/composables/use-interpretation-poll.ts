@@ -1,6 +1,6 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
-import { useProposalsStore } from '../stores/proposals.ts'
-import { useSessionStore } from '../stores/session.ts'
+import { useProposalsStore } from '../../stores/proposals.ts'
+import { useSessionStore } from '../../stores/session.ts'
 
 /**
  * Short-poll transport for facilitator output (no SSE). While any

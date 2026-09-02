@@ -1,11 +1,18 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
-import type { BoardBlockInput } from '../layout.ts'
-import { isEventKind } from '../semantic-edit.ts'
+import { isEventKind } from '../../kernel/semantic-edit.ts'
+
+export interface SelectBlockView {
+  id: string
+  kind: string
+  placement?: 'backlog' | 'timeline' | undefined
+  withdrawn?: boolean | undefined
+  pivotal?: boolean | undefined
+}
 
 /** Selection state, placement eligibility, and toolbar action guards for the board wall. */
-export const useBoardSelection = (
-  blocks: Ref<BoardBlockInput[]>,
+export const useSelectBlock = (
+  blocks: Ref<SelectBlockView[]>,
   timeline: ComputedRef<TimelineLayout>,
 ) => {
   const selectedId = ref<string | null>(null)

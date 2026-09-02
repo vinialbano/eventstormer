@@ -1,9 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
-import type { InterpretationStatus, SessionView } from '../types.ts'
-import { useProposalsStore } from '../stores/proposals.ts'
-import { useSessionStore } from '../stores/session.ts'
+import type { InterpretationStatus, SessionView } from '../../types.ts'
+import { useProposalsStore } from '../../stores/proposals.ts'
+import { useSessionStore } from '../../stores/session.ts'
 import { useInterpretationPoll } from './use-interpretation-poll.ts'
 
 const viewWith = (
@@ -75,6 +75,21 @@ it('polls while a contribution is interpreting and stops once fully derived', as
   scope.stop()
 })
 
+it('polls while a contribution is pending and stops once fully derived', async () => {
+  current = viewWith('set', ['pending'])
+  const { poll, scope } = await setup()
+  expect(poll.polling.value).toBe(true)
+
+  await vi.advanceTimersByTimeAsync(60)
+  expect(poll.polling.value).toBe(true)
+
+  current = viewWith('set', ['derived'])
+  await vi.advanceTimersByTimeAsync(60)
+  expect(poll.polling.value).toBe(false)
+
+  scope.stop()
+})
+
 it('polls while the scope is unset even with no contributions', async () => {
   current = viewWith('proposed', [])
   const { poll, scope } = await setup()
@@ -100,6 +115,21 @@ it('keeps polling after a store refetch rejects — the loop is not wedged', asy
   scope.stop()
 })
 
+it('never fetches board over poll ticks', async () => {
+  current = viewWith('set', ['interpreting'])
+  const { scope } = await setup()
+  const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>
+  fetchMock.mockClear()
+
+  for (let tick = 0; tick < 5; tick += 1) {
+    await vi.advanceTimersByTimeAsync(60)
+  }
+
+  const urls = fetchMock.mock.calls.map((call) => call[0] as string)
+  expect(urls.some((url) => url.includes('/board'))).toBe(false)
+  scope.stop()
+})
+
 it('does not poll a settled resumed session', async () => {
   current = viewWith('set', ['derived', 'failed'])
   const { poll, scope } = await setup()
@@ -109,15 +139,13 @@ it('does not poll a settled resumed session', async () => {
 
 it('refetchNow refreshes both polled stores', async () => {
   current = viewWith('set', ['derived'])
-  const { poll, scope } = await setup()
-  const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>
-  fetchMock.mockClear()
+  const { session, poll, scope } = await setup()
+  expect(session.view?.contributions[0]?.status).toBe('derived')
 
+  current = viewWith('set', ['interpreting'])
   await poll.refetchNow()
 
-  const urls = fetchMock.mock.calls.map((call) => call[0] as string)
-  expect(urls).toContain('/api/workshops/w1/session')
-  expect(urls).toContain('/api/sessions/s1/proposals')
+  expect(session.view?.contributions[0]?.status).toBe('interpreting')
   scope.stop()
 })
 

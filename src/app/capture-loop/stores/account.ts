@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { renderAccountHtml } from '../account/render-account-html.ts'
+import { renderAccountHtml } from '../shell/account/render-account-html.ts'
 import { fetchReadableAccount } from '../transport/account.ts'
 import type { AccountSnapshot } from '../types.ts'
 

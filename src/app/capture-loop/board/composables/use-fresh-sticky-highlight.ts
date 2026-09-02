@@ -1,5 +1,5 @@
 import { onMounted, ref, toRef, watch, type MaybeRefOrGetter } from 'vue'
-import { useReducedMotion } from '../../composables/use-reduced-motion.ts'
+import { useReducedMotion } from '../../shell/composables/use-reduced-motion.ts'
 import type { BoardBlockInput } from '../layout.ts'
 
 /** Fresh-sticky settle animation — brief highlight when a block first lands on the wall. */

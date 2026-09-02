@@ -74,6 +74,12 @@ from the domain model is a direct synchronous call between contexts inside one H
 each context committing its own stream in its own transaction, with the seam drawn so real-time
 collaboration (F14) can make it async later ([ADR-002](docs/adr/002-context-first-layout-and-context-integration.md)).
 
+The Vue SPA in `src/app/` is outside these three contexts — it consumes them over HTTP only.
+How surfaces inside `src/app/` are partitioned (interaction slices, deep modules, shared read
+models) is [§4 Frontend architecture](#4-frontend-architecture) and
+[ADR-012](docs/adr/012-frontend-surface-topology.md); wire protocol and store shape remain
+[ADR-007](docs/adr/007-frontend-architecture.md).
+
 ### Aggregate code shape
 
 Every aggregate is a module of pure functions —
@@ -98,7 +104,8 @@ not exceptions and not Effect
 | Facilitator bar | `lenient`/`strict` self-reported, **eval-verified independently** by content-word match; LLM move-selection between deterministic bookends | [005](docs/adr/005-ai-facilitator.md) |
 | Resilience | Two failure classes — provider-down (retry ladder, at-most-once) vs schema-fail (one retry, then terminal) | [005](docs/adr/005-ai-facilitator.md) |
 | Graph layout | Vue Flow + `@dagrejs/dagre`; CSS-grid-by-rank fallback; layout logic framework-free and swappable | [006](docs/adr/006-graph-timeline-rendering.md) |
-| Frontend | Reka UI + Tailwind; plain `fetch` POST, server-confirmed; 3 Pinia stores, each cold-loadable from one GET | [007](docs/adr/007-frontend-architecture.md) |
+| Frontend data flow | Reka UI + Tailwind; plain `fetch` POST, server-confirmed; Pinia stores cold-loadable from one GET each; no optimistic updates | [007](docs/adr/007-frontend-architecture.md) |
+| Frontend topology | Interaction slices inside deep modules (`shell/`, `board/`, `dock/`) on shared stores + transport substrate | [012](docs/adr/012-frontend-surface-topology.md) |
 | API surface | ~16 user-facing `/api/*` routes; the facilitator and Boundary Commands have no route | [007](docs/adr/007-frontend-architecture.md) |
 | Testing | Weight on domain deciders (Given/When/Then); `fast-check` properties; one E2E; `**/domain/**` ≥ 90% | [008](docs/adr/008-testing-eval-and-observability.md) |
 | Eval | Plain Vitest + hand-rolled reporter; demo domain **restaurant / kitchen orders**; N=5; `k/N` reporting, no aggregate | [008](docs/adr/008-testing-eval-and-observability.md) |
@@ -107,7 +114,149 @@ not exceptions and not Effect
 | Delivery | Local-only, no container; `pnpm dev`; recorded demo + `pnpm seed` | [011](docs/adr/011-local-only-delivery.md) |
 | Build order | Tracer-bullet vertical slices, cut line at thesis-complete after slice 2 | [010](docs/adr/010-tracer-bullet-build-order.md) |
 
-## 4. The `/api` surface
+## 4. Frontend architecture
+
+`src/app/` is a Vue SPA that talks to the three bounded contexts **only over HTTP**
+([ADR-002](docs/adr/002-context-first-layout-and-context-integration.md)). It is not a fourth
+backend context, but each product surface (today: `capture-loop/`) **is** its own frontend
+bounded context — with concepts the backend does not name (dashed ghost, pending drawer,
+facilitator dock) and rules enforced in UX, not only in API handlers
+([ADR-012](docs/adr/012-frontend-surface-topology.md)).
+
+[ADR-007](docs/adr/007-frontend-architecture.md) governs **what** crosses the wire: server-confirmed
+state, plain `fetch`, Pinia stores as cold-load projections. ADR-012 governs **where code lives**
+and **why** that shape differs from both backend context folders and layer-first SPA layouts.
+
+### Why the frontend partition is not the backend partition
+
+On the server, the axis of change is a bounded context and its commands. On the client, one
+command surfaces in several places (a proposal card in the dock, a sticky on the board, a line in
+the readable account), and one screen reads several GETs. Mirroring backend folders inside
+`src/app/` would produce thin slices that all import the same stores — high coupling, low
+cohesion, and no folder an agent can open to finish one gesture end to end.
+
+The client's axis of change is the **user interaction**: reword a block, accept a proposal, place
+on the timeline. Each interaction carries its own draft state, submit, error handling, and refetch
+decision. Those co-change; transport adapters and projection stores usually do not.
+
+Both sides use vertical-slice language; the **unit of the slice is different**. Backend slices
+partition on **commands** (authoritative writes). Frontend slices partition on **interactions**
+(user gestures). Using the same folder name on both sides — or mirroring `POST /proposals/:id/accept`
+as a UI folder — collapses that distinction.
+
+| | Backend command / capability slice | Frontend interaction slice |
+|---|---|---|
+| **Unit** | One domain request the system accepts | One user gesture the product exposes |
+| **Changes when** | Business rules or aggregate invariants change | UX steps, copy, validation timing, error presentation change |
+| **Lifecycle** | Transactional — request in, accept/reject out | Stateful — draft → confirm → POST → refetch → idle |
+| **Owns truth?** | Yes — write model / event log | No — browser holds intent; GET holds validated state |
+| **Lives in** | `src/<bounded-context>/capabilities/` | `src/app/<surface>/<zone>/interactions/` |
+| **Neither** | — | `stores/`, `transport/`, `view-state/` are **substrate**, not commands or interactions |
+
+**Why they are not 1:1.** One backend command often surfaces in several UI places; one frontend
+gesture may call several endpoints or none until confirm:
+
+| Pattern | EventStormer example |
+|---|---|
+| 1 command → N UI effects | `AcceptProposal` → dock card updates, `board-dirty` refetch, account refetch, poll stop — orchestrated in `shell/`, not one endpoint folder |
+| 1 interaction → N commands | `review-proposal` → `acceptProposal` in a loop for "accept all remaining" |
+| 1 interaction → 0 commands (yet) | `reword-block` draft editing — permissive state only until POST |
+| N interactions → 1 read model | place, connect, withdraw → separate interaction folders, shared `stores/board.ts` |
+
+**Decision tests.**
+
+- **Backend command** — enforces an authoritative invariant, commits to a stream, would exist if
+  the UI were a CLI. Stays in the owning bounded context; the SPA reaches it via `transport/`.
+- **Frontend interaction** — exists because of how the user experiences the step; holds draft or
+  phase state that never appears on a GET; would change if UX changed while the POST contract
+  stayed fixed. Name the folder after the **gesture**, not the handler.
+- **Substrate** — shared GET cache (`stores/`), wire mapping (`transport/`), ephemeral UI
+  (`view-state/`), pure rules shared with the server (`domain/`).
+
+Ubiquitous language aligns **types and conversation**; folder names align **axis of change**.
+"Accept proposal" names the backend command and the dock gesture, but the backend slice is the
+handler in `session-facilitation`; the frontend slice is
+`dock/interactions/review-proposal/` — card UI, cluster accept, and typed emits to shell
+orchestration. "Pending drawer" has no backend counterpart; it is frontend BC vocabulary only.
+
+### Target shape per surface
+
+```
+src/app/<surface>/          ← one frontend BC per UX surface (sibling folders, not shared layers)
+
+  shell/                    composition root — mounts zones, typed cross-zone refetch orchestration
+  board/                    deep module — canvas + gestures fused to the wall (public: index.ts)
+  dock/                     deep module — facilitator column + its gestures
+  stores/                   validated server projections only (load / reset / read)
+  transport/                HTTP application services + DTO mapping (only layer that calls fetch)
+  view-state/               ephemeral client-only state (never on a projection store)
+
+  <zone>/interactions/<gesture>/   one folder per multi-step gesture
+      *.usecase.ts          framework-free state machine
+      use*.ts               thin Vue composable adapter
+      *.vue                 thin view
+```
+
+**Editor-app rule:** EventStorming is a spatial canvas ([ADR-006](docs/adr/006-graph-timeline-rendering.md)).
+Gestures that render on or operate through the wall live **inside `board/`**, not in a global
+`interactions/` pile. Gestures in the facilitator column live in `dock/`. Shell-level flows
+(workshop creation, session start, account drawer) live under `shell/`.
+
+### Why horizontal `stores/` and `transport/` stay
+
+Layer-first layouts (`components/`, `hooks/`, `api/`) scatter one gesture across sibling folders
+with no enforceable boundary. Endpoint-aligned slices duplicate the same read-model cache in
+every gesture folder. Both fail the localization test: "add a field to the reword confirm step"
+should not require opening four top-level technical directories.
+
+`stores/` and `transport/` are **shared substrate**, not features:
+
+- **Stores** hold **validated** snapshots from GET — shared by board, dock, and shell. They stay
+  shallow (no mutation actions, no cross-store imports) because ADR-007's refresh story depends
+  on every store being reconstructible from one endpoint.
+- **Transport** is the **Partnership anti-corruption layer** to `/api/*` — map wire shapes, call
+  POST, return typed errors. It is deliberately **not** a Repository that mirrors endpoints one
+  method per route; the API is purpose-built and refetch-after-POST is the persistence seam.
+
+Draft and intent state **never** belong on a store — refetch would race keystrokes and break
+"cold-load from one GET."
+
+### Stateful use cases and permissive drafts
+
+Backend handlers are transactional; frontend flows are **state machines between user actions**
+(draft → confirm popover → POST → refetch). Multi-step gestures therefore use a framework-free
+use-case object tested without mounting Vue; reactivity stays in a thin composable adapter.
+Single-step POST → refetch gestures do not need that extra layer.
+
+Where the user edits before the server confirms (contribution text, reword draft, inline proposal
+edit), model **permissive** draft types inside the interaction — explicit types that may carry
+validation errors in their lifecycle. **Validated** building blocks and proposals live in stores
+only after GET. The browser is not trusted as source of truth; the server promotes intent to
+validated state ([ADR-007](docs/adr/007-frontend-architecture.md)).
+
+### Cross-zone coupling must be visible
+
+When accept proposal must refetch board and account, the causality is real but easy to hide.
+Zones emit typed events; **`shell/` orchestration** decides which read models reload. That graph
+is grep-able and testable — unlike store subscriptions, prop chains, or a global event bus, which
+are semantically invisible dependencies agents and static analysis miss.
+
+### Enforcement
+
+Folder boundaries in [`src/app/capture-loop/AGENTS.md`](src/app/capture-loop/AGENTS.md) are
+backed by dependency-cruiser rules (board public API only, dock ↛ board internals, transport-only
+HTTP, no cross-store imports). New surfaces copy the zone table and extend the rule set; claims
+without a planted violation are decoration.
+
+### Deliberately not in the frontend shape
+
+- Layer-first top-level folders inside a surface.
+- Repository classes that proxy REST one endpoint per method.
+- Optimistic projection-store patches ([ADR-007](docs/adr/007-frontend-architecture.md)).
+- A shared `src/app/components/` or `src/app/hooks/` across surfaces — shared UI waits for the
+  Rule of Three when a second surface proves the need.
+
+## 5. The `/api` surface
 
 All routes are user-facing (the SPA calls them). The facilitator is server-side and reactive: the
 interpretation scheduler in `host/` (`scheduler.ts`, a recursive `setTimeout`) drives
@@ -128,7 +277,7 @@ body)* · `/workshops/:id/{stakeholder-check,chosen-problem}` · `/sessions/:id/
 `interpret-contribution` / `ask-opening-question` / `reconcile-pending-derivations` (the `host/`
 scheduler's tick functions), `propose-scope`, the automatic question policies.
 
-## 5. Build plan
+## 6. Build plan
 
 Vertical slices, thesis beats earliest, cut line after slice 2
 ([ADR-010](docs/adr/010-tracer-bullet-build-order.md)):
@@ -147,7 +296,7 @@ Vertical slices, thesis beats earliest, cut line after slice 2
 Each slice is handed to `anoria-engineering:spec-driven-development` and carries a `minor`
 changeset.
 
-## 6. Deliberately not done in v1
+## 7. Deliberately not done in v1
 
 - Process Modelling / Design-Level support, real-time collaboration, the glossary, an
   engineer-facing surface, on-device voice — all in the product view, none built. The model is
@@ -161,7 +310,7 @@ changeset.
   `k/N`), real Anthropic HTTP calls (mocked), graph-layout visuals (manual), concurrency beyond
   one open session, voice, performance.
 
-## 7. Running it
+## 8. Running it
 
 Requires **Node ≥ 24.16.0** and **pnpm 8+**.
 
@@ -177,7 +326,7 @@ runs four restaurant F11 cases × N=5 against the real model, reports k/N per as
 `ANTHROPIC_API_KEY`, and is out of CI. The SQLite database is created and
 migrated automatically at `./data/eventstormer.db`; `pnpm db:reset` wipes it.
 
-## 8. Open items owned by the maintainer
+## 9. Open items owned by the maintainer
 
 - Record and transcribe the ~3–4 minute restaurant/kitchen-order narration (the golden eval
   fixture and the `pnpm seed` session).

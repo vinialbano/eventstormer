@@ -143,7 +143,11 @@ module.exports = {
         'only board/index.ts — never composables, interactions, or presentation internals.',
       from: {
         path: '^src/app/capture-loop/',
-        pathNot: ['^src/app/capture-loop/board/', '\\.test\\.ts$'],
+        pathNot: [
+          '^src/app/capture-loop/board/',
+          '^src/app/capture-loop/shell/',
+          '\\.test\\.ts$',
+        ],
       },
       to: {
         path: '^src/app/capture-loop/board/',
@@ -161,7 +165,10 @@ module.exports = {
       from: { path: '^src/app/capture-loop/board/interactions/([^/]+)/' },
       to: {
         path: '^src/app/capture-loop/board/',
-        pathNot: '^src/app/capture-loop/board/interactions/$1/',
+        pathNot: [
+          '^src/app/capture-loop/board/interactions/$1/',
+          '^src/app/capture-loop/board/kernel/',
+        ],
       },
     },
 
@@ -176,6 +183,51 @@ module.exports = {
         path: '^src/app/capture-loop/board/',
         pathNot: '^src/app/capture-loop/board/index\\.ts$',
       },
+    },
+
+    {
+      name: 'capture-orchestration-framework-free',
+      severity: 'error',
+      comment:
+        'Shell orchestration is framework-free so refetch graphs are unit-testable without Vue. ' +
+        'Import only plain TypeScript and sibling orchestration modules.',
+      from: { path: '^src/app/capture-loop/shell/orchestration/' },
+      to: {
+        path: '(?:^|/)node_modules/(?:vue|vue-router|pinia|@vue/[^/]+)/',
+      },
+    },
+
+    {
+      name: 'dock-no-board-or-account-store',
+      severity: 'error',
+      comment:
+        'The dock reads session and proposals only. Board labels and account content arrive as ' +
+        'shell props; importing board or account stores couples zones invisibly (ADR-012).',
+      from: { path: '^src/app/capture-loop/dock/', pathNot: '\\.test\\.ts$' },
+      to: { path: '^src/app/capture-loop/stores/(board|account)\\.ts$' },
+    },
+
+    {
+      name: 'board-no-projection-stores',
+      severity: 'error',
+      comment:
+        'The board zone is props-in, events-out. Pinia projection stores are shell-owned; the wall ' +
+        'must not import stores/ directly.',
+      from: { path: '^src/app/capture-loop/board/', pathNot: '\\.test\\.ts$' },
+      to: { path: '^src/app/capture-loop/stores/' },
+    },
+
+    {
+      name: 'zones-no-shell-orchestration',
+      severity: 'error',
+      comment:
+        'Refetch orchestration lives in shell/ only. Board and dock emit typed events upward — ' +
+        'they must not import shell/orchestration/.',
+      from: {
+        path: '^src/app/capture-loop/(board|dock)/',
+        pathNot: '\\.test\\.ts$',
+      },
+      to: { path: '^src/app/capture-loop/shell/orchestration/' },
     },
 
     {

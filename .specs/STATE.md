@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `capture-loop-shim-removal` (`.specs/features/capture-loop-shim-removal/`) — GitHub #68
-- **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: removed `dock/mutations.ts` shim + test; added `src/app/capture-loop/AGENTS.md`
+- **Feature**: `capture-loop-topology-migration` (`.specs/features/capture-loop-topology-migration/`) — GitHub #76 (effort map) · **PR #87**
+- **Phase / Task**: Execute complete + Verifier PASS with gaps
+- **Completed**: T1–T15 on `capture-loop-topology-migration`; ADR-012 + ARCHITECTURE §4; changeset patch
 - **In-progress**: none
-- **Next step**: open PR for #68
-- **Blockers**: none
-- **Branch**: `capture-loop-shim-removal`
+- **Next step**: merge PR #87; close #76 on merge
+- **Blockers**: none (await CI on PR #87)
+- **Branch**: `capture-loop-topology-migration` (pushed)
 
 ---
 

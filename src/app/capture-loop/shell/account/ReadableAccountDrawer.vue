@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useAccountStore } from '../stores/account.ts'
+import { useAccountStore } from '../../stores/account.ts'
 
 /**
  * Right-edge readable-account drawer. Markdown is sanitised in the account
