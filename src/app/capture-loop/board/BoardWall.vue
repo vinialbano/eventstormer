@@ -4,6 +4,7 @@ import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/comp
 import { useBoardMutations } from './composables/use-board-mutations.ts'
 import { useBoardSelection } from './composables/use-board-selection.ts'
 import { useFreshStickyHighlight } from './composables/use-fresh-sticky-highlight.ts'
+import { useBoardKeyboard } from './interactions/board-keyboard/use-board-keyboard.ts'
 import { fetchBlockReferences } from './interactions/reword-block/reword-references.ts'
 import { useRewordBlock } from './interactions/reword-block/use-reword-block.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
@@ -89,13 +90,8 @@ const mutations = useBoardMutations({
   blocks,
   selectedId,
   lastPlacedId: selection.lastPlacedId,
-  withdrawAskId,
-  editingId,
-  confirmOpen,
   onBoardDirty,
   startReword,
-  cancelReword,
-  requestConfirm,
 })
 const {
   relationError,
@@ -110,6 +106,27 @@ const {
   markSelectedPivotal,
   unmarkSelectedPivotal,
 } = mutations
+
+useBoardKeyboard({
+  isEditing: () => editingId.value !== null,
+  hasSelection: () => selectedId.value !== null,
+  onDismiss: (): void => {
+    if (confirmOpen.value) {
+      confirmOpen.value = false
+      return
+    }
+    if (withdrawAskId.value !== null) {
+      withdrawAskId.value = null
+      return
+    }
+    cancelReword()
+  },
+  onRequestConfirm: requestConfirm,
+  onRewordSelected: (): void => {
+    const id = selectedId.value
+    if (id !== null) void startReword(id)
+  },
+})
 
 const { fresh } = useFreshStickyHighlight(blocks)
 

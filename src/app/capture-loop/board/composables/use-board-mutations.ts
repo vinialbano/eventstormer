@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import type { BoardBlockInput } from '../layout.ts'
 import { applyBoardEdit } from '../kernel/apply-board-edit.ts'
 import {
@@ -11,22 +11,16 @@ import {
   type DraggedBlock,
   type RelationEdit,
 } from '../kernel/semantic-edit.ts'
-import { isTypingSurface } from '../kernel/typing-surface.ts'
 
-/** Board mutation application, cycle-error feedback, drag-and-drop, and keyboard shortcuts. */
+/** Board mutation application, cycle-error feedback, and drag-and-drop. */
 export const useBoardMutations = (options: {
   workshopId: Ref<string | undefined>
   accepter: Ref<string | undefined>
   blocks: Ref<BoardBlockInput[]>
   selectedId: Ref<string | null>
   lastPlacedId: Ref<string | null>
-  withdrawAskId: Ref<string | null>
-  editingId: Ref<string | null>
-  confirmOpen: Ref<boolean>
   onBoardDirty: () => void
   startReword: (id: string) => Promise<void>
-  cancelReword: () => void
-  requestConfirm: () => void
 }) => {
   const relationError = ref('')
   const dragging = ref<DraggedBlock | null>(null)
@@ -112,47 +106,6 @@ export const useBoardMutations = (options: {
     if (id === null) return
     void applyEdit({ kind: 'unmark-pivotal', target: id })
   }
-
-  const dismissEsc = (): void => {
-    if (options.confirmOpen.value) {
-      options.confirmOpen.value = false
-      return
-    }
-    if (options.withdrawAskId.value !== null) {
-      options.withdrawAskId.value = null
-      return
-    }
-    options.cancelReword()
-  }
-
-  const onWindowKeydown = (event: KeyboardEvent): void => {
-    if (isTypingSurface(event.target)) {
-      if (event.key === 'Escape' && options.editingId.value !== null) {
-        event.preventDefault()
-        dismissEsc()
-      }
-      if (event.key === 'Enter' && options.editingId.value !== null) {
-        event.preventDefault()
-        options.requestConfirm()
-      }
-      return
-    }
-    if (event.key === 'Escape') {
-      dismissEsc()
-      return
-    }
-    if (options.editingId.value !== null || options.selectedId.value === null) return
-    if (event.key !== 'e' && event.key !== 'E' && event.key !== 'Enter') return
-    event.preventDefault()
-    void options.startReword(options.selectedId.value)
-  }
-
-  onMounted(() => {
-    window.addEventListener('keydown', onWindowKeydown)
-  })
-  onBeforeUnmount(() => {
-    window.removeEventListener('keydown', onWindowKeydown)
-  })
 
   return {
     relationError,
