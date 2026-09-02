@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `capture-loop-transport-seam` (`.specs/features/capture-loop-transport-seam/`) — GitHub #62
+- **Feature**: `board-interaction-composables` (`.specs/features/board-interaction-composables/`) — GitHub #63
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: T1–T6; `pnpm check` green (656 tests)
+- **Completed**: four composables extracted; `BoardWall.vue` script slimmed; `pnpm check` green (656 tests)
 - **In-progress**: none
-- **Next step**: open PR for #62
+- **Next step**: open PR for #63
 - **Blockers**: none
-- **Branch**: `capture-loop-transport-seam`
+- **Branch**: `board-interaction-composables`
 
 ---
 
