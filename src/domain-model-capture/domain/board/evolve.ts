@@ -102,12 +102,19 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'unlink-cause':
       removeEdge(next.causedBy, op.effect, op.cause)
       break
-    case 'reword':
     case 'raise-hot-spot':
+      next.blocks.set(op.id, { kind: 'hot-spot', withdrawn: false })
+      next.hotSpotResolved.set(op.id, false)
+      break
+    case 'annotate':
+      next.annotates.set(op.hotSpot, op.target)
+      break
+    case 'unannotate':
+      next.annotates.delete(op.hotSpot)
+      break
+    case 'reword':
     case 'place':
     case 'unplace':
-    case 'annotate':
-    case 'unannotate':
     case 'mark-pivotal':
     case 'unmark-pivotal':
     case 'resolve':

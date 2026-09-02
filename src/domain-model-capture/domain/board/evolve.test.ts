@@ -138,6 +138,30 @@ describe('evolve (write-model fold)', () => {
     expect(writeModel.follows.size).toBe(0)
   })
 
+  it('raise-hot-spot adds a hot-spot block and marks it unresolved', () => {
+    const writeModel = evolve(emptyWriteModel(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    expect(writeModel.blocks.get(bid('h1'))).toEqual({ kind: 'hot-spot', withdrawn: false })
+    expect(writeModel.hotSpotResolved.get(bid('h1'))).toBe(false)
+    expect(writeModel.annotates.size).toBe(0)
+  })
+
+  it('annotate after a raise records exactly the hotSpot -> target edge', () => {
+    let writeModel = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    writeModel = evolve(writeModel, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    writeModel = evolve(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect([...writeModel.annotates]).toEqual([[bid('h1'), bid('e1')]])
+  })
+
+  it('unannotate removes the edge; unannotate of a hot spot annotating nothing leaves annotates unchanged', () => {
+    let writeModel = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    writeModel = evolve(writeModel, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    writeModel = evolve(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    writeModel = evolve(writeModel, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(writeModel.annotates.size).toBe(0)
+    const after = evolve(writeModel, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect([...after.annotates]).toEqual([])
+  })
+
   it('place, unplace, and mark-pivotal do not touch the write model', () => {
     const base = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
     expect(evolve(base, op({ kind: 'place', target: 'e1' }))).toEqual(base)
