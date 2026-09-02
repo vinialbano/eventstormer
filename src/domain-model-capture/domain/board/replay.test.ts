@@ -30,6 +30,9 @@ const POOL: Operation[] = [
   op({ kind: 'unlink-cause', cause: 'a1', effect: 'e1' }),
   op({ kind: 'mark-pivotal', target: 'e1' }),
   op({ kind: 'unmark-pivotal', target: 'e1' }),
+  op({ kind: 'raise-hot-spot', id: 'h1', label: 'hot' }),
+  op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }),
+  op({ kind: 'unannotate', hotSpot: 'h1' }),
 ]
 
 describe('replay', () => {

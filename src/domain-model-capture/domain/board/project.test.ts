@@ -196,6 +196,16 @@ describe('project (read-model fold)', () => {
     expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
   })
 
+  it('rewording an annotated building block leaves its hot spot annotation intact', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment times out' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    snap = project(snap, op({ kind: 'reword', target: 'e1', label: 'payment integration times out' }))
+    expect(snap.blocks.get(bid('e1'))?.label).toBe('payment integration times out')
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBe(bid('e1'))
+    expect(snap.blocks.get(bid('h1'))?.resolved).toBe(false)
+  })
+
   it('raise-hot-spot adds a backlog hot-spot block, open and annotating nothing, and counts it', () => {
     const snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
     expect(snap.blocks.get(bid('h1'))).toEqual({
