@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, toRef, watch } from 'vue'
-import ReadableAccountDrawer from '../account/ReadableAccountDrawer.vue'
+import ReadableAccountDrawer from './account/ReadableAccountDrawer.vue'
 import { BoardWall, type BoardBlockInput } from '../board/index.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
-import { useCaptureOrchestration } from '../shell/composables/use-capture-orchestration.ts'
+import { useCaptureOrchestration } from './composables/use-capture-orchestration.ts'
 import { startSession as postStartSession } from '../transport/session.ts'
 import { useBoardViewState } from '../view-state/board-view.ts'
 
