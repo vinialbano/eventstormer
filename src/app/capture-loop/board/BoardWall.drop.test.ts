@@ -5,7 +5,7 @@ import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/comp
 import { HttpError } from '../transport/board.ts'
 import * as mutations from '../transport/board.ts'
 import BoardWall from './BoardWall.vue'
-import { encodeDragged } from './semantic-edit.ts'
+import { encodeDragged } from './kernel/semantic-edit.ts'
 import TimelinePane from './TimelinePane.vue'
 
 enableAutoUnmount(afterEach)

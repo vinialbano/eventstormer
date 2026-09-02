@@ -1,7 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import type { BoardBlockInput } from '../layout.ts'
-import { isEventKind } from '../semantic-edit.ts'
+import { isEventKind } from '../kernel/semantic-edit.ts'
 
 /** Selection state, placement eligibility, and toolbar action guards for the board wall. */
 export const useBoardSelection = (

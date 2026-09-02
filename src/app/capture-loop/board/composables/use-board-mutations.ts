@@ -12,8 +12,8 @@ import {
   relationFromDrop,
   type DraggedBlock,
   type RelationEdit,
-} from '../semantic-edit.ts'
-import { isTypingSurface } from '../typing-surface.ts'
+} from '../kernel/semantic-edit.ts'
+import { isTypingSurface } from '../kernel/typing-surface.ts'
 
 /** Board mutation application, cycle-error feedback, drag-and-drop, and keyboard shortcuts. */
 export const useBoardMutations = (options: {
