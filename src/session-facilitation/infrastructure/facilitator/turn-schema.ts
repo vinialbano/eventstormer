@@ -12,7 +12,7 @@ import { InterpretationBar, InterpretedBlockKind } from '../../domain/schema/int
  *   never emits an empty `{}` subschema (Anthropic HTTP 400 "Empty schema");
  * - ≤ 24 optional parameters across the whole schema (Anthropic's grammar limit);
  * - `interpretation` is `z.array(Track).max(12)` — the hard "not an unbounded
- *   queue" ceiling (issue #38 AC14), not the display cap of 7;
+ *   queue" ceiling (12 tracks per interpretation), not the display cap of 7;
  * - `label` is `.max(200)`.
  *
  * Every constraint is mirrored into `.describe()` — Anthropic's sanitiser strips

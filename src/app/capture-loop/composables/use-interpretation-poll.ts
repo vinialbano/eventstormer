@@ -11,7 +11,7 @@ import { useSessionStore } from '../stores/session.ts'
  * otherwise cards stay missing until a manual refresh.
  *
  * `board` is deliberately not polled here: the wall refetches only after an
- * accept resolves (`refetchAfterAccept`), never on a timer, never optimistically.
+ * an accept resolves (`board-dirty` → `board.load`), never on a timer, never optimistically.
  */
 const IN_FLIGHT = new Set(['pending', 'interpreting', 'interpreted'])
 

@@ -14,7 +14,8 @@ import TimelinePane from './TimelinePane.vue'
 
 /**
  * The board wall — a full-screen EventStorming surface. Composes presentation
- * components; interaction logic lives in board composables (#63) and reword-block (#66).
+ * components; interaction logic lives in board composables and the reword-block
+ * interaction module.
  */
 
 const EMPTY_TIMELINE: TimelineLayout = { tracks: [], edges: [], attachments: {}, pivotal: [] }
