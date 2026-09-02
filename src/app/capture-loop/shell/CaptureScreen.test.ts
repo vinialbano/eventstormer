@@ -1,4 +1,4 @@
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
@@ -26,6 +26,23 @@ const respondNoSession = (url: string): Response => {
   return new Response('{}', { status: 200 })
 }
 
+const acceptButton = (wrapper: VueWrapper): ReturnType<VueWrapper['get']> => {
+  const proposed = wrapper.find('[data-disposition="PROPOSED"]')
+  if (!proposed.exists()) throw new Error('missing PROPOSED proposal card')
+  const button = proposed.findAll('button').find((node) => node.text().trim() === 'Accept')
+  if (button === undefined) throw new Error('missing Accept button')
+  return button
+}
+
+const startSessionButton = (wrapper: VueWrapper): ReturnType<VueWrapper['get']> => {
+  const button = wrapper.findAll('button').find((node) => node.text().trim() === 'Start session')
+  if (button === undefined) throw new Error('missing Start session button')
+  return button
+}
+
+const hasFacilitatorHeading = (wrapper: VueWrapper): boolean =>
+  wrapper.findAll('h2').some((heading) => heading.text().trim() === 'Facilitator')
+
 enableAutoUnmount(afterEach)
 
 beforeEach(async () => {
@@ -42,8 +59,8 @@ afterEach(() => {
 })
 
 // Suite: CaptureScreen
-// Invariant: Shell composes zones, session gate, and poll-surfaced cards from server state.
-// Boundary IN: End-to-end shell composition and account drawer lazy load.
+// Invariant: Shell composes zones, session gate, proposals cold load, and poll-surfaced cards from server state.
+// Boundary IN: End-to-end shell composition, shouldLoadProposals watch wiring, account drawer lazy load.
 // Boundary OUT: Zone-event refetch wiring (use-capture-orchestration.integration.test.ts).
 
 describe('CaptureScreen', () => {
@@ -54,15 +71,13 @@ describe('CaptureScreen', () => {
     const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
     await flushPromises()
 
-    expect(wrapper.find('.wall').exists()).toBe(true)
-    expect(wrapper.findAll('.sticky')).toHaveLength(0)
-    expect(wrapper.get('[role="list"]').attributes('data-empty')).toBe('true')
-    expect(wrapper.get('.screen__gate').text()).toContain('Start session')
-    // no dock while there is no open session
-    expect(wrapper.find('.dock').exists()).toBe(false)
+    expect(wrapper.find('[aria-label="EventStorming board"]').exists()).toBe(true)
+    expect(wrapper.get('[role="list"][aria-label="Backlog"]').attributes('data-empty')).toBe('true')
+    expect(wrapper.findAll('button').some((node) => node.text().trim() === 'Start session')).toBe(true)
+    expect(hasFacilitatorHeading(wrapper)).toBe(false)
   })
 
-  it('starts a session on click and reloads', async () => {
+  it('starts a session on click, reloads, and loads proposals when sessionId is set', async () => {
     let hasSession = false
     fetchMock = vi.fn((url: string, init?: RequestInit) => {
       if (url.endsWith('/sessions') && init?.method === 'POST') {
@@ -77,21 +92,22 @@ describe('CaptureScreen', () => {
         )
       }
       if (url.endsWith('/board')) return Promise.resolve(new Response(JSON.stringify({ error: 'x' }), { status: 404 }))
-      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
+      if (url.endsWith('/proposals')) return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
+      return Promise.resolve(new Response('{}', { status: 200 }))
     })
     vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
     await flushPromises()
-    await wrapper.get('.screen__gate button').trigger('click')
+    await startSessionButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/workshops/w1/sessions',
       expect.objectContaining({ method: 'POST' }),
     )
-    expect(wrapper.find('.screen__gate').exists()).toBe(false)
-    expect(wrapper.find('.dock').exists()).toBe(true)
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/proposals'))).toBe(true)
+    expect(hasFacilitatorHeading(wrapper)).toBe(true)
     wrapper.unmount()
   })
 
@@ -177,14 +193,18 @@ describe('CaptureScreen', () => {
 
     expect(wrapper.find('[aria-label="event: Order placed, added by Maria"]').exists()).toBe(false)
 
-    await wrapper.get('.pc--active button.btn--primary').trigger('click')
+    await acceptButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/accept', expect.objectContaining({ method: 'POST' }))
 
     const sticky = wrapper.get('[aria-label="event: Order placed, added by Maria"]')
     expect(sticky.text()).toContain('Order placed')
-    expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
+    const receipt = wrapper
+      .findAll('[role="status"]')
+      .find((node) => node.text().includes('added by Maria'))
+    if (receipt === undefined) throw new Error('missing applied receipt')
+    expect(receipt.text()).toContain('Order placed — added by Maria')
     wrapper.unmount()
   })
 
@@ -215,7 +235,7 @@ describe('CaptureScreen', () => {
     await wrapper.get('[aria-label="Readable account"]').trigger('click')
     await flushPromises()
     expect(urls.filter((url) => url.endsWith('/readable-account'))).toHaveLength(1)
-    expect(wrapper.get('.account__body').text()).toContain('Order placed')
+    expect(wrapper.get('aside[role="region"][aria-labelledby="account-title"]').text()).toContain('Order placed')
 
     await wrapper.get('[aria-label="Readable account"]').trigger('click')
     await wrapper.get('[aria-label="Readable account"]').trigger('click')
@@ -265,12 +285,12 @@ describe('CaptureScreen', () => {
 
       const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
       await flushPromises()
-      expect(wrapper.find('.pc--active').exists()).toBe(false)
+      expect(wrapper.find('[data-disposition="PROPOSED"]').exists()).toBe(false)
 
       contributions = [{ contributionId: 'c1', status: 'interpreted' }]
       await vi.advanceTimersByTimeAsync(1000)
       await flushPromises()
-      expect(wrapper.find('.pc--active').exists()).toBe(false)
+      expect(wrapper.find('[data-disposition="PROPOSED"]').exists()).toBe(false)
 
       contributions = [{ contributionId: 'c1', status: 'derived' }]
       proposalCards.push({
@@ -286,8 +306,8 @@ describe('CaptureScreen', () => {
       await vi.advanceTimersByTimeAsync(1000)
       await flushPromises()
 
-      expect(wrapper.findAll('.pc--active')).toHaveLength(1)
-      expect(wrapper.get('.pc--active').text()).toContain('Order placed')
+      expect(wrapper.findAll('[data-disposition="PROPOSED"]')).toHaveLength(1)
+      expect(wrapper.get('[data-disposition="PROPOSED"]').text()).toContain('Order placed')
       wrapper.unmount()
     } finally {
       vi.useRealTimers()

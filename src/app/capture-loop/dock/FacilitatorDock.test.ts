@@ -61,6 +61,11 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+// Suite: FacilitatorDock
+// Invariant: Dock shell wires stores, transport, and child zones into the facilitator surface.
+// Boundary IN: cluster rendering, accept POST wiring, scope card, pending drawer, composer submit.
+// Boundary OUT: feed assembly (use-dock-feed.test.ts), proposal actions (use-review-proposal.test.ts), card UI (ProposalCard.test.ts), drawer rows (PendingDrawer.test.ts).
+
 describe('FacilitatorDock', () => {
   it('welds a proposal cluster to the contribution turn and renders questions as messages', () => {
     seed(view(), [card(), card({ proposalId: 'p2', label: 'Order confirmed' })])
@@ -72,8 +77,6 @@ describe('FacilitatorDock', () => {
     expect(wrapper.findAll('.dock__cluster')).toHaveLength(1)
     expect(wrapper.findAll('.pc--active')).toHaveLength(2)
     expect(wrapper.text()).toContain('You said: A customer places an order.')
-    expect(wrapper.text()).toContain('This name is not in what you said — check it before you add it.')
-    // two acceptable cards in the cluster -> Accept all
     expect(wrapper.get('.dock__acceptall').text()).toBe('Accept all')
   })
 
@@ -87,43 +90,12 @@ describe('FacilitatorDock', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/accept', expect.objectContaining({ method: 'POST' }))
     expect(wrapper.emitted('board-dirty')).toHaveLength(1)
     expect(wrapper.emitted('mutated')).toHaveLength(1)
-    // still shown as an active card — no optimistic collapse
     expect(wrapper.find('.pc--active').exists()).toBe(true)
     expect(wrapper.find('.pc--receipt').exists()).toBe(false)
 
-    // server-confirmed refetch lands
     proposals.cards = [card({ disposition: 'APPLIED' })]
     await wrapper.vm.$nextTick()
     expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
-  })
-
-  it('retries accept after APPLY_FAILED and collapses to a receipt once the store confirms', async () => {
-    const { proposals } = seed(
-      view(),
-      [card({ disposition: 'APPLY_FAILED', applyFailedReason: 'target was withdrawn' })],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    await wrapper.get('.btn--primary').trigger('click')
-    await flushPromises()
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/accept', expect.objectContaining({ method: 'POST' }))
-    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
-    expect(wrapper.emitted('mutated')).toHaveLength(1)
-    expect(wrapper.find('.pc--receipt').exists()).toBe(false)
-
-    proposals.cards = [card({ disposition: 'APPLIED', buildingBlockId: 'b1' })]
-    await wrapper.vm.$nextTick()
-    expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
-  })
-
-  it('updates an applied receipt when the board label is reworded', () => {
-    seed(view(), [card({ disposition: 'APPLIED', buildingBlockId: 'b1', label: 'Order placed' })])
-    const wrapper = mount(FacilitatorDock, {
-      props: dockProps({ blockLabels: { b1: 'Invoice sent' } }),
-    })
-    expect(wrapper.get('.pc--receipt').text()).toContain('Invoice sent — added by Maria')
-    expect(wrapper.get('.pc--receipt').text()).not.toContain('Order placed')
   })
 
   it('submits a contribution through the composer', async () => {
@@ -164,9 +136,7 @@ describe('FacilitatorDock', () => {
     const scopeCard = wrapper.get('.dock__scope .pc--active')
     expect(scopeCard.text()).toContain('SCOPE')
     expect(scopeCard.text()).toContain('Restaurant service, from seating to payment.')
-    // the raw scope question is folded into the card, not also shown as a plain message
     expect(wrapper.findAll('.turn').filter((turn) => turn.text().includes('What are we mapping?'))).toHaveLength(0)
-    expect(wrapper.findAll('.dock__scope')).toHaveLength(1)
 
     await wrapper.get('.dock__scope .btn--primary').trigger('click')
     await flushPromises()
@@ -179,129 +149,10 @@ describe('FacilitatorDock', () => {
     )
   })
 
-  it('clears the scope card on reject without POSTing', async () => {
-    seed(
-      view({ scope: { status: 'proposed', proposedStatement: 'X' }, transcript: [], contributions: [] }),
-      [],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.find('.dock__scope').exists()).toBe(true)
-    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
-    await named('Not this')?.trigger('click')
-    await named('Reject')?.trigger('click')
-    expect(wrapper.find('.dock__scope').exists()).toBe(false)
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  it('shows the facilitator first prompt once the scope is set and nothing is narrated yet', () => {
-    seed(
-      view({
-        scope: { status: 'set' },
-        transcript: [
-          { kind: 'question', speaker: 'facilitator', text: 'What are we mapping?', at: 't0', questionKind: 'scope' },
-        ],
-        contributions: [],
-      }),
-      [],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).toContain('describe the first thing that happens')
-    expect(wrapper.find('.dock__scope').exists()).toBe(false)
-  })
-
-  it('keeps the first prompt at the head of the feed after contributions are narrated', () => {
-    seed(view(), [])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).toContain('describe the first thing that happens')
-    const turns = wrapper.findAll('.turn').map((turn) => turn.text())
-    expect(turns[0]).toContain('describe the first thing that happens')
-    expect(turns.some((turn) => turn.includes('A customer places an order.'))).toBe(true)
-  })
-
-  it('shows a "noted" reply when a contribution produced no proposals', () => {
-    seed(
-      view({
-        transcript: [
-          { kind: 'contribution', speaker: 'Maria', text: 'Hmm, let me think.', at: 't1', contributionId: 'c1' },
-        ],
-        contributions: [{ contributionId: 'c1', status: 'derived' }],
-      }),
-      [],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).toContain('Noted')
-  })
-
-  it('shows a rephrase hint when a contribution failed interpretation', () => {
-    seed(
-      view({
-        transcript: [
-          { kind: 'contribution', speaker: 'Maria', text: 'zzz', at: 't1', contributionId: 'c1' },
-        ],
-        contributions: [{ contributionId: 'c1', status: 'failed' }],
-      }),
-      [],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).toContain('try rephrasing')
-  })
-
-  it('does not add a rephrase hint when a failed contribution was answered with a question', () => {
-    seed(
-      view({
-        transcript: [
-          { kind: 'contribution', speaker: 'Maria', text: 'zzz', at: 't1', contributionId: 'c1' },
-          { kind: 'question', speaker: 'facilitator', text: 'Could you say that another way?', at: 't2', questionKind: 'free' },
-        ],
-        contributions: [{ contributionId: 'c1', status: 'failed' }],
-      }),
-      [],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).not.toContain('try rephrasing')
-    expect(wrapper.text()).toContain('Could you say that another way?')
-  })
-
-  it('does not add a "noted" reply when the facilitator answered with a question', () => {
-    seed(
-      view({
-        transcript: [
-          { kind: 'contribution', speaker: 'Maria', text: 'A phase of work.', at: 't1', contributionId: 'c1' },
-          { kind: 'question', speaker: 'facilitator', text: 'Is that a phase rather than an event?', at: 't2', questionKind: 'phase' },
-        ],
-        contributions: [{ contributionId: 'c1', status: 'derived' }],
-      }),
-      [],
-    )
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).not.toContain('Noted')
-  })
-
-  it('does not show the first prompt while the scope is still unset', () => {
-    seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    expect(wrapper.text()).not.toContain('describe the first thing that happens')
-  })
-
-  it('shows a getting-started placeholder before the scope question exists', () => {
-    seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-    expect(wrapper.get('.dock__placeholder').text()).toContain('Getting started')
-  })
-
   it('widens to the pending drawer, jumps + pulses an inline card, then collapses', async () => {
     seed(view(), [card({ proposalId: 'p1', label: 'Order placed' }), card({ proposalId: 'p2', label: 'Order confirmed' })])
     const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
-    // handle shows the pending count; opens the drawer
     await wrapper.get('.dock__handle').trigger('click')
     const drawer = wrapper.get('.dock__drawer')
     expect(drawer.findAll('.drawer__row').length).toBe(2)
@@ -309,83 +160,8 @@ describe('FacilitatorDock', () => {
     const secondRow = drawer.findAll('.drawer__row').at(1)
     if (secondRow === undefined) throw new Error('expected a second drawer row')
     await secondRow.trigger('click')
-    expect(wrapper.find('.dock__drawer').exists()).toBe(false) // collapsed on jump
+    expect(wrapper.find('.dock__drawer').exists()).toBe(false)
     expect(wrapper.get('#proposal-p2').classes()).toContain('dock__cardslot--pulse')
-  })
-
-  it('drawer Accept all remaining accepts every non-held pending proposal once', async () => {
-    seed(view(), [card({ proposalId: 'p1' }), card({ proposalId: 'p2', label: 'B' }), card({ proposalId: 'p3', label: 'C', held: true })])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-    await wrapper.get('.dock__handle').trigger('click')
-    await wrapper.get('.drawer__acceptall').trigger('click')
-    await flushPromises()
-
-    const urls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.endsWith('/accept'))
-    expect(urls).toEqual(['/api/proposals/p1/accept', '/api/proposals/p2/accept'])
-    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
-  })
-
-  it('reject POSTs and collapses to Dismissed only after the store confirms', async () => {
-    const { proposals } = seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
-    await named('Not this')?.trigger('click')
-    const reject = named('Reject')
-    if (reject === undefined) throw new Error('expected a Reject button')
-    await reject.trigger('click')
-    await flushPromises()
-
-    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/reject', expect.objectContaining({ method: 'POST' }))
-    expect(wrapper.findAll('button').some((button) => button.text() === 'Reject')).toBe(true)
-
-    proposals.cards = [card({ disposition: 'REJECTED' })]
-    await wrapper.vm.$nextTick()
-    expect(wrapper.findAll('button').some((button) => button.text() === 'Reject')).toBe(false)
-    expect(wrapper.text()).toContain('Dismissed')
-  })
-
-  it('edit POSTs the new label', async () => {
-    seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
-    await named('Not this')?.trigger('click')
-    const edit = named('Edit')
-    if (edit === undefined) throw new Error('expected an Edit button')
-    await edit.trigger('click')
-    await wrapper.get('input').setValue('Invoice sent')
-    const save = wrapper.findAll('button').find((button) => button.text() === 'Save')
-    if (save === undefined) throw new Error('expected a Save button')
-    await save.trigger('click')
-    await flushPromises()
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/proposals/p1/edit',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ label: 'Invoice sent' }) }),
-    )
-  })
-
-  it('hold then unhold POST in sequence', async () => {
-    const { proposals } = seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
-    await named('Not this')?.trigger('click')
-    const hold = named('Hold')
-    if (hold === undefined) throw new Error('expected a Hold button')
-    await hold.trigger('click')
-    await flushPromises()
-    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/hold', expect.objectContaining({ method: 'POST' }))
-
-    proposals.cards = [card({ held: true })]
-    await wrapper.vm.$nextTick()
-
-    const unpark = wrapper.findAll('button').find((button) => button.text() === 'Unpark')
-    if (unpark === undefined) throw new Error('expected an Unpark button')
-    await unpark.trigger('click')
-    await flushPromises()
-    expect(fetchMock).toHaveBeenCalledWith('/api/proposals/p1/unhold', expect.objectContaining({ method: 'POST' }))
   })
 
   it('collapses to a Facilitator pill with a pending count and a parked dot', async () => {
@@ -398,15 +174,5 @@ describe('FacilitatorDock', () => {
     expect(pill.text()).toContain('Facilitator')
     expect(pill.get('.dock__count').text()).toBe('2')
     expect(pill.find('.dock__dot').exists()).toBe(true)
-  })
-
-  it('hides the pending count on the collapsed pill when nothing is waiting', async () => {
-    seed(view(), [card({ disposition: 'APPLIED' })])
-    const wrapper = mount(FacilitatorDock, { props: dockProps() })
-
-    await wrapper.get('.dock__min').trigger('click')
-
-    expect(wrapper.get('.dock__pill').text()).toBe('Facilitator')
-    expect(wrapper.find('.dock__count').exists()).toBe(false)
   })
 })

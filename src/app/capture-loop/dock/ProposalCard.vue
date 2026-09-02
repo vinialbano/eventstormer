@@ -85,7 +85,14 @@ const nameInSource = computed(() => {
   </p>
   <p v-else-if="state === 'lapsed'" class="pc pc--dismissed" role="status">Set aside</p>
 
-  <div v-else class="pc pc--active" :class="{ 'pc--held': held }" :data-disposition="disposition">
+  <div
+    v-else
+    class="pc pc--active"
+    role="group"
+    :aria-label="`Proposal: ${label}`"
+    :class="{ 'pc--held': held }"
+    :data-disposition="disposition"
+  >
     <span v-if="held" class="pc__ribbon" aria-hidden="true" />
     <div class="pc__head">
       <span class="pc__pill" :class="pillClass">{{ kindLabel }}</span>

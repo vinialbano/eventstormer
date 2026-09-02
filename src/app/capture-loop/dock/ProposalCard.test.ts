@@ -4,6 +4,11 @@ import ProposalCard from './ProposalCard.vue'
 
 const base = { kindLabel: 'EVENT', label: 'Order placed', accepter: 'Maria' } as const
 
+// Suite: ProposalCard
+// Invariant: A proposal card renders the correct actions and receipt state for each disposition.
+// Boundary IN: Accept/Not this staging, receipts, held chip, source-text mismatch, inline edit emit.
+// Boundary OUT: transport POST wiring (use-review-proposal.test.ts), dock shell (FacilitatorDock.test.ts).
+
 describe('ProposalCard', () => {
   it('offers Accept and Not this on a fresh proposal, and stages the rest', async () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED' } })
@@ -33,6 +38,13 @@ describe('ProposalCard', () => {
     const cls = scope.get('.pc__pill').classes()
     expect(cls).not.toContain('pc__pill--actor')
     expect(cls).not.toContain('pc__pill--system')
+  })
+
+  it('shows Adding… while the proposal is applying', () => {
+    const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'ACCEPTED' } })
+
+    expect(wrapper.get('[role="status"]').text()).toBe('Adding…')
+    expect(wrapper.findAll('button')).toHaveLength(0)
   })
 
   it('collapses to a transcript receipt naming the accepter once APPLIED', () => {

@@ -12,6 +12,11 @@ const asLayout = (layout: {
   pivotal: string[]
 }): TimelineLayout => layout as unknown as TimelineLayout
 
+// Suite: layoutTimeline
+// Invariant: Dagre layout places events on the axis with correct edges, attachments, and CELL width.
+// Boundary IN: layoutTimeline node positions, branch geometry, label growth behavior.
+// Boundary OUT: Vue Flow props and pane wiring (TimelinePane.test.ts).
+
 describe('layoutTimeline', () => {
   it('places a sequenced pair left-to-right at fixed CELL width', () => {
     const timeline = asLayout({

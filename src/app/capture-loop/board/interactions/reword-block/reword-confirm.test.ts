@@ -1,3 +1,8 @@
+// Suite: reword-confirm
+// Invariant: Confirm popover phase machine gates busy state and confirm eligibility.
+// Boundary IN: reword-confirm.ts pure state transitions.
+// Boundary OUT: RewordConfirm.vue mount (RewordConfirm.test.ts).
+
 import { describe, expect, it } from 'vitest'
 import {
   canConfirmReword,
@@ -11,6 +16,11 @@ import {
 } from './reword-confirm.ts'
 
 const sites = [{ kind: 'readable-account', path: 'building-blocks' }]
+
+// Suite: reword-confirm
+// Invariant: Confirm phase machine gates confirm, busy, and site listing.
+// Boundary IN: Pure confirm phase transitions and canConfirmReword guards.
+// Boundary OUT: Popover UI (RewordConfirm.test.ts), composable wiring (use-reword-block.test.ts).
 
 describe('reword-confirm', () => {
   it('starts idle and only allows confirm from ready', () => {

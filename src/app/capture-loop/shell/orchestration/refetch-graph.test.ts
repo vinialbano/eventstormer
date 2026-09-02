@@ -1,24 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { REFETCH_BY_ZONE_EVENT, refetchTargetsFor, ZONE_EVENTS } from './refetch-graph.ts'
 
+// Suite: refetch-graph
+// Invariant: Each zone event maps to its declared refetch targets; mutated never pulls board or account.
+// Boundary IN: refetchTargetsFor and the REFETCH_BY_ZONE_EVENT record.
+// Boundary OUT: Store loader wiring (apply-capture-effect.test.ts, use-capture-orchestration.integration.test.ts).
+
 describe('refetch-graph', () => {
-  it('maps mutated to session and proposals', () => {
+  it('pins mutated and board-dirty refetch targets', () => {
+    expect(ZONE_EVENTS).toEqual(['mutated', 'board-dirty'])
     expect(refetchTargetsFor('mutated')).toEqual(['session', 'proposals'])
-  })
-
-  it('maps board-dirty to board and account', () => {
     expect(refetchTargetsFor('board-dirty')).toEqual(['board', 'account'])
-  })
-
-  it('exposes a frozen graph record', () => {
     expect(REFETCH_BY_ZONE_EVENT.mutated).toEqual(['session', 'proposals'])
     expect(REFETCH_BY_ZONE_EVENT['board-dirty']).toEqual(['board', 'account'])
-  })
-
-  it('maps every zone event to its declared refetch targets', () => {
-    for (const event of ZONE_EVENTS) {
-      expect(refetchTargetsFor(event)).toEqual(REFETCH_BY_ZONE_EVENT[event])
-    }
   })
 
   it('excludes board and account from mutated targets', () => {

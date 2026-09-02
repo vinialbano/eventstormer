@@ -1,3 +1,8 @@
+// Suite: capture-loop stores
+// Invariant: Each projection store cold-loads or refetches from exactly one transport GET per action.
+// Boundary IN: session, proposals, board, and account Pinia stores with stubbed fetch.
+// Boundary OUT: Shell orchestration wiring (use-capture-orchestration.integration.test.ts), transport adapters (transport/*.test.ts).
+
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AccountSnapshot, BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
@@ -76,6 +81,16 @@ describe('proposals store', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith('/api/sessions/s1/proposals')
     expect(store.cards).toEqual(cards)
+  })
+
+  it('records an error on a failed load and clears cards', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: 'boom' }, 500)))
+
+    const store = useProposalsStore()
+    await store.load('s1')
+
+    expect(store.cards).toEqual([])
+    expect(store.error).not.toBeNull()
   })
 })
 

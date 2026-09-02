@@ -1,3 +1,8 @@
+// Suite: semantic-edit
+// Invariant: Drop, connect, and drag payloads map to the correct relation operations and cycle copy.
+// Boundary IN: semantic-edit.ts pure helpers.
+// Boundary OUT: use-relate-blocks and BoardWall drop integration (use-relate-blocks.test.ts, BoardWall.drop.test.ts).
+
 import { describe, expect, it } from 'vitest'
 import {
   cycleLine,
@@ -8,6 +13,11 @@ import {
   relationFromConnect,
   relationFromDrop,
 } from './semantic-edit.ts'
+
+// Suite: semantic-edit
+// Invariant: Drop, connect, and drag payloads map to the correct relation edit discriminant.
+// Boundary IN: relationFromDrop, relationFromConnect, cycle line copy, drag encode/decode.
+// Boundary OUT: HTTP apply and wall gestures (apply-board-edit.test.ts, BoardWall.drop.test.ts).
 
 describe('relationFromDrop', () => {
   it('places an event on an empty pane', () => {

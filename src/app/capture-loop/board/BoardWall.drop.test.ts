@@ -61,6 +61,11 @@ const dropOn = (host: Element, payload: { id: string; kind: string }, onto?: Ele
   ;(onto ?? host).dispatchEvent(event)
 }
 
+// Suite: BoardWall semantic edits
+// Invariant: Gestures POST the expected edit kind and emit board-dirty; cycle 422 surfaces inline.
+// Boundary IN: Drop, connect, and toolbar wiring from BoardWall to transport.
+// Boundary OUT: Full POST wire bodies (transport/board.test.ts), relation mapping (semantic-edit.test.ts).
+
 describe('BoardWall semantic edits', () => {
   beforeEach(() => {
     vi.spyOn(mutations, 'postBoardOperation').mockResolvedValue({ position: 9 })

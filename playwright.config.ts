@@ -4,16 +4,25 @@ import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * The ONE end-to-end suite (ADR-008 "one E2E"; docs/testing.md "add with the
- * first real flow"). It boots the real `pnpm dev` process — Vite serving the SPA
- * and handing `/api/*` to the Hono app, the interpretation scheduler running —
- * with `FACILITATOR_MODE=scripted` so the facilitator's turns come from a fixture
- * instead of Anthropic. Real server, real SQLite, fake model.
- *
- * Each run gets a throwaway data directory so it never touches `./data/`.
+ * End-to-end suite (ADR-008 smoke + ADR-007 no-optimism). Each project boots its
+ * own `pnpm dev` so the in-process scripted facilitator turn index never leaks
+ * between specs. Real server, real SQLite, fake model.
  */
-const dataDirectory = mkdtempSync(join(tmpdir(), 'eventstormer-e2e-'))
-const port = 5178
+const fixtureFile = join(import.meta.dirname, 'e2e', 'fixtures', 'facilitator.json')
+
+const serverEnvironment = (dataDirectory: string) => ({
+  FACILITATOR_MODE: 'scripted',
+  ANTHROPIC_API_KEY: '',
+  SCRIPTED_FACILITATOR_FILE: fixtureFile,
+  INTERPRETATION_INTERVAL_MS: '250',
+  DATA_DIR: dataDirectory,
+  EVENTSTORMER_DB: join(dataDirectory, 'e2e.db'),
+})
+
+const smokePort = 5178
+const adr007Port = 5179
+const smokeDataDirectory = mkdtempSync(join(tmpdir(), 'eventstormer-e2e-smoke-'))
+const adr007DataDirectory = mkdtempSync(join(tmpdir(), 'eventstormer-e2e-adr007-'))
 
 export default defineConfig({
   testDir: './e2e',
@@ -24,26 +33,40 @@ export default defineConfig({
   timeout: 45_000,
   reporter: 'list',
   use: {
-    baseURL: `http://localhost:${String(port)}`,
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: devices['Desktop Chrome'] }],
-  webServer: {
-    command: `pnpm dev --port ${String(port)} --strictPort`,
-    url: `http://localhost:${String(port)}`,
-    reuseExistingServer: false,
-    timeout: 60_000,
-    // These take precedence over `.env` / `.env.local` — `host/index.ts` loads
-    // those with `loadEnvFile`, which never overrides an already-set key. The
-    // empty `ANTHROPIC_API_KEY` guarantees the e2e server can never reach the
-    // real Anthropic API even if `FACILITATOR_MODE` were ever dropped.
-    env: {
-      FACILITATOR_MODE: 'scripted',
-      ANTHROPIC_API_KEY: '',
-      SCRIPTED_FACILITATOR_FILE: join(import.meta.dirname, 'e2e', 'fixtures', 'facilitator.json'),
-      INTERPRETATION_INTERVAL_MS: '250',
-      DATA_DIR: dataDirectory,
-      EVENTSTORMER_DB: join(dataDirectory, 'e2e.db'),
+  projects: [
+    {
+      name: 'smoke',
+      testMatch: 'capture-loop.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://localhost:${String(smokePort)}`,
+      },
     },
-  },
+    {
+      name: 'adr007',
+      testMatch: 'capture-loop-no-optimism.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://localhost:${String(adr007Port)}`,
+      },
+    },
+  ],
+  webServer: [
+    {
+      command: `pnpm dev --port ${String(smokePort)} --strictPort`,
+      url: `http://localhost:${String(smokePort)}`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: serverEnvironment(smokeDataDirectory),
+    },
+    {
+      command: `pnpm dev --port ${String(adr007Port)} --strictPort`,
+      url: `http://localhost:${String(adr007Port)}`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: serverEnvironment(adr007DataDirectory),
+    },
+  ],
 })

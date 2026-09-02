@@ -2,9 +2,18 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
+import * as boardTransport from '../transport/board.ts'
 import { mountRewordPortalHost, unmountRewordPortalHost } from '../test-support/reword-portal-host.ts'
 import BoardWall from './BoardWall.vue'
 import RewordConfirm from './interactions/reword-block/RewordConfirm.vue'
+
+const posted = () => vi.mocked(boardTransport.postBoardOperation)
+
+const backlogItems = (wrapper: ReturnType<typeof mount>) =>
+  wrapper.get('[aria-label="Backlog"]').findAll('li')
+
+const stickyByLabel = (wrapper: ReturnType<typeof mount>, ariaLabel: string) =>
+  wrapper.get(`[aria-label="Backlog"] [aria-label="${ariaLabel}"]`)
 
 const stubMatchMedia = (matches: boolean): void => {
   vi.stubGlobal(
@@ -24,8 +33,14 @@ beforeEach(() => {
 })
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   unmountRewordPortalHost()
 })
+
+// Suite: BoardWall
+// Invariant: Wall renders stickies, withdrawn visibility, reword ghost wiring, and withdraw/reinstate smokes.
+// Boundary IN: Presentation composition, fresh-sticky hook, focus-to-reword UI paths.
+// Boundary OUT: POST wire shapes (transport/board.test.ts), reword confirm flow (use-reword-block.test.ts), keyboard dispatch (use-board-keyboard.test.ts).
 
 describe('BoardWall', () => {
   it('renders one backlog sticky per applied block, labelled by kind + text', () => {
@@ -39,7 +54,7 @@ describe('BoardWall', () => {
       },
     })
 
-    const stickies = wrapper.findAll('.sticky')
+    const stickies = backlogItems(wrapper)
     expect(stickies).toHaveLength(3)
     expect(stickies.map((sticky) => sticky.text())).toEqual(['Order placed', 'Order confirmed', 'Waiter'])
     expect(stickies.map((sticky) => sticky.attributes('aria-label'))).toEqual([
@@ -56,14 +71,16 @@ describe('BoardWall', () => {
         blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', speaker: 'Maria' }],
       },
     })
-    expect(wrapper.get('.sticky__who').text()).toBe('Maria')
-    expect(wrapper.get('.sticky').attributes('aria-label')).toBe('event: Order placed, added by Maria')
+    expect(stickyByLabel(wrapper, 'event: Order placed, added by Maria').text()).toContain('Maria')
+    expect(stickyByLabel(wrapper, 'event: Order placed, added by Maria').attributes('aria-label')).toBe(
+      'event: Order placed, added by Maria',
+    )
   })
 
   it('renders the empty framed wall with no stickies when the board is empty', () => {
     const wrapper = mount(BoardWall, { props: { blocks: [] } })
 
-    expect(wrapper.findAll('.sticky')).toHaveLength(0)
+    expect(backlogItems(wrapper)).toHaveLength(0)
     expect(wrapper.get('[role="list"]').attributes('data-empty')).toBe('true')
     // frame + time arrow still drawn
     expect(wrapper.find('.wall__ink rect').exists()).toBe(true)
@@ -75,7 +92,6 @@ describe('BoardWall', () => {
     const wrapper = mount(BoardWall, {
       props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed' }] },
     })
-    expect(wrapper.find('.sticky--ghost').exists()).toBe(false)
     expect(wrapper.find('[data-ghost]').exists()).toBe(false)
   })
 
@@ -90,12 +106,13 @@ describe('BoardWall', () => {
       },
     })
 
-    const stickies = wrapper.findAll('.sticky')
-    expect(stickies).toHaveLength(2)
-    expect(stickies[0]?.classes()).toContain('sticky--withdrawn')
-    expect(stickies[0]?.classes()).not.toContain('sticky--reword')
-    expect(stickies[0]?.attributes('data-withdrawn')).toBe('true')
-    expect(stickies[1]?.attributes('data-withdrawn')).toBe('false')
+    const withdrawn = stickyByLabel(wrapper, 'event: Order placed')
+    const live = stickyByLabel(wrapper, 'event: Order confirmed')
+    expect(backlogItems(wrapper)).toHaveLength(2)
+    expect(withdrawn.classes()).toContain('sticky--withdrawn')
+    expect(withdrawn.classes()).not.toContain('sticky--reword')
+    expect(withdrawn.attributes('data-withdrawn')).toBe('true')
+    expect(live.attributes('data-withdrawn')).toBe('false')
     expect(wrapper.get('[role="list"]').attributes('data-empty')).toBe('false')
   })
 
@@ -104,13 +121,13 @@ describe('BoardWall', () => {
       attachTo: document.body,
       props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }] },
     })
-    const sticky = wrapper.get('.sticky')
+    const sticky = stickyByLabel(wrapper, 'event: Order confirmed')
     await sticky.trigger('focus')
 
     await wrapper.get('[aria-label="Reword"]').trigger('click')
     await nextTick()
 
-    expect(sticky.classes()).toContain('sticky--reword')
+    expect(sticky.find('input[type="text"]').exists()).toBe(true)
     const field = wrapper.get('input[type="text"]')
     expect((field.element as HTMLInputElement).value).toBe('Order confirmed')
 
@@ -118,9 +135,8 @@ describe('BoardWall', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await nextTick()
 
-    expect(wrapper.find('.sticky--reword').exists()).toBe(false)
-    expect(wrapper.get('.sticky').text()).toContain('Order confirmed')
     expect(wrapper.find('input[type="text"]').exists()).toBe(false)
+    expect(stickyByLabel(wrapper, 'event: Order confirmed').text()).toContain('Order confirmed')
   })
 
   it('adds sticky--fresh when a block arrives after mount and skips it with reduced motion', async () => {
@@ -128,7 +144,7 @@ describe('BoardWall', () => {
       props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
     })
     await nextTick()
-    expect(wrapper.get('.sticky').classes()).not.toContain('sticky--fresh')
+    expect(stickyByLabel(wrapper, 'event: Order placed').classes()).not.toContain('sticky--fresh')
 
     await wrapper.setProps({
       blocks: [
@@ -138,8 +154,8 @@ describe('BoardWall', () => {
     })
     await nextTick()
 
-    const fresh = wrapper.findAll('.sticky').find((sticky) => sticky.text().includes('Order confirmed'))
-    expect(fresh?.classes()).toContain('sticky--fresh')
+    const fresh = stickyByLabel(wrapper, 'event: Order confirmed')
+    expect(fresh.classes()).toContain('sticky--fresh')
 
     wrapper.unmount()
     vi.unstubAllGlobals()
@@ -156,9 +172,7 @@ describe('BoardWall', () => {
       ],
     })
     await nextTick()
-    expect(reduced.findAll('.sticky').find((sticky) => sticky.text().includes('Order confirmed'))?.classes()).not.toContain(
-      'sticky--fresh',
-    )
+    expect(stickyByLabel(reduced, 'event: Order confirmed').classes()).not.toContain('sticky--fresh')
   })
 
   it('opens the confirm popover when Enter is pressed inside the dashed-ghost field', async () => {
@@ -166,7 +180,7 @@ describe('BoardWall', () => {
       attachTo: document.body,
       props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
     })
-    await wrapper.get('.sticky').trigger('focus')
+    await stickyByLabel(wrapper, 'event: Order placed').trigger('focus')
     await wrapper.get('[aria-label="Reword"]').trigger('click')
     await nextTick()
 
@@ -176,7 +190,7 @@ describe('BoardWall', () => {
     await nextTick()
 
     expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(true)
-    expect(wrapper.get('.sticky').classes()).toContain('sticky--reword')
+    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
   })
 
   it('opens the dashed-ghost from Enter on a focused sticky', async () => {
@@ -184,12 +198,12 @@ describe('BoardWall', () => {
       attachTo: document.body,
       props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
     })
-    const sticky = wrapper.get('.sticky')
+    const sticky = stickyByLabel(wrapper, 'event: Order placed')
     await sticky.trigger('focus')
     sticky.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await nextTick()
 
-    expect(wrapper.get('.sticky').classes()).toContain('sticky--reword')
+    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
     expect((wrapper.get('input[type="text"]').element as HTMLInputElement).value).toBe('Order placed')
   })
 
@@ -198,7 +212,7 @@ describe('BoardWall', () => {
       attachTo: document.body,
       props: { blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order placed', withdrawn: false }] },
     })
-    await wrapper.get('.sticky').trigger('focus')
+    await stickyByLabel(wrapper, 'event: Order placed').trigger('focus')
 
     const field = document.createElement('input')
     document.body.appendChild(field)
@@ -208,28 +222,12 @@ describe('BoardWall', () => {
     await nextTick()
 
     expect(event.defaultPrevented).toBe(false)
-    expect(wrapper.find('.sticky--reword').exists()).toBe(false)
+    expect(wrapper.find('input[type="text"]').exists()).toBe(false)
     field.remove()
   })
 
-  it('opens the confirm popover from ✓ without POSTing, then confirm POSTs and emits board-dirty', async () => {
-    const fetchMock = vi.fn((url: string) => {
-      if (url.includes('/references')) {
-        return Promise.resolve(
-          new Response(JSON.stringify([{ kind: 'readable-account', path: 'building-blocks' }]), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
-        )
-      }
-      return Promise.resolve(
-        new Response(JSON.stringify({ position: 2 }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      )
-    })
-    vi.stubGlobal('fetch', fetchMock)
+  it('confirms withdraw posts withdraw kind and emits board-dirty', async () => {
+    vi.spyOn(boardTransport, 'postBoardOperation').mockResolvedValue({ position: 2 })
 
     const wrapper = mount(BoardWall, {
       attachTo: document.body,
@@ -240,112 +238,23 @@ describe('BoardWall', () => {
         revision: 1,
       },
     })
-    await wrapper.get('.sticky').trigger('focus')
-    await wrapper.get('[aria-label="Reword"]').trigger('click')
-    await wrapper.get('.sticky__keep').trigger('click')
-    await nextTick()
-    await flushPromises()
-
-    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/references'))).toBe(
-      true,
-    )
-    expect(fetchMock.mock.calls.some((call) => typeof call[0] === 'string' && call[0].includes('/operations'))).toBe(
-      false,
-    )
-
-    const confirm = [...document.body.querySelectorAll('button')].find(
-      (button) => button.textContent.trim() === 'Confirm reword',
-    )
-    if (!(confirm instanceof HTMLButtonElement)) throw new Error('missing Confirm reword')
-    confirm.click()
-    await flushPromises()
-
-    expect(
-      fetchMock.mock.calls.filter((call) => typeof call[0] === 'string' && call[0].includes('/operations')),
-    ).toHaveLength(1)
-    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
-    vi.unstubAllGlobals()
-  })
-
-  it('rejects an empty label inline and never POSTs', async () => {
-    const fetchMock = vi.fn(() => Promise.resolve(new Response('[]', { status: 200 })))
-    vi.stubGlobal('fetch', fetchMock)
-
-    const wrapper = mount(BoardWall, {
-      attachTo: document.body,
-      props: {
-        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
-        workshopId: 'w1',
-        accepter: 'Maria',
-        revision: 1,
-      },
-    })
-    await wrapper.get('.sticky').trigger('focus')
-    await wrapper.get('[aria-label="Reword"]').trigger('click')
-    await wrapper.get('input[type="text"]').setValue('   ')
-    await wrapper.get('.sticky__keep').trigger('click')
-    await nextTick()
-
-    expect(wrapper.text()).toContain("Name can't be empty.")
-    expect(fetchMock).not.toHaveBeenCalled()
-    vi.unstubAllGlobals()
-  })
-
-  it('withdraws a selected active sticky and emits board-dirty', async () => {
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ position: 2 }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
-    )
-    vi.stubGlobal('fetch', fetchMock)
-
-    const wrapper = mount(BoardWall, {
-      attachTo: document.body,
-      props: {
-        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
-        workshopId: 'w1',
-        accepter: 'Maria',
-        revision: 1,
-      },
-    })
-    await wrapper.get('.sticky').trigger('focus')
+    await stickyByLabel(wrapper, 'event: Order confirmed').trigger('focus')
     await wrapper.get('[aria-label="Withdraw"]').trigger('click')
     await flushPromises()
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(posted()).not.toHaveBeenCalled()
 
     await wrapper.get('[aria-label="Confirm withdraw"]').trigger('click')
     await flushPromises()
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/workshops/w1/board/operations',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          v: 1,
-          kind: 'withdraw',
-          target: 'b1',
-          author: { accepter: { name: 'Maria' } },
-        }),
-      }),
+    expect(posted()).toHaveBeenCalledWith(
+      'w1',
+      expect.objectContaining({ kind: 'withdraw', target: 'b1' }),
     )
     expect(wrapper.emitted('board-dirty')).toHaveLength(1)
-    vi.unstubAllGlobals()
   })
 
   it('shows Reinstate on a ghost, not pencil or Withdraw, and reinstates', async () => {
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ position: 3 }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
-    )
-    vi.stubGlobal('fetch', fetchMock)
+    vi.spyOn(boardTransport, 'postBoardOperation').mockResolvedValue({ position: 3 })
 
     const wrapper = mount(BoardWall, {
       attachTo: document.body,
@@ -357,27 +266,18 @@ describe('BoardWall', () => {
         showWithdrawn: true,
       },
     })
-    await wrapper.get('.sticky').trigger('focus')
+    await stickyByLabel(wrapper, 'event: Order confirmed').trigger('focus')
 
     expect(wrapper.find('[aria-label="Reword"]').exists()).toBe(false)
     expect(wrapper.find('[aria-label="Withdraw"]').exists()).toBe(false)
     await wrapper.get('[aria-label="Reinstate"]').trigger('click')
     await flushPromises()
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/workshops/w1/board/operations',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          v: 1,
-          kind: 'reinstate',
-          target: 'b1',
-          author: { accepter: { name: 'Maria' } },
-        }),
-      }),
+    expect(posted()).toHaveBeenCalledWith(
+      'w1',
+      expect.objectContaining({ kind: 'reinstate', target: 'b1' }),
     )
     expect(wrapper.emitted('board-dirty')).toHaveLength(1)
-    vi.unstubAllGlobals()
   })
 
   it('does not open dashed-ghost from E or Enter on a focused ghost', async () => {
@@ -388,56 +288,13 @@ describe('BoardWall', () => {
         showWithdrawn: true,
       },
     })
-    const sticky = wrapper.get('.sticky')
+    const sticky = stickyByLabel(wrapper, 'event: Order confirmed')
     await sticky.trigger('focus')
     sticky.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     sticky.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', bubbles: true }))
     await nextTick()
 
-    expect(wrapper.find('.sticky--reword').exists()).toBe(false)
     expect(wrapper.find('input[type="text"]').exists()).toBe(false)
-  })
-
-  it('Esc from the ghost input closes the confirm popover and keeps the dashed-ghost', async () => {
-    const fetchMock = vi.fn((url: string) => {
-      if (url.includes('/references')) {
-        return Promise.resolve(
-          new Response(JSON.stringify([{ kind: 'readable-account', path: 'building-blocks' }]), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
-        )
-      }
-      return Promise.resolve(new Response(JSON.stringify({ position: 2 }), { status: 200 }))
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    const wrapper = mount(BoardWall, {
-      attachTo: document.body,
-      props: {
-        blocks: [{ id: 'b1', kind: 'domain-event', label: 'Order confirmed', withdrawn: false }],
-        workshopId: 'w1',
-        accepter: 'Maria',
-        revision: 1,
-      },
-    })
-    await wrapper.get('.sticky').trigger('focus')
-    await wrapper.get('[aria-label="Reword"]').trigger('click')
-    await wrapper.get('.sticky__keep').trigger('click')
-    await nextTick()
-    await flushPromises()
-
-    expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(true)
-
-    const field = wrapper.get('input[type="text"]')
-    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
-    Object.defineProperty(escape, 'target', { value: field.element })
-    window.dispatchEvent(escape)
-    await nextTick()
-
-    expect(wrapper.find('.sticky--reword').exists()).toBe(true)
-    expect(wrapper.getComponent(RewordConfirm).props('open')).toBe(false)
-    vi.unstubAllGlobals()
   })
 
   it('keeps an unattached actor in the backlog while an attached cause leaves it', () => {
@@ -481,8 +338,8 @@ describe('BoardWall', () => {
       },
     })
 
-    expect(wrapper.findAll('[aria-label="Backlog"] .sticky')).toHaveLength(1)
-    expect(wrapper.get('[aria-label="Backlog"] .sticky').text()).toContain('Order confirmed')
+    expect(backlogItems(wrapper)).toHaveLength(1)
+    expect(stickyByLabel(wrapper, 'event: Order confirmed').text()).toContain('Order confirmed')
     expect(wrapper.find('[data-withdrawn="true"]').exists()).toBe(false)
 
     await wrapper.get('[aria-label="Show withdrawn"]').setValue(true)
@@ -516,7 +373,7 @@ describe('BoardWall', () => {
       },
     })
 
-    expect(wrapper.findAll('[aria-label="Backlog"] .sticky')).toHaveLength(0)
+    expect(backlogItems(wrapper)).toHaveLength(0)
     const nodes = wrapper.findComponent({ name: 'VueFlow' }).props('nodes') as {
       id: string
       data: { withdrawn: boolean }

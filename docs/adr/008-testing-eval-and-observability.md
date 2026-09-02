@@ -25,7 +25,7 @@ model calls need to be observable enough to debug and to feed the eval.
 | Choreography | the close sweep raises N hot spots; apply-failed-at-close raises one |
 | Facilitator (unit) | schema conformance on recorded/mocked responses; the retry ladder + interpret-at-most-once against a fake provider port. **Behaviour is the eval's job, not the unit suite's** |
 | App (Vue) | jsdom; component tests only where there is real logic |
-| E2E | `@playwright/test`, **one happy-path spec**, added with the first full flow — not before. `playwright-cli` is the manual/agent UI-verification tool |
+| E2E | `@playwright/test`, **two macro specs** — `capture-loop.spec.ts` (ADR-008 smoke) and `capture-loop-no-optimism.spec.ts` (ADR-007 no-optimism guard). `playwright-cli` is the manual/agent UI-verification tool |
 
 - **Property tests: add `fast-check`** — four properties: no operation sequence yields a
   decider-accepted cycle; no operation targeting a kind that doesn't permit it is accepted;
