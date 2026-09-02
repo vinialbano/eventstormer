@@ -2,9 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import { useBoardMutations } from './composables/use-board-mutations.ts'
-import { useBoardReword } from './composables/use-board-reword.ts'
 import { useBoardSelection } from './composables/use-board-selection.ts'
 import { useFreshStickyHighlight } from './composables/use-fresh-sticky-highlight.ts'
+import { fetchBlockReferences } from './interactions/reword-block/reword-references.ts'
+import { useRewordBlock } from './interactions/reword-block/use-reword-block.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import BacklogPane from './presentation/BacklogPane.vue'
 import BoardActionToolbar from './presentation/BoardActionToolbar.vue'
@@ -13,7 +14,7 @@ import TimelinePane from './TimelinePane.vue'
 
 /**
  * The board wall — a full-screen EventStorming surface. Composes presentation
- * components; interaction logic lives in board composables (#63).
+ * components; interaction logic lives in board composables (#63) and reword-block (#66).
  */
 
 const EMPTY_TIMELINE: TimelineLayout = { tracks: [], edges: [], attachments: {}, pivotal: [] }
@@ -59,16 +60,25 @@ const {
   showsReinstate,
 } = selection
 
-const reword = useBoardReword(blocks, onBoardDirty)
+const reword = useRewordBlock({
+  blocks,
+  workshopId: toRef(props, 'workshopId'),
+  accepter: toRef(props, 'accepter'),
+  revision: toRef(props, 'revision'),
+  onBoardDirty,
+  fetchReferences: fetchBlockReferences,
+})
 const {
   editingId,
   draft,
   labelError,
   confirmOpen,
+  confirmPhase,
   bindDraftInput,
   cancelReword,
   requestConfirm,
-  onRewordConfirmed,
+  confirmReword,
+  retryReferences,
   startReword,
 } = reword
 
@@ -159,10 +169,8 @@ const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
       :draft="draft"
       :label-error="labelError"
       :confirm-open="confirmOpen"
+      :confirm-phase="confirmPhase"
       :bind-draft-input="bindDraftInput"
-      :workshop-id="workshopId"
-      :revision="revision"
-      :accepter="accepter"
       :shows-active-controls="showsActiveControls"
       :shows-reinstate="showsReinstate"
       @select="selectSticky"
@@ -175,7 +183,8 @@ const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
       @request-confirm="requestConfirm"
       @cancel-reword="cancelReword"
       @update:confirm-open="confirmOpen = $event"
-      @reword-confirmed="onRewordConfirmed"
+      @confirm="confirmReword"
+      @retry="retryReferences"
     />
 
     <BoardActionToolbar
@@ -190,10 +199,8 @@ const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
       :draft="draft"
       :label-error="labelError"
       :confirm-open="confirmOpen"
+      :confirm-phase="confirmPhase"
       :bind-draft-input="bindDraftInput"
-      :workshop-id="workshopId"
-      :revision="revision"
-      :accepter="accepter"
       :can-place="canPlace"
       :can-unplace="canUnplace"
       :can-sequence-after="canSequenceAfter"
@@ -210,7 +217,8 @@ const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
       @request-confirm="requestConfirm"
       @cancel-reword="cancelReword"
       @update:confirm-open="confirmOpen = $event"
-      @reword-confirmed="onRewordConfirmed"
+      @confirm="confirmReword"
+      @retry="retryReferences"
     />
 
     <div
