@@ -209,5 +209,6 @@ describe('BoardWall semantic edits', () => {
     expect(wrapper.get('[role="alert"]').text()).toBe(
       'That sequence would loop: Loan recorded → Book returned → Loan recorded.',
     )
+    expect(wrapper.emitted('board-dirty')).toBeUndefined()
   })
 })
