@@ -1,7 +1,7 @@
 import { refetchTargetsFor } from './refetch-graph.ts'
 import type { CaptureZoneEvent, RefetchTarget } from './zone-events.ts'
 
-export interface ReadModelPort {
+interface ReadModelPort {
   refetch: () => Promise<void>
   load: (id: string) => Promise<void>
 }

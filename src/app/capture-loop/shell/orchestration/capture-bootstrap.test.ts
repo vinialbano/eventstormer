@@ -17,9 +17,10 @@ const viewWithContributions = (): SessionView => ({
   sessionOpen: true,
   creatorName: 'Ada',
   scope: { status: 'set' },
-  contributions: [{ contributionId: 'c1', status: 'derived', text: 'x' }],
+  contributions: [{ contributionId: 'c1', status: 'derived' as const }],
   transcript: [],
   openQuestions: [],
+  fullyDerived: true,
 })
 
 describe('capture-bootstrap', () => {
@@ -30,6 +31,7 @@ describe('capture-bootstrap', () => {
       shouldLoadBoardOnBootstrap({
         ...viewWithContributions(),
         contributions: [],
+        fullyDerived: false,
       }),
     ).toBe(false)
   })
