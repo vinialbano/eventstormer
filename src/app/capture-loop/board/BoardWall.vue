@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
-import { useBoardMutations } from './composables/use-board-mutations.ts'
+import { useRelateBlocks } from './interactions/relate-blocks/use-relate-blocks.ts'
 import { useBoardSelection } from './composables/use-board-selection.ts'
 import { useFreshStickyHighlight } from './composables/use-fresh-sticky-highlight.ts'
 import { useBoardKeyboard } from './interactions/board-keyboard/use-board-keyboard.ts'
@@ -15,8 +15,7 @@ import TimelinePane from './TimelinePane.vue'
 
 /**
  * The board wall — a full-screen EventStorming surface. Composes presentation
- * components; interaction logic lives in board composables and the reword-block
- * interaction module.
+ * components; interaction logic lives in board interactions and composables.
  */
 
 const EMPTY_TIMELINE: TimelineLayout = { tracks: [], edges: [], attachments: {}, pivotal: [] }
@@ -84,14 +83,13 @@ const {
   startReword,
 } = reword
 
-const mutations = useBoardMutations({
+const relate = useRelateBlocks({
   workshopId: toRef(props, 'workshopId'),
   accepter: toRef(props, 'accepter'),
   blocks,
   selectedId,
   lastPlacedId: selection.lastPlacedId,
   onBoardDirty,
-  startReword,
 })
 const {
   relationError,
@@ -100,12 +98,16 @@ const {
   onBacklogDragStart,
   onTimelineDrop,
   placeSelected,
-  rewordSelected,
   unplaceSelected,
   sequenceSelectedAfter,
   markSelectedPivotal,
   unmarkSelectedPivotal,
-} = mutations
+} = relate
+
+const rewordSelected = (): void => {
+  const id = selectedId.value
+  if (id !== null) void startReword(id)
+}
 
 useBoardKeyboard({
   isEditing: () => editingId.value !== null,

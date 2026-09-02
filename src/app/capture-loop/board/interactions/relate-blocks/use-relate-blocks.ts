@@ -10,13 +10,18 @@ import {
   type DraggedBlock,
   type RelationEdit,
 } from '../../kernel/semantic-edit.ts'
-import type { BoardBlockInput } from '../../layout.ts'
+
+export interface RelateBlockView {
+  id: string
+  kind: string
+  label: string
+}
 
 /** Relation/placement POST handlers, drag-and-drop, and cycle-error feedback. */
 export const useRelateBlocks = (options: {
   workshopId: Ref<string | undefined>
   accepter: Ref<string | undefined>
-  blocks: Ref<BoardBlockInput[]>
+  blocks: Ref<RelateBlockView[]>
   selectedId: Ref<string | null>
   lastPlacedId: Ref<string | null>
   onBoardDirty: () => void
@@ -52,7 +57,7 @@ export const useRelateBlocks = (options: {
     void applyEdit(edit)
   }
 
-  const onBacklogDragStart = (event: DragEvent, block: BoardBlockInput): void => {
+  const onBacklogDragStart = (event: DragEvent, block: RelateBlockView): void => {
     const payload = { id: block.id, kind: block.kind }
     dragging.value = payload
     event.dataTransfer?.setData(DRAG_MIME, encodeDragged(payload))
