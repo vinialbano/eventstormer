@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `board-deep-module-api` (`.specs/features/board-deep-module-api/`) — GitHub #67
+- **Feature**: `capture-loop-shim-removal` (`.specs/features/capture-loop-shim-removal/`) — GitHub #68
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: board/index.ts public API, transport GET adapters, four depcruise rules
+- **Completed**: removed `dock/mutations.ts` shim + test; added `src/app/capture-loop/AGENTS.md`
 - **In-progress**: none
-- **Next step**: open PR for #67
+- **Next step**: open PR for #68
 - **Blockers**: none
-- **Branch**: `board-deep-module-api`
+- **Branch**: `capture-loop-shim-removal`
 
 ---
 
