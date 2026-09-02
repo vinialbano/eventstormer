@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getJson } from '../client.ts'
+import { fetchProposals } from '../transport/proposals.ts'
 import type { ProposalCard } from '../types.ts'
 
 /**
@@ -17,9 +17,7 @@ export const useProposalsStore = defineStore('proposals', () => {
     if (sessionId.value === null) return
     loading.value = true
     try {
-      const body = await getJson<{ proposals: ProposalCard[] }>(
-        `/api/sessions/${sessionId.value}/proposals`,
-      )
+      const body = await fetchProposals(sessionId.value)
       cards.value = body.proposals
       error.value = null
     } catch (caught) {

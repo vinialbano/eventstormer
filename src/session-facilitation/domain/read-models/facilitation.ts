@@ -2,13 +2,13 @@ import type { SessionSummary } from './session-summary.ts'
 
 /**
  * `facilitationContext` — assembled fresh each interpretation tick, never
- * persisted (#66). A plain normalising assembly: recent transcript trimmed to
+ * persisted. A plain normalising assembly: recent transcript trimmed to
  * the last `RECENT_TRANSCRIPT` lines, everything else passed through.
  *
  * `facilitationAgenda` — derived, not stored: the open questions plus any
  * building block whose label reads like an un-expanded phase name (no
  * past-tense / gerund verb, ≤ 3 words). **No stakeholder-check input** — that is
- * F09 / Slice 4.
+ * F09; it is not assembled here.
  */
 
 const RECENT_TRANSCRIPT = 20

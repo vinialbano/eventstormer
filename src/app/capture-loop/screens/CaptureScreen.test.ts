@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import type { BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
-import BoardWall from '../board/BoardWall.vue'
+import { BoardWall } from '../board/index.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import CaptureScreen from './CaptureScreen.vue'
 

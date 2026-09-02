@@ -48,17 +48,17 @@ capture.
 
 ## Handoff
 
-- **Feature**: `reword-block-interaction` (`.specs/features/reword-block-interaction/`) — GitHub #66
+- **Feature**: `board-deep-module-api` (`.specs/features/board-deep-module-api/`) — GitHub #67
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: reword-block interaction module (adapter, state machine, composable, popover UI)
+- **Completed**: board/index.ts public API, transport GET adapters, four depcruise rules
 - **In-progress**: none
-- **Next step**: open PR for #66
+- **Next step**: open PR for #67
 - **Blockers**: none
-- **Branch**: `reword-block-interaction`
+- **Branch**: `board-deep-module-api`
 
 ---
 
-**Prior feature:** `board-wall-presentation` (`.specs/features/board-wall-presentation/`) — GitHub #65
+**Prior feature:** `reword-block-interaction` (`.specs/features/reword-block-interaction/`) — GitHub #66
 **Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
 **Phase:** slice-1 EXECUTE complete + Verifier PASS. **Follow-up: `slice-1-review-fixes`** —
 the PR #46 automated-review fix batch (spec + validation in

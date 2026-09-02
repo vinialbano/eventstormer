@@ -9,7 +9,7 @@ describe('reword-references', () => {
   it('fetchBlockReferences GETs the references route via injected getJson', async () => {
     const sites: ReferenceSite[] = [{ kind: 'readable-account', path: 'building-blocks' }]
     const getJson = vi.fn<(path: string) => Promise<ReferenceSite[]>>().mockResolvedValue(sites)
-    const load: FetchBlockReferences = (workshopId, blockId) =>
+    const load: FetchBlockReferences = (workshopId: string, blockId: string) =>
       getJson(`/api/workshops/${workshopId}/board/blocks/${blockId}/references`)
 
     await expect(load('w1', 'b1')).resolves.toEqual(sites)

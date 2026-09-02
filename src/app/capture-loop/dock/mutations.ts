@@ -1,6 +1,6 @@
 /**
- * Back-compat shim — re-exports capture-loop transport until #68 removes this file.
- * New code should import from `../transport/*` directly.
+ * Re-exports capture-loop transport for callers that still import from `dock/mutations`.
+ * Prefer `../transport/*` directly.
  */
 export {
   acceptProposal,

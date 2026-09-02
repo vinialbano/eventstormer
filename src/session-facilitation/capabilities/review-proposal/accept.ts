@@ -91,7 +91,7 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
     }
     if (buildingBlockId === undefined) return context.json({ error: 'accept-failed' as const }, 500)
 
-    // 2. build + parse the operation against the Slice 0 SSOT
+    // 2. build + parse the operation against the operation schema SSOT
     const operation = Operation.parse({
       kind: OP_KIND[birth.blockKind],
       id: buildingBlockId,

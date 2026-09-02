@@ -1,4 +1,8 @@
-import { postJson } from '../client.ts'
+import { getJson, postJson } from '../client.ts'
+import type { SessionView } from '../types.ts'
+
+export const fetchSession = (workshopId: string): Promise<SessionView> =>
+  getJson<SessionView>(`/api/workshops/${workshopId}/session`)
 
 export const startSession = (workshopId: string): Promise<unknown> =>
   postJson(`/api/workshops/${workshopId}/sessions`)

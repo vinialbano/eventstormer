@@ -14,10 +14,10 @@ import type { AppendConflict, EventStore, StoredOperation, StreamKey } from './p
  * so it is never used here.
  *
  * `timeout` gives `BEGIN IMMEDIATE` a busy-wait window instead of failing a
- * contended write lock instantly. Slice 0 has one in-process writer, so this is
+ * contended write lock instantly. v1 has one in-process writer, so this is
  * belt-and-suspenders; mapping a residual lock error onto a transient
  * `AppendConflict` (the second loss mode of optimistic concurrency) is a
- * follow-up for the slice that first runs more than one connection.
+ * follow-up when more than one connection contends.
  */
 
 const BUSY_TIMEOUT_MS = 5_000

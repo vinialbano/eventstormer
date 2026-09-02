@@ -46,8 +46,8 @@ export const MIGRATIONS: Migration[] = [
  * in one `BEGIN IMMEDIATE` transaction. Idempotent: a second call is a no-op.
  *
  * `migrations` / `trackingTable` default to the operation-log set. A context that
- * owns projection tables in the same SQLite file (Slice 1: `session-facilitation`)
- * passes its own set and its own tracking table so the two id sequences never
+ * owns projection tables in the same SQLite file (`session-facilitation`
+ * context) passes its own set and its own tracking table so the two id sequences never
  * collide. `trackingTable` is a closed set of internal constants — the type
  * keeps caller input out.
  */

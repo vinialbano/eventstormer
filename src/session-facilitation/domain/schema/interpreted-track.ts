@@ -11,7 +11,7 @@ import { ProposalId, QuestionId } from './ids.ts'
  * No `z.unknown()` anywhere — every field is a concrete type.
  */
 
-/** Events / actors / systems only this slice (ADR-010). */
+/** Domain events, actors, and systems — not hot spots or relations (ADR-010). */
 export const InterpretedBlockKind = z.enum(['domain-event', 'actor', 'system'])
 export type InterpretedBlockKind = z.infer<typeof InterpretedBlockKind>
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getJson, HttpError } from '../client.ts'
+import { fetchBoard, HttpError } from '../transport/board.ts'
 import type { BoardSnapshot } from '../types.ts'
 
 const EMPTY: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [] }
@@ -21,7 +21,7 @@ export const useBoardStore = defineStore('board', () => {
     if (workshopId.value === null) return
     loading.value = true
     try {
-      snapshot.value = await getJson<BoardSnapshot>(`/api/workshops/${workshopId.value}/board`)
+      snapshot.value = await fetchBoard(workshopId.value)
       error.value = null
     } catch (caught) {
       if (caught instanceof HttpError && caught.status === 404) {

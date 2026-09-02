@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { getJson } from '../client.ts'
+import { fetchSession } from '../transport/session.ts'
 import type { SessionView } from '../types.ts'
 
 /**
@@ -23,7 +23,7 @@ export const useSessionStore = defineStore('session', () => {
     if (workshopId.value === null) return
     loading.value = true
     try {
-      view.value = await getJson<SessionView>(`/api/workshops/${workshopId.value}/session`)
+      view.value = await fetchSession(workshopId.value)
       error.value = null
     } catch (caught) {
       error.value = caught instanceof Error ? caught.message : 'load failed'
