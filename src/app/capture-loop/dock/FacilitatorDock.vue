@@ -1,33 +1,20 @@
 <script setup lang="ts">
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
-import { computed, nextTick, ref } from 'vue'
-import type { ProposalCard as ProposalCardData } from '../types.ts'
+import { computed, nextTick, ref, toRef } from 'vue'
+import type { ProposalCard } from '../types.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
-import ConversationTurn from './ConversationTurn.vue'
-import { kindLabel } from './kind-label.ts'
+import { useDockFeed } from './composables/use-dock-feed.ts'
+import { useContribute } from './interactions/contribute/use-contribute.ts'
+import { useReviewProposal } from './interactions/review-proposal/use-review-proposal.ts'
 import DockComposer from './DockComposer.vue'
+import DockFeed from './DockFeed.vue'
 import PendingDrawer from './PendingDrawer.vue'
-import ProposalCard from './ProposalCard.vue'
-import {
-  acceptProposal,
-  editProposal,
-  holdProposal,
-  rejectProposal,
-  unholdProposal,
-} from '../transport/proposals.ts'
-import { setScope, submitContribution } from '../transport/session.ts'
 
 /**
- * The floating facilitator dock (brief §3). Conversation column with inline
- * proposal cards welded to the contribution that produced them; an in-dock
- * pending drawer that widens the dock rightward; the scope question rendered as
- * the first F05 accept/edit/reject card (no separate screen).
- * Collapses to a `Facilitator · n` pill (parked dot when anything is held).
- *
- * Every action is a POST then a `mutated` emit — the parent refetches the
- * cold-loadable stores; an accept also emits `board-dirty`. Nothing is written
- * optimistically.
+ * The floating facilitator dock (brief §3). Layout and wiring only — feed assembly
+ * lives in `use-dock-feed` + `DockFeed`; proposal review and contribution capture
+ * live in their interaction folders.
  */
 const props = defineProps<{
   workshopId: string
@@ -40,145 +27,52 @@ const emit = defineEmits<{ mutated: []; 'board-dirty': [] }>()
 const session = useSessionStore()
 const proposals = useProposalsStore()
 
-const liveLabel = (card: ProposalCardData): string => {
-  if (card.buildingBlockId === undefined) return card.label
-  return props.blockLabels[card.buildingBlockId] ?? card.label
+const sessionView = computed(() => session.view)
+const proposalCards = computed(() => proposals.cards)
+const sessionId = toRef(props, 'sessionId')
+
+const dockEmit = {
+  mutated: (): void => {
+    emit('mutated')
+  },
+  boardDirty: (): void => {
+    emit('board-dirty')
+  },
 }
+
+const {
+  scopeState,
+  showScopeCard,
+  showGettingStarted,
+  showFirstPrompt,
+  feed,
+  parked,
+  awaiting,
+  pendingCount,
+  anyHeld,
+  acceptableInCluster,
+  dismissScopeCard,
+} = useDockFeed(sessionView, proposalCards, sessionId)
+const review = useReviewProposal(
+  () => props.workshopId,
+  () => scopeState.value.proposedStatement,
+  dockEmit,
+)
+const { catchingUp, onSubmit } = useContribute(sessionId, sessionView, dockEmit)
 
 const open = ref(true)
 const drawerOpen = ref(false)
-const scopeDismissed = ref(false)
 const pulsingId = ref<string | null>(null)
 
-const ACTIONABLE = new Set(['PROPOSED', 'EDITED', 'APPLY_FAILED'])
-
-const scopeState = computed(() => session.view?.scope ?? { status: 'none' as const })
-const showScopeCard = computed(
-  () => scopeState.value.status === 'proposed' && !scopeDismissed.value,
-)
-const showGettingStarted = computed(
-  () => props.sessionId !== null && scopeState.value.status === 'none',
-)
-
-const byContribution = computed(() => {
-  const map = new Map<string, ProposalCardData[]>()
-  for (const card of proposals.cards) {
-    if (card.overflow) continue
-    const list = map.get(card.contributionId) ?? []
-    list.push(card)
-    map.set(card.contributionId, list)
-  }
-  return map
-})
-
-type FeedItem =
-  | { type: 'turn'; key: string; kind: 'contribution' | 'question' | 'notice'; speaker: string; text: string }
-  | { type: 'cluster'; key: string; cards: ProposalCardData[]; sourceText: string }
-
-const contribStatus = computed(
-  () => new Map((session.view?.contributions ?? []).map((contribution) => [contribution.contributionId, contribution.status])),
-)
-
-const feed = computed<FeedItem[]>(() => {
-  const items: FeedItem[] = []
-  const turns = session.view?.transcript ?? []
-  for (const [index, turn] of turns.entries()) {
-    // The scope question is rendered as its own F05 card, not a plain message.
-    if (turn.kind === 'question' && turn.questionKind === 'scope') continue
-    items.push({
-      type: 'turn',
-      key: `t${String(index)}`,
-      kind: turn.kind,
-      speaker: turn.speaker,
-      text: turn.text,
-    })
-    if (turn.kind !== 'contribution' || turn.contributionId === undefined) continue
-
-    const cards = byContribution.value.get(turn.contributionId)
-    if (cards !== undefined && cards.length > 0) {
-      items.push({ type: 'cluster', key: `c${turn.contributionId}`, cards, sourceText: turn.text })
-      continue
-    }
-    // No proposals for this contribution. Give the facilitator a visible reply
-    // so a turn never looks dropped — unless it already answered with a
-    // question or a notice (the next transcript turn), which stands on its own.
-    if (turns[index + 1]?.kind === 'question' || turns[index + 1]?.kind === 'notice') continue
-    const status = contribStatus.value.get(turn.contributionId)
-    if (status === 'failed') {
-      items.push({
-        type: 'turn',
-        key: `k${turn.contributionId}`,
-        kind: 'notice',
-        speaker: 'facilitator',
-        text: "I couldn't make sense of that one — try rephrasing it.",
-      })
-    } else if (status === 'derived') {
-      items.push({
-        type: 'turn',
-        key: `k${turn.contributionId}`,
-        kind: 'notice',
-        speaker: 'facilitator',
-        text: 'Noted — nothing to capture from that one.',
-      })
-    }
-  }
-  return items
-})
-
-// Once the scope is set, the fixed opening prompt (UI chrome, see the template)
-// leads the feed and stays there — it reads as a chat log, messages append
-// below it (brief §5). Before that it is the F05 scope card (`showScopeCard`).
-const showFirstPrompt = computed(() => scopeState.value.status === 'set')
-
-const actionable = computed(() =>
-  proposals.cards.filter((card) => ACTIONABLE.has(card.disposition)),
-)
-const parked = computed(() => actionable.value.filter((card) => card.held))
-const awaiting = computed(() => actionable.value.filter((card) => !card.held))
-const pendingCount = computed(() => actionable.value.length)
-const anyHeld = computed(() => parked.value.length > 0)
-
-const catchingUp = computed(() =>
-  (session.view?.contributions ?? []).some(
-    (contribution) => contribution.status === 'pending' || contribution.status === 'interpreting',
-  ),
-)
-
-const acceptableInCluster = (cards: ProposalCardData[]): ProposalCardData[] =>
-  cards.filter((card) => !card.held && ACTIONABLE.has(card.disposition))
-
-const run = async (work: Promise<unknown>, boardDirty = false): Promise<void> => {
-  await work
-  if (boardDirty) emit('board-dirty')
-  emit('mutated')
-}
-
-const onAccept = (id: string): Promise<void> => run(acceptProposal(id), true)
-const onReject = (id: string): Promise<void> => run(rejectProposal(id))
-const onHold = (id: string): Promise<void> => run(holdProposal(id))
-const onUnhold = (id: string): Promise<void> => run(unholdProposal(id))
-const onEdit = (id: string, label: string): Promise<void> => run(editProposal(id, label))
-
-const acceptEvery = async (cards: ProposalCardData[]): Promise<void> => {
-  for (const card of cards) await acceptProposal(card.proposalId)
-  emit('board-dirty')
-  emit('mutated')
-}
-const onAcceptAllCluster = (cards: ProposalCardData[]): Promise<void> =>
-  acceptEvery(acceptableInCluster(cards))
-const onAcceptAllRemaining = (): Promise<void> => acceptEvery(awaiting.value)
-
-const onScopeAccept = (): Promise<void> => {
-  const statement = scopeState.value.proposedStatement
-  return statement === undefined ? Promise.resolve() : run(setScope(props.workshopId, statement))
-}
-const onScopeEdit = (statement: string): Promise<void> => run(setScope(props.workshopId, statement))
 const onScopeReject = (): void => {
-  scopeDismissed.value = true
+  dismissScopeCard()
 }
 
-const onSubmit = (text: string): Promise<void> =>
-  props.sessionId === null ? Promise.resolve() : run(submitContribution(props.sessionId, text))
+const onAcceptAllCluster = (cards: ProposalCard[]): Promise<void> =>
+  review.onAcceptAllCluster(cards, acceptableInCluster(cards))
+
+const onAcceptAllRemaining = (): Promise<void> =>
+  review.onAcceptAllRemaining(awaiting.value)
 
 const onJump = async (proposalId: string): Promise<void> => {
   drawerOpen.value = false
@@ -207,85 +101,26 @@ const onJump = async (proposalId: string): Promise<void> => {
             <CollapsibleTrigger class="dock__min" aria-label="Collapse the dock">–</CollapsibleTrigger>
           </header>
 
-          <div class="dock__feed">
-            <p v-if="showGettingStarted" class="dock__placeholder" role="status">
-              Getting started… the facilitator is preparing your first question.
-            </p>
-
-            <div v-if="showScopeCard" class="dock__scope">
-              <ConversationTurn
-                kind="question"
-                speaker="facilitator"
-                text="What business are we mapping? Here’s a starting point — accept, edit, or reject it."
-              />
-              <div class="dock__cluster">
-                <ProposalCard
-                  kind-label="SCOPE"
-                  :label="scopeState.proposedStatement ?? ''"
-                  disposition="PROPOSED"
-                  :no-hold="true"
-                  @accept="onScopeAccept"
-                  @edit="onScopeEdit"
-                  @reject="onScopeReject"
-                />
-              </div>
-            </div>
-
-            <!--
-              A UI affordance (brief §5), not a facilitator.askOpening turn:
-              fixed copy that leads the feed once the scope is set. The model's
-              only opening turn is the scope question, rendered as the F05 card above.
-            -->
-            <ConversationTurn
-              v-if="showFirstPrompt"
-              kind="question"
-              speaker="facilitator"
-              text="Scope set. Now walk me through it — describe the first thing that happens, one moment at a time."
-            />
-
-            <template v-for="item in feed" :key="item.key">
-              <ConversationTurn
-                v-if="item.type === 'turn'"
-                :kind="item.kind"
-                :speaker="item.speaker"
-                :text="item.text"
-              />
-              <div v-else class="dock__cluster">
-                <div
-                  v-for="card in item.cards"
-                  :id="`proposal-${card.proposalId}`"
-                  :key="card.proposalId"
-                  class="dock__cardslot"
-                  :class="{ 'dock__cardslot--pulse': pulsingId === card.proposalId }"
-                >
-                  <ProposalCard
-                    :kind-label="kindLabel(card.blockKind)"
-                    :pill-kind="card.blockKind"
-                    :label="liveLabel(card)"
-                    :disposition="card.disposition"
-                    :held="card.held"
-                    :bar="card.bar"
-                    :apply-failed-reason="card.applyFailedReason"
-                    :accepter="accepter"
-                    :source-text="item.sourceText"
-                    @accept="onAccept(card.proposalId)"
-                    @reject="onReject(card.proposalId)"
-                    @hold="onHold(card.proposalId)"
-                    @unhold="onUnhold(card.proposalId)"
-                    @edit="(label) => onEdit(card.proposalId, label)"
-                  />
-                </div>
-                <button
-                  v-if="acceptableInCluster(item.cards).length > 1"
-                  type="button"
-                  class="dock__acceptall"
-                  @click="onAcceptAllCluster(item.cards)"
-                >
-                  Accept all
-                </button>
-              </div>
-            </template>
-          </div>
+          <DockFeed
+            :show-getting-started="showGettingStarted"
+            :show-scope-card="showScopeCard"
+            :show-first-prompt="showFirstPrompt"
+            :scope-state="scopeState"
+            :feed="feed"
+            :block-labels="blockLabels"
+            :accepter="accepter"
+            :pulsing-id="pulsingId"
+            :acceptable-in-cluster="acceptableInCluster"
+            @scope-accept="review.onScopeAccept"
+            @scope-edit="review.onScopeEdit"
+            @scope-reject="onScopeReject"
+            @accept="review.onAccept"
+            @reject="review.onReject"
+            @hold="review.onHold"
+            @unhold="review.onUnhold"
+            @edit="review.onEdit"
+            @accept-all-cluster="onAcceptAllCluster"
+          />
 
           <DockComposer :catching-up="catchingUp" @submit="onSubmit" />
         </div>
@@ -359,49 +194,6 @@ const onJump = async (proposalId: string): Promise<void> => {
   color: var(--color-text-soft);
   cursor: pointer;
   padding: 4px 8px;
-}
-.dock__feed {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-.dock__placeholder,
-.dock__scope {
-  margin-bottom: 12px;
-}
-.dock__placeholder {
-  font-size: 0.9375rem;
-  color: var(--color-text-soft);
-}
-.dock__cluster {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 6px 0 12px 40px;
-}
-.dock__cardslot--pulse {
-  animation: pulse 1.2s var(--ease-flight);
-  border-radius: var(--radius-card);
-}
-@keyframes pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-  25% {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-event) 45%, transparent);
-  }
-}
-.dock__acceptall {
-  align-self: flex-start;
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--color-event-ink);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 0;
 }
 
 .dock__handle {
