@@ -48,8 +48,8 @@ presentation hard to evolve independently.
 
 | ID | Status |
 | -- | ------ |
-| BWP-01 | Pending |
-| BWP-02 | Pending |
-| BWP-03 | Pending |
-| BWP-04 | Pending |
-| BWP-05 | Pending |
+| BWP-01 | Done |
+| BWP-02 | Done |
+| BWP-03 | Done |
+| BWP-04 | Done |
+| BWP-05 | Done |
