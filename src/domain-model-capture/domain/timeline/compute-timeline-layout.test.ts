@@ -141,6 +141,33 @@ describe('computeTimelineLayout', () => {
     expect(layout.attachments).toEqual({ eA: [bid('a1')] })
   })
 
+  it('sorts multiple causes under one event by id', () => {
+    const snapshot = snapshotOf([
+      { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
+      { kind: 'identify-actor', id: 'a2', label: 'Waiter' },
+      { kind: 'identify-actor', id: 'a1', label: 'Clerk' },
+      { kind: 'identify-system', id: 's1', label: 'Catalogue' },
+      { kind: 'place', target: 'eA' },
+      { kind: 'link-cause', cause: 'a2', effect: 'eA' },
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+      { kind: 'link-cause', cause: 's1', effect: 'eA' },
+    ])
+
+    expect(computeTimelineLayout(snapshot).attachments).toEqual({
+      eA: [bid('a1'), bid('a2'), bid('s1')],
+    })
+  })
+
+  it('omits causedBy when the effect is not on the timeline', () => {
+    const snapshot = snapshotOf([
+      { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },
+      { kind: 'identify-actor', id: 'a1', label: 'Clerk' },
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+    ])
+
+    expect(computeTimelineLayout(snapshot).attachments).toEqual({})
+  })
+
   it('omits a withdrawn cause from attachments', () => {
     const snapshot = snapshotOf([
       { kind: 'capture-domain-event', id: 'eA', label: 'Loan recorded' },

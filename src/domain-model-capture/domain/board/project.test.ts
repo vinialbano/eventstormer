@@ -187,6 +187,15 @@ describe('project (read-model fold)', () => {
     expect(snap.blocks.get(bid('eA'))?.withdrawn).toBe(true)
   })
 
+  it('unmarks pivotal without touching placement or edges', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
+    snap = project(snap, op({ kind: 'place', target: 'eA' }))
+    snap = project(snap, op({ kind: 'mark-pivotal', target: 'eA' }))
+    snap = project(snap, op({ kind: 'unmark-pivotal', target: 'eA' }))
+    expect(snap.blocks.get(bid('eA'))?.pivotal).toBe(false)
+    expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
+  })
+
   it('reinstate returns a previously placed pivotal event to a naked backlog', () => {
     let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
     snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))

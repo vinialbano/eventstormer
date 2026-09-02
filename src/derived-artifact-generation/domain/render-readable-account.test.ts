@@ -192,4 +192,90 @@ Scope: (not set)
       after.markdown.slice(after.markdown.indexOf('## Quoted evidence')),
     )
   })
+
+  it('indents fork successors under their predecessor', () => {
+    const loanId = 'eA' as BuildingBlockId
+    const bookId = 'eB' as BuildingBlockId
+    const fineId = 'eC' as BuildingBlockId
+    const { markdown } = renderReadableAccount({
+      position: 3,
+      format: 'big-picture',
+      scope: null,
+      narratorCount: 1,
+      blocks: [
+        { id: loanId, kind: 'domain-event', label: 'Loan recorded', withdrawn: false, placement: 'timeline' },
+        { id: bookId, kind: 'domain-event', label: 'Book returned', withdrawn: false, placement: 'timeline' },
+        { id: fineId, kind: 'domain-event', label: 'Fine assessed', withdrawn: false, placement: 'timeline' },
+      ],
+      follows: [
+        { predecessor: loanId, successor: bookId },
+        { predecessor: loanId, successor: fineId },
+      ],
+      quotes: [],
+    })
+
+    expect(markdown).toContain('- Event: Loan recorded')
+    expect(markdown).toContain('  - Event: Book returned')
+    expect(markdown).toContain('  - Event: Fine assessed')
+  })
+
+  it('renders two disconnected timeline components as separate roots', () => {
+    const loanId = 'e1' as BuildingBlockId
+    const bookId = 'e2' as BuildingBlockId
+    const fineId = 'e3' as BuildingBlockId
+    const { markdown } = renderReadableAccount({
+      position: 3,
+      format: 'big-picture',
+      scope: null,
+      narratorCount: 1,
+      blocks: [
+        { id: loanId, kind: 'domain-event', label: 'Loan recorded', withdrawn: false, placement: 'timeline' },
+        { id: bookId, kind: 'domain-event', label: 'Book returned', withdrawn: false, placement: 'timeline' },
+        { id: fineId, kind: 'domain-event', label: 'Fine paid', withdrawn: false, placement: 'timeline' },
+      ],
+      follows: [{ predecessor: loanId, successor: bookId }],
+      quotes: [],
+    })
+
+    expect(markdown).toContain('- Event: Loan recorded')
+    expect(markdown).toContain('  - Event: Book returned')
+    expect(markdown).toContain('- Event: Fine paid')
+  })
+
+  it('registers caused-by reference sites for both endpoints', () => {
+    const { references } = renderReadableAccount({
+      position: 2,
+      format: 'big-picture',
+      scope: null,
+      narratorCount: 0,
+      blocks: [
+        { id: actorId, kind: 'actor', label: 'Clerk', withdrawn: false },
+        { id: placedId, kind: 'domain-event', label: 'Order placed', withdrawn: false, placement: 'timeline' },
+      ],
+      causedBy: [{ cause: actorId, effect: placedId }],
+      quotes: [],
+    })
+
+    expect(references.get(actorId)).toEqual(
+      expect.arrayContaining([
+        { kind: 'readable-account', path: 'building-blocks' },
+        { kind: 'caused-by', path: `${actorId}>${placedId}` },
+      ]),
+    )
+    expect(references.get(placedId)).toEqual(
+      expect.arrayContaining([
+        { kind: 'readable-account', path: 'building-blocks' },
+        { kind: 'caused-by', path: `${actorId}>${placedId}` },
+      ]),
+    )
+  })
+
+  it('renders multiline quotes with a greater-than prefix on each line', () => {
+    const { markdown } = renderReadableAccount({
+      ...emptyInput,
+      quotes: [{ id: 'c_1', text: 'First line\nSecond line' }],
+    })
+
+    expect(markdown).toContain('> First line\n> Second line')
+  })
 })
