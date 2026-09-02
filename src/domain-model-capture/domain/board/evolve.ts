@@ -77,6 +77,7 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'withdraw': {
       const block = next.blocks.get(op.target)
       if (block) next.blocks.set(op.target, { ...block, withdrawn: true })
+      next.annotates.delete(op.target)
       dropIncident(next, op.target)
       break
     }

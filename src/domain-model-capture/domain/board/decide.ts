@@ -144,13 +144,42 @@ const referencingEffects = (
   return effects.toSorted((left, right) => left.localeCompare(right))
 }
 
+const annotatingHotSpots = (
+  writeModel: BoardWriteModel,
+  target: BuildingBlockId,
+): BuildingBlockId[] => {
+  const hotSpots: BuildingBlockId[] = []
+  for (const [hotSpot, annotated] of writeModel.annotates) {
+    if (annotated === target && writeModel.blocks.get(hotSpot)?.withdrawn === false) {
+      hotSpots.push(hotSpot)
+    }
+  }
+  return hotSpots.toSorted((left, right) => left.localeCompare(right))
+}
+
 const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>): Decision => {
   const block = writeModel.blocks.get(operation.target)
   if (!block) return unknownTarget(operation.target)
   if (block.withdrawn) {
     return err({ kind: 'already-withdrawn', classification: 'systemic', target: operation.target })
   }
-  if (block.kind !== 'actor' && block.kind !== 'system') return ok([operation])
+  // Withdrawing a hot spot drops its own annotation edge as a follow-on.
+  if (block.kind === 'hot-spot') {
+    const unannotate: OpOf<'unannotate'>[] = writeModel.annotates.has(operation.target)
+      ? [{ kind: 'unannotate', hotSpot: operation.target, author: operation.author, v: operation.v }]
+      : []
+    return ok([operation, ...unannotate])
+  }
+  // Withdrawing anything else cascades to every live hot spot annotating it.
+  const cascade: OpOf<'withdraw'>[] = annotatingHotSpots(writeModel, operation.target).map(
+    (hotSpot) => ({
+      kind: 'withdraw',
+      target: hotSpot,
+      author: operation.author,
+      v: operation.v,
+    }),
+  )
+  if (block.kind !== 'actor' && block.kind !== 'system') return ok([operation, ...cascade])
   const unlinks: OpOf<'unlink-cause'>[] = referencingEffects(writeModel, operation.target).map(
     (effect) => ({
       kind: 'unlink-cause',
@@ -160,7 +189,7 @@ const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>
       v: operation.v,
     }),
   )
-  return ok([operation, ...unlinks])
+  return ok([operation, ...cascade, ...unlinks])
 }
 
 const decideReinstate = (writeModel: BoardWriteModel, operation: OpOf<'reinstate'>): Decision => {

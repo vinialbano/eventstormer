@@ -1019,6 +1019,81 @@ describe('decide — raise-hot-spot / annotate / unannotate', () => {
   })
 })
 
+describe('decide — withdraw annotation cascades', () => {
+  const annotated = [
+    { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+    { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+    { kind: 'annotate', hotSpot: 'h1', target: 'e1' },
+  ]
+
+  it('withdrawing the annotated block also withdraws the hot spot annotating it', () => {
+    const writeModel = given(annotated)
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'e1' }),
+        op({ kind: 'withdraw', target: 'h1' }),
+      ])
+    }
+  })
+
+  it('withdrawing a hot spot that annotates something appends an unannotate; the target is untouched', () => {
+    const writeModel = given(annotated)
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'h1' }),
+        op({ kind: 'unannotate', hotSpot: 'h1' }),
+      ])
+    }
+    const after = evolve(writeModel, op({ kind: 'withdraw', target: 'h1' }))
+    expect(after.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: false })
+  })
+
+  it('withdrawing a hot spot annotating nothing is a single withdraw', () => {
+    const writeModel = given([
+      { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'withdraw', target: 'h1' })])
+  })
+
+  it('two hot spots annotating one block are both withdrawn in sorted order', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+      { kind: 'raise-hot-spot', id: 'hb', label: 'b' },
+      { kind: 'raise-hot-spot', id: 'ha', label: 'a' },
+      { kind: 'annotate', hotSpot: 'hb', target: 'e1' },
+      { kind: 'annotate', hotSpot: 'ha', target: 'e1' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'e1' }),
+        op({ kind: 'withdraw', target: 'ha' }),
+        op({ kind: 'withdraw', target: 'hb' }),
+      ])
+    }
+  })
+
+  it('no dangling annotation remains in the snapshot after the cascade (acceptance test 21)', () => {
+    const log = [
+      ...annotated,
+      { kind: 'withdraw', target: 'e1' },
+      { kind: 'withdraw', target: 'h1' },
+    ].map((raw) => op(raw))
+    const snap = replay(log)
+    expect(snap.blocks.get(bid('e1'))?.withdrawn).toBe(true)
+    expect(snap.blocks.get(bid('h1'))?.withdrawn).toBe(true)
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBeNull()
+    expect(snap.hotSpotCount).toBe(0)
+  })
+})
+
 describe('decide — resolve / reopen', () => {
   const openHotSpot = [
     { kind: 'capture-domain-event', id: 'e1', label: 'payment' },

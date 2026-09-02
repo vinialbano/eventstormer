@@ -115,7 +115,13 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       patchBlock(blocks, op.target, { label: op.label })
       break
     case 'withdraw':
-      patchBlock(blocks, op.target, { withdrawn: true })
+      patchBlock(
+        blocks,
+        op.target,
+        blocks.get(op.target)?.kind === 'hot-spot'
+          ? { withdrawn: true, annotates: null }
+          : { withdrawn: true },
+      )
       follows = dropIncidentFollows(follows, op.target)
       causedBy = dropIncidentCausedBy(causedBy, op.target)
       break
