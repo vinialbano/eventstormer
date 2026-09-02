@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import { useRelateBlocks } from './interactions/relate-blocks/use-relate-blocks.ts'
-import { useBoardSelection } from './composables/use-board-selection.ts'
+import { useSelectBlock } from './interactions/select-block/use-select-block.ts'
 import { useFreshStickyHighlight } from './composables/use-fresh-sticky-highlight.ts'
 import { useBoardKeyboard } from './interactions/board-keyboard/use-board-keyboard.ts'
 import { fetchBlockReferences } from './interactions/reword-block/reword-references.ts'
@@ -44,7 +44,7 @@ const onBoardDirty = (): void => {
   emit('board-dirty')
 }
 
-const selection = useBoardSelection(blocks, timeline)
+const selection = useSelectBlock(blocks, timeline)
 const {
   selectedId,
   withdrawAskId,
