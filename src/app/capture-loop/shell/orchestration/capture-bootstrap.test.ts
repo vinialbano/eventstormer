@@ -23,6 +23,11 @@ const viewWithContributions = (): SessionView => ({
   fullyDerived: true,
 })
 
+// Suite: capture-bootstrap
+// Invariant: Cold load always fetches session; board load is gated on contributions.
+// Boundary IN: Bootstrap predicates and coldLoadCaptureScreen sequencing.
+// Boundary OUT: Interpretation poll loop and CaptureScreen mount integration.
+
 describe('capture-bootstrap', () => {
   it('loads board on bootstrap only when contributions exist', () => {
     expect(shouldLoadBoardOnBootstrap(null)).toBe(false)

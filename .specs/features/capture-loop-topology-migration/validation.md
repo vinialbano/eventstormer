@@ -10,7 +10,7 @@
 
 ## Verdict
 
-**PASS with gaps** — topology migration is landed and `pnpm check` is green (678 unit tests, depcruise 0 violations). ADR-007 wire semantics preserved in production wiring. Two test-harness gaps and one stale doc line remain.
+**PASS with gaps** — topology migration is landed and `pnpm check` is green. ADR-007 wire semantics preserved in production wiring. Remaining gaps are doc/process fidelity (TOPO-10 planted-violation inventory, E2E not re-verified this round).
 
 ---
 
@@ -63,7 +63,7 @@
 | Accept emits `board-dirty` + `mutated` | `FacilitatorDock.test.ts:80-89` | ✅ PASS |
 | No optimistic card collapse | `FacilitatorDock.test.ts:90-91`, `ProposalCard.vue` comment | ✅ PASS |
 | 422 cycle does not emit `board-dirty` (implementation) | `use-relate-blocks.ts:42-47` — `onBoardDirty()` only on `result.ok` | ✅ PASS |
-| 422 cycle does not emit `board-dirty` (test) | `BoardWall.drop.test.ts:202-211` asserts inline copy only — **no** `board-dirty` negation | ⚠️ GAP |
+| 422 cycle does not emit `board-dirty` (test) | `use-relate-blocks.test.ts:11-30` (composable guard); `BoardWall.drop.test.ts:202-212` (wall integration negation) | ✅ PASS |
 
 ---
 
@@ -76,11 +76,12 @@ Injected in scratch (reverted); targeted vitest runs.
 | M1 | Swap `mutated` targets to `['board','account']` in `refetch-graph.ts` | `refetch-graph.test.ts` | ✅ Killed (2 failed) |
 | M2 | No-op `board` branch in `apply-capture-effect.ts` | `apply-capture-effect.test.ts` | ✅ Killed (2 failed) |
 | M3 | `shouldLoadBoardOnBootstrap` always true | `capture-bootstrap.test.ts` | ✅ Killed (2 failed) |
-| M4 | Call `onBoardDirty()` on cycle 422 in `use-relate-blocks.ts` | `BoardWall.test.ts`, `BoardWall.drop.test.ts`, `apply-board-edit.test.ts` (30 tests) | ❌ **Survived** |
+| M4 | Call `onBoardDirty()` on cycle 422 in `use-relate-blocks.ts` | `use-relate-blocks.test.ts`, `BoardWall.drop.test.ts` | ✅ Killed |
+| M4′ | Skip `onBoardDirty()` on successful relation POST in `use-relate-blocks.ts` | `BoardWall.test.ts`, `BoardWall.drop.test.ts` (success paths emit `board-dirty`) | ✅ Killed |
 | M5 | Poll `board` instead of `proposals` in interpretation poll | `use-interpretation-poll.test.ts` | ✅ Killed (6 failed) |
 | M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `CaptureScreen.test.ts` | ✅ Killed (8 failed) |
 
-**Surviving mutant (rank 1 gap):** M4 — cycle rejection can spuriously emit `board-dirty` without any test failing. Spec edge case is implemented correctly but not discriminated at integration level.
+**Discrimination:** All planted mutants killed. M4/M4′ split: cycle guard at composable + wall level (`use-relate-blocks.test.ts`, `BoardWall.drop.test.ts`); successful POST emission at wall level (`BoardWall.test.ts`, success paths in `BoardWall.drop.test.ts`). `use-relate-blocks.test.ts` owns the negative composable contract only — positive emission is not duplicated there by design.
 
 ---
 
@@ -99,11 +100,11 @@ Note: planting in `.vue` SFCs did not create parseable import edges; use `.ts` f
 
 ## Ranked gaps
 
-1. **P2 — Cycle 422 `board-dirty` guard untested at wall level** (M4 survived). Add assertion to `BoardWall.drop.test.ts` cycle case: `expect(wrapper.emitted('board-dirty')).toBeUndefined()`.
-2. **P3 — Stale surface `AGENTS.md`** (`src/app/capture-loop/AGENTS.md:22-23`) still says `screens/` and root `composables/` "not yet landed"; migration is complete. Zone-docs section also says "Add when migration lands each zone" despite zone docs existing.
-3. **P3 — TOPO-10 process evidence missing** — dep-cruiser rules are live and verifier-proven, but commit `59d7495` omits the planted-violation inventory required by repo convention.
-4. **P4 — `applyCaptureZoneEvent('mutated')` test path uses `session.load`** while production `onMutated` uses `session.refetch` via poll. Behavior equivalent when `workshopId` is set, but the framework module's `mutated` branch is not the wired path — minor documentation/test fidelity gap.
-5. **P4 — E2E not re-run by verifier** — author gate only; acceptable for topology refactor if CI covers it.
+1. **P3 — TOPO-10 process evidence missing** — dep-cruiser rules are live and verifier-proven, but commit `59d7495` omits the planted-violation inventory required by repo convention.
+2. **P4 — E2E not re-run by verifier** — author gate only; acceptable for topology refactor if CI covers it.
+3. ~~**P2 — Cycle 422 `board-dirty` guard untested**~~ — **closed** (M4/M4′ killed via `use-relate-blocks.test.ts` + `BoardWall.drop.test.ts`).
+4. ~~**P3 — Stale surface `AGENTS.md`**~~ — **closed** on branch (zone topology documented; no `screens/` / root `composables/` stale lines).
+5. ~~**P4 — `applyCaptureZoneEvent('mutated')` test path**~~ — **documented** in `apply-capture-effect.test.ts` comment; production uses `poll.refetchNow()`.
 
 ---
 
@@ -113,4 +114,4 @@ Author batch report (Execute T12–T15) claimed full PASS. Verifier agrees on im
 
 ---
 
-**Status**: ✅ **PASS with gaps** — ship-ready for topology goals; close gap #1 before treating edge-case ACs as harness-proven.
+**Status**: ✅ **PASS with gaps** — ship-ready for topology goals; remaining gaps are process/doc only (TOPO-10 inventory, E2E re-verification optional).

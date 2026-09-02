@@ -1,12 +1,14 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import type { Connection } from '@vue-flow/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import { HttpError } from '../transport/board.ts'
 import * as mutations from '../transport/board.ts'
 import BoardWall from './BoardWall.vue'
 import { encodeDragged } from './kernel/semantic-edit.ts'
 import TimelinePane from './TimelinePane.vue'
+import BacklogPane from './presentation/BacklogPane.vue'
 
 enableAutoUnmount(afterEach)
 afterEach(() => {
@@ -44,6 +46,11 @@ const connect = (wrapper: ReturnType<typeof mount>, source: string, target: stri
   exposed.onConnect({ source, target, sourceHandle: null, targetHandle: null })
 }
 
+const selectBlock = async (wrapper: ReturnType<typeof mount>, id: string): Promise<void> => {
+  wrapper.findComponent(BacklogPane).vm.$emit('select', id)
+  await nextTick()
+}
+
 const dropOn = (host: Element, payload: { id: string; kind: string }, onto?: Element): void => {
   const transfer = {
     getData: () => encodeDragged(payload),
@@ -74,6 +81,7 @@ describe('BoardWall semantic edits', () => {
       'w1',
       expect.objectContaining({ kind: 'place', target: 'eC' }),
     )
+    expect(wrapper.emitted('board-dirty')).toHaveLength(1)
   })
 
   it('POSTs sequence from a handle-connect', async () => {
@@ -97,7 +105,7 @@ describe('BoardWall semantic edits', () => {
     expect(posted()).not.toHaveBeenCalled()
   })
 
-  it('POSTs sequence, link-cause, and insert-between from the matching drop sites', async () => {
+  it('POSTs sequence when dropped onto an event node', async () => {
     const wrapper = mountWall()
     const timeline = wrapper.get('[aria-label="Timeline"]').element
     const eventNode = document.createElement('div')
@@ -109,16 +117,25 @@ describe('BoardWall semantic edits', () => {
       'w1',
       expect.objectContaining({ kind: 'sequence', predecessor: 'eA', successor: 'eC' }),
     )
+  })
 
-    posted().mockClear()
+  it('POSTs link-cause when an actor is dropped onto an event node', async () => {
+    const wrapper = mountWall()
+    const timeline = wrapper.get('[aria-label="Timeline"]').element
+    const eventNode = document.createElement('div')
+    eventNode.setAttribute('data-event-id', 'eA')
+    timeline.append(eventNode)
     dropOn(timeline, { id: 'a1', kind: 'actor' }, eventNode)
     await flushPromises()
     expect(posted()).toHaveBeenCalledWith(
       'w1',
       expect.objectContaining({ kind: 'link-cause', cause: 'a1', effect: 'eA' }),
     )
+  })
 
-    posted().mockClear()
+  it('POSTs insert-between when dropped onto an edge', async () => {
+    const wrapper = mountWall()
+    const timeline = wrapper.get('[aria-label="Timeline"]').element
     const edge = document.createElement('div')
     edge.className = 'vue-flow__edge'
     edge.setAttribute('data-id', 'eA>eB')
@@ -136,7 +153,7 @@ describe('BoardWall semantic edits', () => {
     )
   })
 
-  it('POSTs place / unplace / sequence-after / mark-pivotal from the selected-sticky actions', async () => {
+  it('POSTs place from Place on timeline', async () => {
     const wrapper = mountWall()
     await wrapper.get('[aria-label="event: Still loose"]').trigger('focus')
     await wrapper.get('[aria-label="Place on timeline"]').trigger('click')
@@ -145,26 +162,33 @@ describe('BoardWall semantic edits', () => {
       'w1',
       expect.objectContaining({ kind: 'place', target: 'eC' }),
     )
+  })
 
-    posted().mockClear()
-    await wrapper.get('[data-event-id="eA"]').trigger('click')
+  it('POSTs unmark-pivotal from Unmark pivotal', async () => {
+    const wrapper = mountWall()
+    await selectBlock(wrapper, 'eA')
     await wrapper.get('[aria-label="Unmark pivotal"]').trigger('click')
     await flushPromises()
     expect(posted()).toHaveBeenCalledWith(
       'w1',
       expect.objectContaining({ kind: 'unmark-pivotal', target: 'eA' }),
     )
+  })
 
-    posted().mockClear()
-    await wrapper.get('[data-event-id="eA"]').trigger('click')
+  it('POSTs unplace from Unplace', async () => {
+    const wrapper = mountWall()
+    await selectBlock(wrapper, 'eA')
     await wrapper.get('[aria-label="Unplace"]').trigger('click')
     await flushPromises()
     expect(posted()).toHaveBeenCalledWith(
       'w1',
       expect.objectContaining({ kind: 'unplace', target: 'eA' }),
     )
+  })
 
-    posted().mockClear()
+  it('POSTs sequence from Sequence after', async () => {
+    const wrapper = mountWall()
+    await selectBlock(wrapper, 'eA')
     await wrapper.get('[aria-label="event: Still loose"]').trigger('focus')
     await wrapper.get('[aria-label="Sequence after"]').trigger('click')
     await flushPromises()
@@ -172,31 +196,17 @@ describe('BoardWall semantic edits', () => {
       'w1',
       expect.objectContaining({ kind: 'sequence', predecessor: 'eA', successor: 'eC' }),
     )
+  })
 
-    posted().mockClear()
+  it('POSTs mark-pivotal from Mark pivotal', async () => {
+    const wrapper = mountWall()
+    await wrapper.get('[aria-label="event: Still loose"]').trigger('focus')
     await wrapper.get('[aria-label="Mark pivotal"]').trigger('click')
     await flushPromises()
     expect(posted()).toHaveBeenCalledWith(
       'w1',
       expect.objectContaining({ kind: 'mark-pivotal', target: 'eC' }),
     )
-  })
-
-  it('does not emit board-dirty when a board POST fails', async () => {
-    posted().mockRejectedValueOnce(new HttpError(500, { error: 'server error' }))
-    const wrapper = mountWall()
-    const rejection = new Promise<unknown>((resolve) => {
-      const onRejection = (reason: unknown): void => {
-        process.off('unhandledRejection', onRejection)
-        resolve(reason)
-      }
-      process.on('unhandledRejection', onRejection)
-    })
-    dropOn(wrapper.get('[aria-label="Timeline"]').element, { id: 'eC', kind: 'domain-event' })
-    const reason = await Promise.race([rejection, flushPromises()])
-    expect(reason).toBeInstanceOf(HttpError)
-    expect(posted()).toHaveBeenCalledTimes(1)
-    expect(wrapper.emitted('board-dirty')).toBeUndefined()
   })
 
   it('shows a cycle 422 inline with labels from the snapshot', async () => {

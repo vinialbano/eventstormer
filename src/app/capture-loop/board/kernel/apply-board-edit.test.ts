@@ -12,6 +12,11 @@ const labels = new Map([
   ['eB', 'Book returned'],
 ])
 
+// Suite: apply-board-edit
+// Invariant: POST apply returns ok or typed cycle inline copy; other errors rethrow.
+// Boundary IN: Kernel transport apply and 422 cycle mapping.
+// Boundary OUT: onBoardDirty emission and UI feedback (use-relate-blocks.test.ts).
+
 describe('applyBoardEdit', () => {
   it('POSTs the edit with author and returns ok', async () => {
     vi.spyOn(boardTransport, 'postBoardOperation').mockResolvedValue({ position: 1 })
@@ -48,6 +53,21 @@ describe('applyBoardEdit', () => {
       ok: false,
       cycleError: 'That sequence would loop: Loan recorded → Book returned → Loan recorded.',
     })
+  })
+
+  it('rethrows non-cycle 422 errors', async () => {
+    vi.spyOn(boardTransport, 'postBoardOperation').mockRejectedValue(
+      new HttpError(422, { error: 'kind-permission' }),
+    )
+
+    await expect(
+      applyBoardEdit({
+        workshopId: 'w1',
+        accepter: 'Maria',
+        edit: { kind: 'place', target: 'eA' },
+        blockLabels: labels,
+      }),
+    ).rejects.toThrow(HttpError)
   })
 
   it('rethrows non-cycle errors', async () => {

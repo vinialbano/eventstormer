@@ -15,9 +15,15 @@ describe('refetch-graph', () => {
     expect(REFETCH_BY_ZONE_EVENT['board-dirty']).toEqual(['board', 'account'])
   })
 
-  it('covers every zone event', () => {
+  it('maps every zone event to its declared refetch targets', () => {
     for (const event of ZONE_EVENTS) {
-      expect(refetchTargetsFor(event).length).toBeGreaterThan(0)
+      expect(refetchTargetsFor(event)).toEqual(REFETCH_BY_ZONE_EVENT[event])
     }
+  })
+
+  it('excludes board and account from mutated targets', () => {
+    const targets = refetchTargetsFor('mutated')
+    expect(targets).not.toContain('board')
+    expect(targets).not.toContain('account')
   })
 })

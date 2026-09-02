@@ -17,6 +17,11 @@ const ports = (): CaptureEffectPorts => ({
   account: port(),
 })
 
+// Suite: apply-capture-effect
+// Invariant: Zone events invoke the correct store loaders through injected ports.
+// Boundary IN: applyCaptureZoneEvent port orchestration (framework-free).
+// Boundary OUT: Production onMutated wiring via useInterpretationPoll.refetchNow().
+
 describe('applyCaptureZoneEvent', () => {
   it('refetches board and account on board-dirty', async () => {
     const effectPorts = ports()
@@ -28,6 +33,8 @@ describe('applyCaptureZoneEvent', () => {
     expect(effectPorts.proposals.refetch).not.toHaveBeenCalled()
   })
 
+  // Production routes onMutated through useInterpretationPoll.refetchNow(), not
+  // applyCaptureZoneEvent('mutated'). This test guards the graph contract if wired later.
   it('refetches session and proposals on mutated', async () => {
     const effectPorts = ports()
     await applyCaptureZoneEvent('mutated', effectPorts, { workshopId: 'w1' })
