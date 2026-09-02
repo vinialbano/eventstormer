@@ -3,8 +3,6 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import type { BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
-import { BoardWall } from '../board/index.ts'
-import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import CaptureScreen from './CaptureScreen.vue'
 
 const sessionView = (over: Partial<SessionView> = {}): SessionView => ({
@@ -44,9 +42,9 @@ afterEach(() => {
 })
 
 // Suite: CaptureScreen
-// Invariant: Shell wires zone events and poll to server-confirmed store refetches.
-// Boundary IN: End-to-end shell composition, refetch wiring, and poll surfacing cards.
-// Boundary OUT: Pure orchestration graph and port modules (refetch-graph, apply-capture-effect).
+// Invariant: Shell composes zones, session gate, and poll-surfaced cards from server state.
+// Boundary IN: End-to-end shell composition and account drawer lazy load.
+// Boundary OUT: Zone-event refetch wiring (use-capture-orchestration.integration.test.ts).
 
 describe('CaptureScreen', () => {
   it('renders the board wall and, with no open session, the Start session gate', async () => {
@@ -187,104 +185,6 @@ describe('CaptureScreen', () => {
     const sticky = wrapper.get('[aria-label="event: Order placed, added by Maria"]')
     expect(sticky.text()).toContain('Order placed')
     expect(wrapper.get('.pc--receipt').text()).toContain('Order placed — added by Maria')
-    wrapper.unmount()
-  })
-
-  it('refetches session and proposals only when the dock emits mutated', async () => {
-    fetchMock = vi.fn((url: string) => {
-      if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
-      if (url.endsWith('/board')) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ position: -1, blocks: [], follows: [], causedBy: [] }), { status: 200 }),
-        )
-      }
-      if (url.endsWith('/readable-account')) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ position: -1, markdown: '# Readable account\n' }), { status: 200 }),
-        )
-      }
-      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
-    await flushPromises()
-
-    const sessionCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/session')).length
-    const proposalCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/proposals')).length
-    const boardCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/board')).length
-    const accountCallsBefore = fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/readable-account')).length
-
-    wrapper.getComponent(FacilitatorDock).vm.$emit('mutated')
-    await flushPromises()
-
-    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/session')).length).toBe(
-      sessionCallsBefore + 1,
-    )
-    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/proposals')).length).toBe(
-      proposalCallsBefore + 1,
-    )
-    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/board')).length).toBe(boardCallsBefore)
-    expect(fetchMock.mock.calls.filter((call) => String(call[0]).endsWith('/readable-account')).length).toBe(
-      accountCallsBefore,
-    )
-    wrapper.unmount()
-  })
-
-  it('refetches the board (server-confirmed) when the dock reports an accept', async () => {
-    const boardCalls: string[] = []
-    fetchMock = vi.fn((url: string) => {
-      if (url.endsWith('/board')) {
-        boardCalls.push(url)
-        return Promise.resolve(
-          new Response(JSON.stringify({ position: -1, blocks: [], follows: [], causedBy: [] }), { status: 200 }),
-        )
-      }
-      if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
-      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
-    await flushPromises()
-    const before = boardCalls.length
-
-    wrapper.getComponent(FacilitatorDock).vm.$emit('board-dirty')
-    await flushPromises()
-
-    expect(boardCalls.length).toBe(before + 1)
-    wrapper.unmount()
-  })
-
-  it('loads board and account when the wall emits board-dirty', async () => {
-    const urls: string[] = []
-    fetchMock = vi.fn((url: string) => {
-      urls.push(url)
-      if (url.endsWith('/session')) return Promise.resolve(new Response(JSON.stringify(sessionView()), { status: 200 }))
-      if (url.endsWith('/board')) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ position: 1, blocks: [], follows: [], causedBy: [] }), { status: 200 }),
-        )
-      }
-      if (url.endsWith('/readable-account')) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ position: 1, markdown: '# Readable account\n' }), { status: 200 }),
-        )
-      }
-      return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    const wrapper = mount(CaptureScreen, { props: { id: 'w1' }, global: { plugins: [router] } })
-    await flushPromises()
-    const beforeAccount = urls.filter((url) => url.endsWith('/readable-account')).length
-    const beforeBoard = urls.filter((url) => url.endsWith('/board')).length
-
-    wrapper.getComponent(BoardWall).vm.$emit('board-dirty')
-    await flushPromises()
-
-    expect(urls.filter((url) => url.endsWith('/board')).length).toBe(beforeBoard + 1)
-    expect(urls.filter((url) => url.endsWith('/readable-account')).length).toBe(beforeAccount + 1)
     wrapper.unmount()
   })
 

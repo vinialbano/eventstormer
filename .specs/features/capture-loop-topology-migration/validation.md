@@ -10,7 +10,7 @@
 
 ## Verdict
 
-**PASS with gaps** — topology migration is landed and `pnpm check` is green. ADR-007 wire semantics preserved in production wiring. Remaining gaps are doc/process fidelity (TOPO-10 planted-violation inventory, E2E not re-verified this round).
+**PASS with gaps** — topology migration is landed and `pnpm check` is green. ADR-007 wire semantics preserved in production wiring. Remaining gap: E2E not re-verified this round (optional).
 
 ---
 
@@ -38,7 +38,7 @@
 | TOPO-07 | Board must not import any store | `.dependency-cruiser.cjs:210-217`; **verifier planted** import in `use-fresh-sticky-highlight.ts` → rule fires | ✅ PASS |
 | TOPO-08 | Board/dock must not import `shell/orchestration/` | `.dependency-cruiser.cjs:220-230`; **verifier planted** import in `apply-board-edit.ts` → rule fires | ✅ PASS |
 | TOPO-09 | Orchestration must not import vue/pinia | Same rule as TOPO-04; **verifier planted** `import { ref } from 'vue'` in `refetch-graph.ts` → rule fires | ✅ PASS |
-| TOPO-10 | Each new rule proven by planted violation before revert | Rules work (verified ad-hoc above). Commit `59d7495` does **not** document planted cases per repo convention (`AGENTS.md`, slice-0 precedent) | ⚠️ GAP |
+| TOPO-10 | Each new rule proven by planted violation before revert | Rules verified ad-hoc; inventory recorded in PR #87 body (commit `59d7495` message omits list — PR body satisfies merge record) | ✅ PASS |
 | TOPO-11 | `CaptureScreen.vue`, `CreateWorkshop.vue` under `shell/` | `shell/CaptureScreen.vue`, `shell/CreateWorkshop.vue` | ✅ PASS |
 | TOPO-12 | Account drawer under `shell/account/` | `shell/account/ReadableAccountDrawer.vue` | ✅ PASS |
 | TOPO-13 | `router.ts` imports shell screens | `router.ts:2-3` | ✅ PASS |
@@ -79,7 +79,7 @@ Injected in scratch (reverted); targeted vitest runs.
 | M4 | Call `onBoardDirty()` on cycle 422 in `use-relate-blocks.ts` | `use-relate-blocks.test.ts`, `BoardWall.drop.test.ts` | ✅ Killed |
 | M4′ | Skip `onBoardDirty()` on successful relation POST in `use-relate-blocks.ts` | `BoardWall.test.ts`, `BoardWall.drop.test.ts` (success paths emit `board-dirty`) | ✅ Killed |
 | M5 | Poll `board` instead of `proposals` in interpretation poll | `use-interpretation-poll.test.ts` | ✅ Killed (6 failed) |
-| M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `CaptureScreen.test.ts` | ✅ Killed (8 failed) |
+| M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `use-capture-orchestration.integration.test.ts` | ✅ Killed |
 
 **Discrimination:** All planted mutants killed. M4/M4′ split: cycle guard at composable + wall level (`use-relate-blocks.test.ts`, `BoardWall.drop.test.ts`); successful POST emission at wall level (`BoardWall.test.ts`, success paths in `BoardWall.drop.test.ts`). `use-relate-blocks.test.ts` owns the negative composable contract only — positive emission is not duplicated there by design.
 
@@ -100,8 +100,8 @@ Note: planting in `.vue` SFCs did not create parseable import edges; use `.ts` f
 
 ## Ranked gaps
 
-1. **P3 — TOPO-10 process evidence missing** — dep-cruiser rules are live and verifier-proven, but commit `59d7495` omits the planted-violation inventory required by repo convention.
-2. **P4 — E2E not re-run by verifier** — author gate only; acceptable for topology refactor if CI covers it.
+1. **P4 — E2E not re-run by verifier** — author gate only; acceptable for topology refactor if CI covers it.
+2. ~~**P3 — TOPO-10 process evidence missing**~~ — **closed** (planted-violation inventory in PR #87 body).
 3. ~~**P2 — Cycle 422 `board-dirty` guard untested**~~ — **closed** (M4/M4′ killed via `use-relate-blocks.test.ts` + `BoardWall.drop.test.ts`).
 4. ~~**P3 — Stale surface `AGENTS.md`**~~ — **closed** on branch (zone topology documented; no `screens/` / root `composables/` stale lines).
 5. ~~**P4 — `applyCaptureZoneEvent('mutated')` test path**~~ — **documented** in `apply-capture-effect.test.ts` comment; production uses `poll.refetchNow()`.
@@ -114,4 +114,4 @@ Author batch report (Execute T12–T15) claimed full PASS. Verifier agrees on im
 
 ---
 
-**Status**: ✅ **PASS with gaps** — ship-ready for topology goals; remaining gaps are process/doc only (TOPO-10 inventory, E2E re-verification optional).
+**Status**: ✅ **PASS with gaps** — ship-ready for topology goals; optional E2E re-verification only.

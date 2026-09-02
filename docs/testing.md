@@ -4,6 +4,9 @@
 
 - Tests co-locate with what they cover and run through the public interface, never private
   helpers.
+- Sociable tests that cross framework-free `shell/orchestration/` and Pinia use the
+  `.integration.test.ts` suffix under `shell/composables/`, next to the Vue adapter they
+  exercise.
 - Domain tests need no DOM — plain Vitest, `environment: 'node'`. If a domain test starts
   needing `jsdom`, the domain layer has grown a dependency it must not have.
 - **Assert against an independently-stated expectation, not against another projection.** A
