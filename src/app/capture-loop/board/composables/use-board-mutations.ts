@@ -1,13 +1,11 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
-import { HttpError, postBoardOperation } from '../../transport/board.ts'
 import type { BoardBlockInput } from '../layout.ts'
+import { applyBoardEdit } from '../kernel/apply-board-edit.ts'
 import {
-  cycleLine,
   decodeDragged,
   DRAG_MIME,
   dropSiteFromElement,
   encodeDragged,
-  isCycleRejection,
   relationFromConnect,
   relationFromDrop,
   type DraggedBlock,
@@ -37,24 +35,18 @@ export const useBoardMutations = (options: {
     const workshopId = options.workshopId.value
     const accepter = options.accepter.value
     if (workshopId === undefined || workshopId.length === 0 || accepter === undefined) return
-    try {
-      await postBoardOperation(workshopId, {
-        v: 1,
-        ...edit,
-        author: { accepter: { name: accepter } },
-      })
+    const result = await applyBoardEdit({
+      workshopId,
+      accepter,
+      edit,
+      blockLabels: new Map(options.blocks.value.map((block) => [block.id, block.label])),
+    })
+    if (result.ok) {
       relationError.value = ''
       options.onBoardDirty()
-    } catch (caught) {
-      if (caught instanceof HttpError && caught.status === 422 && isCycleRejection(caught.body)) {
-        relationError.value = cycleLine(
-          caught.body.path,
-          new Map(options.blocks.value.map((block) => [block.id, block.label])),
-        )
-        return
-      }
-      throw caught
+      return
     }
+    relationError.value = result.cycleError
   }
 
   const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise<void> => {

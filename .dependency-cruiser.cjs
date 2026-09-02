@@ -165,7 +165,10 @@ module.exports = {
       from: { path: '^src/app/capture-loop/board/interactions/([^/]+)/' },
       to: {
         path: '^src/app/capture-loop/board/',
-        pathNot: '^src/app/capture-loop/board/interactions/$1/',
+        pathNot: [
+          '^src/app/capture-loop/board/interactions/$1/',
+          '^src/app/capture-loop/board/kernel/',
+        ],
       },
     },
 
