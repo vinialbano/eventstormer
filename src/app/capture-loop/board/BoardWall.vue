@@ -1,26 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
-import { HttpError } from '../client.ts'
-import { useReducedMotion } from '../composables/use-reduced-motion.ts'
-import { postBoardOperation } from '../transport/board.ts'
+import { useBoardMutations } from './composables/use-board-mutations.ts'
+import { useBoardReword } from './composables/use-board-reword.ts'
+import { useBoardSelection } from './composables/use-board-selection.ts'
+import { useFreshStickyHighlight } from './composables/use-fresh-sticky-highlight.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import RewordConfirm from './RewordConfirm.vue'
-import {
-  cycleLine,
-  decodeDragged,
-  DRAG_MIME,
-  dropSiteFromElement,
-  encodeDragged,
-  isCycleRejection,
-  isEventKind,
-  relationFromConnect,
-  relationFromDrop,
-  type DraggedBlock,
-  type RelationEdit,
-} from './semantic-edit.ts'
 import TimelinePane from './TimelinePane.vue'
-import { isTypingSurface } from './typing-surface.ts'
 
 /**
  * The board wall — a full-screen EventStorming surface. The backlog is the
@@ -48,208 +35,78 @@ const measure = (): void => {
   }
 }
 
-const selectedId = ref<string | null>(null)
-const lastPlacedId = ref<string | null>(null)
-const dragging = ref<DraggedBlock | null>(null)
-const withdrawAskId = ref<string | null>(null)
-const editingId = ref<string | null>(null)
-const draft = ref('')
-const labelError = ref('')
-const relationError = ref('')
-const confirmOpen = ref(false)
-const draftInput = ref<HTMLInputElement | null>(null)
-const bindDraftInput = (element: unknown): void => {
-  draftInput.value = element instanceof HTMLInputElement ? element : null
-}
-
+const blocks = toRef(props, 'blocks')
 const timeline = computed(() => props.timeline ?? EMPTY_TIMELINE)
-const timelineEventIds = computed(
-  () => new Set(timeline.value.tracks.flatMap((track) => track.eventIds.map(String))),
-)
-
-const selectSticky = (id: string): void => {
-  selectedId.value = id
-  if (withdrawAskId.value !== id) withdrawAskId.value = null
-  const block = props.blocks.find((candidate) => candidate.id === id)
-  if (block?.placement === 'timeline' || timelineEventIds.value.has(id)) lastPlacedId.value = id
-}
-
-const cancelReword = (): void => {
-  confirmOpen.value = false
-  editingId.value = null
-  draft.value = ''
-  labelError.value = ''
-}
-
-const requestConfirm = (): void => {
-  if (draft.value.trim().length === 0) {
-    labelError.value = "Name can't be empty."
-    return
-  }
-  labelError.value = ''
-  confirmOpen.value = true
-}
-
-const onRewordConfirmed = (): void => {
+const onBoardDirty = (): void => {
   emit('board-dirty')
-  cancelReword()
 }
 
-const applyEdit = async (edit: RelationEdit): Promise<void> => {
-  const workshopId = props.workshopId
-  const accepter = props.accepter
-  if (workshopId === undefined || workshopId.length === 0 || accepter === undefined) return
-  try {
-    await postBoardOperation(workshopId, {
-      v: 1,
-      ...edit,
-      author: { accepter: { name: accepter } },
-    })
-    relationError.value = ''
-    emit('board-dirty')
-  } catch (caught) {
-    if (caught instanceof HttpError && caught.status === 422 && isCycleRejection(caught.body)) {
-      relationError.value = cycleLine(
-        caught.body.path,
-        new Map(props.blocks.map((block) => [block.id, block.label])),
-      )
-      return
-    }
-    throw caught
-  }
-}
+const selection = useBoardSelection(blocks, timeline)
+const {
+  selectedId,
+  withdrawAskId,
+  timelineEventIds,
+  selectSticky,
+  selectedBlock,
+  selectedOnTimeline,
+  canPlace,
+  canUnplace,
+  canSequenceAfter,
+  canMarkPivotal,
+  canUnmarkPivotal,
+  showsActiveControls,
+  showsReinstate,
+} = selection
 
-const postEdit = async (kind: 'withdraw' | 'reinstate', target: string): Promise<void> => {
-  await applyEdit({ kind, target })
-}
+const reword = useBoardReword(blocks, onBoardDirty)
+const {
+  editingId,
+  draft,
+  labelError,
+  confirmOpen,
+  bindDraftInput,
+  cancelReword,
+  requestConfirm,
+  onRewordConfirmed,
+  startReword,
+} = reword
 
-const onConnectEvents = (payload: { source: string; target: string }): void => {
-  const edit = relationFromConnect(payload.source, payload.target)
-  if (edit === undefined) return
-  void applyEdit(edit)
-}
-
-const onBacklogDragStart = (event: DragEvent, block: BoardBlockInput): void => {
-  const payload = { id: block.id, kind: block.kind }
-  dragging.value = payload
-  event.dataTransfer?.setData(DRAG_MIME, encodeDragged(payload))
-}
-
-const onTimelineDrop = (event: DragEvent): void => {
-  event.preventDefault()
-  const dragged = decodeDragged(event.dataTransfer?.getData(DRAG_MIME) ?? '') ?? dragging.value ?? undefined
-  dragging.value = null
-  if (dragged === undefined) return
-  const edit = relationFromDrop(dragged, dropSiteFromElement(event.target))
-  if (edit === undefined) return
-  void applyEdit(edit)
-}
-
-const selectedBlock = computed(() => props.blocks.find((block) => block.id === selectedId.value))
-const editingBlock = computed(() => props.blocks.find((block) => block.id === editingId.value))
-const selectedIsLiveEvent = computed(() => {
-  const block = selectedBlock.value
-  return block !== undefined && isEventKind(block.kind) && block.withdrawn !== true
+const mutations = useBoardMutations({
+  workshopId: toRef(props, 'workshopId'),
+  accepter: toRef(props, 'accepter'),
+  blocks,
+  selectedId,
+  lastPlacedId: selection.lastPlacedId,
+  withdrawAskId,
+  editingId,
+  confirmOpen,
+  onBoardDirty,
+  startReword,
+  cancelReword,
+  requestConfirm,
 })
-const selectedOnTimeline = computed(() => {
-  const id = selectedId.value
-  if (id === null) return false
-  return selectedBlock.value?.placement === 'timeline' || timelineEventIds.value.has(id)
-})
-const canPlace = computed(() => selectedIsLiveEvent.value && !selectedOnTimeline.value)
-const canUnplace = computed(() => selectedIsLiveEvent.value && selectedOnTimeline.value)
-const canSequenceAfter = computed(
-  () => canPlace.value && lastPlacedId.value !== null && lastPlacedId.value !== selectedId.value,
-)
-const canMarkPivotal = computed(() => selectedIsLiveEvent.value && selectedBlock.value?.pivotal !== true)
-const canUnmarkPivotal = computed(() => selectedIsLiveEvent.value && selectedBlock.value?.pivotal === true)
+const {
+  relationError,
+  postEdit,
+  onConnectEvents,
+  onBacklogDragStart,
+  onTimelineDrop,
+  placeSelected,
+  rewordSelected,
+  unplaceSelected,
+  sequenceSelectedAfter,
+  markSelectedPivotal,
+  unmarkSelectedPivotal,
+} = mutations
 
-const placeSelected = (): void => {
-  const id = selectedId.value
-  if (id === null) return
-  lastPlacedId.value = id
-  void applyEdit({ kind: 'place', target: id })
-}
-const rewordSelected = (): void => {
-  const id = selectedId.value
-  if (id === null) return
-  void startReword(id)
-}
-const unplaceSelected = (): void => {
-  const id = selectedId.value
-  if (id === null) return
-  void applyEdit({ kind: 'unplace', target: id })
-}
-const sequenceSelectedAfter = (): void => {
-  const predecessor = lastPlacedId.value
-  const successor = selectedId.value
-  if (predecessor === null || successor === null) return
-  void applyEdit({ kind: 'sequence', predecessor, successor })
-}
-const markSelectedPivotal = (): void => {
-  const id = selectedId.value
-  if (id === null) return
-  void applyEdit({ kind: 'mark-pivotal', target: id })
-}
-const unmarkSelectedPivotal = (): void => {
-  const id = selectedId.value
-  if (id === null) return
-  void applyEdit({ kind: 'unmark-pivotal', target: id })
-}
-
-
-const dismissEsc = (): void => {
-  if (confirmOpen.value) {
-    confirmOpen.value = false
-    return
-  }
-  if (withdrawAskId.value !== null) {
-    withdrawAskId.value = null
-    return
-  }
-  cancelReword()
-}
-
-const startReword = async (id: string): Promise<void> => {
-  const block = props.blocks.find((candidate) => candidate.id === id)
-  if (block === undefined || block.withdrawn === true) return
-  editingId.value = id
-  draft.value = block.label
-  await nextTick()
-  draftInput.value?.focus()
-  draftInput.value?.select()
-}
-
-const onWindowKeydown = (event: KeyboardEvent): void => {
-  if (isTypingSurface(event.target)) {
-    if (event.key === 'Escape' && editingId.value !== null) {
-      event.preventDefault()
-      dismissEsc()
-    }
-    if (event.key === 'Enter' && editingId.value !== null) {
-      event.preventDefault()
-      requestConfirm()
-    }
-    return
-  }
-  if (event.key === 'Escape') {
-    dismissEsc()
-    return
-  }
-  if (editingId.value !== null || selectedId.value === null) return
-  if (event.key !== 'e' && event.key !== 'E' && event.key !== 'Enter') return
-  event.preventDefault()
-  void startReword(selectedId.value)
-}
+const { fresh } = useFreshStickyHighlight(blocks)
 
 onMounted(() => {
   measure()
   window.addEventListener('resize', measure)
-  window.addEventListener('keydown', onWindowKeydown)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', measure)
-  window.removeEventListener('keydown', onWindowKeydown)
 })
 
 const attachedIds = computed(() => {
@@ -270,36 +127,6 @@ const backlogBlocks = computed(() =>
 )
 const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
 
-// The focal moment (DESIGN.md §6): a block that has just landed on the wall
-// gets a brief settle + fading highlight, then it is just part of the wall.
-// Reduced motion skips the wash — the sticky simply appears.
-const reduced = useReducedMotion()
-const seen = new Set<string>()
-const fresh = ref(new Set<string>())
-let mounted = false
-
-watch(
-  () => props.blocks.map((block) => block.id),
-  (ids) => {
-    for (const id of ids) {
-      if (seen.has(id)) continue
-      seen.add(id)
-      if (mounted && !reduced.value) {
-        fresh.value = new Set(fresh.value).add(id)
-        window.setTimeout(() => {
-          const next = new Set(fresh.value)
-          next.delete(id)
-          fresh.value = next
-        }, 1000)
-      }
-    }
-  },
-  { immediate: true },
-)
-onMounted(() => {
-  mounted = true
-})
-
 const onShowWithdrawnChange = (event: Event): void => {
   const target = event.target
   if (!(target instanceof HTMLInputElement)) return
@@ -312,11 +139,6 @@ const KIND_LABEL: Record<string, string> = {
   system: 'system',
 }
 const kindWord = (kind: string): string => KIND_LABEL[kind] ?? kind
-
-const showsActiveControls = (id: string, withdrawn: boolean): boolean =>
-  selectedId.value === id && editingId.value !== id && !withdrawn
-const showsReinstate = (id: string, withdrawn: boolean): boolean =>
-  selectedId.value === id && withdrawn
 </script>
 
 <template>
@@ -429,7 +251,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
         @dragstart="onBacklogDragStart($event, s)"
       >
         <button
-          v-if="showsActiveControls(s.id, s.withdrawn)"
+          v-if="showsActiveControls(s.id, s.withdrawn, editingId)"
           type="button"
           class="sticky__pencil"
           aria-label="Reword"
@@ -446,7 +268,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
           </svg>
         </button>
         <button
-          v-if="showsActiveControls(s.id, s.withdrawn) && withdrawAskId !== s.id"
+          v-if="showsActiveControls(s.id, s.withdrawn, editingId) && withdrawAskId !== s.id"
           type="button"
           class="sticky__status"
           aria-label="Withdraw"
@@ -455,7 +277,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
           Withdraw
         </button>
         <button
-          v-if="showsActiveControls(s.id, s.withdrawn) && withdrawAskId === s.id"
+          v-if="showsActiveControls(s.id, s.withdrawn, editingId) && withdrawAskId === s.id"
           type="button"
           class="sticky__status"
           aria-label="Confirm withdraw"
@@ -589,7 +411,7 @@ const showsReinstate = (id: string, withdrawn: boolean): boolean =>
       </button>
     </div>
     <div
-      v-if="editingId !== null && selectedOnTimeline && editingBlock !== undefined"
+      v-if="editingId !== null && selectedOnTimeline && selectedBlock !== undefined"
       class="wall__reword"
       :style="{
         left: `${layout.frame.x}px`,
