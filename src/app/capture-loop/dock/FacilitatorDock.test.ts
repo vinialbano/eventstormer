@@ -2,7 +2,6 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProposalCard, SessionView } from '../types.ts'
-import { useBoardStore } from '../stores/board.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
 import FacilitatorDock from './FacilitatorDock.vue'
@@ -36,6 +35,13 @@ const view = (over: Partial<SessionView> = {}): SessionView => ({
 
 let fetchMock: ReturnType<typeof vi.fn>
 
+const dockProps = (over: { blockLabels?: Record<string, string> } = {}) => ({
+  workshopId: 'w1',
+  sessionId: 's1',
+  accepter: 'Maria',
+  blockLabels: over.blockLabels ?? {},
+})
+
 const seed = (sessionView: SessionView, cards: ProposalCard[]) => {
   const session = useSessionStore()
   const proposals = useProposalsStore()
@@ -58,7 +64,7 @@ afterEach(() => {
 describe('FacilitatorDock', () => {
   it('welds a proposal cluster to the contribution turn and renders questions as messages', () => {
     seed(view(), [card(), card({ proposalId: 'p2', label: 'Order confirmed' })])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     const question = wrapper.findAll('.turn').find((turn) => turn.text().includes('What happens first?'))
     expect(question?.attributes('role')).toBe('status')
@@ -73,7 +79,7 @@ describe('FacilitatorDock', () => {
 
   it('accept POSTs, asks for a board refetch, and does NOT collapse the card until the store confirms', async () => {
     const { proposals } = seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     await wrapper.get('.pc--active .btn--primary').trigger('click')
     await flushPromises()
@@ -96,7 +102,7 @@ describe('FacilitatorDock', () => {
       view(),
       [card({ disposition: 'APPLY_FAILED', applyFailedReason: 'target was withdrawn' })],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     await wrapper.get('.btn--primary').trigger('click')
     await flushPromises()
@@ -113,30 +119,16 @@ describe('FacilitatorDock', () => {
 
   it('updates an applied receipt when the board label is reworded', () => {
     seed(view(), [card({ disposition: 'APPLIED', buildingBlockId: 'b1', label: 'Order placed' })])
-    const board = useBoardStore()
-    board.snapshot = {
-      position: 2,
-      blocks: [
-        {
-          id: 'b1',
-          kind: 'domain-event',
-          label: 'Invoice sent',
-          withdrawn: false,
-          placement: 'backlog',
-          pivotal: false,
-        },
-      ],
-      follows: [],
-      causedBy: [],
-    }
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, {
+      props: dockProps({ blockLabels: { b1: 'Invoice sent' } }),
+    })
     expect(wrapper.get('.pc--receipt').text()).toContain('Invoice sent — added by Maria')
     expect(wrapper.get('.pc--receipt').text()).not.toContain('Order placed')
   })
 
   it('submits a contribution through the composer', async () => {
     seed(view(), [])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     await wrapper.get('.composer__field').setValue('Then the kitchen starts cooking.')
     await wrapper.get('.composer__send').trigger('click')
@@ -150,7 +142,7 @@ describe('FacilitatorDock', () => {
 
   it('shows a quiet catching-up line while a contribution is still interpreting', () => {
     seed(view({ contributions: [{ contributionId: 'c1', status: 'interpreting' }], fullyDerived: false }), [])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
     const note = wrapper.get('.composer__note')
     expect(note.text()).toBe('Catching up…')
     expect(note.attributes('role')).toBe('status')
@@ -167,7 +159,7 @@ describe('FacilitatorDock', () => {
       }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     const scopeCard = wrapper.get('.dock__scope .pc--active')
     expect(scopeCard.text()).toContain('SCOPE')
@@ -192,7 +184,7 @@ describe('FacilitatorDock', () => {
       view({ scope: { status: 'proposed', proposedStatement: 'X' }, transcript: [], contributions: [] }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.find('.dock__scope').exists()).toBe(true)
     const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
@@ -213,7 +205,7 @@ describe('FacilitatorDock', () => {
       }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).toContain('describe the first thing that happens')
     expect(wrapper.find('.dock__scope').exists()).toBe(false)
@@ -221,7 +213,7 @@ describe('FacilitatorDock', () => {
 
   it('keeps the first prompt at the head of the feed after contributions are narrated', () => {
     seed(view(), [])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).toContain('describe the first thing that happens')
     const turns = wrapper.findAll('.turn').map((turn) => turn.text())
@@ -239,7 +231,7 @@ describe('FacilitatorDock', () => {
       }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).toContain('Noted')
   })
@@ -254,7 +246,7 @@ describe('FacilitatorDock', () => {
       }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).toContain('try rephrasing')
   })
@@ -270,7 +262,7 @@ describe('FacilitatorDock', () => {
       }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).not.toContain('try rephrasing')
     expect(wrapper.text()).toContain('Could you say that another way?')
@@ -287,27 +279,27 @@ describe('FacilitatorDock', () => {
       }),
       [],
     )
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).not.toContain('Noted')
   })
 
   it('does not show the first prompt while the scope is still unset', () => {
     seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     expect(wrapper.text()).not.toContain('describe the first thing that happens')
   })
 
   it('shows a getting-started placeholder before the scope question exists', () => {
     seed(view({ scope: { status: 'none' }, transcript: [], contributions: [] }), [])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
     expect(wrapper.get('.dock__placeholder').text()).toContain('Getting started')
   })
 
   it('widens to the pending drawer, jumps + pulses an inline card, then collapses', async () => {
     seed(view(), [card({ proposalId: 'p1', label: 'Order placed' }), card({ proposalId: 'p2', label: 'Order confirmed' })])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     // handle shows the pending count; opens the drawer
     await wrapper.get('.dock__handle').trigger('click')
@@ -323,7 +315,7 @@ describe('FacilitatorDock', () => {
 
   it('drawer Accept all remaining accepts every non-held pending proposal once', async () => {
     seed(view(), [card({ proposalId: 'p1' }), card({ proposalId: 'p2', label: 'B' }), card({ proposalId: 'p3', label: 'C', held: true })])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
     await wrapper.get('.dock__handle').trigger('click')
     await wrapper.get('.drawer__acceptall').trigger('click')
     await flushPromises()
@@ -335,7 +327,7 @@ describe('FacilitatorDock', () => {
 
   it('reject POSTs and collapses to Dismissed only after the store confirms', async () => {
     const { proposals } = seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
     await named('Not this')?.trigger('click')
@@ -355,7 +347,7 @@ describe('FacilitatorDock', () => {
 
   it('edit POSTs the new label', async () => {
     seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
     await named('Not this')?.trigger('click')
@@ -376,7 +368,7 @@ describe('FacilitatorDock', () => {
 
   it('hold then unhold POST in sequence', async () => {
     const { proposals } = seed(view(), [card()])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
     await named('Not this')?.trigger('click')
@@ -398,7 +390,7 @@ describe('FacilitatorDock', () => {
 
   it('collapses to a Facilitator pill with a pending count and a parked dot', async () => {
     seed(view(), [card({ disposition: 'PROPOSED' }), card({ proposalId: 'p2', held: true })])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     await wrapper.get('.dock__min').trigger('click')
 
@@ -410,7 +402,7 @@ describe('FacilitatorDock', () => {
 
   it('hides the pending count on the collapsed pill when nothing is waiting', async () => {
     seed(view(), [card({ disposition: 'APPLIED' })])
-    const wrapper = mount(FacilitatorDock, { props: { workshopId: 'w1', sessionId: 's1', accepter: 'Maria' } })
+    const wrapper = mount(FacilitatorDock, { props: dockProps() })
 
     await wrapper.get('.dock__min').trigger('click')
 

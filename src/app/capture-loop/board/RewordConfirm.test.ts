@@ -1,6 +1,7 @@
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mountRewordPortalHost, unmountRewordPortalHost } from '../test-support/reword-portal-host.ts'
 import RewordConfirm from './RewordConfirm.vue'
 
 enableAutoUnmount(afterEach)
@@ -48,6 +49,7 @@ describe('RewordConfirm', () => {
   let fetchMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
+    mountRewordPortalHost()
     fetchMock = vi.fn((url: string) => {
       if (url.includes('/references')) return Promise.resolve(json(sites))
       return Promise.resolve(json({ position: 4 }))
@@ -56,6 +58,7 @@ describe('RewordConfirm', () => {
   })
   afterEach(() => {
     vi.unstubAllGlobals()
+    unmountRewordPortalHost()
   })
 
   it('GETs references on open, names the popover Reword impact, and does not POST until confirm', async () => {

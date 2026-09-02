@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, toRef, watch } from 'vue'
 import ReadableAccountDrawer from '../account/ReadableAccountDrawer.vue'
 import BoardWall from '../board/BoardWall.vue'
-import { postJson } from '../client.ts'
 import { useInterpretationPoll } from '../composables/use-interpretation-poll.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import { useAccountStore } from '../stores/account.ts'
 import { useBoardStore } from '../stores/board.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
+import { startSession as postStartSession } from '../transport/session.ts'
+import { useBoardViewState } from '../view-state/board-view.ts'
 
 /**
  * The capture screen (brief §1): a full-screen board wall with a floating
@@ -21,6 +22,8 @@ const props = defineProps<{ id: string }>()
 const session = useSessionStore()
 const proposals = useProposalsStore()
 const board = useBoardStore()
+const boardView = useBoardViewState(toRef(board, 'snapshot'))
+const { showWithdrawn, timeline } = boardView
 const account = useAccountStore()
 const poll = useInterpretationPoll()
 
@@ -38,6 +41,9 @@ const blocks = computed(() =>
     pivotal: block.pivotal,
     speaker: block.provenance?.accepter.name,
   })),
+)
+const blockLabels = computed(() =>
+  Object.fromEntries(board.snapshot.blocks.map((block) => [block.id, block.label])),
 )
 const needsSession = computed(() => loaded.value && !session.sessionOpen)
 
@@ -62,7 +68,7 @@ const startSession = async (): Promise<void> => {
   if (startingSession.value) return
   startingSession.value = true
   try {
-    await postJson(`/api/workshops/${props.id}/sessions`)
+    await postStartSession(props.id)
     await loadAll()
   } finally {
     startingSession.value = false
@@ -86,14 +92,14 @@ onMounted(loadAll)
   <div class="screen">
     <BoardWall
       :blocks="blocks"
-      :timeline="board.timeline"
-      :show-withdrawn="board.showWithdrawn"
+      :timeline="timeline"
+      :show-withdrawn="showWithdrawn"
       :workshop-id="id"
       :accepter="session.creatorName"
       :revision="board.snapshot.position"
       class="screen__wall"
       @board-dirty="onBoardDirty"
-      @update:show-withdrawn="board.showWithdrawn = $event"
+      @update:show-withdrawn="showWithdrawn = $event"
     />
 
     <FacilitatorDock
@@ -101,6 +107,7 @@ onMounted(loadAll)
       :workshop-id="id"
       :session-id="session.sessionId"
       :accepter="session.creatorName"
+      :block-labels="blockLabels"
       @mutated="onMutated"
       @board-dirty="onBoardDirty"
     />

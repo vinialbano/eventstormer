@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
 import { HttpError } from '../client.ts'
 import { useReducedMotion } from '../composables/use-reduced-motion.ts'
-import { postBoardOperation } from '../dock/mutations.ts'
+import { postBoardOperation } from '../transport/board.ts'
 import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import RewordConfirm from './RewordConfirm.vue'
 import {

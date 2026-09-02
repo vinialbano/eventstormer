@@ -2,7 +2,6 @@
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
 import { computed, nextTick, ref } from 'vue'
 import type { ProposalCard as ProposalCardData } from '../types.ts'
-import { useBoardStore } from '../stores/board.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useSessionStore } from '../stores/session.ts'
 import ConversationTurn from './ConversationTurn.vue'
@@ -15,10 +14,9 @@ import {
   editProposal,
   holdProposal,
   rejectProposal,
-  setScope,
-  submitContribution,
   unholdProposal,
-} from './mutations.ts'
+} from '../transport/proposals.ts'
+import { setScope, submitContribution } from '../transport/session.ts'
 
 /**
  * The floating facilitator dock (brief §3). Conversation column with inline
@@ -35,16 +33,16 @@ const props = defineProps<{
   workshopId: string
   sessionId: string | null
   accepter: string
+  blockLabels: Readonly<Record<string, string>>
 }>()
 const emit = defineEmits<{ mutated: []; 'board-dirty': [] }>()
 
 const session = useSessionStore()
 const proposals = useProposalsStore()
-const board = useBoardStore()
 
 const liveLabel = (card: ProposalCardData): string => {
   if (card.buildingBlockId === undefined) return card.label
-  return board.snapshot.blocks.find((block) => block.id === card.buildingBlockId)?.label ?? card.label
+  return props.blockLabels[card.buildingBlockId] ?? card.label
 }
 
 const open = ref(true)
