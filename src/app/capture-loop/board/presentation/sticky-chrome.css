@@ -1,0 +1,83 @@
+.sticky {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  text-align: center;
+  border-radius: 2px;
+  background-color: var(--color-event);
+  color: var(--color-event-ink);
+  box-shadow: var(--shadow-sticky);
+  transform: rotate(var(--tilt, 0deg));
+}
+.sticky[data-kind='actor'] {
+  background-color: var(--color-actor);
+  color: var(--color-actor-ink);
+}
+.sticky[data-kind='system'] {
+  background-color: var(--color-system);
+  color: var(--color-system-ink);
+}
+
+.sticky__label {
+  font-family: var(--font-marker);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.sticky__who {
+  margin-top: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sticky:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+.sticky--selected {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
+.sticky--withdrawn {
+  background-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-paper));
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px rgb(43 39 35 / 0.12);
+  text-decoration: line-through;
+}
+.sticky--withdrawn[data-kind='actor'],
+.sticky--withdrawn[data-kind='system'] {
+  background-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-paper));
+  color: var(--color-ink);
+}
+
+.sticky--fresh {
+  animation: sticky-settle 0.9s var(--ease-flight);
+}
+@keyframes sticky-settle {
+  0% {
+    transform: rotate(var(--tilt, 0deg)) scale(1.08);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-event) 55%, transparent), var(--shadow-sticky);
+  }
+  100% {
+    transform: rotate(var(--tilt, 0deg)) scale(1);
+    box-shadow: 0 0 0 0 transparent, var(--shadow-sticky);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

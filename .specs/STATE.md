@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `dock-modularization` (`.specs/features/dock-modularization/`) — GitHub #64
+- **Feature**: `board-wall-presentation` (`.specs/features/board-wall-presentation/`) — GitHub #65
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: feed composable + `DockFeed.vue`; review-proposal and contribute interactions; slim shell
+- **Completed**: presentation components + shared sticky chrome; slim BoardWall coordinator
 - **In-progress**: none
-- **Next step**: open PR for #64
+- **Next step**: open PR for #65
 - **Blockers**: none
-- **Branch**: `dock-modularization`
+- **Branch**: `board-wall-presentation` (worktree: `eventstormer-worktrees/board-wall-presentation`)
 
 ---
 
