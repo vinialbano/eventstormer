@@ -4,7 +4,7 @@ import type { FacilitationTurn, OpeningQuestion } from './turn-schema.ts'
 /**
  * The `Facilitator` port — the one seam a scripted double is injected at (DESIGN
  * §6). The behaviour ACs are tested at the translation layer against the double;
- * real-model judgment quality is the Slice-5 eval.
+ * real-model judgment quality is covered by `pnpm eval`.
  *
  * Both calls take pre-assembled prompt strings (`prompt.ts` builds them)
  * and return the parsed model output or a classified failure.

@@ -10,7 +10,7 @@ import { emptySnapshot, Operation, OP_SCHEMA_VERSION, replay } from './api.ts'
 /**
  * The end-to-end proof that a workshop's model survives a process restart
  * (F01). Under Approach A there is no repository yet — this test wires
- * `store.read → replay` directly, the way Slice 2's F06 handler eventually will.
+ * `store.read → replay` directly, the way the F06 board handler does.
  */
 
 const temporaryDirectories: string[] = []

@@ -2,7 +2,7 @@ import type { Result } from '../result.ts'
 
 /**
  * A log stream, namespaced per bounded context + aggregate (ADR-003). No
- * context reads another's streams. Slice 0 uses
+ * context reads another's streams. The board stream is
  * `domain-model-capture` / `board` / `<workshopId>`.
  */
 export interface StreamKey {
@@ -39,7 +39,7 @@ export interface AppendConflict {
 /**
  * Synchronous: every implementation is synchronous — `node:sqlite`'s
  * `DatabaseSync`, the `better-sqlite3` escape hatch, and the in-memory impl.
- * Slice 2+ handlers call it fine from inside async Hono routes.
+ * Capability handlers call it from inside async Hono routes.
  */
 export interface EventStore {
   /**

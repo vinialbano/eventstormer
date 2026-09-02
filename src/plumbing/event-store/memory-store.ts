@@ -3,7 +3,7 @@ import type { AppendConflict, EventStore, StoredOperation, StreamKey } from './p
 
 /**
  * A first-class in-memory `EventStore` — the seam the decider/replay tests run
- * against (Slice 1's tests import it too). It enforces the same
+ * against (session-facilitation tests import it too). It enforces the same
  * `expectedPosition` and batch-atomic semantics as the `node:sqlite` adapter,
  * and serializes each operation the way the adapter does, so a non-serializable
  * operation aborts the whole batch here exactly as it would there.
