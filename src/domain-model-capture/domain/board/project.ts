@@ -119,9 +119,19 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       follows = dropIncidentFollows(follows, op.target)
       causedBy = dropIncidentCausedBy(causedBy, op.target)
       break
-    case 'reinstate':
-      patchBlock(blocks, op.target, { withdrawn: false, placement: 'backlog', pivotal: false })
+    case 'reinstate': {
+      const naked =
+        blocks.get(op.target)?.kind === 'hot-spot'
+          ? { annotates: null, resolved: false, reference: null }
+          : {}
+      patchBlock(blocks, op.target, {
+        withdrawn: false,
+        placement: 'backlog',
+        pivotal: false,
+        ...naked,
+      })
       break
+    }
     case 'place':
       patchBlock(blocks, op.target, { placement: 'timeline' })
       break
@@ -178,7 +188,10 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       patchBlock(blocks, op.hotSpot, { annotates: null })
       break
     case 'resolve':
+      patchBlock(blocks, op.target, { resolved: true, reference: op.reference })
+      break
     case 'reopen':
+      patchBlock(blocks, op.target, { resolved: false })
       break
   }
 

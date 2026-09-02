@@ -83,6 +83,10 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'reinstate': {
       const block = next.blocks.get(op.target)
       if (block) next.blocks.set(op.target, { ...block, withdrawn: false })
+      if (block?.kind === 'hot-spot') {
+        next.annotates.delete(op.target)
+        next.hotSpotResolved.set(op.target, false)
+      }
       break
     }
     case 'sequence':
@@ -112,13 +116,17 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'unannotate':
       next.annotates.delete(op.hotSpot)
       break
+    case 'resolve':
+      next.hotSpotResolved.set(op.target, true)
+      break
+    case 'reopen':
+      next.hotSpotResolved.set(op.target, false)
+      break
     case 'reword':
     case 'place':
     case 'unplace':
     case 'mark-pivotal':
     case 'unmark-pivotal':
-    case 'resolve':
-    case 'reopen':
       break
   }
 
