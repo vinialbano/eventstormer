@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `capture-loop-shim-removal` (`.specs/features/capture-loop-shim-removal/`) — GitHub #68
-- **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: removed `dock/mutations.ts` shim + test; added `src/app/capture-loop/AGENTS.md`
+- **Feature**: `capture-loop-topology-migration` (`.specs/features/capture-loop-topology-migration/`) — GitHub #76 (effort map closed)
+- **Phase / Task**: Specify + Design + Tasks complete — awaiting user approval before Execute
+- **Completed**: effort-map decisions (#77–#86, #84); `spec.md` (TOPO-01..22), `design.md`, `tasks.md` (T1–T15), `context.md`
 - **In-progress**: none
-- **Next step**: open PR for #68
+- **Next step**: user approves spec/design/tasks → create branch → Execute T1 (shell orchestration modules)
 - **Blockers**: none
-- **Branch**: `capture-loop-shim-removal`
+- **Branch**: not created yet — use `capture-loop-topology-migration` off `main`
 
 ---
 
