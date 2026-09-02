@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { postBoardOperation, type BoardEdit } from './mutations.ts'
+import { postBoardOperation, type BoardEdit } from './board.ts'
 
 const author = { accepter: { name: 'Maria' } } as const
 

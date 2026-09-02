@@ -2,6 +2,7 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
+import { mountRewordPortalHost, unmountRewordPortalHost } from '../test-support/reword-portal-host.ts'
 import BoardWall from './BoardWall.vue'
 import RewordConfirm from './RewordConfirm.vue'
 
@@ -18,10 +19,12 @@ const stubMatchMedia = (matches: boolean): void => {
 
 enableAutoUnmount(afterEach)
 beforeEach(() => {
+  mountRewordPortalHost()
   stubMatchMedia(false)
 })
 afterEach(() => {
   vi.unstubAllGlobals()
+  unmountRewordPortalHost()
 })
 
 describe('BoardWall', () => {

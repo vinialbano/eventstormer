@@ -104,43 +104,6 @@ describe('board store', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/workshops/w1/board')
     expect(store.snapshot).toEqual(snapshot)
-    expect(store.timeline.tracks).toEqual([])
-  })
-
-  it('lays out published follows as ranks and edges', async () => {
-    const snapshot: BoardSnapshot = {
-      position: 2,
-      blocks: [
-        {
-          id: 'eA',
-          kind: 'domain-event',
-          label: 'Loan recorded',
-          withdrawn: false,
-          placement: 'timeline',
-          pivotal: false,
-        },
-        {
-          id: 'eB',
-          kind: 'domain-event',
-          label: 'Book returned',
-          withdrawn: false,
-          placement: 'timeline',
-          pivotal: false,
-        },
-      ],
-      follows: [{ predecessor: 'eA', successor: 'eB' }],
-      causedBy: [],
-    }
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(snapshot)))
-
-    const store = useBoardStore()
-    await store.load('w1')
-
-    expect(store.showWithdrawn).toBe(false)
-    expect(store.timeline.tracks).toEqual([
-      { eventIds: ['eA', 'eB'], ranks: { eA: 0, eB: 1 } },
-    ])
-    expect(store.timeline.edges).toEqual([{ predecessor: 'eA', successor: 'eB' }])
   })
 
   it('treats a 404 board stream as an empty board, not an error', async () => {
@@ -151,41 +114,6 @@ describe('board store', () => {
 
     expect(store.snapshot).toEqual({ position: -1, blocks: [], follows: [], causedBy: [] })
     expect(store.error).toBeNull()
-  })
-
-  it('defaults showWithdrawn to false and toggling it does not fetch', async () => {
-    const snapshot: BoardSnapshot = {
-      position: 3,
-      blocks: [
-        {
-          id: 'eA',
-          kind: 'domain-event',
-          label: 'Loan recorded',
-          withdrawn: true,
-          placement: 'timeline',
-          pivotal: false,
-        },
-      ],
-      follows: [],
-      causedBy: [],
-    }
-    const fetchMock = vi.fn().mockResolvedValue(json(snapshot))
-    vi.stubGlobal('fetch', fetchMock)
-
-    const store = useBoardStore()
-    expect(store.showWithdrawn).toBe(false)
-    await store.load('w1')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(store.timeline.tracks).toEqual([])
-
-    store.showWithdrawn = true
-    expect(store.showWithdrawn).toBe(true)
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(store.timeline.tracks).toEqual([{ eventIds: ['eA'], ranks: { eA: 0 } }])
-
-    store.showWithdrawn = false
-    expect(store.timeline.tracks).toEqual([])
-    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
 

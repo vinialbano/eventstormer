@@ -48,21 +48,17 @@ capture.
 
 ## Handoff
 
-- **Feature**: `slice-3-relations-board` (`.specs/features/slice-3-relations-board/`) — GitHub #40
+- **Feature**: `capture-loop-transport-seam` (`.specs/features/capture-loop-transport-seam/`) — GitHub #62
 - **Phase / Task**: Execute complete + Verifier PASS
-- **Completed**: T1–T22 through `d293252`; validation.md PASS (32/32 ACs, 3/3 mutants
-  killed). Sequence-family withdrawn/unknown rejections and write-model incremental
-  replay are in `decide.test.ts` / `replay.test.ts`. Vue Flow kept. #40
-  sequence-placement comment posted
+- **Completed**: T1–T6; `pnpm check` green (656 tests)
 - **In-progress**: none
-- **Next step**: optional interactive UAT. Open PR when ready
+- **Next step**: open PR for #62
 - **Blockers**: none
-- **Uncommitted files**: spec close-out, lessons, assertion-gap tests
-- **Branch**: `slice-3-relations-board`
+- **Branch**: `capture-loop-transport-seam`
 
 ---
 
-**Prior feature:** `slice-1-capture-loop` (GitHub issue #38)
+**Prior feature:** `slice-3-relations-board` (`.specs/features/slice-3-relations-board/`) — GitHub #40
 **Branch:** `slice-1-capture-loop` off `main` (created; Slice 0 merged as of `d55351c`). Not pushed.
 **Phase:** slice-1 EXECUTE complete + Verifier PASS. **Follow-up: `slice-1-review-fixes`** —
 the PR #46 automated-review fix batch (spec + validation in

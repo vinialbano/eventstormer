@@ -2,7 +2,7 @@
 import { PopoverAnchor, PopoverContent, PopoverPortal, PopoverRoot } from 'reka-ui'
 import { ref, watch } from 'vue'
 import { getJson } from '../client.ts'
-import { postBoardOperation } from '../dock/mutations.ts'
+import { postBoardOperation } from '../transport/board.ts'
 
 interface ReferenceSite {
   kind: string
@@ -50,15 +50,6 @@ const loadReferences = async (): Promise<void> => {
     loading.value = false
   }
 }
-
-const ensurePortal = (): void => {
-  if (document.querySelector('#reword-portal') !== null) return
-  const host = document.createElement('div')
-  host.id = 'reword-portal'
-  document.body.append(host)
-}
-
-ensurePortal()
 
 watch(
   () => [props.open, props.revision, props.blockId] as const,
