@@ -25,6 +25,18 @@ verifier sub-agent with `isolation: "worktree"`. The `Stop` gate runs `pnpm chec
 live tree; a mutation in flight there reads as a red gate on a codebase that is actually green,
 and the main agent has no reliable way to tell the two apart.
 
+### Capture-loop sensors (M1–M6)
+
+| Mutant | Fault | Sensor suite |
+| ------ | ----- | ------------ |
+| M1 | Swap `mutated` targets to `['board','account']` in `refetch-graph.ts` | `refetch-graph.test.ts` |
+| M2 | No-op `board` branch in `apply-capture-effect.ts` | `apply-capture-effect.test.ts` |
+| M3 | `shouldLoadBoardOnBootstrap` always true | `capture-bootstrap.test.ts` |
+| M4 | Call `onBoardDirty()` on cycle 422 in `use-relate-blocks.ts` | `use-relate-blocks.test.ts`, `BoardWall.drop.test.ts` |
+| M4′ | Skip `onBoardDirty()` on successful relation POST | `BoardWall.test.ts`, `BoardWall.drop.test.ts` (success paths) |
+| M5 | Poll `board` instead of `proposals` in interpretation poll | `use-interpretation-poll.test.ts` |
+| M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `use-capture-orchestration.integration.test.ts` |
+
 ## Coverage
 
 `vite.config.ts` sets `coverage.thresholds`. Locally, `autoUpdate` ratchets the numbers upward on
@@ -40,15 +52,21 @@ running app and read its console — not `curl`, not a screenshot-only tool. `pl
 <url>` reports console errors/warnings inline; treat a nonzero count as a real finding, not
 noise — a console warning is signal here even when the page still renders.
 
-## E2E — capture-loop Playwright spec
+## E2E — capture-loop Playwright specs
 
-`e2e/capture-loop.spec.ts` is the one happy-path spec (ADR-008): create a workshop, accept the
-scope card, narrate three contributions, accept each proposed building block, and assert the
-three stickies in the board backlog. Run it with `pnpm test:e2e`.
+Two specs under `e2e/`, both run by `pnpm test:e2e`. Playwright gives each spec its own
+`pnpm dev` process (separate ports and SQLite files) so the in-process scripted facilitator
+turn index cannot leak between them.
 
-`playwright.config.ts` boots `pnpm dev` with `FACILITATOR_MODE=scripted` and an empty
-`ANTHROPIC_API_KEY` so the facilitator reads `e2e/fixtures/facilitator.json` and never reaches
-Anthropic. Everything else is the real server, real SQLite, and the real SPA.
+| Spec | What it guards |
+| --- | --- |
+| `capture-loop.spec.ts` | Core smoke (ADR-008), **three serial macro stages**: (1) workshop setup — create workshop, start session, accept scope; (2) board mutations — narrate three contributions and accept each onto the backlog; (3) timeline — place and sequence two events. Reword, withdraw, readable-account walk, and reload persistence stay in unit tests. |
+| `capture-loop-no-optimism.spec.ts` | ADR-007 macro: `page.route()` holds the board GET after accept; the proposal receipt may appear while the backlog must stay empty until the refetch completes. |
 
-CI runs this spec in a sibling `e2e` job (`pnpm test:e2e` after installing Chromium). It is not
+`playwright.config.ts` boots each project on its own port with `FACILITATOR_MODE=scripted` and an
+empty `ANTHROPIC_API_KEY` so the facilitator reads `e2e/fixtures/facilitator.json` and never
+reaches Anthropic. Everything else is the real server, real SQLite, and the real SPA. Serial
+stages in `capture-loop.spec.ts` name the failing phase; the no-optimism spec is standalone.
+
+CI runs both in a sibling `e2e` job (`pnpm test:e2e` after installing Chromium). E2E is not
 part of `pnpm check` or the pre-push hook — those stay browser-free.

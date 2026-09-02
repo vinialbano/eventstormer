@@ -15,6 +15,11 @@ const card = (over: Partial<ProposalCard>): ProposalCard => ({
   ...over,
 })
 
+// Suite: PendingDrawer
+// Invariant: The pending drawer lists parked and awaiting groups and emits jump / accept-all intents.
+// Boundary IN: row grouping, accept-all-remaining visibility, empty state.
+// Boundary OUT: accept-all transport (use-review-proposal.test.ts), dock open/jump wiring (FacilitatorDock.test.ts).
+
 describe('PendingDrawer', () => {
   it('lists parked and awaiting groups with counts, and emits jump on a row click', async () => {
     const wrapper = mount(PendingDrawer, {
@@ -44,6 +49,16 @@ describe('PendingDrawer', () => {
       props: { parked: [card({ proposalId: 'p1', held: true })], awaiting: [] },
     })
     expect(nothingAwaiting.find('.drawer__acceptall').exists()).toBe(false)
+  })
+
+  it('emits accept-all when Accept all remaining is clicked', async () => {
+    const wrapper = mount(PendingDrawer, {
+      props: { parked: [], awaiting: [card({ proposalId: 'p2', label: 'Order confirmed' })] },
+    })
+
+    await wrapper.get('.drawer__acceptall').trigger('click')
+
+    expect(wrapper.emitted('accept-all')).toEqual([[]])
   })
 
   it('shows an empty line when nothing is pending', () => {

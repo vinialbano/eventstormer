@@ -22,9 +22,9 @@ const emptyBoard = { position: -1, blocks: [], follows: [], causedBy: [] }
 const emptyAccount = { position: -1, markdown: '# Readable account\n' }
 
 // Suite: use-capture-orchestration integration
-// Invariant: The shell adapter wires cold load and zone events to the correct store loaders.
+// Invariant: The shell adapter wires zone events to the correct store loaders.
 // Boundary IN: useCaptureOrchestration with live Pinia stores and stubbed fetch.
-// Boundary OUT: Pure orchestration modules (orchestration/*.test.ts), full SFC mount (CaptureScreen.test.ts).
+// Boundary OUT: Cold-load bootstrap (capture-bootstrap.test.ts), CaptureScreen watch wiring (CaptureScreen.test.ts).
 
 const setup = () => {
   const scope = effectScope()
@@ -42,45 +42,6 @@ describe('useCaptureOrchestration integration', () => {
   })
   afterEach(() => {
     vi.unstubAllGlobals()
-  })
-
-  it('cold-loads board when live session view has contributions after async load', async () => {
-    const fetchMock = vi.fn((url: string) => {
-      if (url.endsWith('/session')) return Promise.resolve(json(viewWithContributions()))
-      if (url.endsWith('/board')) return Promise.resolve(json(emptyBoard))
-      return Promise.resolve(json({}))
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    const { scope, orch } = setup()
-    await orch.coldLoad()
-
-    expect(fetchMock.mock.calls.some((call) => call[0].endsWith('/session'))).toBe(true)
-    expect(fetchMock.mock.calls.some((call) => call[0].endsWith('/board'))).toBe(true)
-    scope.stop()
-  })
-
-  it('skips board cold-load when live session view has no contributions after load', async () => {
-    const fetchMock = vi.fn((url: string) => {
-      if (url.endsWith('/session')) {
-        return Promise.resolve(
-          json({
-            ...viewWithContributions(),
-            contributions: [],
-            fullyDerived: false,
-          }),
-        )
-      }
-      return Promise.resolve(json({}))
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    const { scope, orch } = setup()
-    await orch.coldLoad()
-
-    expect(fetchMock.mock.calls.some((call) => call[0].endsWith('/session'))).toBe(true)
-    expect(fetchMock.mock.calls.some((call) => call[0].endsWith('/board'))).toBe(false)
-    scope.stop()
   })
 
   it('refetches session and proposals only on mutated', async () => {

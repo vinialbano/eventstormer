@@ -1,3 +1,8 @@
+// Suite: use-interpretation-poll
+// Invariant: Poll refetches session and proposals only — never board or account.
+// Boundary IN: useInterpretationPoll with live session/proposals stores and stubbed fetch.
+// Boundary OUT: Shell adapter onMutated wiring (use-capture-orchestration.integration.test.ts).
+
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'

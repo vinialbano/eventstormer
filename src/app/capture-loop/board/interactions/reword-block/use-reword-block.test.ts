@@ -74,6 +74,11 @@ const mountInteraction = (revision = 3) => {
   }
 }
 
+// Suite: use-reword-block
+// Invariant: Confirm opens references GET; confirm POSTs reword once; empty labels never open confirm.
+// Boundary IN: fetchReferences injection, confirm popover phases, onBoardDirty on successful POST.
+// Boundary OUT: GET/POST wire shapes (transport/board.test.ts), keyboard routing (use-board-keyboard.test.ts).
+
 describe('useRewordBlock', () => {
   let fetchMock: ReturnType<typeof vi.fn>
 
@@ -89,6 +94,27 @@ describe('useRewordBlock', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     unmountRewordPortalHost()
+  })
+
+  it('rejects an empty draft inline and never opens confirm', () => {
+    const blocks = ref([
+      { id: 'b1', kind: 'domain-event', label: 'Order acknowledged', withdrawn: false },
+    ])
+    const reword = useRewordBlock({
+      blocks,
+      workshopId: ref('w1'),
+      accepter: ref('Maria'),
+      revision: ref(3),
+      onBoardDirty: vi.fn(),
+      fetchReferences: fetchBlockReferences,
+    })
+    void reword.startReword('b1')
+    reword.draft.value = '   '
+    reword.requestConfirm()
+
+    expect(reword.labelError.value).toBe("Name can't be empty.")
+    expect(reword.confirmOpen.value).toBe(false)
+    expect(postsOf(fetchMock)).toHaveLength(0)
   })
 
   it('GETs references on confirm open and POSTs one reword on confirm', async () => {

@@ -1,3 +1,8 @@
+// Suite: board-view
+// Invariant: Client-only board filters and timeline layout derive correctly from a board snapshot ref.
+// Boundary IN: useBoardViewState composable with literal snapshot fixtures.
+// Boundary OUT: BoardWall mount and dagre layout (BoardWall.test.ts, use-dagre-layout.test.ts).
+
 import { ref } from 'vue'
 import { describe, expect, it } from 'vitest'
 import type { BoardSnapshot } from '../types.ts'

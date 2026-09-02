@@ -1,11 +1,42 @@
+// Suite: transport board
+// Invariant: postBoardOperation serialises each board-edit kind to the correct POST body shape.
+// Boundary IN: transport/board.ts fetch adapter with stubbed fetch.
+// Boundary OUT: BoardWall gesture integration (BoardWall.drop.test.ts, RewordConfirm.test.ts).
+
 import { describe, expect, it, vi } from 'vitest'
-import { postBoardOperation, type BoardEdit } from './board.ts'
+import * as client from '../client.ts'
+import {
+  fetchBlockReferences,
+  postBoardOperation,
+  referenceSiteLine,
+  type BoardEdit,
+} from './board.ts'
 
 const author = { accepter: { name: 'Maria' } } as const
 
-// place and reword wire shapes are also asserted in BoardWall.drop.test.ts and
-// RewordConfirm.test.ts; this file pins the discriminated-union kinds that lack
-// a dedicated component test (sequence, link-cause).
+// Suite: board transport
+// Invariant: POST bodies match the BoardEdit discriminated union; GET references uses the block route.
+// Boundary IN: fetchBlockReferences path, referenceSiteLine copy, postBoardOperation wire shapes.
+// Boundary OUT: composable dirty callbacks (use-reword-block.test.ts), wall gestures (BoardWall.drop.test.ts).
+
+describe('fetchBlockReferences', () => {
+  it('GETs the block references route via getJson', async () => {
+    const sites = [{ kind: 'readable-account', path: 'building-blocks' }]
+    const getJson = vi.spyOn(client, 'getJson').mockResolvedValue(sites)
+
+    await expect(fetchBlockReferences('w1', 'b1')).resolves.toEqual(sites)
+    expect(getJson).toHaveBeenCalledWith('/api/workshops/w1/board/blocks/b1/references')
+  })
+})
+
+describe('referenceSiteLine', () => {
+  it('names the readable-account building-blocks path', () => {
+    expect(referenceSiteLine({ kind: 'readable-account', path: 'building-blocks' })).toBe(
+      'Readable account · Building blocks',
+    )
+    expect(referenceSiteLine({ kind: 'other', path: 'timeline' })).toBe('timeline')
+  })
+})
 
 describe('postBoardOperation', () => {
   it('POSTs a sequence body with predecessor and successor and no target', async () => {

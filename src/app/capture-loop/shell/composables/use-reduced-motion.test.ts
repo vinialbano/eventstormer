@@ -1,3 +1,8 @@
+// Suite: use-reduced-motion
+// Invariant: prefers-reduced-motion media query toggles the composable ref and cleans up listeners.
+// Boundary IN: useReducedMotion with stubbed matchMedia.
+// Boundary OUT: Board animation presentation (BoardWall.test.ts).
+
 import { afterEach, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
 import { useReducedMotion } from './use-reduced-motion.ts'

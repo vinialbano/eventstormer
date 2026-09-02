@@ -1,3 +1,8 @@
+// Suite: RewordConfirm
+// Invariant: Reword impact popover exposes reference sites and confirm/cancel actions by phase.
+// Boundary IN: RewordConfirm.vue mount with portal host.
+// Boundary OUT: Phase machine rules (reword-confirm.test.ts), composable flow (use-reword-block.test.ts).
+
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { mountRewordPortalHost, unmountRewordPortalHost } from '../../../test-support/reword-portal-host.ts'

@@ -1,7 +1,17 @@
+// Suite: layoutBoard
+// Invariant: Backlog stickies flow three-per-row inside a framed canvas with stable geometry.
+// Boundary IN: layoutBoard and tiltFor pure functions.
+// Boundary OUT: BoardWall mount and dagre timeline (BoardWall.test.ts, use-dagre-layout.test.ts).
+
 import { describe, expect, it } from 'vitest'
 import { layoutBoard, tiltFor } from './layout.ts'
 
 const VIEWPORT = { w: 1280, h: 800 }
+
+// Suite: layoutBoard
+// Invariant: Backlog frame and sticky grid positions follow block count and viewport size.
+// Boundary IN: layoutBoard and tiltFor pure layout math.
+// Boundary OUT: Wall rendering (BoardWall.test.ts), dagre timeline (use-dagre-layout.test.ts).
 
 describe('layoutBoard', () => {
   it('lays out an empty backlog as a framed 3-wide outline and no stickies', () => {

@@ -1,3 +1,8 @@
+// Suite: CreateWorkshop
+// Invariant: Workshop entry posts creator name and routes to the resumable capture URL.
+// Boundary IN: CreateWorkshop.vue mount with stubbed fetch and memory router.
+// Boundary OUT: Capture session cold load (CaptureScreen.test.ts, capture-bootstrap.test.ts).
+
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
