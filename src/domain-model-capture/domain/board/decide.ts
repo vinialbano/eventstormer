@@ -380,6 +380,47 @@ const decideUnmarkPivotal = (
   return ok([operation])
 }
 
+const decideRaiseHotSpot = (
+  writeModel: BoardWriteModel,
+  operation: OpOf<'raise-hot-spot'>,
+): Decision =>
+  writeModel.blocks.has(operation.id)
+    ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
+    : ok([operation])
+
+const decideAnnotate = (writeModel: BoardWriteModel, operation: OpOf<'annotate'>): Decision => {
+  const hotSpot = lookupActive(writeModel, operation.hotSpot)
+  if (!hotSpot.ok) return hotSpot
+  const target = lookupActive(writeModel, operation.target)
+  if (!target.ok) return target
+  if (hotSpot.value.kind !== 'hot-spot') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'only a hot spot may annotate a building block',
+    })
+  }
+  if (target.value.kind === 'hot-spot') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'a hot spot cannot annotate another hot spot',
+    })
+  }
+  return ok([operation])
+}
+
+const decideUnannotate = (writeModel: BoardWriteModel, operation: OpOf<'unannotate'>): Decision => {
+  const hotSpot = lookupActive(writeModel, operation.hotSpot)
+  if (!hotSpot.ok) return hotSpot
+  if (!writeModel.annotates.has(operation.hotSpot)) {
+    return err({ kind: 'missing-edge', classification: 'systemic' })
+  }
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -443,8 +484,14 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
       return decideUnmarkPivotal(writeModel, operation)
 
     case 'raise-hot-spot':
+      return decideRaiseHotSpot(writeModel, operation)
+
     case 'annotate':
+      return decideAnnotate(writeModel, operation)
+
     case 'unannotate':
+      return decideUnannotate(writeModel, operation)
+
     case 'resolve':
     case 'reopen':
       return err({

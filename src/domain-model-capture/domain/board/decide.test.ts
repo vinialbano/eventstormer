@@ -50,13 +50,7 @@ const followsIsAcyclic = (follows: Map<BuildingBlockId, Set<BuildingBlockId>>): 
   return visited === nodes.size
 }
 
-const NOT_IMPLEMENTED: OperationKind[] = [
-  'raise-hot-spot',
-  'annotate',
-  'unannotate',
-  'resolve',
-  'reopen',
-]
+const NOT_IMPLEMENTED: OperationKind[] = ['resolve', 'reopen']
 
 describe('decide — capture', () => {
   it('emits the capture operation for each kind-specific variant', () => {
@@ -932,6 +926,97 @@ describe('decide — mark-pivotal / unmark-pivotal', () => {
   })
 })
 
+describe('decide — raise-hot-spot / annotate / unannotate', () => {
+  const raised = [
+    { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+    { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+  ]
+
+  it('raises a hot spot with a fresh id as a single raise-hot-spot', () => {
+    const result = decide(emptyWriteModel(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'x' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'raise-hot-spot', id: 'h1', label: 'x' })])
+  })
+
+  it('rejects a raise-hot-spot whose id already exists as duplicate-id', () => {
+    const writeModel = given(raised)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op({ kind: 'raise-hot-spot', id: 'h1', label: 'again' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'duplicate-id', classification: 'systemic', id: 'h1' })
+    }
+    expect(writeModel).toEqual(before)
+  })
+
+  it('annotates a live non-hot-spot target as a single annotate', () => {
+    const writeModel = given(raised)
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' })])
+    }
+  })
+
+  it('rejects annotate of an unknown target and leaves the write model unchanged', () => {
+    const writeModel = given(raised)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e9' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'unknown-target', classification: 'systemic', target: 'e9' })
+    }
+    expect(writeModel).toEqual(before)
+  })
+
+  it('rejects annotate of a withdrawn target', () => {
+    const writeModel = given([...raised, { kind: 'withdraw', target: 'e1' }])
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'withdrawn-target', classification: 'systemic', target: 'e1' })
+    }
+  })
+
+  it('rejects annotate whose target is itself a hot spot as kind-permission', () => {
+    const writeModel = given([...raised, { kind: 'raise-hot-spot', id: 'h2', label: 'other' }])
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'h2' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error.kind).toBe('kind-permission')
+      if (result.error.kind === 'kind-permission') expect(result.error.operation).toBe('annotate')
+    }
+  })
+
+  it('rejects annotate whose hotSpot is not a hot spot as kind-permission', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+      { kind: 'capture-domain-event', id: 'e2', label: 'refund' },
+    ])
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'e1', target: 'e2' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  it('unannotates a hot spot that currently annotates something', () => {
+    const writeModel = given([...raised, { kind: 'annotate', hotSpot: 'h1', target: 'e1' }])
+    const result = decide(writeModel, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'unannotate', hotSpot: 'h1' })])
+  })
+
+  it('rejects unannotate of a hot spot annotating nothing as missing-edge', () => {
+    const writeModel = given(raised)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
+    }
+    expect(writeModel).toEqual(before)
+  })
+})
+
 describe('decide — schema and not-implemented rejections', () => {
   it('rejects an operation that fails schema validation, emitting nothing', () => {
     const result = decide(emptyWriteModel(), { kind: 'withdraw', author } as unknown as Operation)
@@ -944,13 +1029,7 @@ describe('decide — schema and not-implemented rejections', () => {
   })
 
   it('rejects every not-yet-implemented kind explicitly, never silently', () => {
-    expect(NOT_IMPLEMENTED).toEqual([
-      'raise-hot-spot',
-      'annotate',
-      'unannotate',
-      'resolve',
-      'reopen',
-    ])
+    expect(NOT_IMPLEMENTED).toEqual(['resolve', 'reopen'])
     for (const kind of NOT_IMPLEMENTED) {
       const result = decide(emptyWriteModel(), op(sampleFor(kind)))
       expect(isErr(result)).toBe(true)
