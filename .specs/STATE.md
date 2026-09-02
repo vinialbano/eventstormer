@@ -48,13 +48,13 @@ capture.
 
 ## Handoff
 
-- **Feature**: `capture-loop-topology-migration` (`.specs/features/capture-loop-topology-migration/`) — GitHub #76 (effort map closed)
-- **Phase / Task**: Specify + Design + Tasks complete — awaiting user approval before Execute
-- **Completed**: effort-map decisions (#77–#86, #84); `spec.md` (TOPO-01..22), `design.md`, `tasks.md` (T1–T15), `context.md`
+- **Feature**: `capture-loop-topology-migration` (`.specs/features/capture-loop-topology-migration/`) — GitHub #76 (effort map) · **PR #87**
+- **Phase / Task**: Execute complete + Verifier PASS with gaps
+- **Completed**: T1–T15 on `capture-loop-topology-migration`; ADR-012 + ARCHITECTURE §4; changeset patch
 - **In-progress**: none
-- **Next step**: user approves spec/design/tasks → create branch → Execute T1 (shell orchestration modules)
-- **Blockers**: none
-- **Branch**: not created yet — use `capture-loop-topology-migration` off `main`
+- **Next step**: merge PR #87; close #76 on merge
+- **Blockers**: none (await CI on PR #87)
+- **Branch**: `capture-loop-topology-migration` (pushed)
 
 ---
 
