@@ -66,6 +66,7 @@ describe('persistence round-trip', () => {
       position: 3,
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('e1'),
@@ -106,6 +107,7 @@ describe('persistence round-trip', () => {
       position: 5,
       follows: [{ predecessor: bid('e1'), successor: bid('e2') }],
       causedBy: [{ cause: bid('a1'), effect: bid('e1') }],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('e1'),

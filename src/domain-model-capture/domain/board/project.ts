@@ -161,6 +161,7 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
     blocks,
     follows: publishFollows(follows, blocks),
     causedBy: publishCausedBy(causedBy, blocks),
+    hotSpotCount: 0,
     position,
   }
 }

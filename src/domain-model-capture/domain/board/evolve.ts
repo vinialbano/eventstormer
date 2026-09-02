@@ -11,6 +11,8 @@ const cloneWriteModel = (writeModel: BoardWriteModel): BoardWriteModel => ({
   blocks: new Map(writeModel.blocks),
   follows: cloneAdjacency(writeModel.follows),
   causedBy: cloneAdjacency(writeModel.causedBy),
+  annotates: new Map(writeModel.annotates),
+  hotSpotResolved: new Map(writeModel.hotSpotResolved),
 })
 
 const addEdge = (

@@ -48,6 +48,7 @@ describe('replay', () => {
       position: 3,
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('e1'),
@@ -109,6 +110,7 @@ describe('replay', () => {
       position: 8,
       follows: [{ predecessor: bid('eC'), successor: bid('eB') }],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('eA'),
@@ -168,6 +170,7 @@ describe('replay', () => {
       position: 2,
       follows: [{ predecessor: bid('e1'), successor: bid('e2') }],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('e1'),

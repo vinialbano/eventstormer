@@ -20,17 +20,24 @@ export interface WriteBlock {
 /**
  * The slim write model `decide` guards on: only what an invariant
  * reads. `follows` is predecessor → successors; `causedBy` is effect → causes.
+ * `annotates` holds the live hot-spot → target edge (one per hot spot);
+ * `hotSpotResolved` is what the `resolve` / `reopen` guards read. A hot spot's
+ * `reference` is not here — no invariant reads it.
  */
 export interface BoardWriteModel {
   blocks: Map<BuildingBlockId, WriteBlock>
   follows: Map<BuildingBlockId, Set<BuildingBlockId>>
   causedBy: Map<BuildingBlockId, Set<BuildingBlockId>>
+  annotates: Map<BuildingBlockId, BuildingBlockId>
+  hotSpotResolved: Map<BuildingBlockId, boolean>
 }
 
 export const emptyWriteModel = (): BoardWriteModel => ({
   blocks: new Map(),
   follows: new Map(),
   causedBy: new Map(),
+  annotates: new Map(),
+  hotSpotResolved: new Map(),
 })
 
 /** A projected Building Block in the read-model snapshot. */
@@ -41,6 +48,11 @@ export interface SnapshotBlock {
   placement: 'backlog' | 'timeline'
   pivotal: boolean
   provenance: Author
+  // Meaningful only when kind === 'hot-spot':
+  modelAffecting?: boolean
+  annotates?: BuildingBlockId | null
+  resolved?: boolean
+  reference?: unknown
 }
 
 export interface FollowsEdge {
@@ -63,6 +75,7 @@ export interface BoardSnapshot {
   blocks: Map<BuildingBlockId, SnapshotBlock>
   follows: readonly FollowsEdge[]
   causedBy: readonly CausedByEdge[]
+  hotSpotCount: number
   position: number
 }
 
@@ -70,6 +83,7 @@ export const emptySnapshot = (): BoardSnapshot => ({
   blocks: new Map(),
   follows: [],
   causedBy: [],
+  hotSpotCount: 0,
   position: -1,
 })
 
@@ -91,3 +105,5 @@ export type Rejection =
   | { kind: 'kind-permission'; classification: 'systemic'; operation: string; reason: string }
   | { kind: 'already-related'; classification: 'systemic' }
   | { kind: 'missing-edge'; classification: 'systemic' }
+  | { kind: 'already-resolved'; classification: 'systemic'; target: string }
+  | { kind: 'not-resolved'; classification: 'systemic'; target: string }

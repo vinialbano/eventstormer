@@ -379,6 +379,8 @@ describe('decide — place / unplace', () => {
         blocks: new Map([[bid('x1'), { kind, withdrawn: false }]]),
         follows: new Map(),
         causedBy: new Map(),
+        annotates: new Map(),
+        hotSpotResolved: new Map(),
       }
       for (const operationKind of ['place', 'unplace'] as const) {
         const result = decide(writeModel, op({ kind: operationKind, target: 'x1' }))
