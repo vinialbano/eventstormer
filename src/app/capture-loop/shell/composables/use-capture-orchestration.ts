@@ -1,5 +1,5 @@
 import { type Ref } from 'vue'
-import { useInterpretationPoll } from '../../composables/use-interpretation-poll.ts'
+import { useInterpretationPoll } from './use-interpretation-poll.ts'
 import { useAccountStore } from '../../stores/account.ts'
 import { useBoardStore } from '../../stores/board.ts'
 import { useProposalsStore } from '../../stores/proposals.ts'

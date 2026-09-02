@@ -1,9 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
-import type { InterpretationStatus, SessionView } from '../types.ts'
-import { useProposalsStore } from '../stores/proposals.ts'
-import { useSessionStore } from '../stores/session.ts'
+import type { InterpretationStatus, SessionView } from '../../types.ts'
+import { useProposalsStore } from '../../stores/proposals.ts'
+import { useSessionStore } from '../../stores/session.ts'
 import { useInterpretationPoll } from './use-interpretation-poll.ts'
 
 const viewWith = (
