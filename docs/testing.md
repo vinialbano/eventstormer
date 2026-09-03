@@ -37,6 +37,7 @@ and the main agent has no reliable way to tell the two apart.
 | M5 | Poll `board` instead of `proposals` in interpretation poll | `use-interpretation-poll.test.ts` |
 | M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `use-capture-orchestration.integration.test.ts` |
 | M7 | Skip `boardDirty()` after a successful direct flag POST in `use-flag-hot-spot.ts` | `use-flag-hot-spot.test.ts`, `use-flag-hot-spot.integration.test.ts` |
+| M8 | Move the `closeSession` call from `confirm` into `submitProblem` in `use-close-ceremony.ts` (freeze the session before the final press) | `use-close-ceremony.test.ts`, `use-close-ceremony.integration.test.ts` |
 
 ## Coverage
 

@@ -787,10 +787,10 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-39 (AD-034 — session stays OPEN until confirm)
 **Tools**: Skill `impeccable` · Skill `testing-boss`
 **Done when**:
-- [ ] The ceremony holds the session OPEN through the Q&A + picker; `/sessions/:id/close` fires only on final confirm
-- [ ] Skipping the problem posts `{skipReason}`
-- [ ] `.integration.test.ts` for the orchestration seam; sensor row added
-- [ ] `pnpm test` green
+- [x] The ceremony holds the session OPEN through the Q&A + picker; `/sessions/:id/close` fires only on final confirm
+- [x] Skipping the problem posts `{skipReason}`
+- [x] `.integration.test.ts` for the orchestration seam; sensor row added
+- [x] `pnpm test` green
 **Tests**: unit (+ `.integration.test.ts`) · **Gate**: full
 
 ### T49: Close-ceremony components + FacilitatorDock wiring
