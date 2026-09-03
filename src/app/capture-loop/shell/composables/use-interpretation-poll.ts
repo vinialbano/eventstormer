@@ -1,5 +1,6 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useProposalsStore } from '../../stores/proposals.ts'
+import { useResolutionsStore } from '../../stores/resolutions.ts'
 import { useSessionStore } from '../../stores/session.ts'
 
 /**
@@ -12,22 +13,41 @@ import { useSessionStore } from '../../stores/session.ts'
  *
  * `board` is deliberately not polled here: the wall refetches only after an
  * an accept resolves (`board-dirty` → `board.load`), never on a timer, never optimistically.
+ *
+ * `resolutions` are polled on the same interval while any resolution is still
+ * pending review (a facilitator may propose one at any point), and drop out of
+ * the poll once every resolution is terminal.
  */
 const IN_FLIGHT = new Set(['pending', 'interpreting', 'interpreted'])
+const RESOLUTION_PENDING = new Set(['PROPOSED', 'EDITED', 'ACCEPTED'])
 
 export const useInterpretationPoll = (intervalMs = 1000) => {
   const session = useSessionStore()
   const proposals = useProposalsStore()
+  const resolutions = useResolutionsStore()
 
   const polling = ref(false)
   let timer: ReturnType<typeof setTimeout> | undefined
+
+  const anyResolutionPending = computed(() =>
+    resolutions.cards.some((card) => RESOLUTION_PENDING.has(card.disposition)),
+  )
 
   const shouldPoll = computed(() => {
     const view = session.view
     if (view === null) return false
     if (view.scope.status !== 'set') return true
-    return view.contributions.some((contribution) => IN_FLIGHT.has(contribution.status))
+    if (view.contributions.some((contribution) => IN_FLIGHT.has(contribution.status))) return true
+    return anyResolutionPending.value
   })
+
+  watch(
+    () => session.view?.sessionId ?? null,
+    (id) => {
+      if (id !== null && resolutions.sessionId !== id) void resolutions.load(id)
+    },
+    { immediate: true },
+  )
 
   const stop = (): void => {
     if (timer !== undefined) {
@@ -57,7 +77,7 @@ export const useInterpretationPoll = (intervalMs = 1000) => {
   // today; the catch is the guard if that ever changes.
   const tick = async (): Promise<void> => {
     try {
-      await Promise.all([session.refetch(), proposals.refetch()])
+      await Promise.all([session.refetch(), proposals.refetch(), resolutions.refetch()])
     } catch {
       /* transient — the next tick retries */
     }

@@ -1,18 +1,26 @@
 <script setup lang="ts">
-import type { ProposalCard } from '../types.ts'
+import type { ProposalCard, ResolutionCard } from '../types.ts'
 import { kindLabel } from './kind-label.ts'
 
 /**
  * The in-dock pending drawer (brief §3) — an *index*, not a second card. Rows
  * are kind pill + label + jump chevron, grouped `Parked by you` / `Awaiting
- * review`. A row click jumps to the inline card and pulses it. `Accept all
- * remaining` at the foot; there is no reject-all.
+ * review` / `Resolutions`. A row click jumps to the inline card and pulses it.
+ * `Accept all remaining` at the foot; there is no reject-all.
  */
-defineProps<{
-  parked: ProposalCard[]
-  awaiting: ProposalCard[]
+withDefaults(
+  defineProps<{
+    parked: ProposalCard[]
+    awaiting: ProposalCard[]
+    resolutions?: ResolutionCard[]
+  }>(),
+  { resolutions: () => [] },
+)
+const emit = defineEmits<{
+  jump: [proposalId: string]
+  'jump-resolution': [resolutionId: string]
+  'accept-all': []
 }>()
-const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
 </script>
 
 <template>
@@ -47,7 +55,27 @@ const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
       </button>
     </section>
 
-    <p v-if="parked.length === 0 && awaiting.length === 0" class="drawer__empty">Nothing pending.</p>
+    <section v-if="resolutions.length > 0" class="drawer__group">
+      <h3 class="drawer__heading">Resolutions <span>{{ resolutions.length }}</span></h3>
+      <button
+        v-for="card in resolutions"
+        :key="card.resolutionId"
+        type="button"
+        class="drawer__row"
+        @click="emit('jump-resolution', card.resolutionId)"
+      >
+        <span class="drawer__pill drawer__pill--resolution">FIX</span>
+        <span class="drawer__label">{{ card.reference }}</span>
+        <span class="drawer__chev" aria-hidden="true">›</span>
+      </button>
+    </section>
+
+    <p
+      v-if="parked.length === 0 && awaiting.length === 0 && resolutions.length === 0"
+      class="drawer__empty"
+    >
+      Nothing pending.
+    </p>
 
     <button
       v-if="awaiting.length > 0"
@@ -118,6 +146,10 @@ const emit = defineEmits<{ jump: [proposalId: string]; 'accept-all': [] }>()
 .drawer__pill--system {
   background-color: var(--color-system);
   color: var(--color-system-ink);
+}
+.drawer__pill--resolution {
+  background-color: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+  color: var(--color-danger);
 }
 .drawer__label {
   flex: 1;

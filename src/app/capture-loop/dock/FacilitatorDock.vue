@@ -3,13 +3,16 @@ import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui
 import { computed, nextTick, ref, toRef } from 'vue'
 import type { ProposalCard } from '../types.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
+import { useResolutionsStore } from '../stores/resolutions.ts'
 import { useSessionStore } from '../stores/session.ts'
 import { useDockFeed } from './composables/use-dock-feed.ts'
 import { useContribute } from './interactions/contribute/use-contribute.ts'
 import { useReviewProposal } from './interactions/review-proposal/use-review-proposal.ts'
+import { useReviewResolution } from './interactions/review-resolution/use-review-resolution.ts'
 import DockComposer from './DockComposer.vue'
 import DockFeed from './DockFeed.vue'
 import PendingDrawer from './PendingDrawer.vue'
+import ResolutionCard from './ResolutionCard.vue'
 
 /**
  * The floating facilitator dock (brief §3). Layout and wiring only — feed assembly
@@ -26,10 +29,17 @@ const emit = defineEmits<{ mutated: []; 'board-dirty': [] }>()
 
 const session = useSessionStore()
 const proposals = useProposalsStore()
+const resolutions = useResolutionsStore()
 
 const sessionView = computed(() => session.view)
 const proposalCards = computed(() => proposals.cards)
 const sessionId = toRef(props, 'sessionId')
+
+const RESOLUTION_PENDING = new Set(['PROPOSED', 'EDITED', 'ACCEPTED'])
+const resolutionCards = computed(() => resolutions.cards)
+const pendingResolutions = computed(() =>
+  resolutionCards.value.filter((card) => RESOLUTION_PENDING.has(card.disposition)),
+)
 
 const dockEmit = {
   mutated: (): void => {
@@ -58,6 +68,7 @@ const review = useReviewProposal(
   () => scopeState.value.proposedStatement,
   dockEmit,
 )
+const resolutionReview = useReviewResolution(dockEmit)
 const { catchingUp, onSubmit } = useContribute(sessionId, sessionView, dockEmit)
 
 const open = ref(true)
@@ -74,6 +85,8 @@ const onAcceptAllCluster = (cards: ProposalCard[]): Promise<void> =>
 const onAcceptAllRemaining = (): Promise<void> =>
   review.onAcceptAllRemaining(awaiting.value)
 
+const pulsingResolutionId = ref<string | null>(null)
+
 const onJump = async (proposalId: string): Promise<void> => {
   drawerOpen.value = false
   await nextTick()
@@ -81,6 +94,15 @@ const onJump = async (proposalId: string): Promise<void> => {
   pulsingId.value = proposalId
   window.setTimeout(() => {
     if (pulsingId.value === proposalId) pulsingId.value = null
+  }, 1200)
+}
+const onJumpResolution = async (resolutionId: string): Promise<void> => {
+  drawerOpen.value = false
+  await nextTick()
+  document.getElementById(`resolution-${resolutionId}`)?.scrollIntoView({ block: 'center' })
+  pulsingResolutionId.value = resolutionId
+  window.setTimeout(() => {
+    if (pulsingResolutionId.value === resolutionId) pulsingResolutionId.value = null
   }, 1200)
 }
 </script>
@@ -122,6 +144,26 @@ const onJump = async (proposalId: string): Promise<void> => {
             @accept-all-cluster="onAcceptAllCluster"
           />
 
+          <section
+            v-if="resolutionCards.length > 0"
+            class="dock__resolutions"
+            aria-label="Resolutions"
+          >
+            <ResolutionCard
+              v-for="card in resolutionCards"
+              :id="`resolution-${card.resolutionId}`"
+              :key="card.resolutionId"
+              class="dock__resolution"
+              :class="{ 'dock__resolution--pulse': pulsingResolutionId === card.resolutionId }"
+              :reference="card.reference"
+              :disposition="card.disposition"
+              :lapsed-reason="card.lapsedReason"
+              @accept="resolutionReview.onAccept(card.resolutionId)"
+              @reject="resolutionReview.onReject(card.resolutionId)"
+              @edit="resolutionReview.onEdit(card.resolutionId, $event)"
+            />
+          </section>
+
           <DockComposer :catching-up="catchingUp" @submit="onSubmit" />
         </div>
 
@@ -143,7 +185,9 @@ const onJump = async (proposalId: string): Promise<void> => {
           <PendingDrawer
             :parked="parked"
             :awaiting="awaiting"
+            :resolutions="pendingResolutions"
             @jump="onJump"
+            @jump-resolution="onJumpResolution"
             @accept-all="onAcceptAllRemaining"
           />
         </div>

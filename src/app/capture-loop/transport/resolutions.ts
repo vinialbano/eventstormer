@@ -1,8 +1,14 @@
 import { getJson, postJson } from '../client.ts'
 import type { ResolutionCard } from '../types.ts'
 
-export const fetchResolutions = (sessionId: string): Promise<{ resolutions: ResolutionCard[] }> =>
-  getJson<{ resolutions: ResolutionCard[] }>(`/api/sessions/${sessionId}/resolutions`)
+export const fetchResolutions = async (
+  sessionId: string,
+): Promise<{ resolutions: ResolutionCard[] }> => {
+  const body = await getJson<{ resolutions?: ResolutionCard[] }>(
+    `/api/sessions/${sessionId}/resolutions`,
+  )
+  return { resolutions: body.resolutions ?? [] }
+}
 
 /**
  * `POST /resolutions/:id/accept` — the synchronous resolve chain: the hot spot

@@ -41,6 +41,7 @@ describe('useFlagHotSpot integration', () => {
       if (url.endsWith('/board')) return Promise.resolve(json(board))
       if (url.endsWith('/readable-account')) return Promise.resolve(json(account))
       if (url.endsWith('/proposals')) return Promise.resolve(json({ proposals: [] }))
+      if (url.endsWith('/resolutions')) return Promise.resolve(json({ resolutions: [] }))
       if (url.endsWith('/hot-spots')) return Promise.resolve(json({ hotSpotId: 'h1', annotates: 'eA' }))
       return Promise.resolve(json({}))
     })
