@@ -262,9 +262,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-12
 **Tools**: NONE
 **Done when**:
-- [ ] `testClient` GET on a board with one annotated resolved hot spot returns the block with `resolved:true`, the reference value, and `hotSpotCount:1`
-- [ ] Existing board-access tests still green (no key removed)
-- [ ] `pnpm test` green
+- [x] `testClient` GET on a board with one annotated resolved hot spot returns the block with `resolved:true`, the reference value, and `hotSpotCount:1`
+- [x] Existing board-access tests still green (no key removed)
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T11: `flag-hot-spot` capability — direct create + reopen
@@ -275,11 +275,11 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-10, S4-11
 **Tools**: Skill `anoria-commons:code-architecture` (slice owns its entry point; no slice→slice import)
 **Done when**:
-- [ ] Happy: flag with a live target → 200, GET /board shows the callout + `hotSpotCount:1`
-- [ ] Flag targeting a hot spot / unknown / withdrawn id → 422 with the reason, board unchanged
-- [ ] Flag with no target → 200, hot spot in the unannotated set
-- [ ] Reopen a resolved hot spot → 200 `resolved:false`; reopen an open one → 422 `not-resolved`
-- [ ] `pnpm test` green
+- [x] Happy: flag with a live target → 200, GET /board shows the callout + `hotSpotCount:1`
+- [x] Flag targeting a hot spot / unknown / withdrawn id → 422 with the reason, board unchanged
+- [x] Flag with no target → 200, hot spot in the unannotated set
+- [x] Reopen a resolved hot spot → 200 `resolved:false`; reopen an open one → 422 `not-resolved`
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T12: Wire `flag-hot-spot` into `api.ts` + `host/routes.ts` + host integration test
@@ -290,8 +290,8 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-10
 **Tools**: NONE
 **Done when**:
-- [ ] Host integration test: create workshop → capture a domain event → flag a hot spot annotating it → GET /board shows callout + count 1
-- [ ] `pnpm check && pnpm build` green (Phase 3 close); `depcruise` + `knip` clean
+- [x] Host integration test: create workshop → capture a domain event → flag a hot spot annotating it → GET /board shows callout + count 1
+- [x] `pnpm check && pnpm build` green (Phase 3 close); `depcruise` + `knip` clean
 **Tests**: integration · **Gate**: build
 
 ### Phase 4 — Resolution aggregate + review-resolution
@@ -304,8 +304,8 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-17
 **Tools**: NONE
 **Done when**:
-- [ ] `newResolutionId()` returns a 21-char nanoid; brand types align across the seam with no cast
-- [ ] `pnpm check && pnpm build` green; `knip` clean (used by T14+)
+- [x] `newResolutionId()` returns a 21-char nanoid; brand types align across the seam with no cast
+- [x] `pnpm check && pnpm build` green; `knip` clean (used by T14+)
 **Tests**: none (id brand — build gate) · **Gate**: build
 
 ### T14: `ResolutionEvent` SSOT
@@ -316,8 +316,8 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-17
 **Tools**: Skill `anoria-commons:distributed-systems` (small explicit event surface; tolerant reader)
 **Done when**:
-- [ ] Union parses each event; `reference` is `z.string().min(1)` (the edited/proposed text)
-- [ ] `pnpm check && pnpm build` green
+- [x] Union parses each event; `reference` is `z.string().min(1)` (the edited/proposed text)
+- [x] `pnpm check && pnpm build` green
 **Tests**: none (event SSOT — build gate) · **Gate**: build
 
 ### T15: `Resolution` aggregate — model / decide / evolve / replay
@@ -328,12 +328,19 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-17
 **Tools**: Skill `anoria-commons:domain-modeling` (event-sourced Decider; G/W/T through commands)
 **Done when**:
-- [ ] G/W/T: Propose → Accept → Record Hot Spot Resolved ⇒ `APPLIED`; Propose → Reject ⇒ `REJECTED`, hot spot untouched (acceptance test 40 / 10); Accept → Record Resolution Rejected('already-resolved') ⇒ `LAPSED`, no retry (acceptance test 39)
-- [ ] Edit after terminal ⇒ `bad-transition`; second Accept while `ACCEPTED`/`APPLIED` ⇒ `ok([])` (idempotent)
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] G/W/T: Propose → Accept → Record Hot Spot Resolved ⇒ `APPLIED`; Propose → Reject ⇒ `REJECTED`, hot spot untouched (acceptance test 40 / 10); Accept → Record Resolution Rejected('already-resolved') ⇒ `LAPSED`, no retry (acceptance test 39)
+- [x] Edit after terminal ⇒ `bad-transition`; second Accept while `ACCEPTED`/`APPLIED` ⇒ `ok([])` (idempotent)
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T16: `resolutionsView` / `resolutionCard` read model
+**Task-plan correction (Batch 2):** `sessionResolutionIds` folds over a `propose-resolution`
+`Contribution Interpreted` track that the breakdown never assigned to a task, yet S4-18/S4-19
+require "propose (derive)" for the `Resolution` aggregate to be reachable end to end. Built in
+Phase 4 alongside T16: `InterpretedTrack` + `FacilitationTrack` `propose-resolution` strand (0
+new optionals — AD-015 budget unchanged), the `map.ts` ACL mint (`TrackIdMint.resolutionId`),
+and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep the
+`FacilitationTurnSchema` optional count consistent** — they also touch `turn-schema.ts`.
 **What**: New `session-facilitation/domain/read-models/resolutions-view.ts` — per-resolution card (hotSpotId, reference, disposition, reject/lapsed reason) + `sessionResolutionIds(events)` fold over `Contribution Interpreted` resolution tracks.
 **Where**: `src/session-facilitation/domain/read-models/resolutions-view.ts`
 **Depends on**: T15
@@ -341,8 +348,8 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-19, S4-38
 **Tools**: Skill `anoria-commons:code-architecture` (reads bypass the domain — CQRS-lite)
 **Done when**:
-- [ ] `resolutionCard` returns the disposition + reference for each state, asserted against literals
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] `resolutionCard` returns the disposition + reference for each state, asserted against literals
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T17: `review-resolution` capability — edit / reject routes
@@ -353,9 +360,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-19
 **Tools**: Skill `anoria-commons:code-architecture`
 **Done when**:
-- [ ] Edit a proposed resolution's reference → 200; edit after terminal → 409
-- [ ] Reject → 200, `GET /sessions/:id/resolutions` shows `REJECTED`
-- [ ] `pnpm test` green
+- [x] Edit a proposed resolution's reference → 200; edit after terminal → 409
+- [x] Reject → 200, `GET /sessions/:id/resolutions` shows `REJECTED`
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T18: `review-resolution/accept.ts` — synchronous resolve chain
@@ -366,10 +373,10 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-20
 **Tools**: Skill `anoria-commons:distributed-systems` (per-context transactions — never one; AD-016)
 **Done when**:
-- [ ] Accept → hot spot `resolved:true` on GET /board, reference recorded; `Resolution` `APPLIED` (acceptance test 9)
-- [ ] Two resolutions for one hot spot: first `APPLIED`, second Accept → `LAPSED` 'already-resolved', hot spot carries exactly one reference (acceptance test 39)
-- [ ] The two appends are never one transaction (assert board + resolution stream commit independently)
-- [ ] `pnpm test` green
+- [x] Accept → hot spot `resolved:true` on GET /board, reference recorded; `Resolution` `APPLIED` (acceptance test 9)
+- [x] Two resolutions for one hot spot: first `APPLIED`, second Accept → `LAPSED` 'already-resolved', hot spot carries exactly one reference (acceptance test 39)
+- [x] The two appends are never one transaction (assert board + resolution stream commit independently)
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T19: Wire `review-resolution` into `api.ts` + `host/routes.ts` + integration test
@@ -380,8 +387,8 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-19, S4-20
 **Tools**: NONE
 **Done when**:
-- [ ] Host integration test: raise a hot spot → POST accept a resolution → GET /board resolved
-- [ ] `pnpm check && pnpm build` green (Phase 4 close); `depcruise` + `knip` clean
+- [x] Host integration test: raise a hot spot → POST accept a resolution → GET /board resolved
+- [x] `pnpm check && pnpm build` green (Phase 4 close); `depcruise` + `knip` clean
 **Tests**: integration · **Gate**: build
 
 ### Phase 5 — Hot-spot proposal track
