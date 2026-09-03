@@ -1,6 +1,8 @@
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
+import { applyOperation, Operation } from '../../domain-model-capture/api.ts'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
+import { newBuildingBlockId } from '~/plumbing/ids.ts'
 import type { ContributionId, ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { isErr, isOk } from '~/plumbing/result.ts'
 import type { ProposalEvent, SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
@@ -91,6 +93,9 @@ describe('readArtifactSource', () => {
         scope: null,
         narratorCount: 0,
         quotes: [],
+        stakeholderCheck: { run: false },
+        chosenProblem: { notRun: true },
+        openModelAffectingHotSpots: [],
       })
     }
   })
@@ -112,6 +117,38 @@ describe('readArtifactSource', () => {
         { id: 'span:p_1', text: 'borrowed a book' },
       ])
       expect(result.value.narratorCount).toBe(1)
+    }
+  })
+
+  it('threads the workshop stakeholder check and the open model-affecting hot spots off the real board', () => {
+    const store = createMemoryEventStore()
+    const db = dbWithMigrations()
+    const author = { accepter: { name: 'Dana' } }
+
+    store.append(workshopStream(workshopId), -1, storedOps([workshopStarted]))
+    const checkRecorded: WorkshopEvent = {
+      v: 1,
+      at,
+      type: 'Stakeholder Check Recorded',
+      workshopId,
+      complete: true,
+      absentNames: [],
+    }
+    store.append(workshopStream(workshopId), 0, storedOps([checkRecorded]))
+
+    const openId = newBuildingBlockId()
+    const resolvedId = newBuildingBlockId()
+    const infoId = newBuildingBlockId()
+    applyOperation({ store, clock: () => at }, workshopId, Operation.parse({ kind: 'raise-hot-spot', id: openId, label: 'still open', author }))
+    applyOperation({ store, clock: () => at }, workshopId, Operation.parse({ kind: 'raise-hot-spot', id: infoId, label: 'just informational', modelAffecting: false, author }))
+    applyOperation({ store, clock: () => at }, workshopId, Operation.parse({ kind: 'raise-hot-spot', id: resolvedId, label: 'sorted', author }))
+    applyOperation({ store, clock: () => at }, workshopId, Operation.parse({ kind: 'resolve', target: resolvedId, reference: 'added a retry', author }))
+
+    const result = readArtifactSource({ store, db }, workshopId)
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value.stakeholderCheck).toEqual({ run: true, complete: true, absentNames: [] })
+      expect(result.value.openModelAffectingHotSpots).toEqual([{ id: openId, label: 'still open' }])
     }
   })
 })

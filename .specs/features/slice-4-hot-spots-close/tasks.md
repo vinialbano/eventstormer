@@ -693,9 +693,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-35 (acceptance test 25 — "not run" distinct from "run, found nothing")
 **Tools**: NONE
 **Done when**:
-- [ ] Source with no stakeholder check → `{run:false}`; with `complete:true` → `{run:true, complete:true, absentNames:[]}`
-- [ ] `openModelAffectingHotSpots` excludes informational and resolved hot spots
-- [ ] `pnpm check && pnpm build` green (Phase 8 close)
+- [x] Source with no stakeholder check → `{run:false}`; with `complete:true` → `{run:true, complete:true, absentNames:[]}`
+- [x] `openModelAffectingHotSpots` excludes informational and resolved hot spots
+- [x] `pnpm check && pnpm build` green (Phase 8 close)
 **Tests**: unit · **Gate**: build
 
 ### Phase 9 — App: hot-spot rendering + direct flag + resolution cards
