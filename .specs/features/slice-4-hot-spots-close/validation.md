@@ -207,3 +207,70 @@ exclude the scope question).
 
 **Verdict**: all four gaps closed within iteration 1 of 3. Ready for Verifier re-dispatch over
 `bc34642..HEAD`.
+
+---
+
+## Re-verification (iteration 1) — 2026-09-03
+
+**Verifier**: fresh independent sub-agent, re-derived. Read-only over the real tree; sensor
+mutations applied in an isolated git worktree on a throwaway branch (`s4-verify` @ `046b87f`),
+each reverted immediately, tree verified clean.
+**Diff range**: `main..HEAD` (HEAD = `046b87f`, 69 commits) — fix iteration 1 = `9e8f100`,
+`7b9084e`, `d2bc234`, `006fe48`, `046b87f`.
+
+### Verdict: PASS ✅
+
+All four ranked gaps from the original report are genuinely closed. Gate fully green; the
+iteration-1 survivor (M5) is now killed; five fresh behaviour-level mutations across the slice
+core all killed (6/6 including the M5 re-run). No existing test weakened or deleted — the E2E
+assertion was **tightened** (exact `Hot spots 2`, tolerant `>=` workaround removed).
+
+### Gap closure
+
+| Gap | Status | Evidence |
+| --- | ------ | -------- |
+| 1 — scope question swept on every close | ✅ **Closed** | `session/model.ts` adds `scopeQuestions: Set<QuestionId>`; `evolve.ts` populates it on `Question Asked {kind:'scope'}` and copies it in the immutable-clone header; `decide.ts:206` `decideClose` filter is `status === 'open' && !writeModel.scopeQuestions.has(id)`. `decide.test.ts:439` asserts EXACT `unresolvedQuestionIds: ['q_free']` for scope+free open (the spec-test-43 exact assertion). `hot-spot-sweep.test.ts:264` — scope-only open question → `hotSpotLabels` `[]` and `sweptQuestionIds` `[]`, so `reconcileHotSpots.closeTargets` raises nothing. `e2e/capture-loop.spec.ts:155` restored to `toHaveText(/Hot spots\s*2/)` after close+reload, apologetic comment gone. |
+| 2 — surviving mutant M5 (`duplicate-id` marker self-heal) | ✅ **Closed** | `hot-spot-sweep.test.ts:164` "rewrites the marker with no duplicate board block when the re-raise returns duplicate-id": mocks `~/plumbing/ids.ts` `newBuildingBlockId` (`mockReturnValueOnce` ×2 same id), one clean `reconcileHotSpots` (asserts label + `readSweptKeys` = `{kg:q_1}`), `DELETE FROM hot_spot_sweep` to simulate a crash between `applyOperation` and `markSwept`, re-run → asserts board hot-spot count **unchanged** (`hotSpotLabels` still `['Who else?']`) **and** the marker row present again (`readSweptKeys` = `{kg:q_1}`). Re-ran the exact iteration-1 mutant → now **KILLED** (see sensor M-B). No production change. |
+| 3 — acceptance test 11 thin | ✅ **Closed** | `interpret.test.ts:214` drives one `Contribution Interpreted` (`turn([propose('domain-event',…), {track:'propose-resolution', hotSpotId:'h_1', …}])`) → births `p_1` (`['Building Block Proposed']`) and `r_1` (`['Resolution Proposed']`) as separate streams; `Reject Resolution` on `r_1` → asserts `replayResolution(...).disposition === 'REJECTED'` **and** `p_1` stream event list unchanged **and** `replayProposal(p_1).disposition === 'PROPOSED'` (state, not just a call). |
+| 4 — acceptance test 48 thin | ✅ **Closed** | `session-summary.test.ts:88` — the module `events` fixture (line 62) contains `Session Closed` (line 69), so `sessionSummary(events, 3)` is computed over the terminal stream twice and asserted `expect(second).toEqual(first)` (deep equal). Thin by nature (pure projection) but exactly the "re-reading after close SHALL yield the same result" half of the AC. |
+
+### Discrimination sensor (re-sweep)
+
+Scratch: isolated worktree branch `s4-verify`; each mutation applied with `perl -pi`, targeted
+tests run, `git checkout` revert, tree confirmed clean.
+
+| # | File:line | Mutation | Killed? |
+| - | --------- | -------- | ------- |
+| M-A (Gap 1 sensor) | `session/decide.ts:206` | flip scope-exclusion filter `!writeModel.scopeQuestions.has(id)` → `writeModel.scopeQuestions.has(id)` | ✅ Killed — 3 tests (`decide.test.ts` exact-set, `hot-spot-sweep.test.ts` consistency + scope-only) |
+| M-B (Gap 2 / iteration-1 survivor re-run) | `hot-spot-sweep.ts:203` | drop `\|\| raised.error.kind === 'duplicate-id'` from the marker-write condition | ✅ **Killed** (was SURVIVED in iteration 1) — `hot-spot-sweep.test.ts` new case fails |
+| M-C | `hot-spot-sweep.ts:163` | `closeTargets` proposal filter `if (!applyFailed) continue` → `if (applyFailed) continue` | ✅ Killed — 3 tests |
+| M-D | `choose-problem/http.ts:39` | drop `&& block.resolved === false` from the open-hot-spot filter | ✅ Killed — 1 test (distinct from iteration-1 M8 which dropped `!withdrawn`) |
+| M-E | `review-resolution/accept.ts:104` | invert `if (LAPSE_REASONS.has(applied.error.kind))` → `if (!LAPSE_REASONS.has(...))` (resolution accept chain) | ✅ Killed — 1 test |
+| M-F | `board/project.ts:131` | reinstate not naked — `{ annotates: null, resolved: false, reference: null }` → `{ annotates: null }` (board decider not touched in iteration 0) | ✅ Killed — 1 test (`board/project.test.ts`) |
+
+**Result**: 6 injected / 6 killed / 0 survived.
+
+### Gate (worktree, HEAD `046b87f`)
+
+| Gate | Command | Exit | Result |
+| ---- | ------- | ---- | ------ |
+| Full check | `pnpm check` | 0 | ✅ **984 tests, 118 files, 0 failed**; depcruise 0 violations (322 modules); knip clean (1 pre-existing config hint) |
+| Build | `pnpm build` | 0 | ✅ built in ~1s (chunk-size warning only) |
+| E2E | `pnpm test:e2e` | 0 | ✅ **5/5** Playwright specs, incl. `hot spots and close › flags hot spots, resolves one, and closes the session through the ceremony` |
+
+### Regression check
+
+- Test count 979 (baseline) → **984** (+5): Gap 1 +2 (`decide.test.ts`, `hot-spot-sweep.test.ts`), Gap 2 +1, Gap 3 +1, Gap 4 +1. No decrease.
+- Fix diffs scanned: `9e8f100` is the only one touching production (`session/{model,evolve,decide}.ts` — additive field + filter clause). `7b9084e`, `d2bc234`, `006fe48` are test-only. `046b87f` is docs-only.
+- No assertion weakened. `e2e/capture-loop.spec.ts` assertion **strengthened** (tolerant `/Hot spots\s*[2-9]/` + dynamic `countBefore` replaced by exact `/Hot spots\s*2/`).
+
+### Requirement traceability
+
+S4-27 and S4-29 confirmed **✅ Verified** — the close sweep-set / `Session Closed`-set
+consistency now holds for the right reason (both correctly exclude the scope question). All of
+S4-01…S4-43 Verified.
+
+### Overall: ✅ Ready to merge
+
+No open items. Follow-up already recorded in STATE.md (a session with no `Scope Set` at all is a
+Slice-6 concern) — not a blocker.
