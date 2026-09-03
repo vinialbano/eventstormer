@@ -176,6 +176,13 @@ const ProposalEdited = z.object({
   label: z.string().min(1).max(200),
 })
 
+const ProposalKindSet = z.object({
+  ...base,
+  type: z.literal('Proposal Kind Set'),
+  proposalId: ProposalId,
+  modelAffecting: z.boolean(),
+})
+
 const ProposalAccepted = z.object({
   ...base,
   type: z.literal('Proposal Accepted'),
@@ -226,6 +233,7 @@ const ProposalLapsed = z.object({
 export const ProposalEvent = z.discriminatedUnion('type', [
   BuildingBlockProposed,
   ProposalEdited,
+  ProposalKindSet,
   ProposalAccepted,
   ProposalRejected,
   ProposalHeld,

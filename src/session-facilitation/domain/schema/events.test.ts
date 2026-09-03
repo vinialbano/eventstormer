@@ -232,6 +232,17 @@ describe('ProposalEvent SSOT', () => {
     expect(() => ProposalEvent.parse({ ...buildingBlockProposed, v: 2 })).toThrow()
   })
 
+  it('parses a Proposal Kind Set carrying the new modelAffecting value', () => {
+    const parsed = ProposalEvent.parse({
+      v: 1,
+      at,
+      type: 'Proposal Kind Set',
+      proposalId: 'p_1',
+      modelAffecting: false,
+    })
+    expect(parsed).toMatchObject({ type: 'Proposal Kind Set', modelAffecting: false })
+  })
+
   it('Proposal Edited bounds the label at 200 chars', () => {
     const edited = { v: 1, at, type: 'Proposal Edited', proposalId: 'p_1', label: 'x' }
     expect(ProposalEvent.parse(edited).type).toBe('Proposal Edited')

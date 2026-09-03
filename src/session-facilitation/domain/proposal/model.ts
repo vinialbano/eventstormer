@@ -33,6 +33,9 @@ export interface ProposalWriteModel {
   born: boolean
   disposition: Disposition
   held: boolean
+  /** The current kind of a hot-spot proposal: the birth value, overridden by the
+   * last `Proposal Kind Set`. `true` (model-affecting) for a plain capture. */
+  modelAffecting: boolean
   buildingBlockId?: BuildingBlockId
 }
 
@@ -40,6 +43,7 @@ export const emptyProposal = (): ProposalWriteModel => ({
   born: false,
   disposition: 'PROPOSED',
   held: false,
+  modelAffecting: true,
 })
 
 export type ProposalRejection =
@@ -60,6 +64,7 @@ export type ProposalCommand =
       at: string
     }
   | { type: 'Edit Proposal'; proposalId: ProposalId; label: string; at: string }
+  | { type: 'Set Proposal Kind'; proposalId: ProposalId; modelAffecting: boolean; at: string }
   | {
       type: 'Accept Proposal'
       proposalId: ProposalId

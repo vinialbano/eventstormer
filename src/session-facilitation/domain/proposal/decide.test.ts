@@ -237,3 +237,57 @@ describe('Proposal.decide — reject and apply outcomes', () => {
     if (isOk(second)) expect(second.value).toEqual([])
   })
 })
+
+describe('Proposal.decide — Set Proposal Kind', () => {
+  const setKind = (modelAffecting: boolean) =>
+    ({ type: 'Set Proposal Kind', proposalId, modelAffecting, at }) as const
+
+  const edited: ProposalEvent = { v: 1, at, type: 'Proposal Edited', proposalId, label: 'Loan recorded' }
+  const rejected: ProposalEvent = { v: 1, at, type: 'Operation Rejected', proposalId, reason: 'unknown-target' }
+  const applied: ProposalEvent = { v: 1, at, type: 'Operation Applied', proposalId, resultingBuildingBlockId: bb }
+  const proposalAccepted: ProposalEvent = {
+    v: 1, at, type: 'Proposal Accepted', proposalId, accepter: 'Dana', buildingBlockId: bb,
+  }
+
+  it('flips the kind on a PROPOSED proposal, emitting Proposal Kind Set', () => {
+    const result = decide(replay([proposed]), setKind(false))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        { v: 1, at, type: 'Proposal Kind Set', proposalId, modelAffecting: false },
+      ])
+    }
+  })
+
+  it('is legal on an EDITED and an APPLY_FAILED proposal', () => {
+    expect(isOk(decide(replay([proposed, edited]), setKind(false)))).toBe(true)
+    expect(isOk(decide(replay([proposed, proposalAccepted, rejected]), setKind(false)))).toBe(true)
+  })
+
+  it('is a bad-transition on a terminal proposal', () => {
+    const result = decide(replay([proposed, proposalAccepted, applied]), setKind(false))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('bad-transition')
+  })
+
+  it('is an idempotent no-op when the kind is already set to that value', () => {
+    const result = decide(replay([proposed]), setKind(true))
+    expect(isOk(result) && result.value).toEqual([])
+  })
+
+  it('evolve exposes the last-set modelAffecting; the birth value is the default', () => {
+    expect(replay([proposed]).modelAffecting).toBe(true)
+    expect(
+      replay([
+        proposed,
+        { v: 1, at, type: 'Proposal Kind Set', proposalId, modelAffecting: false },
+        { v: 1, at, type: 'Proposal Kind Set', proposalId, modelAffecting: true },
+      ]).modelAffecting,
+    ).toBe(true)
+    expect(
+      replay([
+        { ...proposed, blockKind: 'hot-spot', modelAffecting: false },
+      ]).modelAffecting,
+    ).toBe(false)
+  })
+})

@@ -48,6 +48,23 @@ const decideEdit = (writeModel: ProposalWriteModel, command: CommandOf<'Edit Pro
   return ok([{ v: 1, type: 'Proposal Edited', proposalId: command.proposalId, label: command.label, at: command.at }])
 }
 
+const decideSetKind = (
+  writeModel: ProposalWriteModel,
+  command: CommandOf<'Set Proposal Kind'>,
+): Decision => {
+  if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
+  if (writeModel.modelAffecting === command.modelAffecting) return ok([])
+  return ok([
+    {
+      v: 1,
+      type: 'Proposal Kind Set',
+      proposalId: command.proposalId,
+      modelAffecting: command.modelAffecting,
+      at: command.at,
+    },
+  ])
+}
+
 const decideAccept = (
   writeModel: ProposalWriteModel,
   command: CommandOf<'Accept Proposal'>,
@@ -142,6 +159,8 @@ export const decide = (
   switch (command.type) {
     case 'Edit Proposal':
       return decideEdit(writeModel, command)
+    case 'Set Proposal Kind':
+      return decideSetKind(writeModel, command)
     case 'Accept Proposal':
       return decideAccept(writeModel, command)
     case 'Reject Proposal':
