@@ -18,7 +18,7 @@ discrimination sensor).
 **Decisions**: `.specs/STATE.md` AD-005, AD-006, AD-008, AD-009, AD-013, AD-014, AD-015,
 AD-016, AD-017, AD-018, AD-021, AD-022, AD-023, AD-024, AD-026, AD-028, AD-029, **AD-032**,
 **AD-033**, **AD-034**
-**Status**: Draft — awaiting approval
+**Status**: Done — Execute complete (T1–T51), Verifier pending
 
 Create branch `slice-4-hot-spots-close` off `main` before T1. Do not edit `package.json`
 `version` (ADR-009); T51 adds a `minor` changeset only (target 0.5.0).
@@ -826,9 +826,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-41, S4-42, S4-43
 **Tools**: NONE
 **Done when**:
-- [ ] `.changeset/*.md` present, `minor`, `package.json` `version` untouched
-- [ ] `pnpm check && pnpm build && pnpm test:e2e` all green
-- [ ] `git log` shows one atomic commit per task, `slice-4-hot-spots-close` branch
+- [x] `.changeset/*.md` present, `minor`, `package.json` `version` untouched
+- [x] `pnpm check && pnpm build && pnpm test:e2e` all green
+- [x] `git log` shows one atomic commit per task, `slice-4-hot-spots-close` branch
 **Tests**: none (release/docs — build gate) · **Gate**: e2e
 
 **Commit** (per task): `feat(...): ...` for behaviour, `test(...)`/`chore(...)`/`docs(...)` as

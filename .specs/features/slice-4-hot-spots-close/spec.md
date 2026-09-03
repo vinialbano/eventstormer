@@ -4,6 +4,8 @@ GitHub issue: [#41](https://github.com/vinialbano/eventstormer/issues/41) ·
 Blocked by #40 (Slice 3, merged) · Blocks #42 (Slice 5) ·
 Parent effort map #9 · Version target **0.5.0** (`minor` changeset)
 
+**Status**: Done — Execute complete (T1–T51), Verifier pending.
+
 ## Problem Statement
 
 The model can be built and rendered, but it cannot record what is *painful, disputed, or
