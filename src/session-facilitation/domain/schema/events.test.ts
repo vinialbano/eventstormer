@@ -207,6 +207,27 @@ describe('ProposalEvent SSOT', () => {
     expect(ProposalEvent.parse(buildingBlockProposed).type).toBe('Building Block Proposed')
   })
 
+  it('parses a Building Block Proposed with neither hot-spot field as a plain capture', () => {
+    const parsed = ProposalEvent.parse(buildingBlockProposed)
+    expect(parsed.type).toBe('Building Block Proposed')
+    expect(parsed).not.toHaveProperty('modelAffecting')
+    expect(parsed).not.toHaveProperty('annotatesTargetId')
+  })
+
+  it('parses a hot-spot Building Block Proposed carrying modelAffecting and annotatesTargetId', () => {
+    const parsed = ProposalEvent.parse({
+      ...buildingBlockProposed,
+      blockKind: 'hot-spot',
+      modelAffecting: false,
+      annotatesTargetId: 'b_2',
+    })
+    expect(parsed).toMatchObject({
+      blockKind: 'hot-spot',
+      modelAffecting: false,
+      annotatesTargetId: 'b_2',
+    })
+  })
+
   it('every variant requires v === 1', () => {
     expect(() => ProposalEvent.parse({ ...buildingBlockProposed, v: 2 })).toThrow()
   })

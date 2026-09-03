@@ -11,8 +11,8 @@ import { BuildingBlockId, ProposalId, QuestionId, ResolutionId } from './ids.ts'
  * No `z.unknown()` anywhere — every field is a concrete type.
  */
 
-/** Domain events, actors, and systems — not hot spots or relations (ADR-010). */
-export const InterpretedBlockKind = z.enum(['domain-event', 'actor', 'system'])
+/** Domain events, actors, systems, and hot spots — not relations (ADR-010). */
+export const InterpretedBlockKind = z.enum(['domain-event', 'actor', 'system', 'hot-spot'])
 export type InterpretedBlockKind = z.infer<typeof InterpretedBlockKind>
 
 /** How strictly the facilitator held the naming bar for this track. */
@@ -27,6 +27,20 @@ const proposeBuildingBlock = z.object({
   bar: InterpretationBar,
   /** The verbatim substring the label came from — carried when `bar` is lenient. */
   evidenceSpan: z.string().min(1).optional(),
+  /**
+   * Only meaningful when `blockKind` is `hot-spot`: whether the hot spot changes
+   * the model (`true`) or is informational. Absent means model-affecting; a
+   * proposal carrying neither this nor `annotatesTargetId` is a plain capture.
+   */
+  // SPEC_DEVIATION: design says `z.boolean().default(true)`; using `.optional()`.
+  // Reason: `.default()` widens the Zod *output* type so `modelAffecting` becomes
+  // required at every typed `InterpretedTrack` / `ProposalEvent` construction site
+  // (production `map.ts`, `decide.ts`, and ~8 test fixtures). `.optional()` is
+  // equally additive and keeps "absent = model-affecting plain capture"; consumers
+  // read `modelAffecting ?? true`.
+  modelAffecting: z.boolean().optional(),
+  /** Only meaningful when `blockKind` is `hot-spot`: the block the hot spot annotates. */
+  annotatesTargetId: BuildingBlockId.optional(),
 })
 
 const flagPhase = z.object({

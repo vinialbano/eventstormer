@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { InterpretedTrack } from './interpreted-track.ts'
 
 describe('InterpretedTrack — the stored discriminated union', () => {
-  it('parses a propose-building-block track (events/actors/systems only)', () => {
+  it('parses a plain-capture propose-building-block track — no hot-spot fields', () => {
     const track = {
       track: 'propose-building-block',
       proposalId: 'p_1',
@@ -12,10 +12,26 @@ describe('InterpretedTrack — the stored discriminated union', () => {
       bar: 'lenient',
       evidenceSpan: 'we record the loan',
     }
+    const parsed = InterpretedTrack.parse(track)
+    expect(parsed).toStrictEqual(track)
+    expect(parsed).not.toHaveProperty('modelAffecting')
+    expect(parsed).not.toHaveProperty('annotatesTargetId')
+  })
+
+  it('parses a hot-spot propose-building-block track carrying modelAffecting and annotatesTargetId', () => {
+    const track = {
+      track: 'propose-building-block',
+      proposalId: 'p_1',
+      blockKind: 'hot-spot',
+      label: 'Refunds are disputed',
+      bar: 'strict',
+      modelAffecting: false,
+      annotatesTargetId: 'b_7',
+    }
     expect(InterpretedTrack.parse(track)).toStrictEqual(track)
   })
 
-  it('rejects a block kind outside domain-event / actor / system', () => {
+  it('rejects a block kind outside domain-event / actor / system / hot-spot', () => {
     expect(() =>
       InterpretedTrack.parse({
         track: 'propose-building-block',

@@ -11,9 +11,8 @@ import type { InterpretedBlockKind } from '../../domain/schema/interpreted-track
 import { proposalStream, sessionStream, storedOps, workshopStream } from '../../infrastructure/streams.ts'
 import type { ReviewProposalDeps } from './deps.ts'
 
-const OP_KIND: Record<
-  InterpretedBlockKind,
-  'capture-domain-event' | 'identify-actor' | 'identify-system'
+const OP_KIND: Partial<
+  Record<InterpretedBlockKind, 'capture-domain-event' | 'identify-actor' | 'identify-system'>
 > = {
   'domain-event': 'capture-domain-event',
   actor: 'identify-actor',
@@ -60,6 +59,9 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
     const lastEdit = events.findLast((event) => event.type === 'Proposal Edited')
     const label = lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label
 
+    const opKind = OP_KIND[birth.blockKind]
+    if (opKind === undefined) return context.json({ error: 'unsupported-block-kind' as const }, 422)
+
     const sessionEvents = readSession(deps, birth.sessionId)
     const workshopId = sessionEvents.find((event) => event.type === 'Session Started')?.workshopId
     if (workshopId === undefined) return context.json({ error: 'unknown-session' as const }, 404)
@@ -93,7 +95,7 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
 
     // 2. build + parse the operation against the operation schema SSOT
     const operation = Operation.parse({
-      kind: OP_KIND[birth.blockKind],
+      kind: opKind,
       id: buildingBlockId,
       label,
       author: { proposer: { name: 'facilitator' }, accepter: { name: creatorName } },
