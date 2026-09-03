@@ -30,6 +30,11 @@ const POOL: Operation[] = [
   op({ kind: 'unlink-cause', cause: 'a1', effect: 'e1' }),
   op({ kind: 'mark-pivotal', target: 'e1' }),
   op({ kind: 'unmark-pivotal', target: 'e1' }),
+  op({ kind: 'raise-hot-spot', id: 'h1', label: 'hot' }),
+  op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }),
+  op({ kind: 'unannotate', hotSpot: 'h1' }),
+  op({ kind: 'resolve', target: 'h1', reference: 'fixed' }),
+  op({ kind: 'reopen', target: 'h1' }),
 ]
 
 describe('replay', () => {
@@ -48,6 +53,7 @@ describe('replay', () => {
       position: 3,
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('e1'),
@@ -109,6 +115,7 @@ describe('replay', () => {
       position: 8,
       follows: [{ predecessor: bid('eC'), successor: bid('eB') }],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('eA'),
@@ -168,6 +175,7 @@ describe('replay', () => {
       position: 2,
       follows: [{ predecessor: bid('e1'), successor: bid('e2') }],
       causedBy: [],
+      hotSpotCount: 0,
       blocks: new Map([
         [
           bid('e1'),
@@ -201,6 +209,97 @@ describe('replay', () => {
       op({ kind: 'capture-domain-event', id: 'e2', label: 'same' }),
     ])
     expect(snap.blocks.size).toBe(2)
+  })
+
+  it('folds a full hot-spot log from empty to a spelled-out snapshot (acceptance test 18a)', () => {
+    const log = [
+      op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }),
+      op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }),
+      op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }),
+      op({ kind: 'resolve', target: 'h1', reference: 'added a retry' }),
+      op({ kind: 'reopen', target: 'h1' }),
+      op({ kind: 'raise-hot-spot', id: 'h2', label: 'ownership', modelAffecting: false }),
+      op({ kind: 'capture-domain-event', id: 'e2', label: 'refund' }),
+      op({ kind: 'raise-hot-spot', id: 'h3', label: 'temp' }),
+      op({ kind: 'annotate', hotSpot: 'h3', target: 'e2' }),
+      op({ kind: 'withdraw', target: 'e2' }),
+      op({ kind: 'withdraw', target: 'h3' }),
+    ]
+    expect(replay(log)).toEqual({
+      position: 10,
+      follows: [],
+      causedBy: [],
+      hotSpotCount: 2,
+      blocks: new Map([
+        [
+          bid('e1'),
+          {
+            kind: 'domain-event',
+            label: 'payment',
+            withdrawn: false,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('h1'),
+          {
+            kind: 'hot-spot',
+            label: 'timeouts',
+            withdrawn: false,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+            modelAffecting: true,
+            annotates: bid('e1'),
+            resolved: false,
+            reference: 'added a retry',
+          },
+        ],
+        [
+          bid('h2'),
+          {
+            kind: 'hot-spot',
+            label: 'ownership',
+            withdrawn: false,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+            modelAffecting: false,
+            annotates: null,
+            resolved: false,
+            reference: null,
+          },
+        ],
+        [
+          bid('e2'),
+          {
+            kind: 'domain-event',
+            label: 'refund',
+            withdrawn: true,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+          },
+        ],
+        [
+          bid('h3'),
+          {
+            kind: 'hot-spot',
+            label: 'temp',
+            withdrawn: true,
+            placement: 'backlog',
+            pivotal: false,
+            provenance: author,
+            modelAffecting: true,
+            annotates: null,
+            resolved: false,
+            reference: null,
+          },
+        ],
+      ]),
+    })
   })
 
   it('replayWriteModel folds the log into the slim write model', () => {

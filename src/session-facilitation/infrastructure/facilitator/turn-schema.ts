@@ -22,7 +22,7 @@ import { InterpretationBar, InterpretedBlockKind } from '../../domain/schema/int
 const proposeBuildingBlock = z.object({
   track: z.literal('propose-building-block'),
   blockKind: InterpretedBlockKind.describe(
-    'The Big-Picture building block: "domain-event" (a past-tense business fact), "actor" (a person/role), or "system" (an external system).',
+    'The Big-Picture building block: "domain-event" (a past-tense business fact), "actor" (a person/role), "system" (an external system), or "hot-spot" (something painful, disputed, or unknown about the business).',
   ),
   label: z
     .string()
@@ -37,6 +37,19 @@ const proposeBuildingBlock = z.object({
     .min(1)
     .optional()
     .describe('Required when bar is "lenient": the verbatim substring of the contribution the label came from.'),
+  modelAffecting: z
+    .boolean()
+    .optional()
+    .describe(
+      'Only for blockKind "hot-spot": true when the hot spot changes the model, false when it is purely informational. Omit for a model-affecting hot spot or any non-hot-spot block.',
+    ),
+  annotatesTargetId: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      'Only for blockKind "hot-spot": the exact label of an existing building block on the board that this hot spot is about. Use only a label present in the building-blocks list; omit when the hot spot annotates nothing.',
+    ),
 })
 
 const flagPhase = z.object({
@@ -64,11 +77,66 @@ const answerQuestion = z.object({
     .describe('The id of an OPEN question in this session that the contribution answers. Use only an id present in the open-questions list.'),
 })
 
+const proposeResolution = z.object({
+  track: z.literal('propose-resolution'),
+  hotSpotId: z
+    .string()
+    .min(1)
+    .describe('The id of an OPEN hot spot on the board that this contribution resolves. Use only an id present in the open-hot-spots list.'),
+  reference: z
+    .string()
+    .min(1)
+    .describe('The recorded reference for the resolution — what was decided or done to resolve the hot spot. A recorded value, not a live pointer.'),
+})
+
+const revealKnowledgeGap = z.object({
+  track: z.literal('reveal-knowledge-gap'),
+  questionId: z
+    .string()
+    .min(1)
+    .describe(
+      'The id of an OPEN question in this session that this contribution reveals has no known answer. Use only an id present in the open-questions list.',
+    ),
+  detail: z
+    .string()
+    .min(1)
+    .optional()
+    .describe('Optional: what the expert could say about why the answer is not known.'),
+})
+
+const nameAbsentStakeholder = z.object({
+  track: z.literal('name-absent-stakeholder'),
+  questionId: z
+    .string()
+    .min(1)
+    .describe(
+      'The id of an OPEN question in this session that this contribution answers by naming someone not in the room. Use only an id present in the open-questions list.',
+    ),
+  personName: z
+    .string()
+    .min(1)
+    .describe('The name or role of the absent person who would need to answer this question.'),
+})
+
+const confirmCompletePerspective = z.object({
+  track: z.literal('confirm-complete-perspective'),
+  questionId: z
+    .string()
+    .min(1)
+    .describe(
+      'The id of the OPEN stakeholder question this contribution answers by confirming nobody absent would tell the story differently. Use only an id present in the open-questions list.',
+    ),
+})
+
 export const FacilitationTrack = z.discriminatedUnion('track', [
   proposeBuildingBlock,
   flagPhase,
   attributeToOtherFormat,
   answerQuestion,
+  proposeResolution,
+  revealKnowledgeGap,
+  nameAbsentStakeholder,
+  confirmCompletePerspective,
 ])
 export type FacilitationTrack = z.infer<typeof FacilitationTrack>
 

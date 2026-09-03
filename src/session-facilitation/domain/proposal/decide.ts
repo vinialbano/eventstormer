@@ -35,6 +35,10 @@ const decidePropose = (
       label: command.label,
       bar: command.bar,
       ...(command.evidenceSpan === undefined ? {} : { evidenceSpan: command.evidenceSpan }),
+      ...(command.modelAffecting === undefined ? {} : { modelAffecting: command.modelAffecting }),
+      ...(command.annotatesTargetId === undefined
+        ? {}
+        : { annotatesTargetId: command.annotatesTargetId }),
       at: command.at,
     },
   ])
@@ -46,6 +50,23 @@ const decideEdit = (writeModel: ProposalWriteModel, command: CommandOf<'Edit Pro
     return err({ kind: 'label-too-long', classification: 'systemic' })
   }
   return ok([{ v: 1, type: 'Proposal Edited', proposalId: command.proposalId, label: command.label, at: command.at }])
+}
+
+const decideSetKind = (
+  writeModel: ProposalWriteModel,
+  command: CommandOf<'Set Proposal Kind'>,
+): Decision => {
+  if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
+  if (writeModel.modelAffecting === command.modelAffecting) return ok([])
+  return ok([
+    {
+      v: 1,
+      type: 'Proposal Kind Set',
+      proposalId: command.proposalId,
+      modelAffecting: command.modelAffecting,
+      at: command.at,
+    },
+  ])
 }
 
 const decideAccept = (
@@ -142,6 +163,8 @@ export const decide = (
   switch (command.type) {
     case 'Edit Proposal':
       return decideEdit(writeModel, command)
+    case 'Set Proposal Kind':
+      return decideSetKind(writeModel, command)
     case 'Accept Proposal':
       return decideAccept(writeModel, command)
     case 'Reject Proposal':

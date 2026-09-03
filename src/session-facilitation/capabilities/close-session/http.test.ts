@@ -186,4 +186,30 @@ describe('POST /sessions/:id/close', () => {
     const response = await close('s_missing' as SessionId)
     expect(response.status).toBe(404)
   })
+
+  it('reports hotSpotCount and noHotSpotsIsASignal:false when the close sweep raised hot spots', async () => {
+    // the default seed has p_2 in APPLY_FAILED — the close sweep raises one hot spot for it
+    const response = await close()
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      hotSpotCount: 1,
+      noHotSpotsIsASignal: false,
+    })
+  })
+
+  it('reports noHotSpotsIsASignal:true when a session closes with no hot spots on the board', async () => {
+    const cleanSession = 's_clean' as SessionId
+    const cleanWorkshop = 'w_clean' as WorkshopId
+    store.append(sessionStream(cleanSession), -1, [
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: cleanSession, workshopId: cleanWorkshop, at } },
+    ])
+    reserve(db, cleanWorkshop, cleanSession, at)
+
+    const response = await close(cleanSession)
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      hotSpotCount: 0,
+      noHotSpotsIsASignal: true,
+    })
+  })
 })

@@ -6,7 +6,9 @@ export const evolve = (writeModel: SessionWriteModel, event: SessionEvent): Sess
   const next: SessionWriteModel = {
     ...writeModel,
     questions: new Map(writeModel.questions),
+    scopeQuestions: new Set(writeModel.scopeQuestions),
     interpreted: new Set(writeModel.interpreted),
+    absentStakeholders: new Set(writeModel.absentStakeholders),
   }
 
   switch (event.type) {
@@ -21,9 +23,16 @@ export const evolve = (writeModel: SessionWriteModel, event: SessionEvent): Sess
       return next
     case 'Question Asked':
       next.questions.set(event.questionId, 'open')
+      if (event.kind === 'scope') next.scopeQuestions.add(event.questionId)
       return next
     case 'Question Answered':
+    case 'Knowledge Gap Revealed':
+    case 'Complete Perspective Confirmed':
       next.questions.set(event.questionId, 'resolved')
+      return next
+    case 'Absent Stakeholder Named':
+      next.questions.set(event.questionId, 'resolved')
+      next.absentStakeholders.add(`${event.questionId}::${event.personName}`)
       return next
     case 'Session Closed':
       next.closed = true

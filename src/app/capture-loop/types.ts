@@ -70,6 +70,24 @@ export interface ProposalCard {
   buildingBlockId?: string
 }
 
+export type ResolutionDisposition =
+  | 'PROPOSED'
+  | 'EDITED'
+  | 'ACCEPTED'
+  | 'APPLIED'
+  | 'REJECTED'
+  | 'LAPSED'
+
+export interface ResolutionCard {
+  resolutionId: string
+  hotSpotId: string
+  /** The recorded resolution reference — the editable text. */
+  reference: string
+  disposition: ResolutionDisposition
+  /** The apply-bounce reason when the resolution `LAPSED`. */
+  lapsedReason?: string
+}
+
 interface BoardBlock {
   id: string
   kind: string
@@ -78,6 +96,11 @@ interface BoardBlock {
   placement: 'backlog' | 'timeline'
   pivotal: boolean
   provenance?: { accepter: { name: string } } | undefined
+  /** Hot-spot blocks only (`kind === 'hot-spot'`). */
+  modelAffecting?: boolean
+  annotates?: string | null
+  resolved?: boolean
+  reference?: unknown
 }
 
 export interface BoardSnapshot {
@@ -85,6 +108,25 @@ export interface BoardSnapshot {
   blocks: BoardBlock[]
   follows: { predecessor: string; successor: string }[]
   causedBy: { cause: string; effect: string }[]
+  /** Non-withdrawn hot-spot blocks in the snapshot. */
+  hotSpotCount: number
+}
+
+export interface HotSpotCallout {
+  hotSpotId: string
+  label: string
+  modelAffecting: boolean
+  resolved: boolean
+  /** The recorded resolution reference — a string once resolved, else `null`. */
+  reference: string | null
+}
+
+export interface HotSpotView {
+  /** Callouts keyed by the building-block id each hot spot annotates. */
+  annotated: Map<string, HotSpotCallout[]>
+  /** Hot spots that annotate nothing — rendered as a list, not an error. */
+  unannotated: HotSpotCallout[]
+  count: number
 }
 
 export interface AccountSnapshot {

@@ -4,7 +4,7 @@ import { dirname } from 'node:path'
 import { type Clock, systemClock } from '~/plumbing/clock.ts'
 import { createSqliteEventStore } from '~/plumbing/event-store/sqlite-adapter.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import { newProposalId, newQuestionId } from '~/plumbing/ids.ts'
+import { newProposalId, newQuestionId, newResolutionId } from '~/plumbing/ids.ts'
 import { isModelName, MODEL_NAMES } from '~/plumbing/model-pricing.ts'
 import { ok } from '~/plumbing/result.ts'
 import {
@@ -108,7 +108,7 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): HostConfig => 
     clock,
     facilitator,
     inFlight: createInFlightGuard(),
-    mint: { proposalId: newProposalId, questionId: newQuestionId },
+    mint: { proposalId: newProposalId, questionId: newQuestionId, resolutionId: newResolutionId },
     interpretationIntervalMs: Number(env.INTERPRETATION_INTERVAL_MS ?? DEFAULT_INTERVAL_MS),
   }
 }

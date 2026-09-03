@@ -25,6 +25,29 @@ const POOL: WorkshopEvent[] = [
     workshopId,
     statement: 'Library lending across branches.',
   },
+  {
+    v: 1,
+    at,
+    type: 'Stakeholder Check Recorded',
+    workshopId,
+    complete: false,
+    absentNames: ['ops lead'],
+  },
+  {
+    v: 1,
+    at,
+    type: 'Problem Chosen',
+    workshopId,
+    problemHotSpotId: 'b_1' as never,
+    qualification: 'provisional',
+  },
+  {
+    v: 1,
+    at,
+    type: 'Problem Choice Skipped',
+    workshopId,
+    reason: 'none-chosen',
+  },
 ]
 
 describe('Workshop replay — property', () => {

@@ -61,6 +61,14 @@ const dropIncidentCausedBy = (causedBy: CausedByEdge[], id: BuildingBlockId): Ca
 const isLive = (blocks: Map<BuildingBlockId, SnapshotBlock>, id: BuildingBlockId): boolean =>
   blocks.get(id)?.withdrawn !== true
 
+const countHotSpots = (blocks: Map<BuildingBlockId, SnapshotBlock>): number => {
+  let count = 0
+  for (const block of blocks.values()) {
+    if (block.kind === 'hot-spot' && !block.withdrawn) count += 1
+  }
+  return count
+}
+
 const publishFollows = (
   follows: FollowsEdge[],
   blocks: Map<BuildingBlockId, SnapshotBlock>,
@@ -107,13 +115,29 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       patchBlock(blocks, op.target, { label: op.label })
       break
     case 'withdraw':
-      patchBlock(blocks, op.target, { withdrawn: true })
+      patchBlock(
+        blocks,
+        op.target,
+        blocks.get(op.target)?.kind === 'hot-spot'
+          ? { withdrawn: true, annotates: null }
+          : { withdrawn: true },
+      )
       follows = dropIncidentFollows(follows, op.target)
       causedBy = dropIncidentCausedBy(causedBy, op.target)
       break
-    case 'reinstate':
-      patchBlock(blocks, op.target, { withdrawn: false, placement: 'backlog', pivotal: false })
+    case 'reinstate': {
+      const naked =
+        blocks.get(op.target)?.kind === 'hot-spot'
+          ? { annotates: null, resolved: false, reference: null }
+          : {}
+      patchBlock(blocks, op.target, {
+        withdrawn: false,
+        placement: 'backlog',
+        pivotal: false,
+        ...naked,
+      })
       break
+    }
     case 'place':
       patchBlock(blocks, op.target, { placement: 'timeline' })
       break
@@ -150,10 +174,30 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
       patchBlock(blocks, op.target, { pivotal: false })
       break
     case 'raise-hot-spot':
+      blocks.set(op.id, {
+        kind: 'hot-spot',
+        label: op.label,
+        withdrawn: false,
+        placement: 'backlog',
+        pivotal: false,
+        provenance: op.author,
+        modelAffecting: op.modelAffecting,
+        annotates: null,
+        resolved: false,
+        reference: null,
+      })
+      break
     case 'annotate':
+      patchBlock(blocks, op.hotSpot, { annotates: op.target })
+      break
     case 'unannotate':
+      patchBlock(blocks, op.hotSpot, { annotates: null })
+      break
     case 'resolve':
+      patchBlock(blocks, op.target, { resolved: true, reference: op.reference })
+      break
     case 'reopen':
+      patchBlock(blocks, op.target, { resolved: false })
       break
   }
 
@@ -161,6 +205,7 @@ export const project = (snapshot: BoardSnapshot, op: Operation): BoardSnapshot =
     blocks,
     follows: publishFollows(follows, blocks),
     causedBy: publishCausedBy(causedBy, blocks),
+    hotSpotCount: countHotSpots(blocks),
     position,
   }
 }

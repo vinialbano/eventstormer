@@ -93,6 +93,7 @@ describe('CaptureScreen', () => {
       }
       if (url.endsWith('/board')) return Promise.resolve(new Response(JSON.stringify({ error: 'x' }), { status: 404 }))
       if (url.endsWith('/proposals')) return Promise.resolve(new Response(JSON.stringify({ proposals: [] }), { status: 200 }))
+      if (url.endsWith('/resolutions')) return Promise.resolve(new Response(JSON.stringify({ resolutions: [] }), { status: 200 }))
       return Promise.resolve(new Response('{}', { status: 200 }))
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -124,7 +125,7 @@ describe('CaptureScreen', () => {
         overflow: false,
       },
     ]
-    let boardSnapshot: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [] }
+    let boardSnapshot: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [], hotSpotCount: 0 }
     const activeSession = (): SessionView =>
       sessionView({
         contributions: [{ contributionId: 'c1', status: 'derived' }],
@@ -156,6 +157,7 @@ describe('CaptureScreen', () => {
           ],
           follows: [],
           causedBy: [],
+          hotSpotCount: 0,
         }
         proposalCards[0] = {
           proposalId: 'p1',
@@ -178,6 +180,9 @@ describe('CaptureScreen', () => {
       }
       if (url.endsWith('/proposals')) {
         return Promise.resolve(new Response(JSON.stringify({ proposals: proposalCards }), { status: 200 }))
+      }
+      if (url.endsWith('/resolutions')) {
+        return Promise.resolve(new Response(JSON.stringify({ resolutions: [] }), { status: 200 }))
       }
       if (url.endsWith('/readable-account')) {
         return Promise.resolve(
@@ -275,6 +280,9 @@ describe('CaptureScreen', () => {
         }
         if (url.endsWith('/proposals')) {
           return Promise.resolve(new Response(JSON.stringify({ proposals: proposalCards }), { status: 200 }))
+        }
+        if (url.endsWith('/resolutions')) {
+          return Promise.resolve(new Response(JSON.stringify({ resolutions: [] }), { status: 200 }))
         }
         if (url.endsWith('/contributions') && init?.method === 'POST') {
           return Promise.resolve(new Response('{}', { status: 202 }))

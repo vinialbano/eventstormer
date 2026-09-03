@@ -5,10 +5,17 @@
 
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AccountSnapshot, BoardSnapshot, ProposalCard, SessionView } from '../types.ts'
+import type {
+  AccountSnapshot,
+  BoardSnapshot,
+  ProposalCard,
+  ResolutionCard,
+  SessionView,
+} from '../types.ts'
 import { useAccountStore } from './account.ts'
 import { useBoardStore } from './board.ts'
 import { useProposalsStore } from './proposals.ts'
+import { useResolutionsStore } from './resolutions.ts'
 import { useSessionStore } from './session.ts'
 
 const json = (body: unknown, status = 200): Response =>
@@ -94,6 +101,38 @@ describe('proposals store', () => {
   })
 })
 
+describe('resolutions store', () => {
+  it('cold-loads the resolution cards from one GET keyed by session id', async () => {
+    const cards: ResolutionCard[] = [
+      {
+        resolutionId: 'r1',
+        hotSpotId: 'h1',
+        reference: 'we added a retry step',
+        disposition: 'PROPOSED',
+      },
+    ]
+    const fetchMock = vi.fn().mockResolvedValue(json({ resolutions: cards }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const store = useResolutionsStore()
+    await store.load('s1')
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/sessions/s1/resolutions')
+    expect(store.cards).toEqual(cards)
+  })
+
+  it('records an error on a failed load and leaves cards untouched', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: 'boom' }, 500)))
+
+    const store = useResolutionsStore()
+    await store.load('s1')
+
+    expect(store.cards).toEqual([])
+    expect(store.error).not.toBeNull()
+  })
+})
+
 describe('board store', () => {
   it('cold-loads the snapshot from one GET', async () => {
     const snapshot: BoardSnapshot = {
@@ -110,6 +149,7 @@ describe('board store', () => {
       ],
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
     }
     const fetchMock = vi.fn().mockResolvedValue(json(snapshot))
     vi.stubGlobal('fetch', fetchMock)
@@ -127,7 +167,7 @@ describe('board store', () => {
     const store = useBoardStore()
     await store.load('w1')
 
-    expect(store.snapshot).toEqual({ position: -1, blocks: [], follows: [], causedBy: [] })
+    expect(store.snapshot).toEqual({ position: -1, blocks: [], follows: [], causedBy: [], hotSpotCount: 0 })
     expect(store.error).toBeNull()
   })
 })

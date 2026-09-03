@@ -79,6 +79,36 @@ describe('sessionView — open questions', () => {
       { questionId: 'q_phase', kind: 'phase', text: 'phase?' },
     ])
   })
+
+  it('surfaces a stakeholder question like phase and free — open until resolved', () => {
+    const events: SessionEvent[] = [
+      ...base,
+      { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_sh'), kind: 'stakeholder', text: 'Would anyone else tell this differently?' },
+      { v: 1, at, type: 'Question Answered', sessionId, questionId: toQuestionId('q_scope'), byContributionId: toContributionId('c_1') },
+    ]
+    const view = sessionView(events)
+    expect(view.openQuestions).toContainEqual({
+      questionId: 'q_sh',
+      kind: 'stakeholder',
+      text: 'Would anyone else tell this differently?',
+    })
+    expect(view.transcript).toContainEqual({
+      kind: 'question',
+      speaker: 'facilitator',
+      text: 'Would anyone else tell this differently?',
+      at,
+      questionKind: 'stakeholder',
+    })
+  })
+
+  it('drops a stakeholder question once Complete Perspective Confirmed resolves it', () => {
+    const events: SessionEvent[] = [
+      ...base,
+      { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_sh'), kind: 'stakeholder', text: 'anyone else?' },
+      { v: 1, at, type: 'Complete Perspective Confirmed', sessionId, questionId: toQuestionId('q_sh'), byContributionId: toContributionId('c_1') },
+    ]
+    expect(sessionView(events).openQuestions.some((question) => question.questionId === 'q_sh')).toBe(false)
+  })
 })
 
 describe('sessionView — per-contribution interpretation status + fullyDerived', () => {

@@ -40,6 +40,7 @@ const dockProps = (over: { blockLabels?: Record<string, string> } = {}) => ({
   sessionId: 's1',
   accepter: 'Maria',
   blockLabels: over.blockLabels ?? {},
+  openHotSpots: [] as { hotSpotId: string; label: string }[],
 })
 
 const seed = (sessionView: SessionView, cards: ProposalCard[]) => {

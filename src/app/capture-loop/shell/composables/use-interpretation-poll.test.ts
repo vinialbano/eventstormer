@@ -6,7 +6,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
-import type { InterpretationStatus, SessionView } from '../../types.ts'
+import type { InterpretationStatus, ResolutionCard, SessionView } from '../../types.ts'
 import { useProposalsStore } from '../../stores/proposals.ts'
 import { useSessionStore } from '../../stores/session.ts'
 import { useInterpretationPoll } from './use-interpretation-poll.ts'
@@ -26,20 +26,29 @@ const viewWith = (
 })
 
 let current: SessionView
+let currentResolutions: ResolutionCard[] = []
+
+const resolution = (disposition: ResolutionCard['disposition']): ResolutionCard => ({
+  resolutionId: 'r1',
+  hotSpotId: 'h1',
+  reference: 'we added a retry step',
+  disposition,
+})
 
 const json = (body: unknown): Response =>
   new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } })
 
 beforeEach(() => {
   setActivePinia(createPinia())
+  currentResolutions = []
   vi.useFakeTimers()
   vi.stubGlobal(
     'fetch',
-    vi.fn((url: string) =>
-      Promise.resolve(
-        url.includes('/session') ? json(current) : json({ proposals: [] }),
-      ),
-    ),
+    vi.fn((url: string) => {
+      if (url.endsWith('/resolutions')) return Promise.resolve(json({ resolutions: currentResolutions }))
+      if (url.includes('/session')) return Promise.resolve(json(current))
+      return Promise.resolve(json({ proposals: [] }))
+    }),
   )
 })
 afterEach(() => {
@@ -131,6 +140,40 @@ it('never fetches board over poll ticks', async () => {
   }
 
   const urls = fetchMock.mock.calls.map((call) => call[0] as string)
+  expect(urls.some((url) => url.includes('/board'))).toBe(false)
+  scope.stop()
+})
+
+it('keeps polling while a resolution is pending and stops once every resolution is terminal', async () => {
+  current = viewWith('set', ['derived'])
+  currentResolutions = [resolution('PROPOSED')]
+  const { poll, scope } = await setup()
+  await vi.advanceTimersByTimeAsync(0) // let the resolutions cold-load settle
+  expect(poll.polling.value).toBe(true)
+
+  await vi.advanceTimersByTimeAsync(60)
+  expect(poll.polling.value).toBe(true)
+
+  currentResolutions = [resolution('APPLIED')]
+  await vi.advanceTimersByTimeAsync(60)
+  expect(poll.polling.value).toBe(false)
+
+  scope.stop()
+})
+
+it('polls the resolutions route, never the board, while a resolution is pending', async () => {
+  current = viewWith('set', ['derived'])
+  currentResolutions = [resolution('ACCEPTED')]
+  const { scope } = await setup()
+  const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>
+  fetchMock.mockClear()
+
+  for (let tick = 0; tick < 4; tick += 1) {
+    await vi.advanceTimersByTimeAsync(60)
+  }
+
+  const urls = fetchMock.mock.calls.map((call) => call[0] as string)
+  expect(urls.some((url) => url.endsWith('/resolutions'))).toBe(true)
   expect(urls.some((url) => url.includes('/board'))).toBe(false)
   scope.stop()
 })

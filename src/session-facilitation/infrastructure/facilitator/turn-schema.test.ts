@@ -48,6 +48,9 @@ describe('FacilitationTurnSchema — Anthropic structured-output limits', () => 
       const required = new Set(node.required ?? [])
       for (const key of Object.keys(node.properties)) if (!required.has(key)) optionalCount += 1
     })
+    // evidenceSpan, modelAffecting, annotatesTargetId (propose-building-block),
+    // detail (reveal-knowledge-gap) + questionText (nextMove).
+    expect(optionalCount).toBe(5)
     expect(optionalCount).toBeLessThanOrEqual(24)
   })
 
@@ -84,6 +87,50 @@ describe('FacilitationTurnSchema — the hard ceilings', () => {
         nextMove: { move: 'acknowledge' },
       }),
     ).toThrow()
+  })
+
+  it('accepts a propose-resolution strand with a hot-spot id and a reference', () => {
+    const parsed = FacilitationTrack.parse({
+      track: 'propose-resolution',
+      hotSpotId: 'h_1',
+      reference: 'added a retry with backoff',
+    })
+    expect(parsed).toEqual({
+      track: 'propose-resolution',
+      hotSpotId: 'h_1',
+      reference: 'added a retry with backoff',
+    })
+  })
+
+  it('accepts a hot-spot propose-building-block strand with modelAffecting and annotatesTargetId', () => {
+    const parsed = FacilitationTrack.parse({
+      track: 'propose-building-block',
+      blockKind: 'hot-spot',
+      label: 'Refund policy is disputed',
+      bar: 'strict',
+      modelAffecting: false,
+      annotatesTargetId: 'Refund issued',
+    })
+    expect(parsed).toEqual({
+      track: 'propose-building-block',
+      blockKind: 'hot-spot',
+      label: 'Refund policy is disputed',
+      bar: 'strict',
+      modelAffecting: false,
+      annotatesTargetId: 'Refund issued',
+    })
+  })
+
+  it('round-trips the three question-track judgment strands through the union', () => {
+    expect(
+      FacilitationTrack.parse({ track: 'reveal-knowledge-gap', questionId: 'q_1', detail: 'unowned' }),
+    ).toEqual({ track: 'reveal-knowledge-gap', questionId: 'q_1', detail: 'unowned' })
+    expect(
+      FacilitationTrack.parse({ track: 'name-absent-stakeholder', questionId: 'q_1', personName: 'ops lead' }),
+    ).toEqual({ track: 'name-absent-stakeholder', questionId: 'q_1', personName: 'ops lead' })
+    expect(
+      FacilitationTrack.parse({ track: 'confirm-complete-perspective', questionId: 'q_1' }),
+    ).toEqual({ track: 'confirm-complete-perspective', questionId: 'q_1' })
   })
 
   it('rejects a proposal label longer than 200 characters', () => {

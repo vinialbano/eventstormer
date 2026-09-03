@@ -60,6 +60,18 @@ describe('Operation schema union (frozen v:1)', () => {
     })
   })
 
+  it('rejects resolve with a present-but-undefined reference key', () => {
+    expect(() =>
+      Operation.parse({ kind: 'resolve', author, target: 'h1', reference: undefined }),
+    ).toThrow()
+  })
+
+  it('accepts resolve with reference: null — null is a recorded value', () => {
+    expect(Operation.parse({ kind: 'resolve', author, target: 'h1', reference: null })).toMatchObject(
+      { kind: 'resolve', reference: null },
+    )
+  })
+
   it('rejects an unknown operation kind', () => {
     expect(() => Operation.parse({ kind: 'destroy', author, target: 'e1' })).toThrow()
   })

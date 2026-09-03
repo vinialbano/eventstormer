@@ -2,8 +2,9 @@ import { DatabaseSync } from 'node:sqlite'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import type { ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type { ProposalId, QuestionId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
+import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
 import { close, reserve, sessionIdsFor, type SessionIndexDb } from '../../infrastructure/session-index.ts'
@@ -27,7 +28,11 @@ let interpretCalls: number
 
 const mint = (): TrackIdMint => {
   let questionCounter = 0
-  return { proposalId: () => 'p_x' as ProposalId, questionId: () => `q_${String((questionCounter += 1))}` as QuestionId }
+  return {
+    proposalId: () => 'p_x' as ProposalId,
+    questionId: () => `q_${String((questionCounter += 1))}` as QuestionId,
+    resolutionId: () => 'r_x' as ResolutionId,
+  }
 }
 
 const facilitator = (openings: (OpeningQuestion | FacilitatorFailure)[]): Facilitator => {
@@ -55,6 +60,11 @@ const deps = (openings: (OpeningQuestion | FacilitatorFailure)[] = []): Interpre
 
 const sessionEvents = (id: SessionId = sessionId): SessionEvent[] =>
   store.read(sessionStream(id)).map((row) => SessionEvent.parse(row.operation))
+
+const boardHotSpotLabels = (): string[] =>
+  readBoardSnapshot({ store }, workshopId)
+    .blocks.filter((block) => block.kind === 'hot-spot')
+    .map((block) => block.label)
 
 const only = <T extends SessionEvent['type']>(type: T): Extract<SessionEvent, { type: T }>[] =>
   sessionEvents().filter((event): event is Extract<SessionEvent, { type: T }> => event.type === type)
@@ -294,5 +304,114 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         .read(proposalStream('p_x' as ProposalId))
         .map((row) => (row.operation as { type: string }).type),
     ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
+  })
+})
+
+describe('reconcilePendingDerivations — hot-spot close sweep', () => {
+  const closeSessionWithoutSweep = (unresolved: string[]): void => {
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Question Asked',
+          sessionId,
+          questionId: 'q_open',
+          kind: 'phase',
+          text: 'What is the fulfilment phase?',
+          at,
+        },
+      },
+      {
+        at,
+        opVersion: 1,
+        operation: { v: 1, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: unresolved, at },
+      },
+    ])
+    // the index row is left `open` — the close handler crashed before finishClose
+  }
+
+  it('raises the unanswered-question hot spots on the next tick after a crash mid-close', () => {
+    closeSessionWithoutSweep(['q_open'])
+
+    reconcilePendingDerivations(deps())
+
+    expect(boardHotSpotLabels()).toEqual(['What is the fulfilment phase?'])
+    expect(sessionIdsFor(db, workshopId)).toEqual({ closed: [sessionId] })
+  })
+
+  it('is idempotent — a second tick raises no new hot spot', () => {
+    closeSessionWithoutSweep(['q_open'])
+
+    reconcilePendingDerivations(deps())
+    reconcilePendingDerivations(deps())
+
+    expect(boardHotSpotLabels()).toEqual(['What is the fulfilment phase?'])
+  })
+
+  it('retries a partial finishClose — the index row stays open until the lapse and sweep both run', () => {
+    // a still-PROPOSED proposal plus a Session Closed on the stream, index row open
+    store.append(proposalStream('p_x' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Building Block Proposed',
+          proposalId: 'p_x',
+          sessionId,
+          contributionId: 'c_1',
+          blockKind: 'domain-event',
+          label: 'Book borrowed',
+          bar: 'strict',
+          at,
+        },
+      },
+    ])
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_1',
+          tracks: [{ track: 'propose-building-block', proposalId: 'p_x', blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' }],
+          at,
+        },
+      },
+    ])
+    closeSessionWithoutSweep(['q_open'])
+
+    // first tick crashes inside finishClose's lapse loop, before the sweep
+    const realAppend = store.append.bind(store)
+    let crash = true
+    store.append = (stream, expected, ops) => {
+      if (crash && stream.aggregate === 'proposal') throw new Error('crash mid-close')
+      return realAppend(stream, expected, ops)
+    }
+    expect(() => {
+      reconcilePendingDerivations(deps())
+    }).toThrow('crash mid-close')
+
+    // the row stays open and the proposal is not lapsed — finishClose did not finish
+    expect(sessionIdsFor(db, workshopId).open).toBe(sessionId)
+    expect(
+      store.read(proposalStream('p_x' as ProposalId)).map((row) => (row.operation as { type: string }).type),
+    ).toEqual(['Building Block Proposed'])
+
+    // next clean tick completes the close
+    crash = false
+    reconcilePendingDerivations(deps())
+
+    expect(sessionIdsFor(db, workshopId)).toEqual({ closed: [sessionId] })
+    expect(boardHotSpotLabels()).toEqual(['What is the fulfilment phase?'])
+    expect(
+      store.read(proposalStream('p_x' as ProposalId)).map((row) => (row.operation as { type: string }).type),
+    ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
+
+    store.append = realAppend
   })
 })

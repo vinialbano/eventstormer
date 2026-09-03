@@ -54,6 +54,19 @@ describe('applySessionFacilitationMigrations', () => {
     expect(tableNames(db)).not.toContain('_migrations')
   })
 
+  it('adds hot_spot_sweep and tracks migration id 2 additively', () => {
+    const db = new DatabaseSync(':memory:')
+    applySessionFacilitationMigrations(db)
+    expect(tableNames(db)).toContain('hot_spot_sweep')
+    const applied = db.prepare(`SELECT id FROM _sf_migrations ORDER BY id`).all() as { id: number }[]
+    expect(applied.map((row) => row.id)).toContain(2)
+
+    const columns = (
+      db.prepare(`SELECT name FROM pragma_table_info('hot_spot_sweep')`).all() as { name: string }[]
+    ).map((row) => row.name)
+    expect(columns).toEqual(['sweep_key', 'building_block_id', 'at'])
+  })
+
   it('is idempotent — a second call is a no-op', () => {
     const db = new DatabaseSync(':memory:')
     applySessionFacilitationMigrations(db)

@@ -50,13 +50,9 @@ const followsIsAcyclic = (follows: Map<BuildingBlockId, Set<BuildingBlockId>>): 
   return visited === nodes.size
 }
 
-const NOT_IMPLEMENTED: OperationKind[] = [
-  'raise-hot-spot',
-  'annotate',
-  'unannotate',
-  'resolve',
-  'reopen',
-]
+// Every frozen v1 operation kind now has a real decider branch — the list
+// `switch-exhaustiveness-check` once forced open is closed.
+const NOT_IMPLEMENTED: OperationKind[] = []
 
 describe('decide — capture', () => {
   it('emits the capture operation for each kind-specific variant', () => {
@@ -379,6 +375,8 @@ describe('decide — place / unplace', () => {
         blocks: new Map([[bid('x1'), { kind, withdrawn: false }]]),
         follows: new Map(),
         causedBy: new Map(),
+        annotates: new Map(),
+        hotSpotResolved: new Map(),
       }
       for (const operationKind of ['place', 'unplace'] as const) {
         const result = decide(writeModel, op({ kind: operationKind, target: 'x1' }))
@@ -930,6 +928,254 @@ describe('decide — mark-pivotal / unmark-pivotal', () => {
   })
 })
 
+describe('decide — raise-hot-spot / annotate / unannotate', () => {
+  const raised = [
+    { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+    { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+  ]
+
+  it('raises a hot spot with a fresh id as a single raise-hot-spot', () => {
+    const result = decide(emptyWriteModel(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'x' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'raise-hot-spot', id: 'h1', label: 'x' })])
+  })
+
+  it('rejects a raise-hot-spot whose id already exists as duplicate-id', () => {
+    const writeModel = given(raised)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op({ kind: 'raise-hot-spot', id: 'h1', label: 'again' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'duplicate-id', classification: 'systemic', id: 'h1' })
+    }
+    expect(writeModel).toEqual(before)
+  })
+
+  it('annotates a live non-hot-spot target as a single annotate', () => {
+    const writeModel = given(raised)
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' })])
+    }
+  })
+
+  it('rejects annotate of an unknown target and leaves the write model unchanged', () => {
+    const writeModel = given(raised)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e9' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'unknown-target', classification: 'systemic', target: 'e9' })
+    }
+    expect(writeModel).toEqual(before)
+  })
+
+  it('rejects annotate of a withdrawn target', () => {
+    const writeModel = given([...raised, { kind: 'withdraw', target: 'e1' }])
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'withdrawn-target', classification: 'systemic', target: 'e1' })
+    }
+  })
+
+  it('rejects annotate whose target is itself a hot spot as kind-permission', () => {
+    const writeModel = given([...raised, { kind: 'raise-hot-spot', id: 'h2', label: 'other' }])
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'h1', target: 'h2' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error.kind).toBe('kind-permission')
+      if (result.error.kind === 'kind-permission') expect(result.error.operation).toBe('annotate')
+    }
+  })
+
+  it('rejects annotate whose hotSpot is not a hot spot as kind-permission', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+      { kind: 'capture-domain-event', id: 'e2', label: 'refund' },
+    ])
+    const result = decide(writeModel, op({ kind: 'annotate', hotSpot: 'e1', target: 'e2' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  it('unannotates a hot spot that currently annotates something', () => {
+    const writeModel = given([...raised, { kind: 'annotate', hotSpot: 'h1', target: 'e1' }])
+    const result = decide(writeModel, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'unannotate', hotSpot: 'h1' })])
+  })
+
+  it('rejects unannotate of a hot spot annotating nothing as missing-edge', () => {
+    const writeModel = given(raised)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
+    }
+    expect(writeModel).toEqual(before)
+  })
+})
+
+describe('decide — withdraw annotation cascades', () => {
+  const annotated = [
+    { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+    { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+    { kind: 'annotate', hotSpot: 'h1', target: 'e1' },
+  ]
+
+  it('withdrawing the annotated block also withdraws the hot spot annotating it', () => {
+    const writeModel = given(annotated)
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'e1' }),
+        op({ kind: 'withdraw', target: 'h1' }),
+      ])
+    }
+  })
+
+  it('withdrawing a hot spot that annotates something appends an unannotate; the target is untouched', () => {
+    const writeModel = given(annotated)
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'h1' }),
+        op({ kind: 'unannotate', hotSpot: 'h1' }),
+      ])
+    }
+    const after = evolve(writeModel, op({ kind: 'withdraw', target: 'h1' }))
+    expect(after.blocks.get(bid('e1'))).toEqual({ kind: 'domain-event', withdrawn: false })
+  })
+
+  it('withdrawing a hot spot annotating nothing is a single withdraw', () => {
+    const writeModel = given([
+      { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'withdraw', target: 'h1' })])
+  })
+
+  it('two hot spots annotating one block are both withdrawn in sorted order', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+      { kind: 'raise-hot-spot', id: 'hb', label: 'b' },
+      { kind: 'raise-hot-spot', id: 'ha', label: 'a' },
+      { kind: 'annotate', hotSpot: 'hb', target: 'e1' },
+      { kind: 'annotate', hotSpot: 'ha', target: 'e1' },
+    ])
+    const result = decide(writeModel, op({ kind: 'withdraw', target: 'e1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        op({ kind: 'withdraw', target: 'e1' }),
+        op({ kind: 'withdraw', target: 'ha' }),
+        op({ kind: 'withdraw', target: 'hb' }),
+      ])
+    }
+  })
+
+  it('no dangling annotation remains in the snapshot after the cascade (acceptance test 21)', () => {
+    const log = [
+      ...annotated,
+      { kind: 'withdraw', target: 'e1' },
+      { kind: 'withdraw', target: 'h1' },
+    ].map((raw) => op(raw))
+    const snap = replay(log)
+    expect(snap.blocks.get(bid('e1'))?.withdrawn).toBe(true)
+    expect(snap.blocks.get(bid('h1'))?.withdrawn).toBe(true)
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBeNull()
+    expect(snap.hotSpotCount).toBe(0)
+  })
+})
+
+describe('decide — resolve / reopen', () => {
+  const openHotSpot = [
+    { kind: 'capture-domain-event', id: 'e1', label: 'payment' },
+    { kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' },
+  ]
+
+  it('resolves a live open hot spot as a single resolve', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: 'added a retry' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([op({ kind: 'resolve', target: 'h1', reference: 'added a retry' })])
+    }
+  })
+
+  it('accepts a resolve whose reference is null — null is a recorded value', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: null }))
+    expect(isOk(result)).toBe(true)
+  })
+
+  it('rejects a resolve with no reference key as a schema violation, write model unchanged', () => {
+    const writeModel = given(openHotSpot)
+    const before = structuredClone(writeModel)
+    const result = decide(writeModel, { kind: 'resolve', target: 'h1', author } as unknown as Operation)
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('schema')
+    expect(writeModel).toEqual(before)
+  })
+
+  it('rejects a resolve whose reference key is present but undefined as a schema violation', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, {
+      kind: 'resolve',
+      target: 'h1',
+      reference: undefined,
+      author,
+    } as unknown as Operation)
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('schema')
+  })
+
+  it('rejects a resolve targeting a non-hot-spot as kind-permission', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'e1', reference: 'x' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+
+  it('rejects a second resolve of an already-resolved hot spot as already-resolved', () => {
+    const writeModel = given([...openHotSpot, { kind: 'resolve', target: 'h1', reference: 'first' }])
+    const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: 'second' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'already-resolved', classification: 'systemic', target: 'h1' })
+    }
+  })
+
+  it('reopens a resolved hot spot as a single reopen', () => {
+    const writeModel = given([...openHotSpot, { kind: 'resolve', target: 'h1', reference: 'first' }])
+    const result = decide(writeModel, op({ kind: 'reopen', target: 'h1' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'reopen', target: 'h1' })])
+  })
+
+  it('rejects reopen of an open hot spot as not-resolved', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'reopen', target: 'h1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toEqual({ kind: 'not-resolved', classification: 'systemic', target: 'h1' })
+    }
+  })
+
+  it('rejects reopen of a non-hot-spot as kind-permission', () => {
+    const writeModel = given(openHotSpot)
+    const result = decide(writeModel, op({ kind: 'reopen', target: 'e1' }))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
+  })
+})
+
 describe('decide — schema and not-implemented rejections', () => {
   it('rejects an operation that fails schema validation, emitting nothing', () => {
     const result = decide(emptyWriteModel(), { kind: 'withdraw', author } as unknown as Operation)
@@ -941,30 +1187,46 @@ describe('decide — schema and not-implemented rejections', () => {
     }
   })
 
-  it('rejects every not-yet-implemented kind explicitly, never silently', () => {
-    expect(NOT_IMPLEMENTED).toEqual([
-      'raise-hot-spot',
-      'annotate',
-      'unannotate',
-      'resolve',
-      'reopen',
-    ])
-    for (const kind of NOT_IMPLEMENTED) {
+  it('no frozen operation kind is left unimplemented', () => {
+    expect(NOT_IMPLEMENTED).toEqual([])
+    for (const kind of ALL_KINDS) {
       const result = decide(emptyWriteModel(), op(sampleFor(kind)))
-      expect(isErr(result)).toBe(true)
-      if (isErr(result)) {
-        expect(result.error).toEqual({
-          kind: 'not-implemented-in-slice',
-          classification: 'systemic',
-          operation: kind,
-        })
-      }
+      // Some kinds succeed on an empty model, some reject — but none is the
+      // never-silently placeholder.
+      if (isErr(result)) expect(result.error.kind).not.toBe('not-implemented-in-slice')
     }
   })
 })
 
+const ALL_KINDS: OperationKind[] = [
+  'capture-domain-event',
+  'identify-actor',
+  'identify-system',
+  'reword',
+  'withdraw',
+  'reinstate',
+  'raise-hot-spot',
+  'place',
+  'unplace',
+  'sequence',
+  'unsequence',
+  'insert-between',
+  'link-cause',
+  'unlink-cause',
+  'annotate',
+  'unannotate',
+  'mark-pivotal',
+  'unmark-pivotal',
+  'resolve',
+  'reopen',
+]
+
 /** A minimal valid payload for a not-yet-implemented operation kind. */
 const EXTRA_FIELDS: Partial<Record<OperationKind, Record<string, unknown>>> = {
+  'capture-domain-event': { id: 'e1', label: 'x' },
+  'identify-actor': { id: 'a1', label: 'x' },
+  'identify-system': { id: 's1', label: 'x' },
+  reword: { target: 'e1', label: 'x' },
   'raise-hot-spot': { id: 'h1', label: 'x' },
   sequence: { predecessor: 'e1', successor: 'e2' },
   unsequence: { predecessor: 'e1', successor: 'e2' },

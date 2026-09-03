@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { applyOperation, Operation } from '../../../domain-model-capture/api.ts'
 import { newBuildingBlockId } from '~/plumbing/ids.ts'
-import type { BuildingBlockId, ProposalId, SessionId } from '~/plumbing/ids.ts'
+import type { BuildingBlockId, ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { proposalCard } from '../../domain/read-models/proposals-view.ts'
 import { decide } from '../../domain/proposal/decide.ts'
 import { replay } from '../../domain/proposal/replay.ts'
@@ -11,13 +11,16 @@ import type { InterpretedBlockKind } from '../../domain/schema/interpreted-track
 import { proposalStream, sessionStream, storedOps, workshopStream } from '../../infrastructure/streams.ts'
 import type { ReviewProposalDeps } from './deps.ts'
 
-const OP_KIND: Record<
-  InterpretedBlockKind,
-  'capture-domain-event' | 'identify-actor' | 'identify-system'
+const OP_KIND: Partial<
+  Record<
+    InterpretedBlockKind,
+    'capture-domain-event' | 'identify-actor' | 'identify-system' | 'raise-hot-spot'
+  >
 > = {
   'domain-event': 'capture-domain-event',
   actor: 'identify-actor',
   system: 'identify-system',
+  'hot-spot': 'raise-hot-spot',
 }
 
 const readProposal = (deps: ReviewProposalDeps, id: ProposalId): ProposalEvent[] =>
@@ -60,6 +63,9 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
     const lastEdit = events.findLast((event) => event.type === 'Proposal Edited')
     const label = lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label
 
+    const opKind = OP_KIND[birth.blockKind]
+    if (opKind === undefined) return context.json({ error: 'unsupported-block-kind' as const }, 422)
+
     const sessionEvents = readSession(deps, birth.sessionId)
     const workshopId = sessionEvents.find((event) => event.type === 'Session Started')?.workshopId
     if (workshopId === undefined) return context.json({ error: 'unknown-session' as const }, 404)
@@ -92,58 +98,54 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
     if (buildingBlockId === undefined) return context.json({ error: 'accept-failed' as const }, 500)
 
     // 2. build + parse the operation against the operation schema SSOT
+    const author = { proposer: { name: 'facilitator' }, accepter: { name: creatorName } }
     const operation = Operation.parse({
-      kind: OP_KIND[birth.blockKind],
+      kind: opKind,
       id: buildingBlockId,
       label,
-      author: { proposer: { name: 'facilitator' }, accepter: { name: creatorName } },
+      ...(birth.blockKind === 'hot-spot' ? { modelAffecting: writeModel.modelAffecting } : {}),
+      author,
     })
 
     // 3. apply into domain-model-capture — its own transaction
     const applied = applyOperation(deps, workshopId, operation)
 
     // 4. record the outcome on the Proposal — its own transaction
-    const wmAfter = replay(readProposal(deps, id))
-    let boardPosition: number | null = null
-    if (applied.ok) {
-      boardPosition = applied.value.nextPosition
-      appendProposal(
-        deps,
-        id,
-        decideOrEmpty(wmAfter, {
-          type: 'Record Operation Applied',
-          proposalId: id,
-          resultingBuildingBlockId: applied.value.resultingBuildingBlockId,
-          at: deps.clock(),
-        }),
-      )
-    } else if (applied.error.kind === 'duplicate-id') {
-      // the board already has this id — a re-accept after a prior apply
-      appendProposal(
-        deps,
-        id,
-        decideOrEmpty(wmAfter, {
-          type: 'Record Operation Applied',
-          proposalId: id,
-          resultingBuildingBlockId: buildingBlockId,
-          at: deps.clock(),
-        }),
-      )
-    } else {
-      appendProposal(
-        deps,
-        id,
-        decideOrEmpty(wmAfter, {
-          type: 'Record Operation Rejected',
-          proposalId: id,
-          reason: applied.error.kind,
-          at: deps.clock(),
-        }),
-      )
+    const boardPosition = recordApplyOutcome(deps, id, buildingBlockId, applied)
+
+    // 5. hot spot only: attach it to the block it annotates — a second board
+    // transaction, logged (not surfaced) on rejection.
+    const hotSpotApplied = applied.ok || applied.error.kind === 'duplicate-id'
+    if (birth.blockKind === 'hot-spot' && birth.annotatesTargetId !== undefined && hotSpotApplied) {
+      annotateHotSpot(deps, workshopId, buildingBlockId, birth.annotatesTargetId, author)
     }
 
     return context.json({ boardPosition, proposal: cardOf() }, 200)
   })
+
+/**
+ * The follow-on `annotate` after a hot-spot proposal is applied. A rejection
+ * (target withdrawn / gone / itself a hot spot) is logged, not surfaced: the hot
+ * spot exists, unannotated, which is a valid state.
+ */
+const annotateHotSpot = (
+  deps: ReviewProposalDeps,
+  workshopId: WorkshopId,
+  hotSpotId: BuildingBlockId,
+  target: BuildingBlockId,
+  author: { proposer: { name: string }; accepter: { name: string } },
+): void => {
+  const annotated = applyOperation(
+    deps,
+    workshopId,
+    Operation.parse({ kind: 'annotate', hotSpot: hotSpotId, target, author }),
+  )
+  if (!annotated.ok) {
+    console.warn(
+      `accept: hot spot ${hotSpotId} left unannotated — annotate rejected (${annotated.error.kind})`,
+    )
+  }
+}
 
 const decideOrEmpty = (
   writeModel: Parameters<typeof decide>[0],
@@ -151,4 +153,58 @@ const decideOrEmpty = (
 ): ProposalEvent[] => {
   const decided = decide(writeModel, command)
   return decided.ok ? decided.value : []
+}
+
+type ApplyResult = ReturnType<typeof applyOperation>
+
+/**
+ * Record the board apply outcome on the `Proposal` — its own transaction, never
+ * batched with the board append. `duplicate-id` on a re-accept after a prior
+ * apply is the idempotency signal, recorded as applied. Returns the board
+ * position on success, `null` otherwise.
+ */
+const recordApplyOutcome = (
+  deps: ReviewProposalDeps,
+  id: ProposalId,
+  buildingBlockId: BuildingBlockId,
+  applied: ApplyResult,
+): number | null => {
+  const wmAfter = replay(readProposal(deps, id))
+  if (applied.ok) {
+    appendProposal(
+      deps,
+      id,
+      decideOrEmpty(wmAfter, {
+        type: 'Record Operation Applied',
+        proposalId: id,
+        resultingBuildingBlockId: applied.value.resultingBuildingBlockId,
+        at: deps.clock(),
+      }),
+    )
+    return applied.value.nextPosition
+  }
+  if (applied.error.kind === 'duplicate-id') {
+    appendProposal(
+      deps,
+      id,
+      decideOrEmpty(wmAfter, {
+        type: 'Record Operation Applied',
+        proposalId: id,
+        resultingBuildingBlockId: buildingBlockId,
+        at: deps.clock(),
+      }),
+    )
+    return null
+  }
+  appendProposal(
+    deps,
+    id,
+    decideOrEmpty(wmAfter, {
+      type: 'Record Operation Rejected',
+      proposalId: id,
+      reason: applied.error.kind,
+      at: deps.clock(),
+    }),
+  )
+  return null
 }

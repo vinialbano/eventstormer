@@ -22,6 +22,7 @@ export type SessionId = string & z.$brand<'SessionId'>
 export type BuildingBlockId = string & z.$brand<'BuildingBlockId'>
 export type ContributionId = string & z.$brand<'ContributionId'>
 export type ProposalId = string & z.$brand<'ProposalId'>
+export type ResolutionId = string & z.$brand<'ResolutionId'>
 export type QuestionId = string & z.$brand<'QuestionId'>
 
 /**
@@ -34,6 +35,7 @@ export const newSessionId = (): SessionId => nanoid() as unknown as SessionId
 export const newBuildingBlockId = (): BuildingBlockId => nanoid() as unknown as BuildingBlockId
 export const newContributionId = (): ContributionId => nanoid() as unknown as ContributionId
 export const newProposalId = (): ProposalId => nanoid() as unknown as ProposalId
+export const newResolutionId = (): ResolutionId => nanoid() as unknown as ResolutionId
 export const newQuestionId = (): QuestionId => nanoid() as unknown as QuestionId
 
 /** The resumable-workshop URL slug is the id itself — already URL-safe. */

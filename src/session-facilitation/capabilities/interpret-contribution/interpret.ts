@@ -1,20 +1,39 @@
 import { readBuildingBlocks } from '../../../domain-model-capture/api.ts'
-import type { ContributionId, ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type {
+  BuildingBlockId,
+  ContributionId,
+  ProposalId,
+  QuestionId,
+  ResolutionId,
+  SessionId,
+  WorkshopId,
+} from '~/plumbing/ids.ts'
 import { facilitationContext } from '../../domain/read-models/facilitation.ts'
 import { priorSessionHistory, sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { sessionView } from '../../domain/read-models/session-view.ts'
-import { ProposalEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
 import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import { decide as decideProposal } from '../../domain/proposal/decide.ts'
 import { replay as replayProposal } from '../../domain/proposal/replay.ts'
+import { decide as decideResolution } from '../../domain/resolution/decide.ts'
+import { replay as replayResolution } from '../../domain/resolution/replay.ts'
 import { decide as decideSession } from '../../domain/session/decide.ts'
 import { replay as replaySession } from '../../domain/session/replay.ts'
+import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
+import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
+import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
 import { mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
 import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
 import { finishClose } from '../../infrastructure/session-close.ts'
-import { proposalStream, sessionStream, storedOps, workshopStream } from '../../infrastructure/streams.ts'
+import {
+  proposalStream,
+  resolutionStream,
+  sessionStream,
+  storedOps,
+  workshopStream,
+} from '../../infrastructure/streams.ts'
 import type { InterpretContributionDeps } from './deps.ts'
 
 type Interpreted = Extract<SessionEvent, { type: 'Contribution Interpreted' }>
@@ -24,6 +43,9 @@ const readSession = (deps: InterpretContributionDeps, id: SessionId): SessionEve
 
 const readProposal = (deps: InterpretContributionDeps, id: ProposalId): ProposalEvent[] =>
   deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
+
+const readResolution = (deps: InterpretContributionDeps, id: ResolutionId): ResolutionEvent[] =>
+  deps.store.read(resolutionStream(id)).map((row) => ResolutionEvent.parse(row.operation))
 
 const readWorkshop = (deps: InterpretContributionDeps, id: WorkshopId): WorkshopEvent[] =>
   deps.store.read(workshopStream(id)).map((row) => WorkshopEvent.parse(row.operation))
@@ -37,6 +59,17 @@ const appendSession = (
   if (events.length === 0) return
   const position = deps.store.read(sessionStream(id)).length - 1
   deps.store.append(sessionStream(id), position, storedOps(events))
+}
+
+/** Append decided `Workshop` events at the stream's current head. */
+const appendWorkshop = (
+  deps: InterpretContributionDeps,
+  id: WorkshopId,
+  events: WorkshopEvent[],
+): void => {
+  if (events.length === 0) return
+  const position = deps.store.read(workshopStream(id)).length - 1
+  deps.store.append(workshopStream(id), position, storedOps(events))
 }
 
 /**
@@ -82,6 +115,13 @@ type ProposeTrack = Extract<InterpretedTrack, { track: 'propose-building-block' 
 type FlagPhaseTrack = Extract<InterpretedTrack, { track: 'flag-phase' }>
 type AttributeTrack = Extract<InterpretedTrack, { track: 'attribute-to-other-format' }>
 type AnswerTrack = Extract<InterpretedTrack, { track: 'answer-question' }>
+type ProposeResolutionTrack = Extract<InterpretedTrack, { track: 'propose-resolution' }>
+type RevealKnowledgeGapTrack = Extract<InterpretedTrack, { track: 'reveal-knowledge-gap' }>
+type NameAbsentStakeholderTrack = Extract<InterpretedTrack, { track: 'name-absent-stakeholder' }>
+type ConfirmCompletePerspectiveTrack = Extract<
+  InterpretedTrack,
+  { track: 'confirm-complete-perspective' }
+>
 
 const deriveProposeBuildingBlock = (
   deps: InterpretContributionDeps,
@@ -97,6 +137,10 @@ const deriveProposeBuildingBlock = (
     label: track.label,
     bar: track.bar,
     ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
+    ...(track.modelAffecting === undefined ? {} : { modelAffecting: track.modelAffecting }),
+    ...(track.annotatesTargetId === undefined
+      ? {}
+      : { annotatesTargetId: track.annotatesTargetId }),
     at: event.at,
   })
   if (decided.ok && decided.value.length > 0) {
@@ -166,6 +210,88 @@ const deriveAnswerQuestion = (
   else console.warn(`answer-question: dropped unknown/resolved questionId ${track.questionId}`)
 }
 
+const deriveProposeResolution = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: ProposeResolutionTrack,
+): void => {
+  const decided = decideResolution(replayResolution(readResolution(deps, track.resolutionId)), {
+    type: 'Propose Resolution',
+    resolutionId: track.resolutionId,
+    sessionId: event.sessionId,
+    contributionId: event.contributionId,
+    hotSpotId: track.hotSpotId,
+    reference: track.reference,
+    at: event.at,
+  })
+  if (decided.ok && decided.value.length > 0) {
+    deps.store.append(resolutionStream(track.resolutionId), -1, storedOps(decided.value))
+  }
+}
+
+const deriveRevealKnowledgeGap = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: RevealKnowledgeGapTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Reveal Knowledge Gap',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    ...(track.detail === undefined ? {} : { detail: track.detail }),
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
+const deriveNameAbsentStakeholder = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: NameAbsentStakeholderTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Name Absent Stakeholder',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    personName: track.personName,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
+const deriveConfirmCompletePerspective = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: ConfirmCompletePerspectiveTrack,
+): void => {
+  const sessionEvents = readSession(deps, event.sessionId)
+  const decided = decideSession(replaySession(sessionEvents), {
+    type: 'Confirm Complete Perspective',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+
+  // A confirmed complete perspective is the "nobody else would tell it
+  // differently" answer — it records the workshop's stakeholder check as
+  // complete so a later chosen problem qualifies as firm. Idempotent: a second
+  // confirmation on an already-run check emits nothing.
+  const workshopId = sessionEvents.find((sessionEvent) => sessionEvent.type === 'Session Started')?.workshopId
+  if (workshopId === undefined) return
+  const recorded = decideWorkshop(replayWorkshop(readWorkshop(deps, workshopId)), {
+    type: 'Record Stakeholder Check',
+    workshopId,
+    complete: true,
+    absentNames: [],
+    at: event.at,
+  })
+  if (recorded.ok) appendWorkshop(deps, workshopId, recorded.value)
+}
+
 const deriveFreeFollowUp = (deps: InterpretContributionDeps, event: Interpreted): void => {
   if (event.askQuestionId === undefined || event.askQuestionText === undefined) return
   const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
@@ -206,6 +332,18 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
         break
       case 'answer-question':
         deriveAnswerQuestion(deps, event, track)
+        break
+      case 'propose-resolution':
+        deriveProposeResolution(deps, event, track)
+        break
+      case 'reveal-knowledge-gap':
+        deriveRevealKnowledgeGap(deps, event, track)
+        break
+      case 'name-absent-stakeholder':
+        deriveNameAbsentStakeholder(deps, event, track)
+        break
+      case 'confirm-complete-perspective':
+        deriveConfirmCompletePerspective(deps, event, track)
         break
     }
 
@@ -250,7 +388,11 @@ const runInterpretation = async (
       return
     }
 
-    const mapped = mapTurn(turn.value, deps.mint)
+    const blockIdByLabel = new Map<string, BuildingBlockId>()
+    for (const block of readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId)) {
+      if (!blockIdByLabel.has(block.label)) blockIdByLabel.set(block.label, block.id)
+    }
+    const mapped = mapTurn(turn.value, deps.mint, (label) => blockIdByLabel.get(label))
     const asking: { askQuestionId?: QuestionId; askQuestionText?: string } =
       turn.value.nextMove.move === 'ask' &&
       turn.value.nextMove.questionText !== undefined &&
@@ -335,6 +477,7 @@ export const reconcilePendingDerivations = (deps: InterpretContributionDeps): vo
     for (const event of events) {
       if (event.type === 'Contribution Interpreted') deriveTracks(deps, event)
     }
+    reconcileHotSpots(deps, sessionId)
     if (events.some((event) => event.type === 'Session Closed')) finishClose(deps, sessionId)
   }
 }

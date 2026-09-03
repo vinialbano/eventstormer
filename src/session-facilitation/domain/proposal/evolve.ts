@@ -5,9 +5,16 @@ import type { ProposalWriteModel } from './model.ts'
 export const evolve = (writeModel: ProposalWriteModel, event: ProposalEvent): ProposalWriteModel => {
   switch (event.type) {
     case 'Building Block Proposed':
-      return { born: true, disposition: 'PROPOSED', held: false }
+      return {
+        born: true,
+        disposition: 'PROPOSED',
+        held: false,
+        modelAffecting: event.modelAffecting ?? true,
+      }
     case 'Proposal Edited':
       return { ...writeModel, disposition: 'EDITED' }
+    case 'Proposal Kind Set':
+      return { ...writeModel, modelAffecting: event.modelAffecting }
     case 'Proposal Accepted':
       return { ...writeModel, disposition: 'ACCEPTED', buildingBlockId: event.buildingBlockId }
     case 'Proposal Rejected':

@@ -68,6 +68,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: S3-28 (.specs/features/slice-3-relations-board/validation.md:111) (domain/fold-tests)
 - last seen: 2026-09-01T11:57:08Z
 
+### L-010 — When an acceptance test only passes by loosening an E2E assertion (tolerant >=, 'the count is N today' comments), the defect is in the behaviour/spec, not the test — fix the behaviour and keep the exact assertion.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `e2e` · harmful: 0
+- features: slice-4-hot-spots-close
+- evidence: e2e/capture-loop.spec.ts:150 (e2e)
+- last seen: 2026-09-03T18:14:35Z
+
+### L-011 — Error-as-success branches (treating a specific error like duplicate-id as success in a self-heal path) are invisible to happy-path tests — cover them by deterministically forcing the collision: mock the id, wipe the idempotency marker, re-run.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `session-facilitation/infrastructure` · harmful: 0
+- features: slice-4-hot-spots-close
+- evidence: src/session-facilitation/infrastructure/hot-spot-sweep.ts:203 (session-facilitation/infrastructure)
+- last seen: 2026-09-03T18:14:35Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

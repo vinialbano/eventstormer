@@ -196,6 +196,110 @@ describe('project (read-model fold)', () => {
     expect(snap.blocks.get(bid('eA'))?.placement).toBe('timeline')
   })
 
+  it('rewording an annotated building block leaves its hot spot annotation intact', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment times out' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    snap = project(snap, op({ kind: 'reword', target: 'e1', label: 'payment integration times out' }))
+    expect(snap.blocks.get(bid('e1'))?.label).toBe('payment integration times out')
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBe(bid('e1'))
+    expect(snap.blocks.get(bid('h1'))?.resolved).toBe(false)
+  })
+
+  it('raise-hot-spot adds a backlog hot-spot block, open and annotating nothing, and counts it', () => {
+    const snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    expect(snap.blocks.get(bid('h1'))).toEqual({
+      kind: 'hot-spot',
+      label: 'timeouts',
+      withdrawn: false,
+      placement: 'backlog',
+      pivotal: false,
+      provenance: author,
+      modelAffecting: true,
+      annotates: null,
+      resolved: false,
+      reference: null,
+    })
+    expect(snap.hotSpotCount).toBe(1)
+  })
+
+  it('raise-hot-spot carries an explicit modelAffecting:false through the projection', () => {
+    const snap = project(
+      emptySnapshot(),
+      op({ kind: 'raise-hot-spot', id: 'h1', label: 'note', modelAffecting: false }),
+    )
+    expect(snap.blocks.get(bid('h1'))?.modelAffecting).toBe(false)
+  })
+
+  it('project over [raise, annotate] points the hot spot at the target id and counts one', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBe(bid('e1'))
+    expect(snap.hotSpotCount).toBe(1)
+  })
+
+  it('unannotate clears the annotation back to null', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    snap = project(snap, op({ kind: 'unannotate', hotSpot: 'h1' }))
+    expect(snap.blocks.get(bid('h1'))?.annotates).toBeNull()
+  })
+
+  it('a withdrawn hot spot is not in the count', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h2', label: 'ownership' }))
+    expect(snap.hotSpotCount).toBe(2)
+    snap = project(snap, op({ kind: 'withdraw', target: 'h1' }))
+    expect(snap.hotSpotCount).toBe(1)
+  })
+
+  it('resolve marks the hot spot resolved and records the reference value', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'resolve', target: 'h1', reference: 'added a retry' }))
+    expect(snap.blocks.get(bid('h1'))?.resolved).toBe(true)
+    expect(snap.blocks.get(bid('h1'))?.reference).toBe('added a retry')
+  })
+
+  it('reopen returns the hot spot to open while retaining the recorded reference', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'resolve', target: 'h1', reference: 'B fixed it' }))
+    snap = project(snap, op({ kind: 'reopen', target: 'h1' }))
+    expect(snap.blocks.get(bid('h1'))?.resolved).toBe(false)
+    expect(snap.blocks.get(bid('h1'))?.reference).toBe('B fixed it')
+  })
+
+  it('a resolved hot spot stays resolved with its reference unchanged when the referenced block is withdrawn', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'resolve', target: 'h1', reference: 'fixed in e1' }))
+    snap = project(snap, op({ kind: 'withdraw', target: 'e1' }))
+    expect(snap.blocks.get(bid('h1'))?.resolved).toBe(true)
+    expect(snap.blocks.get(bid('h1'))?.reference).toBe('fixed in e1')
+  })
+
+  it('reinstating a withdrawn hot spot returns it naked — open, annotating nothing, no reference', () => {
+    let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'e1', label: 'payment' }))
+    snap = project(snap, op({ kind: 'raise-hot-spot', id: 'h1', label: 'timeouts' }))
+    snap = project(snap, op({ kind: 'annotate', hotSpot: 'h1', target: 'e1' }))
+    snap = project(snap, op({ kind: 'resolve', target: 'h1', reference: 'noted' }))
+    snap = project(snap, op({ kind: 'withdraw', target: 'h1' }))
+    snap = project(snap, op({ kind: 'reinstate', target: 'h1' }))
+    expect(snap.blocks.get(bid('h1'))).toEqual({
+      kind: 'hot-spot',
+      label: 'timeouts',
+      withdrawn: false,
+      placement: 'backlog',
+      pivotal: false,
+      provenance: author,
+      modelAffecting: true,
+      annotates: null,
+      resolved: false,
+      reference: null,
+    })
+  })
+
   it('reinstate returns a previously placed pivotal event to a naked backlog', () => {
     let snap = project(emptySnapshot(), op({ kind: 'capture-domain-event', id: 'eA', label: 'a' }))
     snap = project(snap, op({ kind: 'capture-domain-event', id: 'eB', label: 'b' }))

@@ -1,7 +1,12 @@
+import { readBoardSnapshot } from '../../domain-model-capture/api.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
-import { artifactSource, type ArtifactSource } from '../domain/read-models/artifact-source.ts'
+import {
+  artifactSource,
+  type ArtifactSource,
+  type BoardBlockView,
+} from '../domain/read-models/artifact-source.ts'
 import { sessionProposalIds } from '../domain/read-models/session-summary.ts'
 import { ProposalEvent, SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
 import { sessionIdsFor, type SessionIndexDb } from './session-index.ts'
@@ -44,5 +49,14 @@ export const readArtifactSource = (
     return { events, proposals }
   })
 
-  return ok(artifactSource({ workshopEvents, sessions }))
+  const boardBlocks: BoardBlockView[] = readBoardSnapshot(deps, workshopId).blocks.map((block) => ({
+    id: block.id,
+    kind: block.kind,
+    label: block.label,
+    withdrawn: block.withdrawn,
+    resolved: block.resolved,
+    modelAffecting: block.modelAffecting,
+  }))
+
+  return ok(artifactSource({ workshopEvents, boardBlocks, sessions }))
 }

@@ -1,18 +1,27 @@
-import type { WorkshopId } from '~/plumbing/ids.ts'
+import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
 
 /**
- * The `Workshop` write model `decide` guards on — `{ format, creatorName }` and
- * nothing else (design / path-scoped AGENTS.md). "Has the scope been set / is it
- * locked" is never an aggregate field: a true invariant never delegates its data
- * to another context. `started` is the birth guard only.
+ * The `Workshop` write model `decide` guards on. `{ format, creatorName }` stay
+ * read-model concerns; the close-ceremony fields are true aggregate state —
+ * an invariant reads each one: `stakeholderCheckRun` makes `Record Stakeholder
+ * Check` once-only, `stakeholderComplete` sets the chosen problem's
+ * qualification, `problemDecided` makes choose/skip once-only. `started` is the
+ * birth guard only.
  */
 export interface WorkshopWriteModel {
   started: boolean
   format?: 'big-picture'
   creatorName?: string
+  stakeholderCheckRun: boolean
+  stakeholderComplete?: boolean
+  problemDecided: boolean
 }
 
-export const emptyWorkshop = (): WorkshopWriteModel => ({ started: false })
+export const emptyWorkshop = (): WorkshopWriteModel => ({
+  started: false,
+  stakeholderCheckRun: false,
+  problemDecided: false,
+})
 
 /**
  * Why a `Workshop` command was rejected. Every reason is *systemic* — a human
@@ -29,3 +38,17 @@ export type WorkshopRejection =
 export type WorkshopCommand =
   | { type: 'Start Workshop'; workshopId: WorkshopId; creatorName: string; at: string }
   | { type: 'Set Scope'; workshopId: WorkshopId; statement: string; at: string }
+  | {
+      type: 'Record Stakeholder Check'
+      workshopId: WorkshopId
+      complete: boolean
+      absentNames: string[]
+      at: string
+    }
+  | { type: 'Choose Problem'; workshopId: WorkshopId; problemHotSpotId: BuildingBlockId; at: string }
+  | {
+      type: 'Skip Problem Choice'
+      workshopId: WorkshopId
+      reason: 'none-chosen' | 'no-impediments-yet'
+      at: string
+    }

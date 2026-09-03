@@ -25,7 +25,7 @@ verifier sub-agent with `isolation: "worktree"`. The `Stop` gate runs `pnpm chec
 live tree; a mutation in flight there reads as a red gate on a codebase that is actually green,
 and the main agent has no reliable way to tell the two apart.
 
-### Capture-loop sensors (M1–M6)
+### Capture-loop sensors (M1–M7)
 
 | Mutant | Fault | Sensor suite |
 | ------ | ----- | ------------ |
@@ -36,6 +36,8 @@ and the main agent has no reliable way to tell the two apart.
 | M4′ | Skip `onBoardDirty()` on successful relation POST | `BoardWall.test.ts`, `BoardWall.drop.test.ts` (success paths) |
 | M5 | Poll `board` instead of `proposals` in interpretation poll | `use-interpretation-poll.test.ts` |
 | M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `use-capture-orchestration.integration.test.ts` |
+| M7 | Skip `boardDirty()` after a successful direct flag POST in `use-flag-hot-spot.ts` | `use-flag-hot-spot.test.ts`, `use-flag-hot-spot.integration.test.ts` |
+| M8 | Move the `closeSession` call from `confirm` into `submitProblem` in `use-close-ceremony.ts` (freeze the session before the final press) | `use-close-ceremony.test.ts`, `use-close-ceremony.integration.test.ts` |
 
 ## Coverage
 
@@ -60,7 +62,7 @@ turn index cannot leak between them.
 
 | Spec | What it guards |
 | --- | --- |
-| `capture-loop.spec.ts` | Core smoke (ADR-008), **three serial macro stages**: (1) workshop setup — create workshop, start session, accept scope; (2) board mutations — narrate three contributions and accept each onto the backlog; (3) timeline — place and sequence two events. Reword, withdraw, readable-account walk, and reload persistence stay in unit tests. |
+| `capture-loop.spec.ts` | Core smoke (ADR-008), **four serial macro stages**: (1) workshop setup — create workshop, start session, accept scope; (2) board mutations — narrate three contributions and accept each onto the backlog; (3) timeline — place and sequence two events; (4) hot spots and close — flag two hot spots, accept a facilitator-proposed resolution for one, then run the in-dock close ceremony (stakeholder answer + problem pick) to a CLOSED session whose callouts and count survive a reload. Reword, withdraw, and the readable-account walk stay in unit tests. |
 | `capture-loop-no-optimism.spec.ts` | ADR-007 macro: `page.route()` holds the board GET after accept; the proposal receipt may appear while the backlog must stay empty until the refetch completes. |
 
 `playwright.config.ts` boots each project on its own port with `FACILITATOR_MODE=scripted` and an

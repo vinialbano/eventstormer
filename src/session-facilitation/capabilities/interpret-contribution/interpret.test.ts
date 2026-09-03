@@ -2,13 +2,26 @@ import { DatabaseSync } from 'node:sqlite'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import type { ContributionId, ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type {
+  BuildingBlockId,
+  ContributionId,
+  ProposalId,
+  QuestionId,
+  ResolutionId,
+  SessionId,
+  WorkshopId,
+} from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import { type DerivedTrackDb, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { close as closeIndexRow, reserve, type SessionIndexDb } from '../../infrastructure/session-index.ts'
-import { sessionStream, workshopStream } from '../../infrastructure/streams.ts'
-import { ProposalEvent, SessionEvent } from '../../domain/schema/events.ts'
+import { resolutionStream, sessionStream, workshopStream } from '../../infrastructure/streams.ts'
+import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import { replay as replayProposal } from '../../domain/proposal/replay.ts'
+import { decide as decideResolution } from '../../domain/resolution/decide.ts'
+import { replay as replayResolution } from '../../domain/resolution/replay.ts'
+import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
+import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import type { Facilitator, FacilitatorFailure } from '../../infrastructure/facilitator/port.ts'
 import type { FacilitationTurn } from '../../infrastructure/facilitator/turn-schema.ts'
 import type { TrackIdMint } from '../../infrastructure/facilitator/map.ts'
@@ -38,9 +51,11 @@ const countingDb = (inner: SessionIndexDb & DerivedTrackDb): SessionIndexDb & De
 const countingMint = (): TrackIdMint => {
   let proposalCounter = 0
   let questionCounter = 0
+  let resolutionCounter = 0
   return {
     proposalId: () => `p_${String((proposalCounter += 1))}` as ProposalId,
     questionId: () => `q_${String((questionCounter += 1))}` as QuestionId,
+    resolutionId: () => `r_${String((resolutionCounter += 1))}` as ResolutionId,
   }
 }
 
@@ -169,6 +184,121 @@ describe('interpretContribution — the commit point + derivation', () => {
     ])
   })
 
+  it('births a Resolution per propose-resolution track, carrying the hot spot and reference', async () => {
+    seedSession()
+    contribute('we fixed the payment timeout by adding a retry', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([{ track: 'propose-resolution', hotSpotId: 'h_1', reference: 'added a retry with backoff' }]),
+      ]),
+    )
+
+    const resolutionEvents = store
+      .read({ context: 'session-facilitation', aggregate: 'resolution', id: 'r_1' })
+      .map((row) => row.operation)
+    expect(resolutionEvents).toEqual([
+      {
+        v: 1,
+        type: 'Resolution Proposed',
+        resolutionId: 'r_1',
+        sessionId: defaultSessionId,
+        contributionId: 'c_1',
+        hotSpotId: 'h_1',
+        reference: 'added a retry with backoff',
+        at,
+      },
+    ])
+  })
+
+  it('births the Resolution and the Proposal independently from one turn — rejecting the resolution leaves the proposal', async () => {
+    seedSession()
+    contribute('refunds keep bouncing; we fixed it by adding a retry', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          propose('domain-event', 'Refund issued'),
+          { track: 'propose-resolution', hotSpotId: 'h_1', reference: 'added a retry with backoff' },
+        ]),
+      ]),
+    )
+
+    const resolutionRows = (): ResolutionEvent[] =>
+      store.read(resolutionStream('r_1' as ResolutionId)).map((row) => ResolutionEvent.parse(row.operation))
+
+    expect(proposalEvents('p_1').map((event) => event.type)).toEqual(['Building Block Proposed'])
+    expect(resolutionRows().map((event) => event.type)).toEqual(['Resolution Proposed'])
+
+    const rejected = decideResolution(replayResolution(resolutionRows()), {
+      type: 'Reject Resolution',
+      resolutionId: 'r_1' as ResolutionId,
+      at,
+    })
+    if (!rejected.ok) throw new Error('expected Reject Resolution to succeed')
+    const position = store.read(resolutionStream('r_1' as ResolutionId)).length - 1
+    store.append(
+      resolutionStream('r_1' as ResolutionId),
+      position,
+      rejected.value.map((event) => ({ at, opVersion: 1, operation: event })),
+    )
+
+    expect(replayResolution(resolutionRows()).disposition).toBe('REJECTED')
+    expect(proposalEvents('p_1').map((event) => event.type)).toEqual(['Building Block Proposed'])
+    expect(replayProposal(proposalEvents('p_1')).disposition).toBe('PROPOSED')
+  })
+
+  it('derives a hot-spot Building Block Proposed carrying modelAffecting and the resolved annotatesTargetId', async () => {
+    seedSession()
+    // A live building block for the hot spot to annotate — the resolver maps the
+    // label the facilitator names to this id.
+    store.append({ context: 'domain-model-capture', aggregate: 'board', id: workshopId }, -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          kind: 'capture-domain-event',
+          id: 'bb_target',
+          label: 'Refund issued',
+          author: { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } },
+        },
+      },
+    ])
+    contribute('refunds are always disputed with finance', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          {
+            track: 'propose-building-block',
+            blockKind: 'hot-spot',
+            label: 'Refund policy is disputed',
+            bar: 'strict',
+            modelAffecting: false,
+            annotatesTargetId: 'Refund issued',
+          },
+        ]),
+      ]),
+    )
+
+    expect(proposalEvents('p_1')).toEqual([
+      {
+        v: 1,
+        type: 'Building Block Proposed',
+        proposalId: 'p_1',
+        sessionId: defaultSessionId,
+        contributionId: 'c_1',
+        blockKind: 'hot-spot',
+        label: 'Refund policy is disputed',
+        bar: 'strict',
+        modelAffecting: false,
+        annotatesTargetId: 'bb_target',
+        at,
+      },
+    ])
+  })
+
   it('handles a multi-track turn: a phase question and an out-of-format notice, no block for either', async () => {
     seedSession()
     contribute('acquisitions is how we get new titles; the system auto-places a hold', 'c_1')
@@ -261,6 +391,140 @@ describe('interpretContribution — the commit point + derivation', () => {
     await interpretContribution(deps([turn([{ track: 'answer-question', questionId: 'q_nope' }])]))
 
     expect(sessionEvents().some((event) => event.type === 'Question Answered')).toBe(false)
+    expect(sessionEvents().some((event) => event.type === 'Contribution Interpreted')).toBe(true)
+  })
+
+  const askQuestion = (questionId: string, sessionId: SessionId = defaultSessionId): void => {
+    const rows = store.read(sessionStream(sessionId))
+    store.append(sessionStream(sessionId), rows.length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Question Asked',
+          sessionId,
+          questionId,
+          kind: 'phase',
+          text: `question ${questionId}?`,
+          at,
+        },
+      },
+    ])
+  }
+
+  const questionResolved = (questionId: string): boolean =>
+    only('Question Asked').some((event) => event.questionId === questionId) &&
+    sessionEvents().some(
+      (event) =>
+        (event.type === 'Knowledge Gap Revealed' ||
+          event.type === 'Absent Stakeholder Named' ||
+          event.type === 'Complete Perspective Confirmed' ||
+          event.type === 'Question Answered') &&
+        event.questionId === questionId,
+    )
+
+  it('resolves the question from a reveal-knowledge-gap track and raises no hot spot here', async () => {
+    seedSession()
+    askQuestion('q_gap')
+    contribute('honestly nobody knows who owns returns', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'reveal-knowledge-gap', questionId: 'q_gap', detail: 'unowned area' }])]),
+    )
+
+    expect(only('Knowledge Gap Revealed')).toEqual([
+      {
+        v: 1,
+        at,
+        type: 'Knowledge Gap Revealed',
+        sessionId: defaultSessionId,
+        questionId: 'q_gap',
+        byContributionId: 'c_1',
+        detail: 'unowned area',
+      },
+    ])
+    expect(questionResolved('q_gap')).toBe(true)
+  })
+
+  it('derives one Absent Stakeholder Named per named person from one contribution', async () => {
+    seedSession()
+    askQuestion('q_sh')
+    contribute('my ops lead and our finance partner would each say it differently', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          { track: 'name-absent-stakeholder', questionId: 'q_sh', personName: 'ops lead' },
+          { track: 'name-absent-stakeholder', questionId: 'q_sh', personName: 'finance partner' },
+        ]),
+      ]),
+    )
+
+    expect(only('Absent Stakeholder Named').map((event) => event.personName)).toEqual([
+      'ops lead',
+      'finance partner',
+    ])
+    expect(questionResolved('q_sh')).toBe(true)
+  })
+
+  const workshopEvents = (): WorkshopEvent[] =>
+    store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation))
+
+  it('resolves the question and records the workshop stakeholder check as complete', async () => {
+    seedSession()
+    askQuestion('q_cp')
+    contribute('no, that is the whole picture', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp' }])]),
+    )
+
+    expect(only('Complete Perspective Confirmed').map((event) => event.questionId)).toEqual(['q_cp'])
+    expect(questionResolved('q_cp')).toBe(true)
+    expect(workshopEvents().filter((event) => event.type === 'Stakeholder Check Recorded')).toEqual([
+      { v: 1, at, type: 'Stakeholder Check Recorded', workshopId, complete: true, absentNames: [] },
+    ])
+
+    // A chosen problem after this confirmation qualifies as firm.
+    const chosen = decideWorkshop(replayWorkshop(workshopEvents()), {
+      type: 'Choose Problem',
+      workshopId,
+      problemHotSpotId: 'b_hs' as BuildingBlockId,
+      at,
+    })
+    expect(chosen.ok && chosen.value[0]).toMatchObject({ type: 'Problem Chosen', qualification: 'firm' })
+  })
+
+  it('records the workshop stakeholder check once across repeated confirmations', async () => {
+    seedSession()
+    askQuestion('q_cp1')
+    askQuestion('q_cp2')
+    contribute('nothing more from me', 'c_1')
+    contribute('still nothing more', 'c_2')
+
+    await interpretContribution(
+      deps([
+        turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp1' }]),
+        turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp2' }]),
+      ]),
+    )
+    await interpretContribution(
+      deps([turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp2' }])]),
+    )
+
+    expect(workshopEvents().filter((event) => event.type === 'Stakeholder Check Recorded')).toHaveLength(1)
+  })
+
+  it('drops a judgment track naming an unknown question', async () => {
+    seedSession()
+    contribute('mumble', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'reveal-knowledge-gap', questionId: 'q_nope' }])]),
+    )
+
+    expect(sessionEvents().some((event) => event.type === 'Knowledge Gap Revealed')).toBe(false)
     expect(sessionEvents().some((event) => event.type === 'Contribution Interpreted')).toBe(true)
   })
 

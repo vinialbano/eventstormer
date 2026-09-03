@@ -70,6 +70,56 @@ describe('WorkshopEvent SSOT', () => {
       WorkshopEvent.parse({ ...scopeSet, statement: 'x'.repeat(10_001) }),
     ).toThrow()
   })
+
+  it('parses Stakeholder Check Recorded with the flag and the absent names', () => {
+    const recorded = {
+      v: 1,
+      at,
+      type: 'Stakeholder Check Recorded',
+      workshopId: 'w_1',
+      complete: false,
+      absentNames: ['ops lead', 'the auditor'],
+    }
+    expect(WorkshopEvent.parse(recorded)).toEqual(recorded)
+  })
+
+  it('Stakeholder Check Recorded rejects a blank absent name', () => {
+    expect(() =>
+      WorkshopEvent.parse({
+        v: 1,
+        at,
+        type: 'Stakeholder Check Recorded',
+        workshopId: 'w_1',
+        complete: true,
+        absentNames: [''],
+      }),
+    ).toThrow()
+  })
+
+  it('parses Problem Chosen and pins qualification to firm | provisional', () => {
+    const chosen = {
+      v: 1,
+      at,
+      type: 'Problem Chosen',
+      workshopId: 'w_1',
+      problemHotSpotId: 'b_1',
+      qualification: 'provisional',
+    }
+    expect(WorkshopEvent.parse(chosen)).toEqual(chosen)
+    expect(() => WorkshopEvent.parse({ ...chosen, qualification: 'maybe' })).toThrow()
+  })
+
+  it('parses Problem Choice Skipped and pins reason to the two allowed values', () => {
+    const skipped = {
+      v: 1,
+      at,
+      type: 'Problem Choice Skipped',
+      workshopId: 'w_1',
+      reason: 'no-impediments-yet',
+    }
+    expect(WorkshopEvent.parse(skipped)).toEqual(skipped)
+    expect(() => WorkshopEvent.parse({ ...skipped, reason: 'changed-my-mind' })).toThrow()
+  })
 })
 
 describe('SessionEvent SSOT — Question Asked refine (scopeStatement iff kind === scope)', () => {
@@ -85,6 +135,12 @@ describe('SessionEvent SSOT — Question Asked refine (scopeStatement iff kind =
 
   it('accepts a phase question with no scopeStatement', () => {
     expect(SessionEvent.parse(phaseQuestion).type).toBe('Question Asked')
+  })
+
+  it('accepts a stakeholder question (no scopeStatement) and rejects one that carries a scopeStatement', () => {
+    const stakeholder = { ...phaseQuestion, kind: 'stakeholder', text: 'Would anyone else tell this differently?' }
+    expect(SessionEvent.parse(stakeholder)).toMatchObject({ kind: 'stakeholder' })
+    expect(() => SessionEvent.parse({ ...stakeholder, scopeStatement: 'nope' })).toThrow()
   })
 
   it('rejects a phase question that carries a scopeStatement', () => {
@@ -104,6 +160,54 @@ describe('SessionEvent SSOT — Question Asked refine (scopeStatement iff kind =
     expect(() =>
       SessionEvent.parse({ ...phaseQuestion, kind: 'free', scopeStatement: 'nope' }),
     ).toThrow()
+  })
+})
+
+describe('SessionEvent SSOT — question-track judgments', () => {
+  const gap = {
+    v: 1,
+    at,
+    type: 'Knowledge Gap Revealed',
+    sessionId: 's_1',
+    questionId: 'q_2',
+    byContributionId: 'c_1',
+  }
+
+  it('Knowledge Gap Revealed parses with and without an optional detail', () => {
+    expect(SessionEvent.parse(gap).type).toBe('Knowledge Gap Revealed')
+    expect(SessionEvent.parse({ ...gap, detail: 'nobody owns returns' })).toMatchObject({
+      type: 'Knowledge Gap Revealed',
+      detail: 'nobody owns returns',
+    })
+    expect(SessionEvent.parse(gap)).not.toHaveProperty('detail')
+  })
+
+  it('Absent Stakeholder Named requires a non-empty personName', () => {
+    const named = {
+      v: 1,
+      at,
+      type: 'Absent Stakeholder Named',
+      sessionId: 's_1',
+      questionId: 'q_2',
+      byContributionId: 'c_1',
+      personName: 'ops lead',
+    }
+    expect(SessionEvent.parse(named)).toMatchObject({ type: 'Absent Stakeholder Named', personName: 'ops lead' })
+    expect(() => SessionEvent.parse({ ...named, personName: '' })).toThrow()
+  })
+
+  it('Complete Perspective Confirmed parses and the Question Asked refine still holds', () => {
+    expect(
+      SessionEvent.parse({
+        v: 1,
+        at,
+        type: 'Complete Perspective Confirmed',
+        sessionId: 's_1',
+        questionId: 'q_2',
+        byContributionId: 'c_1',
+      }).type,
+    ).toBe('Complete Perspective Confirmed')
+    expect(SessionEvent.parse(phaseQuestion).type).toBe('Question Asked')
   })
 })
 
@@ -207,8 +311,40 @@ describe('ProposalEvent SSOT', () => {
     expect(ProposalEvent.parse(buildingBlockProposed).type).toBe('Building Block Proposed')
   })
 
+  it('parses a Building Block Proposed with neither hot-spot field as a plain capture', () => {
+    const parsed = ProposalEvent.parse(buildingBlockProposed)
+    expect(parsed.type).toBe('Building Block Proposed')
+    expect(parsed).not.toHaveProperty('modelAffecting')
+    expect(parsed).not.toHaveProperty('annotatesTargetId')
+  })
+
+  it('parses a hot-spot Building Block Proposed carrying modelAffecting and annotatesTargetId', () => {
+    const parsed = ProposalEvent.parse({
+      ...buildingBlockProposed,
+      blockKind: 'hot-spot',
+      modelAffecting: false,
+      annotatesTargetId: 'b_2',
+    })
+    expect(parsed).toMatchObject({
+      blockKind: 'hot-spot',
+      modelAffecting: false,
+      annotatesTargetId: 'b_2',
+    })
+  })
+
   it('every variant requires v === 1', () => {
     expect(() => ProposalEvent.parse({ ...buildingBlockProposed, v: 2 })).toThrow()
+  })
+
+  it('parses a Proposal Kind Set carrying the new modelAffecting value', () => {
+    const parsed = ProposalEvent.parse({
+      v: 1,
+      at,
+      type: 'Proposal Kind Set',
+      proposalId: 'p_1',
+      modelAffecting: false,
+    })
+    expect(parsed).toMatchObject({ type: 'Proposal Kind Set', modelAffecting: false })
   })
 
   it('Proposal Edited bounds the label at 200 chars', () => {

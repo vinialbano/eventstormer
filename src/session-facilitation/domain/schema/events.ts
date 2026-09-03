@@ -4,6 +4,7 @@ import {
   ContributionId,
   ProposalId,
   QuestionId,
+  ResolutionId,
   SessionId,
   WorkshopId,
 } from './ids.ts'
@@ -36,7 +37,36 @@ const ScopeSet = z.object({
   statement: z.string().min(1).max(10_000),
 })
 
-export const WorkshopEvent = z.discriminatedUnion('type', [WorkshopStarted, ScopeSet])
+const StakeholderCheckRecorded = z.object({
+  ...base,
+  type: z.literal('Stakeholder Check Recorded'),
+  workshopId: WorkshopId,
+  complete: z.boolean(),
+  absentNames: z.array(z.string().min(1)),
+})
+
+const ProblemChosen = z.object({
+  ...base,
+  type: z.literal('Problem Chosen'),
+  workshopId: WorkshopId,
+  problemHotSpotId: BuildingBlockId,
+  qualification: z.enum(['firm', 'provisional']),
+})
+
+const ProblemChoiceSkipped = z.object({
+  ...base,
+  type: z.literal('Problem Choice Skipped'),
+  workshopId: WorkshopId,
+  reason: z.enum(['none-chosen', 'no-impediments-yet']),
+})
+
+export const WorkshopEvent = z.discriminatedUnion('type', [
+  WorkshopStarted,
+  ScopeSet,
+  StakeholderCheckRecorded,
+  ProblemChosen,
+  ProblemChoiceSkipped,
+])
 export type WorkshopEvent = z.infer<typeof WorkshopEvent>
 
 // --- Session ---------------------------------------------------------------
@@ -84,7 +114,7 @@ const QuestionAsked = z.object({
   type: z.literal('Question Asked'),
   sessionId: SessionId,
   questionId: QuestionId,
-  kind: z.enum(['scope', 'phase', 'free']),
+  kind: z.enum(['scope', 'phase', 'free', 'stakeholder']),
   text: z.string().min(1),
   /** Required iff `kind` is `scope` — the proposed scope statement to review. */
   scopeStatement: z.string().min(1).max(10_000).optional(),
@@ -93,6 +123,33 @@ const QuestionAsked = z.object({
 const QuestionAnswered = z.object({
   ...base,
   type: z.literal('Question Answered'),
+  sessionId: SessionId,
+  questionId: QuestionId,
+  byContributionId: ContributionId,
+})
+
+const KnowledgeGapRevealed = z.object({
+  ...base,
+  type: z.literal('Knowledge Gap Revealed'),
+  sessionId: SessionId,
+  questionId: QuestionId,
+  byContributionId: ContributionId,
+  /** What the contributor could say about the gap, when they said anything. */
+  detail: z.string().min(1).optional(),
+})
+
+const AbsentStakeholderNamed = z.object({
+  ...base,
+  type: z.literal('Absent Stakeholder Named'),
+  sessionId: SessionId,
+  questionId: QuestionId,
+  byContributionId: ContributionId,
+  personName: z.string().min(1),
+})
+
+const CompletePerspectiveConfirmed = z.object({
+  ...base,
+  type: z.literal('Complete Perspective Confirmed'),
   sessionId: SessionId,
   questionId: QuestionId,
   byContributionId: ContributionId,
@@ -128,6 +185,9 @@ export const SessionEvent = z
     ContributionInterpretationFailed,
     QuestionAsked,
     QuestionAnswered,
+    KnowledgeGapRevealed,
+    AbsentStakeholderNamed,
+    CompletePerspectiveConfirmed,
     ContributionAttributedToAnotherFormat,
     SessionClosed,
   ])
@@ -154,6 +214,17 @@ const BuildingBlockProposed = z.object({
   label: z.string().min(1).max(200),
   bar: InterpretationBar,
   evidenceSpan: z.string().min(1).optional(),
+  /**
+   * Only meaningful when `blockKind` is `hot-spot`: whether the hot spot changes
+   * the model (`true`) or is informational. Absent means model-affecting;
+   * consumers read `modelAffecting ?? true`. A proposal carrying neither this nor
+   * `annotatesTargetId` is a plain capture. `.optional()` rather than
+   * `.default(true)` because `.default()` widens the Zod output type, forcing
+   * `modelAffecting` at every typed `ProposalEvent` construction site.
+   */
+  modelAffecting: z.boolean().optional(),
+  /** Only meaningful when `blockKind` is `hot-spot`: the block the hot spot annotates. */
+  annotatesTargetId: BuildingBlockId.optional(),
 })
 
 const ProposalEdited = z.object({
@@ -161,6 +232,13 @@ const ProposalEdited = z.object({
   type: z.literal('Proposal Edited'),
   proposalId: ProposalId,
   label: z.string().min(1).max(200),
+})
+
+const ProposalKindSet = z.object({
+  ...base,
+  type: z.literal('Proposal Kind Set'),
+  proposalId: ProposalId,
+  modelAffecting: z.boolean(),
 })
 
 const ProposalAccepted = z.object({
@@ -213,6 +291,7 @@ const ProposalLapsed = z.object({
 export const ProposalEvent = z.discriminatedUnion('type', [
   BuildingBlockProposed,
   ProposalEdited,
+  ProposalKindSet,
   ProposalAccepted,
   ProposalRejected,
   ProposalHeld,
@@ -222,3 +301,67 @@ export const ProposalEvent = z.discriminatedUnion('type', [
   ProposalLapsed,
 ])
 export type ProposalEvent = z.infer<typeof ProposalEvent>
+
+// --- Resolution ---------------------------------------------------------------
+
+const ResolutionReference = z.string().min(1)
+
+const ResolutionProposed = z.object({
+  ...base,
+  type: z.literal('Resolution Proposed'),
+  resolutionId: ResolutionId,
+  sessionId: SessionId,
+  contributionId: ContributionId,
+  hotSpotId: BuildingBlockId,
+  reference: ResolutionReference,
+})
+
+const ResolutionEdited = z.object({
+  ...base,
+  type: z.literal('Resolution Edited'),
+  resolutionId: ResolutionId,
+  reference: ResolutionReference,
+})
+
+const ResolutionAccepted = z.object({
+  ...base,
+  type: z.literal('Resolution Accepted'),
+  resolutionId: ResolutionId,
+  accepter: z.string().min(1),
+})
+
+const ResolutionRejected = z.object({
+  ...base,
+  type: z.literal('Resolution Rejected'),
+  resolutionId: ResolutionId,
+})
+
+const ResolutionLapsed = z.object({
+  ...base,
+  type: z.literal('Resolution Lapsed'),
+  resolutionId: ResolutionId,
+})
+
+const HotSpotResolved = z.object({
+  ...base,
+  type: z.literal('Hot Spot Resolved'),
+  resolutionId: ResolutionId,
+})
+
+const HotSpotResolutionRejected = z.object({
+  ...base,
+  type: z.literal('Hot Spot Resolution Rejected'),
+  resolutionId: ResolutionId,
+  reason: z.string().min(1),
+})
+
+export const ResolutionEvent = z.discriminatedUnion('type', [
+  ResolutionProposed,
+  ResolutionEdited,
+  ResolutionAccepted,
+  ResolutionRejected,
+  ResolutionLapsed,
+  HotSpotResolved,
+  HotSpotResolutionRejected,
+])
+export type ResolutionEvent = z.infer<typeof ResolutionEvent>

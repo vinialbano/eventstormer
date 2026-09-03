@@ -25,12 +25,12 @@ interface TranscriptTurn {
   contributionId?: ContributionId
   /** Present on `question` turns — the client renders the `scope` question as an
    * F05 card rather than a plain message. */
-  questionKind?: 'scope' | 'phase' | 'free'
+  questionKind?: 'scope' | 'phase' | 'free' | 'stakeholder'
 }
 
 interface OpenQuestion {
   questionId: QuestionId
-  kind: 'scope' | 'phase' | 'free'
+  kind: 'scope' | 'phase' | 'free' | 'stakeholder'
   text: string
 }
 
@@ -95,7 +95,10 @@ export const sessionView = (
           questionKind: event.kind,
         })
         break
-      case 'Question Answered': {
+      case 'Question Answered':
+      case 'Knowledge Gap Revealed':
+      case 'Absent Stakeholder Named':
+      case 'Complete Perspective Confirmed': {
         const question = questions.get(event.questionId)
         if (question) question.resolved = true
         break

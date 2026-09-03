@@ -40,6 +40,28 @@ describe('PendingDrawer', () => {
     expect(wrapper.emitted('jump')).toEqual([['p2']])
   })
 
+  it('lists a Resolutions group and emits jump-resolution on a row click', async () => {
+    const wrapper = mount(PendingDrawer, {
+      props: {
+        parked: [],
+        awaiting: [],
+        resolutions: [
+          {
+            resolutionId: 'r1',
+            hotSpotId: 'h1',
+            reference: 'we added a retry step',
+            disposition: 'PROPOSED' as const,
+          },
+        ],
+      },
+    })
+
+    expect(wrapper.findAll('h3').some((heading) => heading.text().includes('Resolutions'))).toBe(true)
+    expect(wrapper.find('.drawer__empty').exists()).toBe(false)
+    await wrapper.get('.drawer__row').trigger('click')
+    expect(wrapper.emitted('jump-resolution')).toEqual([['r1']])
+  })
+
   it('offers Accept all remaining only when something is awaiting, and never a reject-all', () => {
     const withAwaiting = mount(PendingDrawer, { props: { parked: [], awaiting: [card({ proposalId: 'p2' })] } })
     expect(withAwaiting.get('.drawer__acceptall').text()).toBe('Accept all remaining')

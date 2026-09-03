@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "testing-boss": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mine/testing-boss/SKILL.md",
+      "computedHash": "a20b323821306084166bce51d50b6d8f56506cc55785ca369e3597c4501e2176"
+    }
+  }
+}

@@ -3,13 +3,19 @@ import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui
 import { computed, nextTick, ref, toRef } from 'vue'
 import type { ProposalCard } from '../types.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
+import { useResolutionsStore } from '../stores/resolutions.ts'
 import { useSessionStore } from '../stores/session.ts'
+import { useReducedMotion } from '../shell/composables/use-reduced-motion.ts'
 import { useDockFeed } from './composables/use-dock-feed.ts'
+import { useCloseCeremony } from './interactions/close-ceremony/use-close-ceremony.ts'
 import { useContribute } from './interactions/contribute/use-contribute.ts'
 import { useReviewProposal } from './interactions/review-proposal/use-review-proposal.ts'
+import { useReviewResolution } from './interactions/review-resolution/use-review-resolution.ts'
+import CloseCeremony from './close-ceremony/CloseCeremony.vue'
 import DockComposer from './DockComposer.vue'
 import DockFeed from './DockFeed.vue'
 import PendingDrawer from './PendingDrawer.vue'
+import ResolutionCard from './ResolutionCard.vue'
 
 /**
  * The floating facilitator dock (brief §3). Layout and wiring only — feed assembly
@@ -21,15 +27,24 @@ const props = defineProps<{
   sessionId: string | null
   accepter: string
   blockLabels: Readonly<Record<string, string>>
+  /** Hot spots open right now — the close-ceremony problem picker's candidates. */
+  openHotSpots: { hotSpotId: string; label: string }[]
 }>()
 const emit = defineEmits<{ mutated: []; 'board-dirty': [] }>()
 
 const session = useSessionStore()
 const proposals = useProposalsStore()
+const resolutions = useResolutionsStore()
 
 const sessionView = computed(() => session.view)
 const proposalCards = computed(() => proposals.cards)
 const sessionId = toRef(props, 'sessionId')
+
+const RESOLUTION_PENDING = new Set(['PROPOSED', 'EDITED', 'ACCEPTED'])
+const resolutionCards = computed(() => resolutions.cards)
+const pendingResolutions = computed(() =>
+  resolutionCards.value.filter((card) => RESOLUTION_PENDING.has(card.disposition)),
+)
 
 const dockEmit = {
   mutated: (): void => {
@@ -58,7 +73,27 @@ const review = useReviewProposal(
   () => scopeState.value.proposedStatement,
   dockEmit,
 )
+const resolutionReview = useReviewResolution(dockEmit)
 const { catchingUp, onSubmit } = useContribute(sessionId, sessionView, dockEmit)
+
+const {
+  step: ceremonyStep,
+  busy: ceremonyBusy,
+  error: ceremonyError,
+  report: ceremonyReport,
+  start: startCeremony,
+  cancel: cancelCeremony,
+  back: ceremonyBack,
+  answerStakeholder,
+  chooseProblem,
+  skipProblem,
+  confirm: confirmCeremony,
+} = useCloseCeremony(
+  () => props.workshopId,
+  () => props.sessionId,
+  dockEmit,
+)
+const reducedMotion = useReducedMotion()
 
 const open = ref(true)
 const drawerOpen = ref(false)
@@ -74,6 +109,8 @@ const onAcceptAllCluster = (cards: ProposalCard[]): Promise<void> =>
 const onAcceptAllRemaining = (): Promise<void> =>
   review.onAcceptAllRemaining(awaiting.value)
 
+const pulsingResolutionId = ref<string | null>(null)
+
 const onJump = async (proposalId: string): Promise<void> => {
   drawerOpen.value = false
   await nextTick()
@@ -81,6 +118,15 @@ const onJump = async (proposalId: string): Promise<void> => {
   pulsingId.value = proposalId
   window.setTimeout(() => {
     if (pulsingId.value === proposalId) pulsingId.value = null
+  }, 1200)
+}
+const onJumpResolution = async (resolutionId: string): Promise<void> => {
+  drawerOpen.value = false
+  await nextTick()
+  document.getElementById(`resolution-${resolutionId}`)?.scrollIntoView({ block: 'center' })
+  pulsingResolutionId.value = resolutionId
+  window.setTimeout(() => {
+    if (pulsingResolutionId.value === resolutionId) pulsingResolutionId.value = null
   }, 1200)
 }
 </script>
@@ -122,7 +168,53 @@ const onJump = async (proposalId: string): Promise<void> => {
             @accept-all-cluster="onAcceptAllCluster"
           />
 
+          <section
+            v-if="resolutionCards.length > 0"
+            class="dock__resolutions"
+            aria-label="Resolutions"
+          >
+            <ResolutionCard
+              v-for="card in resolutionCards"
+              :id="`resolution-${card.resolutionId}`"
+              :key="card.resolutionId"
+              class="dock__resolution"
+              :class="{ 'dock__resolution--pulse': pulsingResolutionId === card.resolutionId }"
+              :reference="card.reference"
+              :disposition="card.disposition"
+              :lapsed-reason="card.lapsedReason"
+              @accept="resolutionReview.onAccept(card.resolutionId)"
+              @reject="resolutionReview.onReject(card.resolutionId)"
+              @edit="resolutionReview.onEdit(card.resolutionId, $event)"
+            />
+          </section>
+
+          <CloseCeremony
+            v-if="ceremonyStep !== 'idle'"
+            class="dock__ceremony"
+            :step="ceremonyStep"
+            :busy="ceremonyBusy"
+            :error="ceremonyError"
+            :report="ceremonyReport"
+            :open-hot-spots="openHotSpots"
+            :reduced-motion="reducedMotion"
+            @answer="answerStakeholder"
+            @choose="chooseProblem"
+            @skip="skipProblem"
+            @back="ceremonyBack"
+            @confirm="confirmCeremony"
+            @cancel="cancelCeremony"
+          />
+
           <DockComposer :catching-up="catchingUp" @submit="onSubmit" />
+
+          <button
+            v-if="ceremonyStep === 'idle'"
+            type="button"
+            class="dock__close"
+            @click="startCeremony"
+          >
+            Close session
+          </button>
         </div>
 
         <button
@@ -143,7 +235,9 @@ const onJump = async (proposalId: string): Promise<void> => {
           <PendingDrawer
             :parked="parked"
             :awaiting="awaiting"
+            :resolutions="pendingResolutions"
             @jump="onJump"
+            @jump-resolution="onJumpResolution"
             @accept-all="onAcceptAllRemaining"
           />
         </div>
@@ -246,6 +340,25 @@ const onJump = async (proposalId: string): Promise<void> => {
   font-size: 1.125rem;
   color: var(--color-text-soft);
   cursor: pointer;
+}
+
+.dock__close {
+  align-self: flex-start;
+  margin-top: 8px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text-soft);
+  cursor: pointer;
+}
+.dock__close:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
 }
 
 .dock__pill {

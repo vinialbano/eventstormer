@@ -18,12 +18,19 @@ describe('Board model', () => {
     expect(writeModel.causedBy.size).toBe(0)
   })
 
-  it('emptySnapshot has no blocks, empty topology, and position -1', () => {
+  it('emptySnapshot has no blocks, empty topology, zero hot spots, and position -1', () => {
     const snapshot = emptySnapshot()
     expect(snapshot.blocks.size).toBe(0)
     expect(snapshot.follows).toEqual([])
     expect(snapshot.causedBy).toEqual([])
+    expect(snapshot.hotSpotCount).toBe(0)
     expect(snapshot.position).toBe(-1)
+  })
+
+  it('emptyWriteModel has empty annotates and hotSpotResolved maps', () => {
+    const writeModel = emptyWriteModel()
+    expect(writeModel.annotates.size).toBe(0)
+    expect(writeModel.hotSpotResolved.size).toBe(0)
   })
 
   it('each empty factory returns a fresh instance', () => {

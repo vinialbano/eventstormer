@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 10,
+  "next_id": 12,
   "lessons": [
     {
       "id": "L-001",
@@ -166,6 +166,42 @@
       ],
       "created": "2026-09-01T11:57:08Z",
       "last_seen": "2026-09-01T11:57:08Z"
+    },
+    {
+      "id": "L-010",
+      "key": "ac_gap::when an acceptance test only passes by loosening an e2e assertion tolerant the count is n today comments the defect is in the behaviour spec not the test fix the behaviour and keep the exact assertion",
+      "text": "When an acceptance test only passes by loosening an E2E assertion (tolerant >=, 'the count is N today' comments), the defect is in the behaviour/spec, not the test — fix the behaviour and keep the exact assertion.",
+      "signal": "ac_gap",
+      "scope": "e2e",
+      "status": "candidate",
+      "features": [
+        "slice-4-hot-spots-close"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "e2e/capture-loop.spec.ts:150 (e2e)"
+      ],
+      "created": "2026-09-03T18:14:35Z",
+      "last_seen": "2026-09-03T18:14:35Z"
+    },
+    {
+      "id": "L-011",
+      "key": "surviving_mutant::error as success branches treating a specific error like duplicate id as success in a self heal path are invisible to happy path tests cover them by deterministically forcing the collision mock the id wipe the idempotency marker re run",
+      "text": "Error-as-success branches (treating a specific error like duplicate-id as success in a self-heal path) are invisible to happy-path tests — cover them by deterministically forcing the collision: mock the id, wipe the idempotency marker, re-run.",
+      "signal": "surviving_mutant",
+      "scope": "session-facilitation/infrastructure",
+      "status": "candidate",
+      "features": [
+        "slice-4-hot-spots-close"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/session-facilitation/infrastructure/hot-spot-sweep.ts:203 (session-facilitation/infrastructure)"
+      ],
+      "created": "2026-09-03T18:14:35Z",
+      "last_seen": "2026-09-03T18:14:35Z"
     }
   ]
 }

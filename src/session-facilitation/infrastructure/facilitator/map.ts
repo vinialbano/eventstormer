@@ -1,5 +1,8 @@
-import type { ProposalId, QuestionId } from '~/plumbing/ids.ts'
-import { QuestionId as QuestionIdSchema } from '../../domain/schema/ids.ts'
+import type { BuildingBlockId, ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
+import {
+  BuildingBlockId as BuildingBlockIdSchema,
+  QuestionId as QuestionIdSchema,
+} from '../../domain/schema/ids.ts'
 import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import type { FacilitationTurn } from './turn-schema.ts'
 
@@ -10,11 +13,16 @@ import type { FacilitationTurn } from './turn-schema.ts'
  * per proposed block, a `questionId` per flagged phase, and (when the turn's
  * `nextMove` is `ask`) one `askQuestionId` for the follow-up question.
  *
- * `mint` is injected so a test gets stable ids.
+ * `mint` is injected so a test gets stable ids. `resolveBlockId` turns the label
+ * the model names for a hot spot's target into a live `BuildingBlockId` — an
+ * unresolvable `annotatesTargetId` label is dropped, leaving the hot spot
+ * unannotated; an unresolvable `propose-resolution` `hotSpotId` is kept verbatim
+ * (the model is told to pass an id there, and a bad one bounces at accept).
  */
 export interface TrackIdMint {
   proposalId: () => ProposalId
   questionId: () => QuestionId
+  resolutionId: () => ResolutionId
 }
 
 export interface MappedTurn {
@@ -22,10 +30,16 @@ export interface MappedTurn {
   askQuestionId?: QuestionId
 }
 
-export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn => {
+export const mapTurn = (
+  turn: FacilitationTurn,
+  mint: TrackIdMint,
+  resolveBlockId: (label: string) => BuildingBlockId | undefined = () => undefined,
+): MappedTurn => {
   const tracks: InterpretedTrack[] = turn.interpretation.map((track): InterpretedTrack => {
     switch (track.track) {
-      case 'propose-building-block':
+      case 'propose-building-block': {
+        const annotatesTargetId =
+          track.annotatesTargetId === undefined ? undefined : resolveBlockId(track.annotatesTargetId)
         return {
           track: 'propose-building-block',
           proposalId: mint.proposalId(),
@@ -33,7 +47,10 @@ export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn =
           label: track.label,
           bar: track.bar,
           ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
+          ...(track.modelAffecting === undefined ? {} : { modelAffecting: track.modelAffecting }),
+          ...(annotatesTargetId === undefined ? {} : { annotatesTargetId }),
         }
+      }
       case 'flag-phase':
         return {
           track: 'flag-phase',
@@ -44,6 +61,30 @@ export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn =
         return { track: 'attribute-to-other-format', format: track.format, note: track.note }
       case 'answer-question':
         return { track: 'answer-question', questionId: QuestionIdSchema.parse(track.questionId) }
+      case 'reveal-knowledge-gap':
+        return {
+          track: 'reveal-knowledge-gap',
+          questionId: QuestionIdSchema.parse(track.questionId),
+          ...(track.detail === undefined ? {} : { detail: track.detail }),
+        }
+      case 'name-absent-stakeholder':
+        return {
+          track: 'name-absent-stakeholder',
+          questionId: QuestionIdSchema.parse(track.questionId),
+          personName: track.personName,
+        }
+      case 'confirm-complete-perspective':
+        return {
+          track: 'confirm-complete-perspective',
+          questionId: QuestionIdSchema.parse(track.questionId),
+        }
+      case 'propose-resolution':
+        return {
+          track: 'propose-resolution',
+          resolutionId: mint.resolutionId(),
+          hotSpotId: resolveBlockId(track.hotSpotId) ?? BuildingBlockIdSchema.parse(track.hotSpotId),
+          reference: track.reference,
+        }
     }
   })
 

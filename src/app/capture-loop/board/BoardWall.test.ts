@@ -382,4 +382,70 @@ describe('BoardWall', () => {
     expect(nodes[0]?.id).toBe('eA')
     expect(nodes[0]?.data.withdrawn).toBe(true)
   })
+
+  it('shows the hot-spot legend with the count and pins a callout on an annotated backlog target', () => {
+    const wrapper = mount(BoardWall, {
+      props: {
+        blocks: [{ id: 'eA', kind: 'domain-event', label: 'Payment captured' }],
+        hotSpots: {
+          annotated: new Map([
+            [
+              'eA',
+              [
+                {
+                  hotSpotId: 'h1',
+                  label: 'Refund path unclear',
+                  modelAffecting: true,
+                  resolved: true,
+                  reference: 'we added a retry step',
+                },
+              ],
+            ],
+          ]),
+          unannotated: [
+            {
+              hotSpotId: 'h2',
+              label: 'Who owns dunning?',
+              modelAffecting: false,
+              resolved: false,
+              reference: null,
+            },
+          ],
+          count: 2,
+        },
+      },
+    })
+
+    expect(wrapper.get('[aria-label="Hot spots"] [role="status"]').text()).toBe('Hot spots 2')
+    const badge = wrapper.get('[aria-label="Hot spots on this block"] .hsb__pin')
+    expect(badge.text()).toContain('we added a retry step')
+  })
+
+  it('renders no hot-spot legend when the model has none', () => {
+    const wrapper = mount(BoardWall, {
+      props: { blocks: [{ id: 'eA', kind: 'domain-event', label: 'Payment captured' }] },
+    })
+    expect(wrapper.find('[aria-label="Hot spots"]').exists()).toBe(false)
+  })
+
+  it('emits flag-hot-spot with the selected block id when the sticky flag action is used', async () => {
+    const wrapper = mount(BoardWall, {
+      props: { blocks: [{ id: 'eA', kind: 'domain-event', label: 'Payment captured' }] },
+    })
+    await stickyByLabel(wrapper, 'event: Payment captured').trigger('click')
+    await wrapper.get('[aria-label="Flag hot spot"]').trigger('click')
+
+    expect(wrapper.emitted('flag-hot-spot')).toEqual([
+      [{ targetId: 'eA', label: 'Concern: Payment captured' }],
+    ])
+  })
+
+  it('emits flag-hot-spot with no target from the board-level flag action', async () => {
+    const wrapper = mount(BoardWall, {
+      props: { blocks: [{ id: 'eA', kind: 'domain-event', label: 'Payment captured' }] },
+    })
+    await wrapper.get('[aria-label="Flag a hot spot"]').trigger('click')
+
+    expect(wrapper.emitted('flag-hot-spot')).toEqual([[{ targetId: null, label: 'Hot spot' }]])
+  })
 })

@@ -11,6 +11,8 @@ const cloneWriteModel = (writeModel: BoardWriteModel): BoardWriteModel => ({
   blocks: new Map(writeModel.blocks),
   follows: cloneAdjacency(writeModel.follows),
   causedBy: cloneAdjacency(writeModel.causedBy),
+  annotates: new Map(writeModel.annotates),
+  hotSpotResolved: new Map(writeModel.hotSpotResolved),
 })
 
 const addEdge = (
@@ -75,12 +77,17 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'withdraw': {
       const block = next.blocks.get(op.target)
       if (block) next.blocks.set(op.target, { ...block, withdrawn: true })
+      next.annotates.delete(op.target)
       dropIncident(next, op.target)
       break
     }
     case 'reinstate': {
       const block = next.blocks.get(op.target)
       if (block) next.blocks.set(op.target, { ...block, withdrawn: false })
+      if (block?.kind === 'hot-spot') {
+        next.annotates.delete(op.target)
+        next.hotSpotResolved.set(op.target, false)
+      }
       break
     }
     case 'sequence':
@@ -100,16 +107,27 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'unlink-cause':
       removeEdge(next.causedBy, op.effect, op.cause)
       break
-    case 'reword':
     case 'raise-hot-spot':
+      next.blocks.set(op.id, { kind: 'hot-spot', withdrawn: false })
+      next.hotSpotResolved.set(op.id, false)
+      break
+    case 'annotate':
+      next.annotates.set(op.hotSpot, op.target)
+      break
+    case 'unannotate':
+      next.annotates.delete(op.hotSpot)
+      break
+    case 'resolve':
+      next.hotSpotResolved.set(op.target, true)
+      break
+    case 'reopen':
+      next.hotSpotResolved.set(op.target, false)
+      break
+    case 'reword':
     case 'place':
     case 'unplace':
-    case 'annotate':
-    case 'unannotate':
     case 'mark-pivotal':
     case 'unmark-pivotal':
-    case 'resolve':
-    case 'reopen':
       break
   }
 

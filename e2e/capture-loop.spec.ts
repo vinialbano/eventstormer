@@ -3,9 +3,11 @@ import { expect, test, type Page } from '@playwright/test'
 /**
  * Core capture-loop smoke (ADR-008): create a workshop, accept scope, narrate three
  * contributions, accept each proposal, and assert three stickies in the backlog.
- * One slim timeline beat (place + sequence) covers the cross-zone macro path;
- * reword, withdraw, readable-account walk, and reload persistence stay in unit
- * tests. ADR-007 no-optimism is in `capture-loop-no-optimism.spec.ts`.
+ * One slim timeline beat (place + sequence) covers the cross-zone macro path; a
+ * fourth stage flags two hot spots, resolves one through the facilitator, and
+ * walks the in-dock close ceremony to a closed session that survives a reload.
+ * Reword, withdraw, and the readable-account walk stay in unit tests. ADR-007
+ * no-optimism is in `capture-loop-no-optimism.spec.ts`.
  *
  * Scripted facilitator: `FACILITATOR_MODE=scripted` + `e2e/fixtures/facilitator.json`.
  */
@@ -106,6 +108,55 @@ test.describe.serial('capture loop', () => {
       await expect(timeline.getByText(sequencedLabel, { exact: true })).toBeVisible({ timeout: 20_000 })
       await expect(backlog.getByLabel(`event: ${sequencedLabel}`)).toHaveCount(0)
       await expect(backlog.getByRole('listitem')).toHaveCount(1)
+
+      assertNoConsoleIssues()
+    })
+  })
+
+  test.describe('hot spots and close', () => {
+    test('flags hot spots, resolves one, and closes the session through the ceremony', async () => {
+      const backlog = page.getByRole('list', { name: 'Backlog' })
+      const hotSpots = page.getByRole('complementary', { name: 'Hot spots' })
+
+      // Flag one hot spot on the remaining backlog event, and one with no target.
+      await backlog.getByLabel('event: Member registered').click()
+      await page.getByRole('button', { name: 'Flag hot spot' }).click()
+      await expect(hotSpots.getByText('Concern: Member registered')).toBeVisible({ timeout: 20_000 })
+
+      await page.getByRole('button', { name: 'Flag a hot spot' }).click()
+      await expect(hotSpots.getByRole('status')).toHaveText(/Hot spots\s*2/, { timeout: 20_000 })
+
+      // The facilitator proposes a resolution for the annotated hot spot; accept it.
+      await page.getByRole('button', { name: /Facilitator/ }).click()
+      const composer = page.getByRole('textbox', { name: 'Describe what happens' })
+      await composer.fill('We added a retry so duplicate signups no longer happen.')
+      await composer.press('Enter')
+
+      const resolution = page.getByRole('group', { name: 'Resolution' })
+      await expect(resolution).toBeVisible({ timeout: 20_000 })
+      await resolution.getByRole('button', { name: 'Accept' }).click()
+      await expect(hotSpots.getByText(/Resolved — Added a retry/)).toBeVisible({ timeout: 20_000 })
+
+      // Close ceremony: nobody else, then pick the still-open hot spot.
+      await page.getByRole('button', { name: 'Close session' }).click()
+      await page.getByRole('button', { name: 'Nobody else' }).click()
+      await page.getByRole('radio', { name: 'Hot spot' }).click()
+      await page.getByRole('button', { name: 'Choose this problem' }).click()
+      await page.getByRole('button', { name: 'Close session' }).click()
+
+      await expect(page.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 20_000 })
+
+      // The flagged callouts, the resolution, and the count all survive a reload
+      // and the session stays closed. The close sweep raises nothing here — the
+      // only open question is the scope question, answered by Scope Set — so the
+      // count is exactly the two the person flagged.
+      await page.reload()
+      const hotSpotsAfter = page.getByRole('complementary', { name: 'Hot spots' })
+      await expect(hotSpotsAfter.getByRole('status')).toHaveText(/Hot spots\s*2/, { timeout: 20_000 })
+      await expect(hotSpotsAfter.getByText(/Concern: Member registered/)).toBeVisible()
+      await expect(hotSpotsAfter.getByText(/Resolved — Added a retry/)).toBeVisible()
+      await expect(hotSpotsAfter.getByText('Hot spot', { exact: true })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Start session' })).toBeVisible()
 
       assertNoConsoleIssues()
     })

@@ -10,13 +10,16 @@ export interface PublishedBoardSnapshot {
   blocks: ({ id: BuildingBlockId } & SnapshotBlock)[]
   follows: FollowsEdge[]
   causedBy: CausedByEdge[]
+  hotSpotCount: number
 }
 
 /**
  * The board snapshot for derived artifacts — includes withdrawn blocks.
- * An empty log is `{ position: -1, blocks: [], follows: [], causedBy: [] }`,
- * not a missing workshop. Topology and per-block placement/pivotal travel
- * here; layout ranks do not.
+ * An empty log is `{ position: -1, blocks: [], follows: [], causedBy: [],
+ * hotSpotCount: 0 }`, not a missing workshop. Topology, per-block
+ * placement/pivotal, and per-hot-spot `annotates` / `resolved` / `reference`
+ * travel here; layout ranks do not. `hotSpotCount` is the number of
+ * non-withdrawn hot-spot blocks.
  */
 export const readBoardSnapshot = (
   deps: { store: EventStore },
@@ -29,5 +32,6 @@ export const readBoardSnapshot = (
     blocks: [...snapshot.blocks].map(([id, block]) => ({ id, ...block })),
     follows: [...snapshot.follows],
     causedBy: [...snapshot.causedBy],
+    hotSpotCount: snapshot.hotSpotCount,
   }
 }

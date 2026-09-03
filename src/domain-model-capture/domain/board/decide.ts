@@ -144,13 +144,42 @@ const referencingEffects = (
   return effects.toSorted((left, right) => left.localeCompare(right))
 }
 
+const annotatingHotSpots = (
+  writeModel: BoardWriteModel,
+  target: BuildingBlockId,
+): BuildingBlockId[] => {
+  const hotSpots: BuildingBlockId[] = []
+  for (const [hotSpot, annotated] of writeModel.annotates) {
+    if (annotated === target && writeModel.blocks.get(hotSpot)?.withdrawn === false) {
+      hotSpots.push(hotSpot)
+    }
+  }
+  return hotSpots.toSorted((left, right) => left.localeCompare(right))
+}
+
 const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>): Decision => {
   const block = writeModel.blocks.get(operation.target)
   if (!block) return unknownTarget(operation.target)
   if (block.withdrawn) {
     return err({ kind: 'already-withdrawn', classification: 'systemic', target: operation.target })
   }
-  if (block.kind !== 'actor' && block.kind !== 'system') return ok([operation])
+  // Withdrawing a hot spot drops its own annotation edge as a follow-on.
+  if (block.kind === 'hot-spot') {
+    const unannotate: OpOf<'unannotate'>[] = writeModel.annotates.has(operation.target)
+      ? [{ kind: 'unannotate', hotSpot: operation.target, author: operation.author, v: operation.v }]
+      : []
+    return ok([operation, ...unannotate])
+  }
+  // Withdrawing anything else cascades to every live hot spot annotating it.
+  const cascade: OpOf<'withdraw'>[] = annotatingHotSpots(writeModel, operation.target).map(
+    (hotSpot) => ({
+      kind: 'withdraw',
+      target: hotSpot,
+      author: operation.author,
+      v: operation.v,
+    }),
+  )
+  if (block.kind !== 'actor' && block.kind !== 'system') return ok([operation, ...cascade])
   const unlinks: OpOf<'unlink-cause'>[] = referencingEffects(writeModel, operation.target).map(
     (effect) => ({
       kind: 'unlink-cause',
@@ -160,7 +189,7 @@ const decideWithdraw = (writeModel: BoardWriteModel, operation: OpOf<'withdraw'>
       v: operation.v,
     }),
   )
-  return ok([operation, ...unlinks])
+  return ok([operation, ...cascade, ...unlinks])
 }
 
 const decideReinstate = (writeModel: BoardWriteModel, operation: OpOf<'reinstate'>): Decision => {
@@ -380,6 +409,89 @@ const decideUnmarkPivotal = (
   return ok([operation])
 }
 
+const decideRaiseHotSpot = (
+  writeModel: BoardWriteModel,
+  operation: OpOf<'raise-hot-spot'>,
+): Decision =>
+  writeModel.blocks.has(operation.id)
+    ? err({ kind: 'duplicate-id', classification: 'systemic', id: operation.id })
+    : ok([operation])
+
+const decideAnnotate = (writeModel: BoardWriteModel, operation: OpOf<'annotate'>): Decision => {
+  const hotSpot = lookupActive(writeModel, operation.hotSpot)
+  if (!hotSpot.ok) return hotSpot
+  const target = lookupActive(writeModel, operation.target)
+  if (!target.ok) return target
+  if (hotSpot.value.kind !== 'hot-spot') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'only a hot spot may annotate a building block',
+    })
+  }
+  if (target.value.kind === 'hot-spot') {
+    return err({
+      kind: 'kind-permission',
+      classification: 'systemic',
+      operation: operation.kind,
+      reason: 'a hot spot cannot annotate another hot spot',
+    })
+  }
+  return ok([operation])
+}
+
+const decideUnannotate = (writeModel: BoardWriteModel, operation: OpOf<'unannotate'>): Decision => {
+  const hotSpot = lookupActive(writeModel, operation.hotSpot)
+  if (!hotSpot.ok) return hotSpot
+  if (!writeModel.annotates.has(operation.hotSpot)) {
+    return err({ kind: 'missing-edge', classification: 'systemic' })
+  }
+  return ok([operation])
+}
+
+const requireLiveHotSpot = (
+  writeModel: BoardWriteModel,
+  target: BuildingBlockId,
+  operation: string,
+  reason: string,
+): Result<WriteBlock, Rejection> => {
+  const block = lookupActive(writeModel, target)
+  if (!block.ok) return block
+  if (block.value.kind !== 'hot-spot') {
+    return err({ kind: 'kind-permission', classification: 'systemic', operation, reason })
+  }
+  return block
+}
+
+const decideResolve = (writeModel: BoardWriteModel, operation: OpOf<'resolve'>): Decision => {
+  const hotSpot = requireLiveHotSpot(
+    writeModel,
+    operation.target,
+    operation.kind,
+    'only a hot spot may be resolved',
+  )
+  if (!hotSpot.ok) return hotSpot
+  if (writeModel.hotSpotResolved.get(operation.target) === true) {
+    return err({ kind: 'already-resolved', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
+const decideReopen = (writeModel: BoardWriteModel, operation: OpOf<'reopen'>): Decision => {
+  const hotSpot = requireLiveHotSpot(
+    writeModel,
+    operation.target,
+    operation.kind,
+    'only a hot spot may be reopened',
+  )
+  if (!hotSpot.ok) return hotSpot
+  if (writeModel.hotSpotResolved.get(operation.target) !== true) {
+    return err({ kind: 'not-resolved', classification: 'systemic', target: operation.target })
+  }
+  return ok([operation])
+}
+
 /**
  * The pure guard. Reads ONLY the slim write model — never
  * labels, placement, or provenance — and returns `ok(operations)` or
@@ -443,14 +555,18 @@ export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => 
       return decideUnmarkPivotal(writeModel, operation)
 
     case 'raise-hot-spot':
+      return decideRaiseHotSpot(writeModel, operation)
+
     case 'annotate':
+      return decideAnnotate(writeModel, operation)
+
     case 'unannotate':
+      return decideUnannotate(writeModel, operation)
+
     case 'resolve':
+      return decideResolve(writeModel, operation)
+
     case 'reopen':
-      return err({
-        kind: 'not-implemented-in-slice',
-        classification: 'systemic',
-        operation: operation.kind,
-      })
+      return decideReopen(writeModel, operation)
   }
 }
