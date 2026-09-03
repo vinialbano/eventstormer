@@ -86,6 +86,19 @@ describe('FacilitationTurnSchema — the hard ceilings', () => {
     ).toThrow()
   })
 
+  it('accepts a propose-resolution strand with a hot-spot id and a reference', () => {
+    const parsed = FacilitationTrack.parse({
+      track: 'propose-resolution',
+      hotSpotId: 'h_1',
+      reference: 'added a retry with backoff',
+    })
+    expect(parsed).toEqual({
+      track: 'propose-resolution',
+      hotSpotId: 'h_1',
+      reference: 'added a retry with backoff',
+    })
+  })
+
   it('rejects a proposal label longer than 200 characters', () => {
     expect(() =>
       FacilitationTrack.parse({ ...proposeTrack, label: 'x'.repeat(201) }),

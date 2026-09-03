@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ProposalId, QuestionId } from './ids.ts'
+import { BuildingBlockId, ProposalId, QuestionId, ResolutionId } from './ids.ts'
 
 /**
  * The **stored** interpretation of one strand of a contribution — the shape
@@ -47,10 +47,23 @@ const answerQuestion = z.object({
   questionId: QuestionId,
 })
 
+/**
+ * A contribution that closes an open hot spot — carried as a `Resolution` birth,
+ * not a `Proposal` (the two aggregates have divergent outcomes). `reference` is
+ * the recorded value; `hotSpotId` names the hot spot on the board.
+ */
+const proposeResolution = z.object({
+  track: z.literal('propose-resolution'),
+  resolutionId: ResolutionId,
+  hotSpotId: BuildingBlockId,
+  reference: z.string().min(1),
+})
+
 export const InterpretedTrack = z.discriminatedUnion('track', [
   proposeBuildingBlock,
   flagPhase,
   attributeToOtherFormat,
   answerQuestion,
+  proposeResolution,
 ])
 export type InterpretedTrack = z.infer<typeof InterpretedTrack>

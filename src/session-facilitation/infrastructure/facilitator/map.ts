@@ -1,5 +1,8 @@
-import type { ProposalId, QuestionId } from '~/plumbing/ids.ts'
-import { QuestionId as QuestionIdSchema } from '../../domain/schema/ids.ts'
+import type { ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
+import {
+  BuildingBlockId as BuildingBlockIdSchema,
+  QuestionId as QuestionIdSchema,
+} from '../../domain/schema/ids.ts'
 import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import type { FacilitationTurn } from './turn-schema.ts'
 
@@ -15,6 +18,7 @@ import type { FacilitationTurn } from './turn-schema.ts'
 export interface TrackIdMint {
   proposalId: () => ProposalId
   questionId: () => QuestionId
+  resolutionId: () => ResolutionId
 }
 
 export interface MappedTurn {
@@ -44,6 +48,13 @@ export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn =
         return { track: 'attribute-to-other-format', format: track.format, note: track.note }
       case 'answer-question':
         return { track: 'answer-question', questionId: QuestionIdSchema.parse(track.questionId) }
+      case 'propose-resolution':
+        return {
+          track: 'propose-resolution',
+          resolutionId: mint.resolutionId(),
+          hotSpotId: BuildingBlockIdSchema.parse(track.hotSpotId),
+          reference: track.reference,
+        }
     }
   })
 

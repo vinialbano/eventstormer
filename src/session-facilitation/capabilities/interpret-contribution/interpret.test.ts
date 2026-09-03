@@ -2,7 +2,14 @@ import { DatabaseSync } from 'node:sqlite'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import type { ContributionId, ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type {
+  ContributionId,
+  ProposalId,
+  QuestionId,
+  ResolutionId,
+  SessionId,
+  WorkshopId,
+} from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import { type DerivedTrackDb, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
@@ -38,9 +45,11 @@ const countingDb = (inner: SessionIndexDb & DerivedTrackDb): SessionIndexDb & De
 const countingMint = (): TrackIdMint => {
   let proposalCounter = 0
   let questionCounter = 0
+  let resolutionCounter = 0
   return {
     proposalId: () => `p_${String((proposalCounter += 1))}` as ProposalId,
     questionId: () => `q_${String((questionCounter += 1))}` as QuestionId,
+    resolutionId: () => `r_${String((resolutionCounter += 1))}` as ResolutionId,
   }
 }
 
@@ -164,6 +173,33 @@ describe('interpretContribution — the commit point + derivation', () => {
         label: 'Book borrowed',
         bar: 'lenient',
         evidenceSpan: 'borrowed a book',
+        at,
+      },
+    ])
+  })
+
+  it('births a Resolution per propose-resolution track, carrying the hot spot and reference', async () => {
+    seedSession()
+    contribute('we fixed the payment timeout by adding a retry', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([{ track: 'propose-resolution', hotSpotId: 'h_1', reference: 'added a retry with backoff' }]),
+      ]),
+    )
+
+    const resolutionEvents = store
+      .read({ context: 'session-facilitation', aggregate: 'resolution', id: 'r_1' })
+      .map((row) => row.operation)
+    expect(resolutionEvents).toEqual([
+      {
+        v: 1,
+        type: 'Resolution Proposed',
+        resolutionId: 'r_1',
+        sessionId: defaultSessionId,
+        contributionId: 'c_1',
+        hotSpotId: 'h_1',
+        reference: 'added a retry with backoff',
         at,
       },
     ])

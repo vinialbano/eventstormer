@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import type { ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type { ProposalId, QuestionId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
@@ -27,7 +27,11 @@ let interpretCalls: number
 
 const mint = (): TrackIdMint => {
   let questionCounter = 0
-  return { proposalId: () => 'p_x' as ProposalId, questionId: () => `q_${String((questionCounter += 1))}` as QuestionId }
+  return {
+    proposalId: () => 'p_x' as ProposalId,
+    questionId: () => `q_${String((questionCounter += 1))}` as QuestionId,
+    resolutionId: () => 'r_x' as ResolutionId,
+  }
 }
 
 const facilitator = (openings: (OpeningQuestion | FacilitatorFailure)[]): Facilitator => {

@@ -1,12 +1,21 @@
 import { readBuildingBlocks } from '../../../domain-model-capture/api.ts'
-import type { ContributionId, ProposalId, QuestionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type {
+  ContributionId,
+  ProposalId,
+  QuestionId,
+  ResolutionId,
+  SessionId,
+  WorkshopId,
+} from '~/plumbing/ids.ts'
 import { facilitationContext } from '../../domain/read-models/facilitation.ts'
 import { priorSessionHistory, sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { sessionView } from '../../domain/read-models/session-view.ts'
-import { ProposalEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
 import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import { decide as decideProposal } from '../../domain/proposal/decide.ts'
 import { replay as replayProposal } from '../../domain/proposal/replay.ts'
+import { decide as decideResolution } from '../../domain/resolution/decide.ts'
+import { replay as replayResolution } from '../../domain/resolution/replay.ts'
 import { decide as decideSession } from '../../domain/session/decide.ts'
 import { replay as replaySession } from '../../domain/session/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
@@ -14,7 +23,13 @@ import { mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
 import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
 import { finishClose } from '../../infrastructure/session-close.ts'
-import { proposalStream, sessionStream, storedOps, workshopStream } from '../../infrastructure/streams.ts'
+import {
+  proposalStream,
+  resolutionStream,
+  sessionStream,
+  storedOps,
+  workshopStream,
+} from '../../infrastructure/streams.ts'
 import type { InterpretContributionDeps } from './deps.ts'
 
 type Interpreted = Extract<SessionEvent, { type: 'Contribution Interpreted' }>
@@ -24,6 +39,9 @@ const readSession = (deps: InterpretContributionDeps, id: SessionId): SessionEve
 
 const readProposal = (deps: InterpretContributionDeps, id: ProposalId): ProposalEvent[] =>
   deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
+
+const readResolution = (deps: InterpretContributionDeps, id: ResolutionId): ResolutionEvent[] =>
+  deps.store.read(resolutionStream(id)).map((row) => ResolutionEvent.parse(row.operation))
 
 const readWorkshop = (deps: InterpretContributionDeps, id: WorkshopId): WorkshopEvent[] =>
   deps.store.read(workshopStream(id)).map((row) => WorkshopEvent.parse(row.operation))
@@ -82,6 +100,7 @@ type ProposeTrack = Extract<InterpretedTrack, { track: 'propose-building-block' 
 type FlagPhaseTrack = Extract<InterpretedTrack, { track: 'flag-phase' }>
 type AttributeTrack = Extract<InterpretedTrack, { track: 'attribute-to-other-format' }>
 type AnswerTrack = Extract<InterpretedTrack, { track: 'answer-question' }>
+type ProposeResolutionTrack = Extract<InterpretedTrack, { track: 'propose-resolution' }>
 
 const deriveProposeBuildingBlock = (
   deps: InterpretContributionDeps,
@@ -166,6 +185,25 @@ const deriveAnswerQuestion = (
   else console.warn(`answer-question: dropped unknown/resolved questionId ${track.questionId}`)
 }
 
+const deriveProposeResolution = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: ProposeResolutionTrack,
+): void => {
+  const decided = decideResolution(replayResolution(readResolution(deps, track.resolutionId)), {
+    type: 'Propose Resolution',
+    resolutionId: track.resolutionId,
+    sessionId: event.sessionId,
+    contributionId: event.contributionId,
+    hotSpotId: track.hotSpotId,
+    reference: track.reference,
+    at: event.at,
+  })
+  if (decided.ok && decided.value.length > 0) {
+    deps.store.append(resolutionStream(track.resolutionId), -1, storedOps(decided.value))
+  }
+}
+
 const deriveFreeFollowUp = (deps: InterpretContributionDeps, event: Interpreted): void => {
   if (event.askQuestionId === undefined || event.askQuestionText === undefined) return
   const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
@@ -206,6 +244,9 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
         break
       case 'answer-question':
         deriveAnswerQuestion(deps, event, track)
+        break
+      case 'propose-resolution':
+        deriveProposeResolution(deps, event, track)
         break
     }
 

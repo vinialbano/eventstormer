@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ProposalId, QuestionId } from '~/plumbing/ids.ts'
+import type { ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
 import type { FacilitationTurn } from './turn-schema.ts'
 import { mapTurn, type TrackIdMint } from './map.ts'
 
@@ -7,9 +7,11 @@ import { mapTurn, type TrackIdMint } from './map.ts'
 const countingMint = (): TrackIdMint => {
   let proposalCounter = 0
   let questionCounter = 0
+  let resolutionCounter = 0
   return {
     proposalId: () => `p_${String((proposalCounter += 1))}` as ProposalId,
     questionId: () => `q_${String((questionCounter += 1))}` as QuestionId,
+    resolutionId: () => `r_${String((resolutionCounter += 1))}` as ResolutionId,
   }
 }
 
@@ -71,6 +73,25 @@ describe('mapTurn — FacilitationTurn → InterpretedTrack[] with minted ids', 
     expect(result.tracks).toEqual([
       { track: 'flag-phase', questionId: 'q_1', questionText: 'Break down "Onboarding"?' },
     ])
+  })
+
+  it('maps a propose-resolution track, minting a resolutionId and carrying hotSpotId + reference', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        { track: 'propose-resolution', hotSpotId: 'h_1', reference: 'added a retry with backoff' },
+      ],
+      nextMove: { move: 'acknowledge' },
+    }
+    expect(mapTurn(turn, countingMint())).toEqual({
+      tracks: [
+        {
+          track: 'propose-resolution',
+          resolutionId: 'r_1',
+          hotSpotId: 'h_1',
+          reference: 'added a retry with backoff',
+        },
+      ],
+    })
   })
 
   it('omits askQuestionId when nextMove.move is "acknowledge"', () => {

@@ -64,11 +64,24 @@ const answerQuestion = z.object({
     .describe('The id of an OPEN question in this session that the contribution answers. Use only an id present in the open-questions list.'),
 })
 
+const proposeResolution = z.object({
+  track: z.literal('propose-resolution'),
+  hotSpotId: z
+    .string()
+    .min(1)
+    .describe('The id of an OPEN hot spot on the board that this contribution resolves. Use only an id present in the open-hot-spots list.'),
+  reference: z
+    .string()
+    .min(1)
+    .describe('The recorded reference for the resolution — what was decided or done to resolve the hot spot. A recorded value, not a live pointer.'),
+})
+
 export const FacilitationTrack = z.discriminatedUnion('track', [
   proposeBuildingBlock,
   flagPhase,
   attributeToOtherFormat,
   answerQuestion,
+  proposeResolution,
 ])
 export type FacilitationTrack = z.infer<typeof FacilitationTrack>
 
