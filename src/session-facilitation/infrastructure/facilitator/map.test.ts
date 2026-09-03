@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
+import type { BuildingBlockId, ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
 import type { FacilitationTurn } from './turn-schema.ts'
 import { mapTurn, type TrackIdMint } from './map.ts'
 
@@ -89,6 +89,65 @@ describe('mapTurn — FacilitationTurn → InterpretedTrack[] with minted ids', 
           resolutionId: 'r_1',
           hotSpotId: 'h_1',
           reference: 'added a retry with backoff',
+        },
+      ],
+    })
+  })
+
+  it('resolves a hot spot annotatesTargetId label to a live block id, carrying modelAffecting', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        {
+          track: 'propose-building-block',
+          blockKind: 'hot-spot',
+          label: 'Refund policy is disputed',
+          bar: 'strict',
+          modelAffecting: false,
+          annotatesTargetId: 'Refund issued',
+        },
+      ],
+      nextMove: { move: 'acknowledge' },
+    }
+    const resolve = (label: string) =>
+      label === 'Refund issued' ? ('b_refund' as BuildingBlockId) : undefined
+
+    expect(mapTurn(turn, countingMint(), resolve)).toEqual({
+      tracks: [
+        {
+          track: 'propose-building-block',
+          proposalId: 'p_1',
+          blockKind: 'hot-spot',
+          label: 'Refund policy is disputed',
+          bar: 'strict',
+          modelAffecting: false,
+          annotatesTargetId: 'b_refund',
+        },
+      ],
+    })
+  })
+
+  it('drops an unresolvable annotatesTargetId label, leaving the hot spot unannotated', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        {
+          track: 'propose-building-block',
+          blockKind: 'hot-spot',
+          label: 'Something unknown',
+          bar: 'strict',
+          annotatesTargetId: 'No such block',
+        },
+      ],
+      nextMove: { move: 'acknowledge' },
+    }
+
+    expect(mapTurn(turn, countingMint(), () => undefined)).toEqual({
+      tracks: [
+        {
+          track: 'propose-building-block',
+          proposalId: 'p_1',
+          blockKind: 'hot-spot',
+          label: 'Something unknown',
+          bar: 'strict',
         },
       ],
     })

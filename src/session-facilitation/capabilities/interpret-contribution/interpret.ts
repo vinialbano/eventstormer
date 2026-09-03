@@ -1,5 +1,6 @@
 import { readBuildingBlocks } from '../../../domain-model-capture/api.ts'
 import type {
+  BuildingBlockId,
   ContributionId,
   ProposalId,
   QuestionId,
@@ -291,7 +292,11 @@ const runInterpretation = async (
       return
     }
 
-    const mapped = mapTurn(turn.value, deps.mint)
+    const blockIdByLabel = new Map<string, BuildingBlockId>()
+    for (const block of readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId)) {
+      if (!blockIdByLabel.has(block.label)) blockIdByLabel.set(block.label, block.id)
+    }
+    const mapped = mapTurn(turn.value, deps.mint, (label) => blockIdByLabel.get(label))
     const asking: { askQuestionId?: QuestionId; askQuestionText?: string } =
       turn.value.nextMove.move === 'ask' &&
       turn.value.nextMove.questionText !== undefined &&

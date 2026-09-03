@@ -22,7 +22,7 @@ import { InterpretationBar, InterpretedBlockKind } from '../../domain/schema/int
 const proposeBuildingBlock = z.object({
   track: z.literal('propose-building-block'),
   blockKind: InterpretedBlockKind.describe(
-    'The Big-Picture building block: "domain-event" (a past-tense business fact), "actor" (a person/role), or "system" (an external system).',
+    'The Big-Picture building block: "domain-event" (a past-tense business fact), "actor" (a person/role), "system" (an external system), or "hot-spot" (something painful, disputed, or unknown about the business).',
   ),
   label: z
     .string()
@@ -37,6 +37,19 @@ const proposeBuildingBlock = z.object({
     .min(1)
     .optional()
     .describe('Required when bar is "lenient": the verbatim substring of the contribution the label came from.'),
+  modelAffecting: z
+    .boolean()
+    .optional()
+    .describe(
+      'Only for blockKind "hot-spot": true when the hot spot changes the model, false when it is purely informational. Omit for a model-affecting hot spot or any non-hot-spot block.',
+    ),
+  annotatesTargetId: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      'Only for blockKind "hot-spot": the exact label of an existing building block on the board that this hot spot is about. Use only a label present in the building-blocks list; omit when the hot spot annotates nothing.',
+    ),
 })
 
 const flagPhase = z.object({

@@ -1,4 +1,4 @@
-import type { ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
+import type { BuildingBlockId, ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
 import {
   BuildingBlockId as BuildingBlockIdSchema,
   QuestionId as QuestionIdSchema,
@@ -13,7 +13,9 @@ import type { FacilitationTurn } from './turn-schema.ts'
  * per proposed block, a `questionId` per flagged phase, and (when the turn's
  * `nextMove` is `ask`) one `askQuestionId` for the follow-up question.
  *
- * `mint` is injected so a test gets stable ids.
+ * `mint` is injected so a test gets stable ids. `resolveBlockId` turns the label
+ * the model names for a hot spot's target into a live `BuildingBlockId` — an
+ * unresolvable label is dropped, leaving the hot spot unannotated.
  */
 export interface TrackIdMint {
   proposalId: () => ProposalId
@@ -26,10 +28,16 @@ export interface MappedTurn {
   askQuestionId?: QuestionId
 }
 
-export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn => {
+export const mapTurn = (
+  turn: FacilitationTurn,
+  mint: TrackIdMint,
+  resolveBlockId: (label: string) => BuildingBlockId | undefined = () => undefined,
+): MappedTurn => {
   const tracks: InterpretedTrack[] = turn.interpretation.map((track): InterpretedTrack => {
     switch (track.track) {
-      case 'propose-building-block':
+      case 'propose-building-block': {
+        const annotatesTargetId =
+          track.annotatesTargetId === undefined ? undefined : resolveBlockId(track.annotatesTargetId)
         return {
           track: 'propose-building-block',
           proposalId: mint.proposalId(),
@@ -37,7 +45,10 @@ export const mapTurn = (turn: FacilitationTurn, mint: TrackIdMint): MappedTurn =
           label: track.label,
           bar: track.bar,
           ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
+          ...(track.modelAffecting === undefined ? {} : { modelAffecting: track.modelAffecting }),
+          ...(annotatesTargetId === undefined ? {} : { annotatesTargetId }),
         }
+      }
       case 'flag-phase':
         return {
           track: 'flag-phase',

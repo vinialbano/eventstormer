@@ -48,6 +48,8 @@ describe('FacilitationTurnSchema — Anthropic structured-output limits', () => 
       const required = new Set(node.required ?? [])
       for (const key of Object.keys(node.properties)) if (!required.has(key)) optionalCount += 1
     })
+    // evidenceSpan, modelAffecting, annotatesTargetId (propose-building-block) + questionText (nextMove).
+    expect(optionalCount).toBe(4)
     expect(optionalCount).toBeLessThanOrEqual(24)
   })
 
@@ -96,6 +98,25 @@ describe('FacilitationTurnSchema — the hard ceilings', () => {
       track: 'propose-resolution',
       hotSpotId: 'h_1',
       reference: 'added a retry with backoff',
+    })
+  })
+
+  it('accepts a hot-spot propose-building-block strand with modelAffecting and annotatesTargetId', () => {
+    const parsed = FacilitationTrack.parse({
+      track: 'propose-building-block',
+      blockKind: 'hot-spot',
+      label: 'Refund policy is disputed',
+      bar: 'strict',
+      modelAffecting: false,
+      annotatesTargetId: 'Refund issued',
+    })
+    expect(parsed).toEqual({
+      track: 'propose-building-block',
+      blockKind: 'hot-spot',
+      label: 'Refund policy is disputed',
+      bar: 'strict',
+      modelAffecting: false,
+      annotatesTargetId: 'Refund issued',
     })
   })
 
