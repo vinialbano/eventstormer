@@ -10,6 +10,10 @@ export interface SessionWriteModel {
   started: boolean
   closed: boolean
   questions: Map<QuestionId, 'open' | 'resolved'>
+  /** The ids of every `Question Asked {kind:'scope'}`. The scope question is
+   * answered by `Scope Set` on the `Workshop`, not by a `Session` event, so it is
+   * excluded from the close sweep's unresolved-question set. */
+  scopeQuestions: Set<QuestionId>
   interpreted: Set<ContributionId>
   /** `${questionId}::${personName}` for every absent stakeholder already named —
    * `Name Absent Stakeholder` is once per pair. */
@@ -20,6 +24,7 @@ export const emptySession = (): SessionWriteModel => ({
   started: false,
   closed: false,
   questions: new Map(),
+  scopeQuestions: new Set(),
   interpreted: new Set(),
   absentStakeholders: new Set(),
 })

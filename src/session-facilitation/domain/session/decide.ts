@@ -199,8 +199,11 @@ const decideAttribute = (command: CommandOf<'Attribute Contribution'>): Decision
 
 const decideClose = (writeModel: SessionWriteModel, command: CommandOf<'Close Session'>): Decision => {
   if (writeModel.closed) return ok([])
+  // The scope question is answered by `Scope Set` on the `Workshop`, not by a
+  // `Session` event — F08's close sweep is for a region that was never opened, and
+  // the scope question is not a region. It never enters the unresolved set.
   const unresolvedQuestionIds = [...writeModel.questions]
-    .filter(([, status]) => status === 'open')
+    .filter(([id, status]) => status === 'open' && !writeModel.scopeQuestions.has(id))
     .map(([id]) => id)
   return ok([
     {

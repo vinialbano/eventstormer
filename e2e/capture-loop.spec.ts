@@ -147,18 +147,12 @@ test.describe.serial('capture loop', () => {
       await expect(page.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 20_000 })
 
       // The flagged callouts, the resolution, and the count all survive a reload
-      // and the session stays closed. (Close also sweeps the unanswered opening
-      // question, so the count is 3 today — assert the two the person made and the
-      // count is at least that, not an exact total the sweep can move.)
-      const countBefore = await page
-        .getByRole('complementary', { name: 'Hot spots' })
-        .getByRole('status')
-        .textContent()
-
+      // and the session stays closed. The close sweep raises nothing here — the
+      // only open question is the scope question, answered by Scope Set — so the
+      // count is exactly the two the person flagged.
       await page.reload()
       const hotSpotsAfter = page.getByRole('complementary', { name: 'Hot spots' })
-      await expect(hotSpotsAfter.getByRole('status')).toHaveText(countBefore ?? '', { timeout: 20_000 })
-      await expect(hotSpotsAfter.getByRole('status')).toHaveText(/Hot spots\s*[2-9]/)
+      await expect(hotSpotsAfter.getByRole('status')).toHaveText(/Hot spots\s*2/, { timeout: 20_000 })
       await expect(hotSpotsAfter.getByText(/Concern: Member registered/)).toBeVisible()
       await expect(hotSpotsAfter.getByText(/Resolved — Added a retry/)).toBeVisible()
       await expect(hotSpotsAfter.getByText('Hot spot', { exact: true })).toBeVisible()

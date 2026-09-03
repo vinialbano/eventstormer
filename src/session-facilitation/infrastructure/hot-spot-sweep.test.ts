@@ -4,6 +4,9 @@ import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { readBoardSnapshot } from '../../domain-model-capture/api.ts'
+import { SessionEvent } from '../domain/schema/events.ts'
+import { decide as decideSession } from '../domain/session/decide.ts'
+import { replay as replaySession } from '../domain/session/replay.ts'
 import { applySessionFacilitationMigrations } from './migrations.ts'
 import { markSwept, readSweptKeys, reconcileHotSpots } from './hot-spot-sweep.ts'
 import { proposalStream, sessionStream, workshopStream } from './streams.ts'
@@ -256,6 +259,36 @@ describe('reconcileHotSpots — the close sweep', () => {
 
     expect(hotSpotLabels(store)).toEqual(['Could not apply: Loan recorded'])
     expect(readSweptKeys(db)).toEqual(new Set(['proposal:p_1']))
+  })
+
+  it('raises no close-sweep hot spot when the only open question is the scope question', () => {
+    const store = createMemoryEventStore()
+    store.append(workshopStream(workshopId), -1, [
+      op({ type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana' }),
+    ])
+    const priorRows = [
+      op({ type: 'Session Started', sessionId, workshopId }),
+      op({
+        type: 'Question Asked',
+        sessionId,
+        questionId: 'q_scope',
+        kind: 'scope',
+        text: 'What business are we mapping?',
+        scopeStatement: 'A public library.',
+      }),
+    ]
+    const model = replaySession(priorRows.map((row) => SessionEvent.parse(row.operation)))
+    const closed = decideSession(model, { type: 'Close Session', sessionId, workshopId, at })
+    if (!closed.ok) throw new Error('expected Close Session to succeed')
+    store.append(sessionStream(sessionId), -1, [
+      ...priorRows,
+      ...closed.value.map((event) => ({ at, opVersion: 1, operation: event })),
+    ])
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    expect(hotSpotLabels(store)).toEqual([])
+    expect(sweptQuestionIds()).toEqual([])
   })
 
   it('the set of questions swept equals Session Closed.unresolvedQuestionIds (test 43 consistency)', () => {

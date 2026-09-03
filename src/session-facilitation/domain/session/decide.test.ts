@@ -436,6 +436,28 @@ describe('Session.decide — Close Session', () => {
     }
   })
 
+  it('excludes the scope opening question from unresolvedQuestionIds', () => {
+    const stream = replay([
+      ...startedStream,
+      { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_scope'), kind: 'scope', text: 'What business are we mapping?', scopeStatement: 'A public library.' },
+      { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_free'), kind: 'free', text: 'f?' },
+    ])
+    const result = decide(stream, { type: 'Close Session', sessionId, workshopId, at })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Session Closed',
+          sessionId,
+          workshopId,
+          unresolvedQuestionIds: ['q_free'],
+        },
+      ])
+    }
+  })
+
   it('a second Close Session returns ok([]) — idempotent', () => {
     const closed = replay([
       ...startedStream,
