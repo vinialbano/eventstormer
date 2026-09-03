@@ -326,6 +326,30 @@ describe('createRoutes — the mounted /api surface', () => {
       expect(response.status).toBe(200)
     })
 
+    it('POST /api/workshops/:id/stakeholder-check (record-stakeholder-check)', async () => {
+      const { app } = wired()
+      const workshopId = await createWorkshop(app)
+      const response = await app.request(`/api/workshops/${workshopId}/stakeholder-check`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ complete: true }),
+      })
+      expect(response.status).not.toBe(404)
+      expect(response.status).toBe(200)
+    })
+
+    it('POST /api/workshops/:id/chosen-problem (choose-problem)', async () => {
+      const { app } = wired()
+      const workshopId = await createWorkshop(app)
+      const response = await app.request(`/api/workshops/${workshopId}/chosen-problem`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ skipReason: 'no-impediments-yet' }),
+      })
+      expect(response.status).not.toBe(404)
+      expect(response.status).toBe(200)
+    })
+
     it('POST /api/sessions/:id/close (close-session)', async () => {
       const { app } = wired()
       const workshopId = await createWorkshop(app)

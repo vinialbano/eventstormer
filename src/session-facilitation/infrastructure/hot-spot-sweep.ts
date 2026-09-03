@@ -12,7 +12,7 @@ import { proposalStream, sessionStream, workshopStream } from './streams.ts'
  * The `hot_spot_sweep` marker table — a `sweep_key` row means the hot-spot
  * reconciliation pass has already raised the hot spot that key stands for
  * (`kg:<questionId>` | `absent:<questionId>:<slug>` | `q:<questionId>` |
- * `proposal:<proposalId>`), so a later tick skips it.
+ * `proposal:<proposalId>` | `absent-sc:<slug>`), so a later tick skips it.
  *
  * The DB handle is structural so this module never imports `node:sqlite`.
  */
@@ -89,8 +89,25 @@ export const reconcileHotSpots = (deps: ReconcileHotSpotsDeps, sessionId: Sessio
   raiseAll(deps, workshopId, [
     ...factTargets(events, questionText),
     ...closeTargets(deps, events, questionText),
+    ...workshopTargets(deps, workshopId),
   ])
 }
+
+/**
+ * The F09 stakeholder answer — an incomplete `Stakeholder Check Recorded` on the
+ * workshop stream raises one hot spot per named absent stakeholder.
+ */
+const workshopTargets = (deps: ReconcileHotSpotsDeps, workshopId: WorkshopId): SweepTarget[] =>
+  deps.store
+    .read(workshopStream(workshopId))
+    .map((row) => WorkshopEvent.parse(row.operation))
+    .flatMap((event): SweepTarget[] => {
+      if (event.type !== 'Stakeholder Check Recorded' || event.complete) return []
+      return event.absentNames.map((name) => ({
+        key: `absent-sc:${slug(name)}`,
+        label: `Absent stakeholder: ${name}`,
+      }))
+    })
 
 /** The always-on facts — a revealed knowledge gap or a named absent stakeholder. */
 const factTargets = (

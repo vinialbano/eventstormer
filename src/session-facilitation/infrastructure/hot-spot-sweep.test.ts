@@ -113,6 +113,45 @@ describe('reconcileHotSpots — knowledge gaps and absent stakeholders', () => {
     expect(hotSpotLabels(store)).toEqual(['Who else?'])
   })
 
+  it('raises one hot spot per absent stakeholder named on an incomplete workshop check', () => {
+    const store = createMemoryEventStore()
+    seed(store, [])
+    store.append(workshopStream(workshopId), 0, [
+      op({
+        type: 'Stakeholder Check Recorded',
+        workshopId,
+        complete: false,
+        absentNames: ['ops lead', 'the auditor'],
+      }),
+    ])
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    expect(hotSpotLabels(store).toSorted()).toEqual([
+      'Absent stakeholder: ops lead',
+      'Absent stakeholder: the auditor',
+    ])
+    expect([...readSweptKeys(db)].filter((key) => key.startsWith('absent-sc:')).toSorted()).toEqual([
+      'absent-sc:ops-lead',
+      'absent-sc:the-auditor',
+    ])
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+    expect(hotSpotLabels(store)).toHaveLength(2)
+  })
+
+  it('raises no hot spot when the workshop stakeholder check is complete', () => {
+    const store = createMemoryEventStore()
+    seed(store, [])
+    store.append(workshopStream(workshopId), 0, [
+      op({ type: 'Stakeholder Check Recorded', workshopId, complete: true, absentNames: [] }),
+    ])
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    expect(hotSpotLabels(store)).toEqual([])
+  })
+
   it('leaves the key unmarked when the board append throws — retried on the next pass', () => {
     const inner = createMemoryEventStore()
     let failNext = true

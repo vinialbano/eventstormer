@@ -2,8 +2,10 @@ import { Hono } from 'hono'
 import { readableAccountRoutes } from '../derived-artifact-generation/api.ts'
 import { boardAccessRoutes, editModelRoutes, flagHotSpotRoutes } from '../domain-model-capture/api.ts'
 import {
+  chooseProblemRoutes,
   closeSessionRoutes,
   makeContributionRoutes,
+  recordStakeholderCheckRoutes,
   reviewProposalRoutes,
   reviewResolutionRoutes,
   setScopeRoutes,
@@ -36,5 +38,7 @@ export const createRoutes = (config: HostConfig) => {
     .route('/api', makeContributionRoutes({ ...withDb, inFlight: () => inFlight.contributions() }))
     .route('/api', reviewProposalRoutes(io))
     .route('/api', reviewResolutionRoutes(io))
+    .route('/api', recordStakeholderCheckRoutes(io))
+    .route('/api', chooseProblemRoutes(io))
     .route('/api', closeSessionRoutes(withDb))
 }
