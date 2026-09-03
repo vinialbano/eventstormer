@@ -85,6 +85,12 @@ describe('sessionSummary — read-time projection over a canned stream', () => {
     })
   })
 
+  it('is a stable projection over the terminal stream — re-reading after close yields the same result', () => {
+    const first = sessionSummary(events, 3)
+    const second = sessionSummary(events, 3)
+    expect(second).toEqual(first)
+  })
+
   it('caps recentTurns at the last 8 lines', () => {
     const many: SessionEvent[] = Array.from({ length: 12 }, (_, index) =>
       madeC(`c_${String(index)}`, 'Dana', `line ${String(index)}`),
