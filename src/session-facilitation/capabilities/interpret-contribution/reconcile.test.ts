@@ -349,4 +349,69 @@ describe('reconcilePendingDerivations — hot-spot close sweep', () => {
 
     expect(boardHotSpotLabels()).toEqual(['What is the fulfilment phase?'])
   })
+
+  it('retries a partial finishClose — the index row stays open until the lapse and sweep both run', () => {
+    // a still-PROPOSED proposal plus a Session Closed on the stream, index row open
+    store.append(proposalStream('p_x' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Building Block Proposed',
+          proposalId: 'p_x',
+          sessionId,
+          contributionId: 'c_1',
+          blockKind: 'domain-event',
+          label: 'Book borrowed',
+          bar: 'strict',
+          at,
+        },
+      },
+    ])
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_1',
+          tracks: [{ track: 'propose-building-block', proposalId: 'p_x', blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' }],
+          at,
+        },
+      },
+    ])
+    closeSessionWithoutSweep(['q_open'])
+
+    // first tick crashes inside finishClose's lapse loop, before the sweep
+    const realAppend = store.append.bind(store)
+    let crash = true
+    store.append = (stream, expected, ops) => {
+      if (crash && stream.aggregate === 'proposal') throw new Error('crash mid-close')
+      realAppend(stream, expected, ops)
+    }
+    expect(() => {
+      reconcilePendingDerivations(deps())
+    }).toThrow('crash mid-close')
+
+    // the row stays open and the proposal is not lapsed — finishClose did not finish
+    expect(sessionIdsFor(db, workshopId).open).toBe(sessionId)
+    expect(
+      store.read(proposalStream('p_x' as ProposalId)).map((row) => (row.operation as { type: string }).type),
+    ).toEqual(['Building Block Proposed'])
+
+    // next clean tick completes the close
+    crash = false
+    reconcilePendingDerivations(deps())
+
+    expect(sessionIdsFor(db, workshopId)).toEqual({ closed: [sessionId] })
+    expect(boardHotSpotLabels()).toEqual(['What is the fulfilment phase?'])
+    expect(
+      store.read(proposalStream('p_x' as ProposalId)).map((row) => (row.operation as { type: string }).type),
+    ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
+
+    store.append = realAppend
+  })
 })

@@ -11,12 +11,17 @@ import { proposalStream, sessionStream, storedOps } from './streams.ts'
 
 /**
  * The idempotent, self-healing tail of `Close Session` (design "close"): once
- * `Session Closed` is on the stream, flip the `session_index` row to `closed`
- * and lapse every non-terminal `Proposal` of the session — `PROPOSED` / `EDITED`
- * / held → `undisposed`, `APPLY_FAILED` → `apply-failed`, `ACCEPTED` in-flight
- * left to finish (the decider no-ops it). Every step is idempotent, so both the
- * `close-session` handler and `reconcilePendingDerivations` call this — a crash
- * mid-close is repaired on the next tick.
+ * `Session Closed` is on the stream, lapse every non-terminal `Proposal` of the
+ * session — `PROPOSED` / `EDITED` / held → `undisposed`, `APPLY_FAILED` →
+ * `apply-failed`, `ACCEPTED` in-flight left to finish (the decider no-ops it) —
+ * run the hot-spot close sweep, then flip the `session_index` row to `closed`.
+ *
+ * Every step is idempotent, so both the `close-session` handler and
+ * `reconcilePendingDerivations` call this. The index row flips last: until then
+ * the row stays `open`, so `reconcilePendingDerivations` (open sessions only)
+ * revisits and completes a close that failed partway. The interpret ticks guard
+ * on `replaySession(events).closed` — the stream, not the row — so a briefly
+ * still-`open` row of an already-closed stream causes no re-interpretation.
  */
 export interface SessionCloseDeps {
   store: EventStore
@@ -28,8 +33,6 @@ export const finishClose = (deps: SessionCloseDeps, sessionId: SessionId): void 
   const events = deps.store.read(sessionStream(sessionId)).map((row) => SessionEvent.parse(row.operation))
   const closed = events.find((event) => event.type === 'Session Closed')
   if (closed === undefined) return
-
-  closeIndexRow(deps.db, sessionId, closed.at)
 
   for (const proposalId of sessionProposalIds(events)) {
     const rows = deps.store.read(proposalStream(proposalId))
@@ -51,4 +54,9 @@ export const finishClose = (deps: SessionCloseDeps, sessionId: SessionId): void 
   // The close sweep runs after the lapse so an APPLY_FAILED proposal's lapse and
   // its hot spot are consistent as of one pass. Idempotent — a re-run raises nothing new.
   reconcileHotSpots(deps, sessionId)
+
+  // Flip the index row last: every step above is idempotent, and keeping the row
+  // `open` until they have all run is what lets reconcilePendingDerivations retry
+  // a partial close.
+  closeIndexRow(deps.db, sessionId, closed.at)
 }
