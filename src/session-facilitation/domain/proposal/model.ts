@@ -61,6 +61,9 @@ export type ProposalCommand =
       label: string
       bar: InterpretationBar
       evidenceSpan?: string
+      /** Hot-spot proposals only: the birth kind and the block it annotates. */
+      modelAffecting?: boolean
+      annotatesTargetId?: BuildingBlockId
       at: string
     }
   | { type: 'Edit Proposal'; proposalId: ProposalId; label: string; at: string }

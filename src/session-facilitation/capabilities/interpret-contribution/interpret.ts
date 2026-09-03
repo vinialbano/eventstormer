@@ -117,6 +117,10 @@ const deriveProposeBuildingBlock = (
     label: track.label,
     bar: track.bar,
     ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
+    ...(track.modelAffecting === undefined ? {} : { modelAffecting: track.modelAffecting }),
+    ...(track.annotatesTargetId === undefined
+      ? {}
+      : { annotatesTargetId: track.annotatesTargetId }),
     at: event.at,
   })
   if (decided.ok && decided.value.length > 0) {

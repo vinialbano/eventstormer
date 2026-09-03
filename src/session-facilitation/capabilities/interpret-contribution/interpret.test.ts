@@ -205,6 +205,57 @@ describe('interpretContribution — the commit point + derivation', () => {
     ])
   })
 
+  it('derives a hot-spot Building Block Proposed carrying modelAffecting and the resolved annotatesTargetId', async () => {
+    seedSession()
+    // A live building block for the hot spot to annotate — the resolver maps the
+    // label the facilitator names to this id.
+    store.append({ context: 'domain-model-capture', aggregate: 'board', id: workshopId }, -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          kind: 'capture-domain-event',
+          id: 'bb_target',
+          label: 'Refund issued',
+          author: { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } },
+        },
+      },
+    ])
+    contribute('refunds are always disputed with finance', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          {
+            track: 'propose-building-block',
+            blockKind: 'hot-spot',
+            label: 'Refund policy is disputed',
+            bar: 'strict',
+            modelAffecting: false,
+            annotatesTargetId: 'Refund issued',
+          },
+        ]),
+      ]),
+    )
+
+    expect(proposalEvents('p_1')).toEqual([
+      {
+        v: 1,
+        type: 'Building Block Proposed',
+        proposalId: 'p_1',
+        sessionId: defaultSessionId,
+        contributionId: 'c_1',
+        blockKind: 'hot-spot',
+        label: 'Refund policy is disputed',
+        bar: 'strict',
+        modelAffecting: false,
+        annotatesTargetId: 'bb_target',
+        at,
+      },
+    ])
+  })
+
   it('handles a multi-track turn: a phase question and an out-of-format notice, no block for either', async () => {
     seedSession()
     contribute('acquisitions is how we get new titles; the system auto-places a hold', 'c_1')

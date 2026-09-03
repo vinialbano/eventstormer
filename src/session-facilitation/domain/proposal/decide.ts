@@ -35,6 +35,10 @@ const decidePropose = (
       label: command.label,
       bar: command.bar,
       ...(command.evidenceSpan === undefined ? {} : { evidenceSpan: command.evidenceSpan }),
+      ...(command.modelAffecting === undefined ? {} : { modelAffecting: command.modelAffecting }),
+      ...(command.annotatesTargetId === undefined
+        ? {}
+        : { annotatesTargetId: command.annotatesTargetId }),
       at: command.at,
     },
   ])
