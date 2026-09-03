@@ -37,7 +37,36 @@ const ScopeSet = z.object({
   statement: z.string().min(1).max(10_000),
 })
 
-export const WorkshopEvent = z.discriminatedUnion('type', [WorkshopStarted, ScopeSet])
+const StakeholderCheckRecorded = z.object({
+  ...base,
+  type: z.literal('Stakeholder Check Recorded'),
+  workshopId: WorkshopId,
+  complete: z.boolean(),
+  absentNames: z.array(z.string().min(1)),
+})
+
+const ProblemChosen = z.object({
+  ...base,
+  type: z.literal('Problem Chosen'),
+  workshopId: WorkshopId,
+  problemHotSpotId: BuildingBlockId,
+  qualification: z.enum(['firm', 'provisional']),
+})
+
+const ProblemChoiceSkipped = z.object({
+  ...base,
+  type: z.literal('Problem Choice Skipped'),
+  workshopId: WorkshopId,
+  reason: z.enum(['none-chosen', 'no-impediments-yet']),
+})
+
+export const WorkshopEvent = z.discriminatedUnion('type', [
+  WorkshopStarted,
+  ScopeSet,
+  StakeholderCheckRecorded,
+  ProblemChosen,
+  ProblemChoiceSkipped,
+])
 export type WorkshopEvent = z.infer<typeof WorkshopEvent>
 
 // --- Session ---------------------------------------------------------------

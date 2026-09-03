@@ -70,6 +70,56 @@ describe('WorkshopEvent SSOT', () => {
       WorkshopEvent.parse({ ...scopeSet, statement: 'x'.repeat(10_001) }),
     ).toThrow()
   })
+
+  it('parses Stakeholder Check Recorded with the flag and the absent names', () => {
+    const recorded = {
+      v: 1,
+      at,
+      type: 'Stakeholder Check Recorded',
+      workshopId: 'w_1',
+      complete: false,
+      absentNames: ['ops lead', 'the auditor'],
+    }
+    expect(WorkshopEvent.parse(recorded)).toEqual(recorded)
+  })
+
+  it('Stakeholder Check Recorded rejects a blank absent name', () => {
+    expect(() =>
+      WorkshopEvent.parse({
+        v: 1,
+        at,
+        type: 'Stakeholder Check Recorded',
+        workshopId: 'w_1',
+        complete: true,
+        absentNames: [''],
+      }),
+    ).toThrow()
+  })
+
+  it('parses Problem Chosen and pins qualification to firm | provisional', () => {
+    const chosen = {
+      v: 1,
+      at,
+      type: 'Problem Chosen',
+      workshopId: 'w_1',
+      problemHotSpotId: 'b_1',
+      qualification: 'provisional',
+    }
+    expect(WorkshopEvent.parse(chosen)).toEqual(chosen)
+    expect(() => WorkshopEvent.parse({ ...chosen, qualification: 'maybe' })).toThrow()
+  })
+
+  it('parses Problem Choice Skipped and pins reason to the two allowed values', () => {
+    const skipped = {
+      v: 1,
+      at,
+      type: 'Problem Choice Skipped',
+      workshopId: 'w_1',
+      reason: 'no-impediments-yet',
+    }
+    expect(WorkshopEvent.parse(skipped)).toEqual(skipped)
+    expect(() => WorkshopEvent.parse({ ...skipped, reason: 'changed-my-mind' })).toThrow()
+  })
 })
 
 describe('SessionEvent SSOT — Question Asked refine (scopeStatement iff kind === scope)', () => {

@@ -11,6 +11,9 @@ export const evolve = (writeModel: WorkshopWriteModel, event: WorkshopEvent): Wo
     case 'Workshop Started':
       return { started: true, format: event.format, creatorName: event.creatorName }
     case 'Scope Set':
+    case 'Stakeholder Check Recorded':
+    case 'Problem Chosen':
+    case 'Problem Choice Skipped':
       return writeModel
   }
 }
