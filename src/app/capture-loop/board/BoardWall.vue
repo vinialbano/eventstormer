@@ -11,7 +11,10 @@ import { layoutBoard, type BoardBlockInput } from './layout.ts'
 import BacklogPane from './presentation/BacklogPane.vue'
 import BoardActionToolbar from './presentation/BoardActionToolbar.vue'
 import BoardWallChrome from './presentation/BoardWallChrome.vue'
+import HotSpotBadge from './presentation/HotSpotBadge.vue'
+import HotSpotPanel from './presentation/HotSpotPanel.vue'
 import TimelinePane from './TimelinePane.vue'
+import type { HotSpotCallout, HotSpotView } from '../types.ts'
 
 /**
  * The board wall — a full-screen EventStorming surface. Composes presentation
@@ -27,7 +30,11 @@ const props = defineProps<{
   accepter?: string
   revision?: number
   showWithdrawn?: boolean
+  hotSpots?: HotSpotView
 }>()
+
+const EMPTY_HOT_SPOTS: HotSpotView = { annotated: new Map(), unannotated: [], count: 0 }
+const hotSpots = computed(() => props.hotSpots ?? EMPTY_HOT_SPOTS)
 const emit = defineEmits<{ 'board-dirty': []; 'update:showWithdrawn': [value: boolean] }>()
 
 const viewport = ref({ w: 1280, h: 800 })
@@ -156,7 +163,15 @@ const backlogBlocks = computed(() =>
     return true
   }),
 )
-const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
+const annotatedTargetIds = computed(() => new Set(hotSpots.value.annotated.keys()))
+const layout = computed(() =>
+  layoutBoard(backlogBlocks.value, viewport.value, annotatedTargetIds.value),
+)
+const calloutsFor = (targetId: string): HotSpotCallout[] =>
+  hotSpots.value.annotated.get(targetId) ?? []
+const blockLabels = computed(() =>
+  Object.fromEntries(props.blocks.map((block) => [block.id, block.label])),
+)
 </script>
 
 <template>
@@ -178,6 +193,16 @@ const layout = computed(() => layoutBoard(backlogBlocks.value, viewport.value))
       :time-guide-x2="layout.timeGuide.x2"
       :time-guide-y2="layout.timeGuide.y2"
     />
+
+    <HotSpotBadge
+      v-for="anchor in layout.callouts"
+      :key="anchor.targetId"
+      :x="anchor.x"
+      :y="anchor.y"
+      :callouts="calloutsFor(anchor.targetId)"
+    />
+
+    <HotSpotPanel v-if="hotSpots.count > 0" :hot-spots="hotSpots" :block-labels="blockLabels" />
 
     <BacklogPane
       :stickies="layout.backlog"

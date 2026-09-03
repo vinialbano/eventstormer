@@ -1,6 +1,6 @@
 import { computed, ref, type Ref } from 'vue'
 import { computeTimelineLayout } from '~/domain-model-capture/domain/timeline/compute-timeline-layout.ts'
-import type { BoardSnapshot } from '../types.ts'
+import type { BoardSnapshot, HotSpotCallout, HotSpotView } from '../types.ts'
 
 type LayoutSnapshot = Parameters<typeof computeTimelineLayout>[0]
 
@@ -23,23 +23,6 @@ const toLayoutSnapshot = (http: BoardSnapshot): LayoutSnapshot =>
       ]),
     ),
   }) as unknown as LayoutSnapshot
-
-interface HotSpotCallout {
-  hotSpotId: string
-  label: string
-  modelAffecting: boolean
-  resolved: boolean
-  /** The recorded resolution reference — a string once resolved, else `null`. */
-  reference: string | null
-}
-
-interface HotSpotView {
-  /** Callouts keyed by the building-block id each hot spot annotates. */
-  annotated: Map<string, HotSpotCallout[]>
-  /** Hot spots that annotate nothing — rendered as a list, not an error. */
-  unannotated: HotSpotCallout[]
-  count: number
-}
 
 const calloutOf = (block: BoardSnapshot['blocks'][number]): HotSpotCallout => ({
   hotSpotId: block.id,

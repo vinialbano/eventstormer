@@ -73,4 +73,26 @@ describe('layoutBoard', () => {
       h: 132,
     })
   })
+
+  it('anchors a callout at the top-right corner of each annotated backlog target', () => {
+    const blocks = [
+      { id: 'b0', kind: 'domain-event', label: 'Payment captured' },
+      { id: 'b1', kind: 'domain-event', label: 'Order placed' },
+    ]
+
+    const layout = layoutBoard(blocks, VIEWPORT, new Set(['b1']))
+
+    // b1 is the second backlog cell: x = 56 + (132 + 16) = 204, y = 86; the
+    // callout pins to its top-right corner (x + 132, y).
+    expect(layout.callouts).toEqual([{ targetId: 'b1', x: 336, y: 86 }])
+  })
+
+  it('emits no callouts when nothing annotated is in the backlog', () => {
+    const layout = layoutBoard(
+      [{ id: 'b0', kind: 'domain-event', label: 'Payment captured' }],
+      VIEWPORT,
+      new Set(['not-in-backlog']),
+    )
+    expect(layout.callouts).toEqual([])
+  })
 })

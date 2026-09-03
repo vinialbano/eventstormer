@@ -18,7 +18,7 @@ const props = defineProps<{ id: string }>()
 const orch = useCaptureOrchestration(toRef(props, 'id'))
 const { session, board, account } = orch
 const boardView = useBoardViewState(toRef(board, 'snapshot'))
-const { showWithdrawn, timeline } = boardView
+const { showWithdrawn, timeline, hotSpots } = boardView
 
 const startingSession = ref(false)
 const loaded = ref(false)
@@ -79,6 +79,7 @@ onMounted(coldLoad)
       :blocks="blocks"
       :timeline="timeline"
       :show-withdrawn="showWithdrawn"
+      :hot-spots="hotSpots"
       :workshop-id="id"
       :accepter="session.creatorName"
       :revision="board.snapshot.position"

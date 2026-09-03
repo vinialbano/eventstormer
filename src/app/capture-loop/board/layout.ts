@@ -37,12 +37,22 @@ interface StickyRect extends Rect {
   speaker?: string | undefined
 }
 
+/** Where a hot-spot callout pins onto a backlog target sticky — its top-right corner. */
+interface CalloutAnchor {
+  targetId: string
+  x: number
+  y: number
+}
+
 interface BoardLayout {
   canvas: { w: number; h: number }
   frame: Rect & { label: string }
   /** The `time →` guide line, drawn hand-style by the renderer. */
   timeGuide: { x1: number; y1: number; x2: number; y2: number }
   backlog: StickyRect[]
+  /** Anchor points for hot-spot callouts on backlog targets. Empty when no
+   * annotated hot spot targets a backlog block. */
+  callouts: CalloutAnchor[]
 }
 
 const WALL_INSET = 40
@@ -63,6 +73,7 @@ export const tiltFor = (id: string): number => {
 export const layoutBoard = (
   blocks: readonly BoardBlockInput[],
   viewport: LayoutViewport,
+  annotatedTargetIds: ReadonlySet<string> = new Set(),
 ): BoardLayout => {
   const count = blocks.length
   const cols = count === 0 ? MAX_COLS : Math.min(MAX_COLS, count)
@@ -90,6 +101,10 @@ export const layoutBoard = (
   const canvasH = Math.max(viewport.h, frameY + frameH + WALL_INSET)
   const guideY = frameY + 6
 
+  const callouts: CalloutAnchor[] = backlog
+    .filter((sticky) => annotatedTargetIds.has(sticky.id))
+    .map((sticky) => ({ targetId: sticky.id, x: sticky.x + sticky.w, y: sticky.y }))
+
   return {
     canvas: { w: canvasW, h: canvasH },
     frame: { x: frameX, y: frameY, w: frameW, h: frameH, label: 'backlog' },
@@ -100,5 +115,6 @@ export const layoutBoard = (
       y2: guideY,
     },
     backlog,
+    callouts,
   }
 }

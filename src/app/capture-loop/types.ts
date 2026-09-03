@@ -94,6 +94,23 @@ export interface BoardSnapshot {
   hotSpotCount: number
 }
 
+export interface HotSpotCallout {
+  hotSpotId: string
+  label: string
+  modelAffecting: boolean
+  resolved: boolean
+  /** The recorded resolution reference — a string once resolved, else `null`. */
+  reference: string | null
+}
+
+export interface HotSpotView {
+  /** Callouts keyed by the building-block id each hot spot annotates. */
+  annotated: Map<string, HotSpotCallout[]>
+  /** Hot spots that annotate nothing — rendered as a list, not an error. */
+  unannotated: HotSpotCallout[]
+  count: number
+}
+
 export interface AccountSnapshot {
   position: number
   markdown: string
