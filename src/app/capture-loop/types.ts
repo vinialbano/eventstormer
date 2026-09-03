@@ -70,6 +70,24 @@ export interface ProposalCard {
   buildingBlockId?: string
 }
 
+export type ResolutionDisposition =
+  | 'PROPOSED'
+  | 'EDITED'
+  | 'ACCEPTED'
+  | 'APPLIED'
+  | 'REJECTED'
+  | 'LAPSED'
+
+export interface ResolutionCard {
+  resolutionId: string
+  hotSpotId: string
+  /** The recorded resolution reference — the editable text. */
+  reference: string
+  disposition: ResolutionDisposition
+  /** The apply-bounce reason when the resolution `LAPSED`. */
+  lapsedReason?: string
+}
+
 interface BoardBlock {
   id: string
   kind: string

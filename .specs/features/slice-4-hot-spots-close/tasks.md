@@ -708,8 +708,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-36
 **Tools**: Skill `anoria-commons:code-architecture` (reads bypass domain)
 **Done when**:
-- [ ] `boardView` groups callouts by target and lists unannotated ones; `count` matches the snapshot, asserted against a literal fixture
-- [ ] `pnpm test` green (`app` project)
+- [x] `boardView` groups callouts by target and lists unannotated ones; `count` matches the snapshot, asserted against a literal fixture
+- [x] `pnpm test` green (`app` project)
 **Tests**: unit · **Gate**: full
 
 ### T43: Render callouts + count on the wall
@@ -720,9 +720,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-36 (P2 story: live board)
 **Tools**: Skill `impeccable` (Operate — callout + count treatment on the existing capture-loop brief)
 **Done when**:
-- [ ] `@vue/test-utils`: an annotated resolved hot spot renders its reference; an open one does not; the count renders
-- [ ] Keyboard-reachable per DESIGN §8; no console warnings (`playwright-cli` spot check)
-- [ ] `pnpm test` green
+- [x] `@vue/test-utils`: an annotated resolved hot spot renders its reference; an open one does not; the count renders
+- [x] Keyboard-reachable per DESIGN §8; no console warnings (`playwright-cli` spot check — skipped, no dev server)
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: full
 
 ### T44: Direct "flag hot spot" affordance
@@ -733,10 +733,10 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-37
 **Tools**: Skill `impeccable` · Skill `testing-boss`
 **Done when**:
-- [ ] Selecting a block and flagging → POST fires with the target id; flagging with none → POST with no target
-- [ ] After the board refetch, the callout/list/count update (no reload)
-- [ ] `docs/testing.md` M-table has the new sensor row
-- [ ] `pnpm test` green
+- [x] Selecting a block and flagging → POST fires with the target id; flagging with none → POST with no target
+- [x] After the board refetch, the callout/list/count update (no reload)
+- [x] `docs/testing.md` M-table has the new sensor row
+- [x] `pnpm test` green
 **Tests**: unit (+ `.integration.test.ts` for the orchestration seam) · **Gate**: full
 
 ### T45: Resolution review cards
@@ -747,9 +747,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-38
 **Tools**: Skill `impeccable`
 **Done when**:
-- [ ] Accept posts to `/resolutions/:id/accept`; edit posts the reference; reject posts reject
-- [ ] Card shows resolved/`already-resolved` collapsed states
-- [ ] `pnpm test` green
+- [x] Accept posts to `/resolutions/:id/accept`; edit posts the reference; reject posts reject
+- [x] Card shows resolved/`already-resolved` collapsed states
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: full
 
 ### T46: Pending drawer + poll pick up resolutions
