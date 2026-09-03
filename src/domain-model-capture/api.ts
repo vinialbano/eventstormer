@@ -8,6 +8,7 @@ export { type ApplyResult, applyOperation } from './infrastructure/apply-operati
 export type { BoardAccessDeps } from './capabilities/board-access/deps.ts'
 export { boardAccessRoutes } from './capabilities/board-access/http.ts'
 export { editModelRoutes } from './capabilities/edit-model/http.ts'
+export { flagHotSpotRoutes } from './capabilities/flag-hot-spot/http.ts'
 export {
   type BuildingBlockRow,
   readBuildingBlocks,

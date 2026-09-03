@@ -272,17 +272,17 @@ describe('POST /workshops/:id/board/operations', () => {
     assertBoard(readBoardSnapshot({ store: deps.store }, workshopId))
   })
 
-  it('rejects raise-hot-spot with 422 not-implemented-in-slice and does not append', async () => {
+  it.each([
+    { kind: 'raise-hot-spot', id: 'h_1', label: 'Unclear fee', author },
+    { kind: 'annotate', hotSpot: 'h_1', target: 'b_1', author },
+    { kind: 'unannotate', hotSpot: 'h_1', author },
+    { kind: 'resolve', target: 'h_1', reference: 'fixed', author },
+    { kind: 'reopen', target: 'h_1', author },
+  ])('rejects the hot-spot kind $kind with 422 not-implemented-in-slice and does not append', async (body) => {
     const deps = depsFor()
     capture(deps, 'b_1', 'Loan recorded')
 
-    const response = await postOp(deps, {
-      v: 1,
-      kind: 'raise-hot-spot',
-      id: 'h_1',
-      label: 'Unclear fee',
-      author,
-    })
+    const response = await postOp(deps, { v: 1, ...body })
     expect(response.status).toBe(422)
     await expect(response.json()).resolves.toEqual({
       error: 'not-implemented-in-slice',

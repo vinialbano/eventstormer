@@ -159,6 +159,31 @@ describe('createRoutes — the mounted /api surface', () => {
     expect(accountBody.markdown).not.toContain('- Event: Loan recorded')
   })
 
+  it('flags a hot spot annotating a captured event and GET /board shows the callout and count', async () => {
+    const { config, app } = wired()
+    const workshopId = await createWorkshop(app)
+    const buildingBlockId = await captureBlockViaAccept(config, app, workshopId, 'Payment taken')
+
+    const flagged = await app.request(`/api/workshops/${workshopId}/board/hot-spots`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'Payment keeps timing out', annotatesTargetId: buildingBlockId, author }),
+    })
+    expect(flagged.status).toBe(200)
+    const { hotSpotId } = (await flagged.json()) as { hotSpotId: string }
+
+    const board = await app.request(`/api/workshops/${workshopId}/board`)
+    expect(board.status).toBe(200)
+    const boardBody = (await board.json()) as {
+      hotSpotCount: number
+      blocks: { id: string; kind: string; annotates?: string | null }[]
+    }
+    expect(boardBody.hotSpotCount).toBe(1)
+    expect(boardBody.blocks).toContainEqual(
+      expect.objectContaining({ id: hotSpotId, kind: 'hot-spot', annotates: buildingBlockId }),
+    )
+  })
+
   it('serves both artifact GETs: empty board is 200 and references list the building-blocks site', async () => {
     const { config, app } = wired()
     const workshopId = await createWorkshop(app)

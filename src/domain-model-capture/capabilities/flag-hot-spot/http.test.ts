@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
-import type { BuildingBlockId, WorkshopId } from '~/plumbing/ids.ts'
+import type { WorkshopId } from '~/plumbing/ids.ts'
+import type { BoardSnapshot, SnapshotBlock } from '../../domain/board/model.ts'
+import { replay } from '../../domain/board/replay.ts'
 import { Operation } from '../../domain/schema/index.ts'
 import { applyOperation } from '../../infrastructure/apply-operation.ts'
-import { readBoardSnapshot } from '../board-access/read-board-snapshot.ts'
+import { boardStream } from '../../infrastructure/board-stream.ts'
 import type { FlagHotSpotDeps } from './deps.ts'
 import { flagHotSpotRoutes } from './http.ts'
 
@@ -17,21 +19,27 @@ const seedEvent = (deps: FlagHotSpotDeps, id: string, label: string): void => {
   applyOperation(deps, workshopId, Operation.parse({ author, kind: 'capture-domain-event', id, label }))
 }
 
-const flag = (deps: FlagHotSpotDeps, body: unknown): Promise<Response> =>
+const flag = async (deps: FlagHotSpotDeps, body: unknown): Promise<Response> =>
   flagHotSpotRoutes(deps).request(`/workshops/${workshopId}/board/hot-spots`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
 
-const reopen = (deps: FlagHotSpotDeps, blockId: string): Promise<Response> =>
+const reopen = async (deps: FlagHotSpotDeps, blockId: string): Promise<Response> =>
   flagHotSpotRoutes(deps).request(`/workshops/${workshopId}/board/hot-spots/${blockId}/reopen`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ author }),
   })
 
-const board = (deps: FlagHotSpotDeps) => readBoardSnapshot({ store: deps.store }, workshopId)
+const boardOps = (deps: FlagHotSpotDeps): Operation[] =>
+  deps.store.read(boardStream(workshopId)).map((row) => Operation.parse(row.operation))
+
+const boardSnapshot = (deps: FlagHotSpotDeps): BoardSnapshot => replay(boardOps(deps))
+
+const blockById = (deps: FlagHotSpotDeps, id: string): SnapshotBlock | undefined =>
+  boardSnapshot(deps).blocks.get(id as never)
 
 describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
   it('flags a hot spot annotating a live block: 200, callout on the block, hotSpotCount 1', async () => {
@@ -43,11 +51,9 @@ describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
     const body = (await response.json()) as { hotSpotId: string; annotates: string | null }
     expect(body.annotates).toBe('e_1')
 
-    const snapshot = board(deps)
+    const snapshot = boardSnapshot(deps)
     expect(snapshot.hotSpotCount).toBe(1)
-    expect(snapshot.blocks).toContainEqual(
-      expect.objectContaining({ id: body.hotSpotId, kind: 'hot-spot', annotates: 'e_1' }),
-    )
+    expect(blockById(deps, body.hotSpotId)).toMatchObject({ kind: 'hot-spot', annotates: 'e_1' })
   })
 
   it('flags with no target: 200, hot spot in the unannotated set (annotates null)', async () => {
@@ -59,26 +65,21 @@ describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
     const body = (await response.json()) as { hotSpotId: string; annotates: string | null }
     expect(body.annotates).toBeNull()
 
-    const snapshot = board(deps)
-    expect(snapshot.hotSpotCount).toBe(1)
-    expect(snapshot.blocks).toContainEqual(
-      expect.objectContaining({ id: body.hotSpotId, kind: 'hot-spot', annotates: null }),
-    )
+    expect(boardSnapshot(deps).hotSpotCount).toBe(1)
+    expect(blockById(deps, body.hotSpotId)).toMatchObject({ kind: 'hot-spot', annotates: null })
   })
 
   it('rejects a target that is another hot spot: 422 kind-permission, log unchanged', async () => {
     const deps = depsFor()
     seedEvent(deps, 'e_1', 'Payment taken')
-    await flag(deps, { label: 'First hot spot', author })
-    const otherHotSpot = board(deps).blocks.find((block) => block.kind === 'hot-spot')?.id as string
-    const before = deps.store.read({ context: 'domain-model-capture', aggregate: 'board', id: workshopId }).length
+    const first = await flag(deps, { label: 'First hot spot', author })
+    const { hotSpotId } = (await first.json()) as { hotSpotId: string }
+    const before = boardOps(deps).length
 
-    const response = await flag(deps, { label: 'Bad', annotatesTargetId: otherHotSpot, author })
+    const response = await flag(deps, { label: 'Bad', annotatesTargetId: hotSpotId, author })
     expect(response.status).toBe(422)
     expect(await response.json()).toEqual({ error: 'kind-permission', classification: 'systemic' })
-    expect(
-      deps.store.read({ context: 'domain-model-capture', aggregate: 'board', id: workshopId }).length,
-    ).toBe(before)
+    expect(boardOps(deps).length).toBe(before)
   })
 
   it('rejects an unknown target: 422 unknown-target, log unchanged', async () => {
@@ -88,7 +89,7 @@ describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
     const response = await flag(deps, { label: 'Bad', annotatesTargetId: 'missing', author })
     expect(response.status).toBe(422)
     expect(await response.json()).toEqual({ error: 'unknown-target', classification: 'systemic' })
-    expect(board(deps).hotSpotCount).toBe(0)
+    expect(boardSnapshot(deps).hotSpotCount).toBe(0)
   })
 
   it('rejects a withdrawn target: 422 withdrawn-target, log unchanged', async () => {
@@ -99,7 +100,7 @@ describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
     const response = await flag(deps, { label: 'Bad', annotatesTargetId: 'e_1', author })
     expect(response.status).toBe(422)
     expect(await response.json()).toEqual({ error: 'withdrawn-target', classification: 'systemic' })
-    expect(board(deps).hotSpotCount).toBe(0)
+    expect(boardSnapshot(deps).hotSpotCount).toBe(0)
   })
 
   it('404s when the board stream is empty', async () => {
@@ -109,7 +110,7 @@ describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
 })
 
 describe('POST /workshops/:id/board/hot-spots/:blockId/reopen', () => {
-  it('reopens a resolved hot spot: 200 resolved false', async () => {
+  it('reopens a resolved hot spot: 200 resolved false, reference retained', async () => {
     const deps = depsFor()
     seedEvent(deps, 'e_1', 'Payment taken')
     const flagResponse = await flag(deps, { label: 'Timeout', author })
@@ -123,9 +124,7 @@ describe('POST /workshops/:id/board/hot-spots/:blockId/reopen', () => {
     const response = await reopen(deps, hotSpotId)
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ hotSpotId, resolved: false })
-    const hotSpot = board(deps).blocks.find((block) => block.id === (hotSpotId as BuildingBlockId))
-    expect(hotSpot?.resolved).toBe(false)
-    expect(hotSpot?.reference).toBe('added a retry')
+    expect(blockById(deps, hotSpotId)).toMatchObject({ resolved: false, reference: 'added a retry' })
   })
 
   it('rejects reopening an open hot spot: 422 not-resolved', async () => {
