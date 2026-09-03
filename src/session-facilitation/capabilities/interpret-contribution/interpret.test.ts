@@ -15,8 +15,11 @@ import { err, ok, type Result } from '~/plumbing/result.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import { type DerivedTrackDb, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { close as closeIndexRow, reserve, type SessionIndexDb } from '../../infrastructure/session-index.ts'
-import { sessionStream, workshopStream } from '../../infrastructure/streams.ts'
-import { ProposalEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import { resolutionStream, sessionStream, workshopStream } from '../../infrastructure/streams.ts'
+import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import { replay as replayProposal } from '../../domain/proposal/replay.ts'
+import { decide as decideResolution } from '../../domain/resolution/decide.ts'
+import { replay as replayResolution } from '../../domain/resolution/replay.ts'
 import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
 import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import type { Facilitator, FacilitatorFailure } from '../../infrastructure/facilitator/port.ts'
@@ -206,6 +209,43 @@ describe('interpretContribution — the commit point + derivation', () => {
         at,
       },
     ])
+  })
+
+  it('births the Resolution and the Proposal independently from one turn — rejecting the resolution leaves the proposal', async () => {
+    seedSession()
+    contribute('refunds keep bouncing; we fixed it by adding a retry', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          propose('domain-event', 'Refund issued'),
+          { track: 'propose-resolution', hotSpotId: 'h_1', reference: 'added a retry with backoff' },
+        ]),
+      ]),
+    )
+
+    const resolutionRows = (): ResolutionEvent[] =>
+      store.read(resolutionStream('r_1' as ResolutionId)).map((row) => ResolutionEvent.parse(row.operation))
+
+    expect(proposalEvents('p_1').map((event) => event.type)).toEqual(['Building Block Proposed'])
+    expect(resolutionRows().map((event) => event.type)).toEqual(['Resolution Proposed'])
+
+    const rejected = decideResolution(replayResolution(resolutionRows()), {
+      type: 'Reject Resolution',
+      resolutionId: 'r_1' as ResolutionId,
+      at,
+    })
+    if (!rejected.ok) throw new Error('expected Reject Resolution to succeed')
+    const position = store.read(resolutionStream('r_1' as ResolutionId)).length - 1
+    store.append(
+      resolutionStream('r_1' as ResolutionId),
+      position,
+      rejected.value.map((event) => ({ at, opVersion: 1, operation: event })),
+    )
+
+    expect(replayResolution(resolutionRows()).disposition).toBe('REJECTED')
+    expect(proposalEvents('p_1').map((event) => event.type)).toEqual(['Building Block Proposed'])
+    expect(replayProposal(proposalEvents('p_1')).disposition).toBe('PROPOSED')
   })
 
   it('derives a hot-spot Building Block Proposed carrying modelAffecting and the resolved annotatesTargetId', async () => {
