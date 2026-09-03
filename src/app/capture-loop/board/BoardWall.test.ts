@@ -427,4 +427,25 @@ describe('BoardWall', () => {
     })
     expect(wrapper.find('[aria-label="Hot spots"]').exists()).toBe(false)
   })
+
+  it('emits flag-hot-spot with the selected block id when the sticky flag action is used', async () => {
+    const wrapper = mount(BoardWall, {
+      props: { blocks: [{ id: 'eA', kind: 'domain-event', label: 'Payment captured' }] },
+    })
+    await stickyByLabel(wrapper, 'event: Payment captured').trigger('click')
+    await wrapper.get('[aria-label="Flag hot spot"]').trigger('click')
+
+    expect(wrapper.emitted('flag-hot-spot')).toEqual([
+      [{ targetId: 'eA', label: 'Concern: Payment captured' }],
+    ])
+  })
+
+  it('emits flag-hot-spot with no target from the board-level flag action', async () => {
+    const wrapper = mount(BoardWall, {
+      props: { blocks: [{ id: 'eA', kind: 'domain-event', label: 'Payment captured' }] },
+    })
+    await wrapper.get('[aria-label="Flag a hot spot"]').trigger('click')
+
+    expect(wrapper.emitted('flag-hot-spot')).toEqual([[{ targetId: null, label: 'Hot spot' }]])
+  })
 })

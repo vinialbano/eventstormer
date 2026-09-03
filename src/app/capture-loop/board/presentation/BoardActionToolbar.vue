@@ -35,6 +35,8 @@ const emit = defineEmits<{
   'sequence-selected-after': []
   'mark-selected-pivotal': []
   'unmark-selected-pivotal': []
+  'flag-selected': []
+  'flag-board': []
   'request-confirm': []
   'cancel-reword': []
   confirm: []
@@ -121,7 +123,27 @@ const onShowWithdrawnChange = (event: Event): void => {
     >
       Unmark
     </button>
+    <button
+      type="button"
+      class="wall__action"
+      aria-label="Flag hot spot"
+      @click="emit('flag-selected')"
+    >
+      Flag hot spot
+    </button>
   </div>
+  <button
+    type="button"
+    class="wall__flag"
+    aria-label="Flag a hot spot"
+    :style="{
+      left: `${frameX}px`,
+      top: `${frameY + frameH + 108}px`,
+    }"
+    @click="emit('flag-board')"
+  >
+    Flag a hot spot
+  </button>
   <div
     v-if="editingId !== null && selectedOnTimeline"
     class="wall__reword"
@@ -218,6 +240,26 @@ const onShowWithdrawnChange = (event: Event): void => {
   cursor: pointer;
 }
 .wall__action:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.wall__flag {
+  position: absolute;
+  z-index: 3;
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wall__flag:focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;
 }

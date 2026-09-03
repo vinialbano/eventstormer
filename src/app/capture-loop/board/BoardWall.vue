@@ -35,7 +35,11 @@ const props = defineProps<{
 
 const EMPTY_HOT_SPOTS: HotSpotView = { annotated: new Map(), unannotated: [], count: 0 }
 const hotSpots = computed(() => props.hotSpots ?? EMPTY_HOT_SPOTS)
-const emit = defineEmits<{ 'board-dirty': []; 'update:showWithdrawn': [value: boolean] }>()
+const emit = defineEmits<{
+  'board-dirty': []
+  'update:showWithdrawn': [value: boolean]
+  'flag-hot-spot': [request: { targetId: string | null; label: string }]
+}>()
 
 const viewport = ref({ w: 1280, h: 800 })
 const measure = (): void => {
@@ -114,6 +118,19 @@ const {
 const rewordSelected = (): void => {
   const id = selectedId.value
   if (id !== null) void startReword(id)
+}
+
+const flagSelected = (): void => {
+  const id = selectedId.value
+  if (id === null) return
+  const label = props.blocks.find((block) => block.id === id)?.label
+  emit('flag-hot-spot', {
+    targetId: id,
+    label: label === undefined ? 'Hot spot' : `Concern: ${label}`,
+  })
+}
+const flagBoard = (): void => {
+  emit('flag-hot-spot', { targetId: null, label: 'Hot spot' })
 }
 
 useBoardKeyboard({
@@ -259,6 +276,8 @@ const blockLabels = computed(() =>
       @sequence-selected-after="sequenceSelectedAfter"
       @mark-selected-pivotal="markSelectedPivotal"
       @unmark-selected-pivotal="unmarkSelectedPivotal"
+      @flag-selected="flagSelected"
+      @flag-board="flagBoard"
       @request-confirm="requestConfirm"
       @cancel-reword="cancelReword"
       @update:confirm-open="confirmOpen = $event"

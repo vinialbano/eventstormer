@@ -25,7 +25,7 @@ verifier sub-agent with `isolation: "worktree"`. The `Stop` gate runs `pnpm chec
 live tree; a mutation in flight there reads as a red gate on a codebase that is actually green,
 and the main agent has no reliable way to tell the two apart.
 
-### Capture-loop sensors (M1–M6)
+### Capture-loop sensors (M1–M7)
 
 | Mutant | Fault | Sensor suite |
 | ------ | ----- | ------------ |
@@ -36,6 +36,7 @@ and the main agent has no reliable way to tell the two apart.
 | M4′ | Skip `onBoardDirty()` on successful relation POST | `BoardWall.test.ts`, `BoardWall.drop.test.ts` (success paths) |
 | M5 | Poll `board` instead of `proposals` in interpretation poll | `use-interpretation-poll.test.ts` |
 | M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `use-capture-orchestration.integration.test.ts` |
+| M7 | Skip `boardDirty()` after a successful direct flag POST in `use-flag-hot-spot.ts` | `use-flag-hot-spot.test.ts`, `use-flag-hot-spot.integration.test.ts` |
 
 ## Coverage
 

@@ -4,6 +4,7 @@ import ReadableAccountDrawer from './account/ReadableAccountDrawer.vue'
 import { BoardWall, type BoardBlockInput } from '../board/index.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import { useCaptureOrchestration } from './composables/use-capture-orchestration.ts'
+import { useFlagHotSpot } from '../dock/interactions/flag-hot-spot/use-flag-hot-spot.ts'
 import { startSession as postStartSession } from '../transport/session.ts'
 import { useBoardViewState } from '../view-state/board-view.ts'
 
@@ -19,6 +20,18 @@ const orch = useCaptureOrchestration(toRef(props, 'id'))
 const { session, board, account } = orch
 const boardView = useBoardViewState(toRef(board, 'snapshot'))
 const { showWithdrawn, timeline, hotSpots } = boardView
+
+const flag = useFlagHotSpot(() => props.id, () => session.creatorName, {
+  mutated: (): void => {
+    void orch.onMutated()
+  },
+  boardDirty: (): void => {
+    void orch.onBoardDirty()
+  },
+})
+const onFlagHotSpot = (request: { targetId: string | null; label: string }): void => {
+  void flag.onFlag(request)
+}
 
 const startingSession = ref(false)
 const loaded = ref(false)
@@ -86,6 +99,7 @@ onMounted(coldLoad)
       class="screen__wall"
       @board-dirty="orch.onBoardDirty"
       @update:show-withdrawn="showWithdrawn = $event"
+      @flag-hot-spot="onFlagHotSpot"
     />
 
     <FacilitatorDock
