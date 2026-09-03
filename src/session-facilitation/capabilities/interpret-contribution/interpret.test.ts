@@ -351,6 +351,108 @@ describe('interpretContribution — the commit point + derivation', () => {
     expect(sessionEvents().some((event) => event.type === 'Contribution Interpreted')).toBe(true)
   })
 
+  const askQuestion = (questionId: string, sessionId: SessionId = defaultSessionId): void => {
+    const rows = store.read(sessionStream(sessionId))
+    store.append(sessionStream(sessionId), rows.length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Question Asked',
+          sessionId,
+          questionId,
+          kind: 'phase',
+          text: `question ${questionId}?`,
+          at,
+        },
+      },
+    ])
+  }
+
+  const questionResolved = (questionId: string): boolean =>
+    only('Question Asked').some((event) => event.questionId === questionId) &&
+    sessionEvents().some(
+      (event) =>
+        (event.type === 'Knowledge Gap Revealed' ||
+          event.type === 'Absent Stakeholder Named' ||
+          event.type === 'Complete Perspective Confirmed' ||
+          event.type === 'Question Answered') &&
+        event.questionId === questionId,
+    )
+
+  it('resolves the question from a reveal-knowledge-gap track and raises no hot spot here', async () => {
+    seedSession()
+    askQuestion('q_gap')
+    contribute('honestly nobody knows who owns returns', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'reveal-knowledge-gap', questionId: 'q_gap', detail: 'unowned area' }])]),
+    )
+
+    expect(only('Knowledge Gap Revealed')).toEqual([
+      {
+        v: 1,
+        at,
+        type: 'Knowledge Gap Revealed',
+        sessionId: defaultSessionId,
+        questionId: 'q_gap',
+        byContributionId: 'c_1',
+        detail: 'unowned area',
+      },
+    ])
+    expect(questionResolved('q_gap')).toBe(true)
+  })
+
+  it('derives one Absent Stakeholder Named per named person from one contribution', async () => {
+    seedSession()
+    askQuestion('q_sh')
+    contribute('my ops lead and our finance partner would each say it differently', 'c_1')
+
+    await interpretContribution(
+      deps([
+        turn([
+          { track: 'name-absent-stakeholder', questionId: 'q_sh', personName: 'ops lead' },
+          { track: 'name-absent-stakeholder', questionId: 'q_sh', personName: 'finance partner' },
+        ]),
+      ]),
+    )
+
+    expect(only('Absent Stakeholder Named').map((event) => event.personName)).toEqual([
+      'ops lead',
+      'finance partner',
+    ])
+    expect(questionResolved('q_sh')).toBe(true)
+  })
+
+  it('resolves the question from a confirm-complete-perspective track without a workshop append', async () => {
+    seedSession()
+    askQuestion('q_cp')
+    contribute('no, that is the whole picture', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp' }])]),
+    )
+
+    expect(only('Complete Perspective Confirmed').map((event) => event.questionId)).toEqual(['q_cp'])
+    expect(questionResolved('q_cp')).toBe(true)
+    expect(store.read(workshopStream(workshopId)).map((row) => row.operation)).toEqual([
+      expect.objectContaining({ type: 'Workshop Started' }),
+    ])
+  })
+
+  it('drops a judgment track naming an unknown question', async () => {
+    seedSession()
+    contribute('mumble', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'reveal-knowledge-gap', questionId: 'q_nope' }])]),
+    )
+
+    expect(sessionEvents().some((event) => event.type === 'Knowledge Gap Revealed')).toBe(false)
+    expect(sessionEvents().some((event) => event.type === 'Contribution Interpreted')).toBe(true)
+  })
+
   it('appends a free Question Asked when nextMove.move is "ask"', async () => {
     seedSession()
     contribute('a member joined', 'c_1')
