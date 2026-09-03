@@ -390,7 +390,7 @@ describe('reconcilePendingDerivations — hot-spot close sweep', () => {
     let crash = true
     store.append = (stream, expected, ops) => {
       if (crash && stream.aggregate === 'proposal') throw new Error('crash mid-close')
-      realAppend(stream, expected, ops)
+      return realAppend(stream, expected, ops)
     }
     expect(() => {
       reconcilePendingDerivations(deps())
