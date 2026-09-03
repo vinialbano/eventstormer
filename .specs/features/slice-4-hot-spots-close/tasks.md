@@ -61,10 +61,12 @@ depcruise rule).
 
 | Gate Level | When to Use | Command |
 | --- | --- | --- |
-| Quick | After a task with domain/unit tests only | `pnpm test` |
-| Full | After a task with capability/integration or app tests | `pnpm test` (single Vitest run covers `domain` + `app` projects) |
+| Quick | A task that only edits existing `.ts` with no new type surface | `pnpm test` |
+| Full | **Any task that adds a new `.ts` file, changes a type/export surface, or adds a capability/route** (the common case) | `pnpm check` (runs `check:process-ids → typecheck → lint → test → depcruise → knip`) |
 | Build | After a phase, or a schema/config/docs-only task | `pnpm check && pnpm build` |
 | E2E | After the E2E task (T50) and before final sign-off | `pnpm check && pnpm build && pnpm test:e2e` |
+
+> **`pnpm test` does NOT run `vue-tsc` or `knip`.** A task that adds a file or an export MUST gate on `pnpm check` or a latent typecheck/unused-export error ships to the next task (this bit T11 — its `.request()` return type slipped past `pnpm test`). When in doubt, gate on `pnpm check`.
 
 `pnpm check` = `check:process-ids → typecheck → lint → test → depcruise → knip`. Every new
 `depcruise` rule is proven by a planted violation (repo convention). `pnpm test` is
