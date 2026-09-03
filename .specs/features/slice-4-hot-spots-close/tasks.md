@@ -481,8 +481,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-21, S4-22, S4-23
 **Tools**: Skill `anoria-commons:distributed-systems`
 **Done when**:
-- [ ] Each event parses; the union refine still holds
-- [ ] `pnpm check && pnpm build` green
+- [x] Each event parses; the union refine still holds
+- [x] `pnpm check && pnpm build` green
 **Tests**: none (event SSOT — build gate) · **Gate**: build
 
 ### T27: `Session` decide/evolve — the three judgment commands
@@ -493,10 +493,10 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-21, S4-22, S4-23
 **Tools**: Skill `anoria-commons:domain-modeling` (idempotency as a model invariant)
 **Done when**:
-- [ ] G/W/T: reveal-knowledge-gap on an open question → event + question resolved; a second → `ok([])`
-- [ ] Two `Name Absent Stakeholder` for different people on one question → two events; same person twice → one (acceptance test 2 shape at the Session level)
-- [ ] Judgment on a resolved/unknown question → `ok([])`
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] G/W/T: reveal-knowledge-gap on an open question → event + question resolved; a second → `ok([])`
+- [x] Two `Name Absent Stakeholder` for different people on one question → two events; same person twice → one (acceptance test 2 shape at the Session level)
+- [x] Judgment on a resolved/unknown question → `ok([])`
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T28: `interpreted-track.ts` + `turn-schema.ts` — the three judgment strands
@@ -507,9 +507,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-24, AD-015
 **Tools**: MCP `context7` · Skill `testing-boss`
 **Done when**:
-- [ ] Optional-parameter count still ≤ 24, test asserts the exact total
-- [ ] Each strand round-trips through the union
-- [ ] `pnpm test` green
+- [x] Optional-parameter count still ≤ 24, test asserts the exact total
+- [x] Each strand round-trips through the union
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: quick
 
 ### T29: `map.ts` + `interpret.ts` — derive the three judgments
@@ -520,9 +520,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-24, S4-23 (acceptance test 44)
 **Tools**: NONE
 **Done when**:
-- [ ] A contribution interpreted as `confirm-complete-perspective` resolves the question AND records `Stakeholder Check Recorded {complete:true}` (acceptance test 44)
-- [ ] `name-absent-stakeholder` / `reveal-knowledge-gap` tracks resolve the question; the hot-spot raise is NOT done here (left to the sweep — AD-032)
-- [ ] `pnpm test` green
+- [x] A contribution interpreted as `confirm-complete-perspective` resolves the question. **REDUCED (batch 4): the `Stakeholder Check Recorded {complete:true}` workshop append is deferred to T40b — it needs the `Record Stakeholder Check` Workshop command from Phase 8.**
+- [x] `name-absent-stakeholder` / `reveal-knowledge-gap` tracks resolve the question; the hot-spot raise is NOT done here (left to the sweep)
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T30: `Question Asked.kind` += `'stakeholder'` + `sessionView` surfaces it
@@ -533,8 +533,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-23 (AD-034)
 **Tools**: NONE
 **Done when**:
-- [ ] A `Question Asked {kind:'stakeholder'}` parses and appears in `sessionView.openQuestions`
-- [ ] `pnpm check && pnpm build` green (Phase 6 close)
+- [x] A `Question Asked {kind:'stakeholder'}` parses and appears in `sessionView.openQuestions`
+- [x] `pnpm check && pnpm build` green (Phase 6 close)
 **Tests**: unit · **Gate**: build
 
 ### Phase 7 — Hot-spot choreography sweep
@@ -547,9 +547,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-25 (marker infra), S4-27
 **Tools**: Skill `anoria-commons:distributed-systems` (idempotency key / dedup store)
 **Done when**:
-- [ ] Migration applies additively; `_sf_migrations` tracks id 2; a re-apply is a no-op
-- [ ] `markSwept` then `readSweptKeys` round-trips; duplicate `markSwept` is `INSERT OR IGNORE`
-- [ ] `pnpm test` green
+- [x] Migration applies additively; `_sf_migrations` tracks id 2; a re-apply is a no-op
+- [x] `markSwept` then `readSweptKeys` round-trips; duplicate `markSwept` is `INSERT OR IGNORE`
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T32: `reconcileHotSpots` — knowledge-gap / absent-stakeholder facts → hot spots
@@ -560,10 +560,10 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-26, S4-27
 **Tools**: Skill `anoria-commons:distributed-systems` (effectively-once; `duplicate-id` as success; reconcile don't blind-retry)
 **Done when**:
-- [ ] A contribution naming two absent stakeholders → after `reconcileHotSpots`, two hot-spot blocks on the board (acceptance test 2)
-- [ ] Re-running `reconcileHotSpots` raises nothing new (idempotent — marker + `duplicate-id`)
-- [ ] A transient board failure leaves the key unmarked (retried next call)
-- [ ] `pnpm test` green
+- [x] A contribution naming two absent stakeholders → after `reconcileHotSpots`, two hot-spot blocks on the board (acceptance test 2)
+- [x] Re-running `reconcileHotSpots` raises nothing new (idempotent — marker + `duplicate-id`)
+- [x] A transient board failure leaves the key unmarked (retried next call)
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T33: `reconcileHotSpots` — close sweep (unresolved questions + apply-failed proposals)
@@ -574,11 +574,11 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-27, S4-28 (acceptance tests 1, 5, 34, 36, 43)
 **Tools**: Skill `anoria-commons:distributed-systems`
 **Done when**:
-- [ ] Close with Q1 answered, Q2 open → exactly one hot spot, for Q2 (acceptance test 43)
-- [ ] A question left open by an off-topic contribution that produced a proposal → still swept (acceptance test 5 / 34)
-- [ ] A `Proposal` in `APPLY_FAILED` at close → a hot spot referencing it (acceptance test 36)
-- [ ] The set swept == `Session Closed.unresolvedQuestionIds` (acceptance test 43 consistency)
-- [ ] `pnpm test` green
+- [x] Close with Q1 answered, Q2 open → exactly one hot spot, for Q2 (acceptance test 43)
+- [x] A question left open by an off-topic contribution that produced a proposal → still swept (acceptance test 5 / 34)
+- [x] A `Proposal` in `APPLY_FAILED` at close → a hot spot referencing it (acceptance test 36)
+- [x] The set swept == `Session Closed.unresolvedQuestionIds` (acceptance test 43 consistency)
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T34: Wire `reconcileHotSpots` into `finishClose` + `reconcilePendingDerivations`
@@ -589,9 +589,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-26, S4-27
 **Tools**: Skill `anoria-commons:distributed-systems`
 **Done when**:
-- [ ] A crash simulated between `Session Closed` append and the sweep → the next `reconcilePendingDerivations`/`finishClose` raises the missing hot spots
-- [ ] `finishClose` remains idempotent (re-run raises nothing new)
-- [ ] `pnpm test` green
+- [x] A crash simulated between `Session Closed` append and the sweep → the next `reconcilePendingDerivations`/`finishClose` raises the missing hot spots
+- [x] `finishClose` remains idempotent (re-run raises nothing new)
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T35: Close report — "no hot spots is a signal"
@@ -602,9 +602,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-30
 **Tools**: NONE
 **Done when**:
-- [ ] Close a session with zero hot spots → response `{noHotSpotsIsASignal:true, hotSpotCount:0}`
-- [ ] Close with hot spots → `{noHotSpotsIsASignal:false, hotSpotCount:n}`
-- [ ] `pnpm check && pnpm build` green (Phase 7 close); `depcruise` planted-violation check for any new cross-context edge
+- [x] Close a session with zero hot spots → response `{noHotSpotsIsASignal:true, hotSpotCount:0}`
+- [x] Close with hot spots → `{noHotSpotsIsASignal:false, hotSpotCount:n}`
+- [x] `pnpm check && pnpm build` green (Phase 7 close); `depcruise` planted-violation check for any new cross-context edge
 **Tests**: integration · **Gate**: build
 
 ### Phase 8 — F09 workshop state + close-ceremony capabilities
