@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
+import * as ids from '~/plumbing/ids.ts'
 import type { SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { readBoardSnapshot } from '../../domain-model-capture/api.ts'
 import { SessionEvent } from '../domain/schema/events.ts'
@@ -10,6 +11,11 @@ import { replay as replaySession } from '../domain/session/replay.ts'
 import { applySessionFacilitationMigrations } from './migrations.ts'
 import { markSwept, readSweptKeys, reconcileHotSpots } from './hot-spot-sweep.ts'
 import { proposalStream, sessionStream, workshopStream } from './streams.ts'
+
+vi.mock('~/plumbing/ids.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof ids>()
+  return { ...actual, newBuildingBlockId: vi.fn(actual.newBuildingBlockId) }
+})
 
 let db: DatabaseSync
 
@@ -153,6 +159,32 @@ describe('reconcileHotSpots — knowledge gaps and absent stakeholders', () => {
     reconcileHotSpots({ store, db, clock }, sessionId)
 
     expect(hotSpotLabels(store)).toEqual([])
+  })
+
+  it('rewrites the marker with no duplicate board block when the re-raise returns duplicate-id', () => {
+    const store = createMemoryEventStore()
+    seed(store, [
+      { type: 'Knowledge Gap Revealed', sessionId, questionId: 'q_1', byContributionId: 'c_1' },
+    ])
+    vi.mocked(ids.newBuildingBlockId)
+      .mockReturnValueOnce('b_fixed_kg' as ReturnType<typeof ids.newBuildingBlockId>)
+      .mockReturnValueOnce('b_fixed_kg' as ReturnType<typeof ids.newBuildingBlockId>)
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+    expect(hotSpotLabels(store)).toEqual(['Who else?'])
+    expect(readSweptKeys(db)).toEqual(new Set(['kg:q_1']))
+
+    // A crash after applyOperation committed the raise but before markSwept ran:
+    // the block is on the board, the marker table is empty.
+    db.prepare('DELETE FROM hot_spot_sweep').run()
+    expect(readSweptKeys(db)).toEqual(new Set())
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    // The re-raise reuses the same id, the board rejects it as duplicate-id, and
+    // that counts as success — the marker is rewritten, no second hot spot appears.
+    expect(hotSpotLabels(store)).toEqual(['Who else?'])
+    expect(readSweptKeys(db)).toEqual(new Set(['kg:q_1']))
   })
 
   it('leaves the key unmarked when the board append throws — retried on the next pass', () => {
