@@ -1,6 +1,6 @@
+import { createHash } from 'node:crypto'
 import type { Clock } from '~/plumbing/clock.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import { newBuildingBlockId } from '~/plumbing/ids.ts'
 import type { SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { applyOperation, Operation } from '../../domain-model-capture/api.ts'
 import { replay as replayProposal } from '../domain/proposal/replay.ts'
@@ -62,6 +62,16 @@ interface SweepTarget {
   key: string
   label: string
 }
+
+/**
+ * The board id for a sweep key, derived from the workshop and the key. A retry
+ * after a lost `markSwept` write re-attempts the raise with the same id, so the
+ * board answers `duplicate-id` (counted as success) instead of raising a second
+ * hot spot for the key. `base64url` over `A-Za-z0-9_-`, 21 chars — the
+ * `BuildingBlockId` shape.
+ */
+const sweptBlockId = (workshopId: WorkshopId, key: string): string =>
+  createHash('sha256').update(`${workshopId}::${key}`).digest('base64url').slice(0, 21)
 
 /**
  * The hot-spot reconciliation pass. Choreography over persisted
@@ -187,7 +197,7 @@ const raiseAll = (
 
   for (const target of targets) {
     if (swept.has(target.key)) continue
-    const buildingBlockId = newBuildingBlockId()
+    const buildingBlockId = sweptBlockId(workshopId, target.key)
     try {
       const raised = applyOperation(
         deps,
