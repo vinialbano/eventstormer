@@ -95,7 +95,10 @@ export const sessionView = (
           questionKind: event.kind,
         })
         break
-      case 'Question Answered': {
+      case 'Question Answered':
+      case 'Knowledge Gap Revealed':
+      case 'Absent Stakeholder Named':
+      case 'Complete Perspective Confirmed': {
         const question = questions.get(event.questionId)
         if (question) question.resolved = true
         break

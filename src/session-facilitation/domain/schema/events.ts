@@ -99,6 +99,33 @@ const QuestionAnswered = z.object({
   byContributionId: ContributionId,
 })
 
+const KnowledgeGapRevealed = z.object({
+  ...base,
+  type: z.literal('Knowledge Gap Revealed'),
+  sessionId: SessionId,
+  questionId: QuestionId,
+  byContributionId: ContributionId,
+  /** What the contributor could say about the gap, when they said anything. */
+  detail: z.string().min(1).optional(),
+})
+
+const AbsentStakeholderNamed = z.object({
+  ...base,
+  type: z.literal('Absent Stakeholder Named'),
+  sessionId: SessionId,
+  questionId: QuestionId,
+  byContributionId: ContributionId,
+  personName: z.string().min(1),
+})
+
+const CompletePerspectiveConfirmed = z.object({
+  ...base,
+  type: z.literal('Complete Perspective Confirmed'),
+  sessionId: SessionId,
+  questionId: QuestionId,
+  byContributionId: ContributionId,
+})
+
 const ContributionAttributedToAnotherFormat = z.object({
   ...base,
   type: z.literal('Contribution Attributed To Another Format'),
@@ -129,6 +156,9 @@ export const SessionEvent = z
     ContributionInterpretationFailed,
     QuestionAsked,
     QuestionAnswered,
+    KnowledgeGapRevealed,
+    AbsentStakeholderNamed,
+    CompletePerspectiveConfirmed,
     ContributionAttributedToAnotherFormat,
     SessionClosed,
   ])

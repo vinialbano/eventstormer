@@ -23,6 +23,9 @@ export const evolve = (writeModel: SessionWriteModel, event: SessionEvent): Sess
       next.questions.set(event.questionId, 'open')
       return next
     case 'Question Answered':
+    case 'Knowledge Gap Revealed':
+    case 'Absent Stakeholder Named':
+    case 'Complete Perspective Confirmed':
       next.questions.set(event.questionId, 'resolved')
       return next
     case 'Session Closed':

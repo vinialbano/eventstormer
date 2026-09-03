@@ -107,6 +107,54 @@ describe('SessionEvent SSOT — Question Asked refine (scopeStatement iff kind =
   })
 })
 
+describe('SessionEvent SSOT — question-track judgments', () => {
+  const gap = {
+    v: 1,
+    at,
+    type: 'Knowledge Gap Revealed',
+    sessionId: 's_1',
+    questionId: 'q_2',
+    byContributionId: 'c_1',
+  }
+
+  it('Knowledge Gap Revealed parses with and without an optional detail', () => {
+    expect(SessionEvent.parse(gap).type).toBe('Knowledge Gap Revealed')
+    expect(SessionEvent.parse({ ...gap, detail: 'nobody owns returns' })).toMatchObject({
+      type: 'Knowledge Gap Revealed',
+      detail: 'nobody owns returns',
+    })
+    expect(SessionEvent.parse(gap)).not.toHaveProperty('detail')
+  })
+
+  it('Absent Stakeholder Named requires a non-empty personName', () => {
+    const named = {
+      v: 1,
+      at,
+      type: 'Absent Stakeholder Named',
+      sessionId: 's_1',
+      questionId: 'q_2',
+      byContributionId: 'c_1',
+      personName: 'ops lead',
+    }
+    expect(SessionEvent.parse(named)).toMatchObject({ type: 'Absent Stakeholder Named', personName: 'ops lead' })
+    expect(() => SessionEvent.parse({ ...named, personName: '' })).toThrow()
+  })
+
+  it('Complete Perspective Confirmed parses and the Question Asked refine still holds', () => {
+    expect(
+      SessionEvent.parse({
+        v: 1,
+        at,
+        type: 'Complete Perspective Confirmed',
+        sessionId: 's_1',
+        questionId: 'q_2',
+        byContributionId: 'c_1',
+      }).type,
+    ).toBe('Complete Perspective Confirmed')
+    expect(SessionEvent.parse(phaseQuestion).type).toBe('Question Asked')
+  })
+})
+
 describe('SessionEvent SSOT — other variants', () => {
   it('Contribution Made requires source "typed" and bounds the body at 10 000', () => {
     const made = {

@@ -55,6 +55,11 @@ export const sessionSummary = (events: SessionEvent[], blocksAdded: number): Ses
         questionsAnswered += 1
         openQuestions.delete(event.questionId)
         break
+      case 'Knowledge Gap Revealed':
+      case 'Absent Stakeholder Named':
+      case 'Complete Perspective Confirmed':
+        openQuestions.delete(event.questionId)
+        break
       case 'Session Started':
       case 'Contribution Interpreted':
       case 'Contribution Interpretation Failed':
