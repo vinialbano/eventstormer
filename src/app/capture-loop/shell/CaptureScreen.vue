@@ -51,6 +51,12 @@ const blocks = computed((): BoardBlockInput[] =>
 const blockLabels = computed(() =>
   Object.fromEntries(board.snapshot.blocks.map((block) => [block.id, block.label])),
 )
+const openHotSpots = computed(() =>
+  [...hotSpots.value.annotated.values(), hotSpots.value.unannotated]
+    .flat()
+    .filter((callout) => !callout.resolved)
+    .map((callout) => ({ hotSpotId: callout.hotSpotId, label: callout.label })),
+)
 const needsSession = computed(() => loaded.value && !session.sessionOpen)
 
 const coldLoad = async (): Promise<void> => {
@@ -108,6 +114,7 @@ onMounted(coldLoad)
       :session-id="session.sessionId"
       :accepter="session.creatorName"
       :block-labels="blockLabels"
+      :open-hot-spots="openHotSpots"
       @mutated="orch.onMutated"
       @board-dirty="orch.onBoardDirty"
     />

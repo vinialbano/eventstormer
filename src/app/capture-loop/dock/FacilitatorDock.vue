@@ -5,10 +5,13 @@ import type { ProposalCard } from '../types.ts'
 import { useProposalsStore } from '../stores/proposals.ts'
 import { useResolutionsStore } from '../stores/resolutions.ts'
 import { useSessionStore } from '../stores/session.ts'
+import { useReducedMotion } from '../shell/composables/use-reduced-motion.ts'
 import { useDockFeed } from './composables/use-dock-feed.ts'
+import { useCloseCeremony } from './interactions/close-ceremony/use-close-ceremony.ts'
 import { useContribute } from './interactions/contribute/use-contribute.ts'
 import { useReviewProposal } from './interactions/review-proposal/use-review-proposal.ts'
 import { useReviewResolution } from './interactions/review-resolution/use-review-resolution.ts'
+import CloseCeremony from './close-ceremony/CloseCeremony.vue'
 import DockComposer from './DockComposer.vue'
 import DockFeed from './DockFeed.vue'
 import PendingDrawer from './PendingDrawer.vue'
@@ -24,6 +27,8 @@ const props = defineProps<{
   sessionId: string | null
   accepter: string
   blockLabels: Readonly<Record<string, string>>
+  /** Hot spots open right now — the close-ceremony problem picker's candidates. */
+  openHotSpots: { hotSpotId: string; label: string }[]
 }>()
 const emit = defineEmits<{ mutated: []; 'board-dirty': [] }>()
 
@@ -70,6 +75,25 @@ const review = useReviewProposal(
 )
 const resolutionReview = useReviewResolution(dockEmit)
 const { catchingUp, onSubmit } = useContribute(sessionId, sessionView, dockEmit)
+
+const {
+  step: ceremonyStep,
+  busy: ceremonyBusy,
+  error: ceremonyError,
+  report: ceremonyReport,
+  start: startCeremony,
+  cancel: cancelCeremony,
+  back: ceremonyBack,
+  answerStakeholder,
+  chooseProblem,
+  skipProblem,
+  confirm: confirmCeremony,
+} = useCloseCeremony(
+  () => props.workshopId,
+  () => props.sessionId,
+  dockEmit,
+)
+const reducedMotion = useReducedMotion()
 
 const open = ref(true)
 const drawerOpen = ref(false)
@@ -164,7 +188,33 @@ const onJumpResolution = async (resolutionId: string): Promise<void> => {
             />
           </section>
 
+          <CloseCeremony
+            v-if="ceremonyStep !== 'idle'"
+            class="dock__ceremony"
+            :step="ceremonyStep"
+            :busy="ceremonyBusy"
+            :error="ceremonyError"
+            :report="ceremonyReport"
+            :open-hot-spots="openHotSpots"
+            :reduced-motion="reducedMotion"
+            @answer="answerStakeholder"
+            @choose="chooseProblem"
+            @skip="skipProblem"
+            @back="ceremonyBack"
+            @confirm="confirmCeremony"
+            @cancel="cancelCeremony"
+          />
+
           <DockComposer :catching-up="catchingUp" @submit="onSubmit" />
+
+          <button
+            v-if="ceremonyStep === 'idle'"
+            type="button"
+            class="dock__close"
+            @click="startCeremony"
+          >
+            Close session
+          </button>
         </div>
 
         <button
@@ -290,6 +340,25 @@ const onJumpResolution = async (resolutionId: string): Promise<void> => {
   font-size: 1.125rem;
   color: var(--color-text-soft);
   cursor: pointer;
+}
+
+.dock__close {
+  align-self: flex-start;
+  margin-top: 8px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text-soft);
+  cursor: pointer;
+}
+.dock__close:focus-visible {
+  outline: 2px solid var(--color-event-strong);
+  outline-offset: 2px;
 }
 
 .dock__pill {

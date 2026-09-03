@@ -801,9 +801,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-39
 **Tools**: Skill `impeccable`
 **Done when**:
-- [ ] `@vue/test-utils`: the picker offers only open hot spots; choose and skip are the same size (F09); reduced-motion presents without motion
-- [ ] Keyboard-reachable; no console warnings
-- [ ] `pnpm test` green
+- [x] `@vue/test-utils`: the picker offers only open hot spots; choose and skip are the same size (F09); reduced-motion presents without motion
+- [x] Keyboard-reachable; no console warnings
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: full
 
 ### T50: E2E — flag → resolve → close ceremony
