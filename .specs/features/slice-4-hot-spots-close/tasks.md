@@ -775,8 +775,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-40
 **Tools**: Skill `impeccable`
 **Done when**:
-- [ ] The brief exists, is internally consistent with `DESIGN.md`, and covers all F09 states
-- [ ] `pnpm check` green (no code — `check:process-ids` + doc-link)
+- [x] The brief exists, is internally consistent with `DESIGN.md`, and covers all F09 states
+- [x] `pnpm check` green (no code — `check:process-ids` + doc-link)
 **Tests**: none (design artifact) · **Gate**: build
 
 ### T48: Close-ceremony composable + transport
