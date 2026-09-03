@@ -55,11 +55,9 @@ export const flagHotSpotRoutes = (deps: FlagHotSpotDeps) =>
       const body = FlagBody.safeParse(await context.req.json().catch(() => null))
       if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
 
+      // No empty-board guard: a hot spot can be the first block on the board.
       const workshopId = context.req.param('id') as WorkshopId
       const operations = log(deps, workshopId)
-      if (operations.length === 0) {
-        return context.json({ error: 'workshop not found' as const }, 404)
-      }
 
       const targetId = body.data.annotatesTargetId as BuildingBlockId | undefined
       if (targetId !== undefined) {
@@ -108,9 +106,6 @@ export const flagHotSpotRoutes = (deps: FlagHotSpotDeps) =>
 
       const workshopId = context.req.param('id') as WorkshopId
       const blockId = context.req.param('blockId') as BuildingBlockId
-      if (log(deps, workshopId).length === 0) {
-        return context.json({ error: 'workshop not found' as const }, 404)
-      }
 
       const reopened = applyOperation(
         deps,

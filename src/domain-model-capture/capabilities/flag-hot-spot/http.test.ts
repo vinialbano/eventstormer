@@ -103,9 +103,11 @@ describe('POST /workshops/:id/board/hot-spots — direct flag', () => {
     expect(boardSnapshot(deps).hotSpotCount).toBe(0)
   })
 
-  it('404s when the board stream is empty', async () => {
-    const response = await flag(depsFor(), { label: 'x', author })
-    expect(response.status).toBe(404)
+  it('flags the first hot spot on an empty board — no other block is required', async () => {
+    const deps = depsFor()
+    const response = await flag(deps, { label: 'Unowned decision', author })
+    expect(response.status).toBe(200)
+    expect(boardSnapshot(deps).hotSpotCount).toBe(1)
   })
 })
 

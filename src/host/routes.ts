@@ -5,6 +5,7 @@ import {
   closeSessionRoutes,
   makeContributionRoutes,
   reviewProposalRoutes,
+  reviewResolutionRoutes,
   setScopeRoutes,
   startSessionRoutes,
   startWorkshopRoutes,
@@ -34,5 +35,6 @@ export const createRoutes = (config: HostConfig) => {
     .route('/api', startSessionRoutes(withDb))
     .route('/api', makeContributionRoutes({ ...withDb, inFlight: () => inFlight.contributions() }))
     .route('/api', reviewProposalRoutes(io))
+    .route('/api', reviewResolutionRoutes(io))
     .route('/api', closeSessionRoutes(withDb))
 }

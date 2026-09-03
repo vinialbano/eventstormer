@@ -184,6 +184,52 @@ describe('createRoutes — the mounted /api surface', () => {
     )
   })
 
+  it('accepts a resolution through the host: raise a hot spot, accept, GET /board shows it resolved', async () => {
+    const { config, app } = wired()
+    const workshopId = await createWorkshop(app)
+    const sessionId = await startSession(app, workshopId)
+
+    const flagged = await app.request(`/api/workshops/${workshopId}/board/hot-spots`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'Payment keeps timing out', author }),
+    })
+    expect(flagged.status).toBe(200)
+    const { hotSpotId } = (await flagged.json()) as { hotSpotId: string }
+
+    config.store.append(
+      { context: 'session-facilitation', aggregate: 'resolution', id: 'r_1' },
+      -1,
+      [
+        {
+          at,
+          opVersion: 1,
+          operation: {
+            v: 1,
+            at,
+            type: 'Resolution Proposed',
+            resolutionId: 'r_1',
+            sessionId,
+            contributionId: 'c_1' as ContributionId,
+            hotSpotId,
+            reference: 'added a retry with backoff',
+          },
+        },
+      ],
+    )
+
+    const accepted = await app.request('/api/resolutions/r_1/accept', { method: 'POST' })
+    expect(accepted.status).toBe(200)
+
+    const board = await app.request(`/api/workshops/${workshopId}/board`)
+    const boardBody = (await board.json()) as {
+      blocks: { id: string; resolved?: boolean; reference?: unknown }[]
+    }
+    expect(boardBody.blocks).toContainEqual(
+      expect.objectContaining({ id: hotSpotId, resolved: true, reference: 'added a retry with backoff' }),
+    )
+  })
+
   it('serves both artifact GETs: empty board is 200 and references list the building-blocks site', async () => {
     const { config, app } = wired()
     const workshopId = await createWorkshop(app)
