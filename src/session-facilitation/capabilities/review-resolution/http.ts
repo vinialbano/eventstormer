@@ -7,6 +7,7 @@ import type { ResolutionCommand } from '../../domain/resolution/model.ts'
 import { replay } from '../../domain/resolution/replay.ts'
 import { ResolutionEvent, SessionEvent } from '../../domain/schema/events.ts'
 import { resolutionStream, sessionStream, storedOps } from '../../infrastructure/streams.ts'
+import { acceptResolutionRoutes } from './accept.ts'
 import type { ReviewResolutionDeps } from './deps.ts'
 
 const EditBody = z.object({ reference: z.string().min(1) })
@@ -62,6 +63,7 @@ export const reviewResolutionRoutes = (deps: ReviewResolutionDeps) =>
         ? context.json({ ok: true as const }, 200)
         : context.json({ error: outcome.error }, outcome.status)
     })
+    .route('/', acceptResolutionRoutes(deps))
     .get('/sessions/:id/resolutions', (context) => {
       const sessionId = context.req.param('id') as SessionId
       const sessionEvents = deps.store
