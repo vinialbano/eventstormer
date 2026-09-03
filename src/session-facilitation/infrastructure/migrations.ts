@@ -12,6 +12,9 @@ import { applyMigrations, type Migration, type MigrationDb } from '~/plumbing/ev
  * - `derived_track` — a marker table; a `(contribution_id, track_index)` row
  *   means that interpreted track has been derived, so `reconcile` can
  *   skip it.
+ * - `hot_spot_sweep` — a marker table; a `sweep_key` row means the hot-spot
+ *   reconciliation pass has already raised the hot spot that key stands for, so
+ *   a later tick skips it.
  */
 export const SESSION_FACILITATION_MIGRATIONS: readonly Migration[] = [
   {
@@ -30,6 +33,16 @@ export const SESSION_FACILITATION_MIGRATIONS: readonly Migration[] = [
         contribution_id TEXT    NOT NULL,
         track_index     INTEGER NOT NULL,
         PRIMARY KEY (contribution_id, track_index)
+      );
+    `,
+  },
+  {
+    id: 2,
+    up: `
+      CREATE TABLE hot_spot_sweep (
+        sweep_key        TEXT NOT NULL PRIMARY KEY,
+        building_block_id TEXT NOT NULL,
+        at               TEXT NOT NULL
       );
     `,
   },
