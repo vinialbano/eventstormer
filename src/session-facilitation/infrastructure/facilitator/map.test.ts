@@ -94,6 +94,22 @@ describe('mapTurn — FacilitationTurn → InterpretedTrack[] with minted ids', 
     })
   })
 
+  it('resolves a propose-resolution hotSpotId label to a live block id, else keeps it verbatim', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        { track: 'propose-resolution', hotSpotId: 'Concern: Book borrowed', reference: 'fixed with a retry' },
+      ],
+      nextMove: { move: 'acknowledge' },
+    }
+    const resolve = (label: string): BuildingBlockId | undefined =>
+      label === 'Concern: Book borrowed' ? ('hs_live' as BuildingBlockId) : undefined
+    expect(mapTurn(turn, countingMint(), resolve).tracks[0]).toMatchObject({
+      track: 'propose-resolution',
+      hotSpotId: 'hs_live',
+    })
+    expect(mapTurn(turn, countingMint()).tracks[0]).toMatchObject({ hotSpotId: 'Concern: Book borrowed' })
+  })
+
   it('resolves a hot spot annotatesTargetId label to a live block id, carrying modelAffecting', () => {
     const turn: FacilitationTurn = {
       interpretation: [

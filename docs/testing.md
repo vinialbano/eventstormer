@@ -62,7 +62,7 @@ turn index cannot leak between them.
 
 | Spec | What it guards |
 | --- | --- |
-| `capture-loop.spec.ts` | Core smoke (ADR-008), **three serial macro stages**: (1) workshop setup — create workshop, start session, accept scope; (2) board mutations — narrate three contributions and accept each onto the backlog; (3) timeline — place and sequence two events. Reword, withdraw, readable-account walk, and reload persistence stay in unit tests. |
+| `capture-loop.spec.ts` | Core smoke (ADR-008), **four serial macro stages**: (1) workshop setup — create workshop, start session, accept scope; (2) board mutations — narrate three contributions and accept each onto the backlog; (3) timeline — place and sequence two events; (4) hot spots and close — flag two hot spots, accept a facilitator-proposed resolution for one, then run the in-dock close ceremony (stakeholder answer + problem pick) to a CLOSED session whose callouts and count survive a reload. Reword, withdraw, and the readable-account walk stay in unit tests. |
 | `capture-loop-no-optimism.spec.ts` | ADR-007 macro: `page.route()` holds the board GET after accept; the proposal receipt may appear while the backlog must stay empty until the refetch completes. |
 
 `playwright.config.ts` boots each project on its own port with `FACILITATOR_MODE=scripted` and an

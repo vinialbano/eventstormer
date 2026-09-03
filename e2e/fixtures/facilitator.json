@@ -38,6 +38,16 @@
         }
       ],
       "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "interpretation": [
+        {
+          "track": "propose-resolution",
+          "hotSpotId": "Concern: Member registered",
+          "reference": "Added a retry on duplicate signups."
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
     }
   ]
 }

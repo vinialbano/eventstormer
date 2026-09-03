@@ -814,8 +814,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4 success criterion (demoable end to end)
 **Tools**: Skill `playwright-cli`
 **Done when**:
-- [ ] `pnpm test:e2e` green (both specs); the new stage names its failing phase on failure
-- [ ] Real server, real SQLite, real SPA — no Anthropic call
+- [x] `pnpm test:e2e` green (both specs); the new stage names its failing phase on failure
+- [x] Real server, real SQLite, real SPA — no Anthropic call
 **Tests**: e2e · **Gate**: e2e
 
 ### T51: `minor` changeset + STATE/spec status + slice-6 list

@@ -15,7 +15,9 @@ import type { FacilitationTurn } from './turn-schema.ts'
  *
  * `mint` is injected so a test gets stable ids. `resolveBlockId` turns the label
  * the model names for a hot spot's target into a live `BuildingBlockId` — an
- * unresolvable label is dropped, leaving the hot spot unannotated.
+ * unresolvable `annotatesTargetId` label is dropped, leaving the hot spot
+ * unannotated; an unresolvable `propose-resolution` `hotSpotId` is kept verbatim
+ * (the model is told to pass an id there, and a bad one bounces at accept).
  */
 export interface TrackIdMint {
   proposalId: () => ProposalId
@@ -80,7 +82,7 @@ export const mapTurn = (
         return {
           track: 'propose-resolution',
           resolutionId: mint.resolutionId(),
-          hotSpotId: BuildingBlockIdSchema.parse(track.hotSpotId),
+          hotSpotId: resolveBlockId(track.hotSpotId) ?? BuildingBlockIdSchema.parse(track.hotSpotId),
           reference: track.reference,
         }
     }
