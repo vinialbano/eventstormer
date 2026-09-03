@@ -22,6 +22,15 @@ describe('Workshop.evolve', () => {
       started: true,
       format: 'big-picture',
       creatorName: 'Dana',
+      stakeholderCheckRun: false,
+      problemDecided: false,
+    })
+  })
+
+  it('Workshop Started clears the once-only close-ceremony guards', () => {
+    expect(evolve(emptyWorkshop(), started)).toMatchObject({
+      stakeholderCheckRun: false,
+      problemDecided: false,
     })
   })
 
@@ -38,6 +47,44 @@ describe('Workshop.evolve', () => {
       started: true,
       format: 'big-picture',
       creatorName: 'Dana',
+      stakeholderCheckRun: false,
+      problemDecided: false,
     })
+  })
+
+  it('Stakeholder Check Recorded sets the run guard and the completeness flag', () => {
+    const afterStart = evolve(emptyWorkshop(), started)
+    const next = evolve(afterStart, {
+      v: 1,
+      at,
+      type: 'Stakeholder Check Recorded',
+      workshopId,
+      complete: false,
+      absentNames: ['ops lead'],
+    })
+    expect(next).toMatchObject({ stakeholderCheckRun: true, stakeholderComplete: false })
+  })
+
+  it('Problem Chosen and Problem Choice Skipped both set problemDecided', () => {
+    const afterStart = evolve(emptyWorkshop(), started)
+    expect(
+      evolve(afterStart, {
+        v: 1,
+        at,
+        type: 'Problem Chosen',
+        workshopId,
+        problemHotSpotId: 'b_1' as never,
+        qualification: 'firm',
+      }).problemDecided,
+    ).toBe(true)
+    expect(
+      evolve(afterStart, {
+        v: 1,
+        at,
+        type: 'Problem Choice Skipped',
+        workshopId,
+        reason: 'none-chosen',
+      }).problemDecided,
+    ).toBe(true)
   })
 })

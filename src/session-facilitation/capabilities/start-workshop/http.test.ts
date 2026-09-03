@@ -33,7 +33,13 @@ describe('POST /workshops', () => {
     const events = deps.store
       .read(workshopStream(workshopId as WorkshopId))
       .map((row) => WorkshopEvent.parse(row.operation))
-    expect(replay(events)).toEqual({ started: true, format: 'big-picture', creatorName: 'Dana' })
+    expect(replay(events)).toEqual({
+      started: true,
+      format: 'big-picture',
+      creatorName: 'Dana',
+      stakeholderCheckRun: false,
+      problemDecided: false,
+    })
   })
 
   it('rejects a blank name with a 400 typed body', async () => {
