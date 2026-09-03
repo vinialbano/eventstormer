@@ -4,6 +4,7 @@ import {
   ContributionId,
   ProposalId,
   QuestionId,
+  ResolutionId,
   SessionId,
   WorkshopId,
 } from './ids.ts'
@@ -222,3 +223,67 @@ export const ProposalEvent = z.discriminatedUnion('type', [
   ProposalLapsed,
 ])
 export type ProposalEvent = z.infer<typeof ProposalEvent>
+
+// --- Resolution ---------------------------------------------------------------
+
+const ResolutionReference = z.string().min(1)
+
+const ResolutionProposed = z.object({
+  ...base,
+  type: z.literal('Resolution Proposed'),
+  resolutionId: ResolutionId,
+  sessionId: SessionId,
+  contributionId: ContributionId,
+  hotSpotId: BuildingBlockId,
+  reference: ResolutionReference,
+})
+
+const ResolutionEdited = z.object({
+  ...base,
+  type: z.literal('Resolution Edited'),
+  resolutionId: ResolutionId,
+  reference: ResolutionReference,
+})
+
+const ResolutionAccepted = z.object({
+  ...base,
+  type: z.literal('Resolution Accepted'),
+  resolutionId: ResolutionId,
+  accepter: z.string().min(1),
+})
+
+const ResolutionRejected = z.object({
+  ...base,
+  type: z.literal('Resolution Rejected'),
+  resolutionId: ResolutionId,
+})
+
+const ResolutionLapsed = z.object({
+  ...base,
+  type: z.literal('Resolution Lapsed'),
+  resolutionId: ResolutionId,
+})
+
+const HotSpotResolved = z.object({
+  ...base,
+  type: z.literal('Hot Spot Resolved'),
+  resolutionId: ResolutionId,
+})
+
+const HotSpotResolutionRejected = z.object({
+  ...base,
+  type: z.literal('Hot Spot Resolution Rejected'),
+  resolutionId: ResolutionId,
+  reason: z.string().min(1),
+})
+
+export const ResolutionEvent = z.discriminatedUnion('type', [
+  ResolutionProposed,
+  ResolutionEdited,
+  ResolutionAccepted,
+  ResolutionRejected,
+  ResolutionLapsed,
+  HotSpotResolved,
+  HotSpotResolutionRejected,
+])
+export type ResolutionEvent = z.infer<typeof ResolutionEvent>
