@@ -19,6 +19,8 @@ import { decide as decideResolution } from '../../domain/resolution/decide.ts'
 import { replay as replayResolution } from '../../domain/resolution/replay.ts'
 import { decide as decideSession } from '../../domain/session/decide.ts'
 import { replay as replaySession } from '../../domain/session/replay.ts'
+import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
+import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
 import { mapTurn } from '../../infrastructure/facilitator/map.ts'
@@ -57,6 +59,17 @@ const appendSession = (
   if (events.length === 0) return
   const position = deps.store.read(sessionStream(id)).length - 1
   deps.store.append(sessionStream(id), position, storedOps(events))
+}
+
+/** Append decided `Workshop` events at the stream's current head. */
+const appendWorkshop = (
+  deps: InterpretContributionDeps,
+  id: WorkshopId,
+  events: WorkshopEvent[],
+): void => {
+  if (events.length === 0) return
+  const position = deps.store.read(workshopStream(id)).length - 1
+  deps.store.append(workshopStream(id), position, storedOps(events))
 }
 
 /**
@@ -253,7 +266,8 @@ const deriveConfirmCompletePerspective = (
   event: Interpreted,
   track: ConfirmCompletePerspectiveTrack,
 ): void => {
-  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+  const sessionEvents = readSession(deps, event.sessionId)
+  const decided = decideSession(replaySession(sessionEvents), {
     type: 'Confirm Complete Perspective',
     sessionId: event.sessionId,
     questionId: track.questionId,
@@ -261,6 +275,21 @@ const deriveConfirmCompletePerspective = (
     at: event.at,
   })
   if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+
+  // A confirmed complete perspective is the "nobody else would tell it
+  // differently" answer — it records the workshop's stakeholder check as
+  // complete so a later chosen problem qualifies as firm. Idempotent: a second
+  // confirmation on an already-run check emits nothing.
+  const workshopId = sessionEvents.find((sessionEvent) => sessionEvent.type === 'Session Started')?.workshopId
+  if (workshopId === undefined) return
+  const recorded = decideWorkshop(replayWorkshop(readWorkshop(deps, workshopId)), {
+    type: 'Record Stakeholder Check',
+    workshopId,
+    complete: true,
+    absentNames: [],
+    at: event.at,
+  })
+  if (recorded.ok) appendWorkshop(deps, workshopId, recorded.value)
 }
 
 const deriveFreeFollowUp = (deps: InterpretContributionDeps, event: Interpreted): void => {

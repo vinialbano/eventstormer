@@ -109,7 +109,7 @@ T31 → T32 → T33 → T34 → T35
 ```
 ### Phase 8 — F09 workshop state + close-ceremony capabilities
 ```
-T36 → T37 → T38 → T39 → T40 → T41
+T36 → T37 → T38 → T39 → T40 → T40b → T41
 ```
 ### Phase 9 — App: hot-spot rendering + direct flag + resolution cards
 ```
@@ -617,8 +617,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-31, S4-32
 **Tools**: Skill `anoria-commons:distributed-systems`
 **Done when**:
-- [ ] Each event parses; `qualification` is `z.enum(['firm','provisional'])`; `reason` is `z.enum(['none-chosen','no-impediments-yet'])`
-- [ ] `pnpm check && pnpm build` green
+- [x] Each event parses; `qualification` is `z.enum(['firm','provisional'])`; `reason` is `z.enum(['none-chosen','no-impediments-yet'])`
+- [x] `pnpm check && pnpm build` green
 **Tests**: none (event SSOT — build gate) · **Gate**: build
 
 ### T37: `Workshop` decide/evolve — stakeholder check + choose/skip problem
@@ -629,9 +629,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-31, S4-32 (acceptance test 44)
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] Record check `complete:false` then Choose Problem → `Problem Chosen {qualification:'provisional'}`; `complete:true` → `firm` (acceptance test 44)
-- [ ] Second `Record Stakeholder Check` → `ok([])`; Choose after Skip (or vice versa) → `bad-transition`/`ok([])` per the pinned rule
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] Record check `complete:false` then Choose Problem → `Problem Chosen {qualification:'provisional'}`; `complete:true` → `firm` (acceptance test 44)
+- [x] Second `Record Stakeholder Check` → `ok([])`; Choose after Skip (or vice versa) → `ok([])` (pinned rule: a repeat once `problemDecided` emits nothing — the distinct `Problem Chosen` vs `Problem Choice Skipped` events keep the log discriminable)
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T38: `record-stakeholder-check` capability
@@ -642,9 +642,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-33 (F09 stakeholder answer)
 **Tools**: Skill `anoria-commons:code-architecture`
 **Done when**:
-- [ ] `complete:true` → 200, workshop stream has the event; `complete:false` with two names → event carries both
-- [ ] Re-post → 200 idempotent, no duplicate event
-- [ ] `pnpm test` green
+- [x] `complete:true` → 200, workshop stream has the event; `complete:false` with two names → event carries both
+- [x] Re-post → 200 idempotent, no duplicate event
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T39: `choose-problem` capability
@@ -655,9 +655,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-32 (candidates = open hot spots)
 **Tools**: Skill `anoria-commons:code-architecture` (sync query-back is allowed; a sync command is not)
 **Done when**:
-- [ ] Choose an open hot spot → 200 `Problem Chosen`; choose a resolved/unknown one → 409 `unknown-open-hot-spot`
-- [ ] Skip with `no-impediments-yet` → 200 `Problem Choice Skipped`
-- [ ] `pnpm test` green
+- [x] Choose an open hot spot → 200 `Problem Chosen`; choose a resolved/unknown one → 409 `unknown-open-hot-spot`
+- [x] Skip with `no-impediments-yet` → 200 `Problem Choice Skipped`
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T40: Wire F09 capabilities + `reconcileHotSpots` reads `absentNames`
@@ -668,8 +668,21 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-33 (one absent-stakeholder hot spot per person)
 **Tools**: Skill `anoria-commons:distributed-systems`
 **Done when**:
-- [ ] Host integration test: `stakeholder-check {complete:false, absentNames:['ops lead']}` → after a reconcile tick, one hot spot "Absent: ops lead" on the board
-- [ ] `pnpm test` green
+- [x] Host integration test: `stakeholder-check {complete:false, absentNames:['ops lead']}` → after a reconcile tick, one hot spot "Absent stakeholder: ops lead" on the board
+- [x] `pnpm test` green
+**Tests**: integration · **Gate**: full
+
+### T40b: `interpret.ts` — complete-perspective records the workshop stakeholder check
+**What**: In `interpret.ts` `deriveConfirmCompletePerspective`, after resolving the question, also append `Workshop.decide(Record Stakeholder Check {complete:true, absentNames:[]})` on the session's workshop stream (same context, same tick, idempotent). Completes the half of T29 that was reduced in batch 4 (it needed the `Record Stakeholder Check` command from T37). Owns acceptance test 44.
+**Where**: `src/session-facilitation/capabilities/interpret-contribution/interpret.ts`
+**Depends on**: T40, T37
+**Reuses**: `deriveConfirmCompletePerspective`, `appendSession` pattern
+**Requirement**: S4-23 (acceptance test 44)
+**Tools**: NONE
+**Done when**:
+- [x] A contribution interpreted as `confirm-complete-perspective` resolves the question AND the workshop stream carries `Stakeholder Check Recorded {complete:true, absentNames:[]}`; a later `Choose Problem` yields `firm` (acceptance test 44)
+- [x] Repeated confirmations record the workshop check exactly once
+- [x] `pnpm check` green
 **Tests**: integration · **Gate**: full
 
 ### T41: `readArtifactSource` extension for #42
@@ -835,7 +848,7 @@ P4  (Resolution + review)       T13 → T14 → T15 → T16 → T17 → T18 → 
 P5  (hot-spot proposal track)   T20 → T21 → T22 → T23 → T24 → T25
 P6  (question-track judgments)  T26 → T27 → T28 → T29 → T30
 P7  (choreography sweep)        T31 → T32 → T33 → T34 → T35
-P8  (F09 workshop state)        T36 → T37 → T38 → T39 → T40 → T41
+P8  (F09 workshop state)        T36 → T37 → T38 → T39 → T40 → T40b → T41
 P9  (app: hot spots + cards)    T42 → T43 → T44 → T45 → T46
 P10 (app: close + changeset)    T47 → T48 → T49 → T50 → T51
 ```
@@ -908,7 +921,8 @@ aggregate — the same granularity slice 1 used (`T10 applyOperation`, `T15 repl
 | T38 | T37 | T37→T38 | ✅ |
 | T39 | T38 | T38→T39 | ✅ |
 | T40 | T39, T34 | T39→T40; T34 (P7) earlier | ✅ |
-| T41 | T40 | T40→T41 | ✅ |
+| T40b | T40, T37 | T40→T40b (resolves the T29 back-edge — see note) | ✅ |
+| T41 | T40b | T40b→T41 | ✅ |
 | T42 | T10 | P9 after P3 | ✅ |
 | T43 | T42 | T42→T43 | ✅ |
 | T44 | T43, T12 | T43→T44; T12 earlier | ✅ |

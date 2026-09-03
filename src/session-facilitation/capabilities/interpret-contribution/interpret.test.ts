@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type {
+  BuildingBlockId,
   ContributionId,
   ProposalId,
   QuestionId,
@@ -15,7 +16,9 @@ import { applySessionFacilitationMigrations } from '../../infrastructure/migrati
 import { type DerivedTrackDb, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { close as closeIndexRow, reserve, type SessionIndexDb } from '../../infrastructure/session-index.ts'
 import { sessionStream, workshopStream } from '../../infrastructure/streams.ts'
-import { ProposalEvent, SessionEvent } from '../../domain/schema/events.ts'
+import { ProposalEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
+import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import type { Facilitator, FacilitatorFailure } from '../../infrastructure/facilitator/port.ts'
 import type { FacilitationTurn } from '../../infrastructure/facilitator/turn-schema.ts'
 import type { TrackIdMint } from '../../infrastructure/facilitator/map.ts'
@@ -425,7 +428,10 @@ describe('interpretContribution — the commit point + derivation', () => {
     expect(questionResolved('q_sh')).toBe(true)
   })
 
-  it('resolves the question from a confirm-complete-perspective track without a workshop append', async () => {
+  const workshopEvents = (): WorkshopEvent[] =>
+    store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation))
+
+  it('resolves the question and records the workshop stakeholder check as complete', async () => {
     seedSession()
     askQuestion('q_cp')
     contribute('no, that is the whole picture', 'c_1')
@@ -436,9 +442,38 @@ describe('interpretContribution — the commit point + derivation', () => {
 
     expect(only('Complete Perspective Confirmed').map((event) => event.questionId)).toEqual(['q_cp'])
     expect(questionResolved('q_cp')).toBe(true)
-    expect(store.read(workshopStream(workshopId)).map((row) => row.operation)).toEqual([
-      expect.objectContaining({ type: 'Workshop Started' }),
+    expect(workshopEvents().filter((event) => event.type === 'Stakeholder Check Recorded')).toEqual([
+      { v: 1, at, type: 'Stakeholder Check Recorded', workshopId, complete: true, absentNames: [] },
     ])
+
+    // A chosen problem after this confirmation qualifies as firm.
+    const chosen = decideWorkshop(replayWorkshop(workshopEvents()), {
+      type: 'Choose Problem',
+      workshopId,
+      problemHotSpotId: 'b_hs' as BuildingBlockId,
+      at,
+    })
+    expect(chosen.ok && chosen.value[0]).toMatchObject({ type: 'Problem Chosen', qualification: 'firm' })
+  })
+
+  it('records the workshop stakeholder check once across repeated confirmations', async () => {
+    seedSession()
+    askQuestion('q_cp1')
+    askQuestion('q_cp2')
+    contribute('nothing more from me', 'c_1')
+    contribute('still nothing more', 'c_2')
+
+    await interpretContribution(
+      deps([
+        turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp1' }]),
+        turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp2' }]),
+      ]),
+    )
+    await interpretContribution(
+      deps([turn([{ track: 'confirm-complete-perspective', questionId: 'q_cp2' }])]),
+    )
+
+    expect(workshopEvents().filter((event) => event.type === 'Stakeholder Check Recorded')).toHaveLength(1)
   })
 
   it('drops a judgment track naming an unknown question', async () => {
