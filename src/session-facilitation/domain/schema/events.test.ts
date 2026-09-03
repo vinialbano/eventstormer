@@ -87,6 +87,12 @@ describe('SessionEvent SSOT — Question Asked refine (scopeStatement iff kind =
     expect(SessionEvent.parse(phaseQuestion).type).toBe('Question Asked')
   })
 
+  it('accepts a stakeholder question (no scopeStatement) and rejects one that carries a scopeStatement', () => {
+    const stakeholder = { ...phaseQuestion, kind: 'stakeholder', text: 'Would anyone else tell this differently?' }
+    expect(SessionEvent.parse(stakeholder)).toMatchObject({ kind: 'stakeholder' })
+    expect(() => SessionEvent.parse({ ...stakeholder, scopeStatement: 'nope' })).toThrow()
+  })
+
   it('rejects a phase question that carries a scopeStatement', () => {
     expect(() =>
       SessionEvent.parse({ ...phaseQuestion, scopeStatement: 'nope' }),

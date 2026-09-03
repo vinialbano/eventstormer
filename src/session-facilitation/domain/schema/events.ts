@@ -85,7 +85,7 @@ const QuestionAsked = z.object({
   type: z.literal('Question Asked'),
   sessionId: SessionId,
   questionId: QuestionId,
-  kind: z.enum(['scope', 'phase', 'free']),
+  kind: z.enum(['scope', 'phase', 'free', 'stakeholder']),
   text: z.string().min(1),
   /** Required iff `kind` is `scope` — the proposed scope statement to review. */
   scopeStatement: z.string().min(1).max(10_000).optional(),

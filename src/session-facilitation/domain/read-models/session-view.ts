@@ -25,12 +25,12 @@ interface TranscriptTurn {
   contributionId?: ContributionId
   /** Present on `question` turns — the client renders the `scope` question as an
    * F05 card rather than a plain message. */
-  questionKind?: 'scope' | 'phase' | 'free'
+  questionKind?: 'scope' | 'phase' | 'free' | 'stakeholder'
 }
 
 interface OpenQuestion {
   questionId: QuestionId
-  kind: 'scope' | 'phase' | 'free'
+  kind: 'scope' | 'phase' | 'free' | 'stakeholder'
   text: string
 }
 

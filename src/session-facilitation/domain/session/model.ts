@@ -48,7 +48,7 @@ export type SessionCommand =
       type: 'Ask Question'
       sessionId: SessionId
       questionId: QuestionId
-      kind: 'scope' | 'phase' | 'free'
+      kind: 'scope' | 'phase' | 'free' | 'stakeholder'
       text: string
       scopeStatement?: string
       at: string
