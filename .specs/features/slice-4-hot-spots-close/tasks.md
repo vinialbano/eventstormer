@@ -401,8 +401,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-13
 **Tools**: Skill `anoria-commons:distributed-systems` (backward-compatible event evolution)
 **Done when**:
-- [ ] A `Building Block Proposed` with neither new field parses as a plain capture (`modelAffecting` defaults, `annotatesTargetId` absent)
-- [ ] `pnpm check && pnpm build` green
+- [x] A `Building Block Proposed` with neither new field parses as a plain capture (`modelAffecting` defaults, `annotatesTargetId` absent)
+- [x] `pnpm check && pnpm build` green
 **Tests**: none (schema — build gate) · **Gate**: build
 
 ### T21: `turn-schema.ts` hot-spot fields + ACL mapping + optional-count guard
@@ -413,10 +413,10 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-14, AD-015
 **Tools**: MCP `context7` (Anthropic structured-output limits — `docs/agents/ai-harness-gotchas.md` first) · Skill `testing-boss`
 **Done when**:
-- [ ] Optional-parameter count test asserts the new total and is ≤ 24
-- [ ] `mapTurn` maps a `annotatesTargetId` label to a live block id and drops an unknown one
-- [ ] No `z.unknown()` anywhere in `turn-schema.ts`
-- [ ] `pnpm test` green
+- [x] Optional-parameter count test asserts the new total and is ≤ 24
+- [x] `mapTurn` maps a `annotatesTargetId` label to a live block id and drops an unknown one
+- [x] No `z.unknown()` anywhere in `turn-schema.ts`
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: quick
 
 ### T22: `Proposal` — `Set Proposal Kind` command + `Proposal Kind Set` event
@@ -427,9 +427,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-16
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] Set kind on a `PROPOSED`/`EDITED`/`APPLY_FAILED` proposal → event; on a terminal one → `bad-transition`
-- [ ] `evolve` exposes the last-set `modelAffecting` (default from birth)
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] Set kind on a `PROPOSED`/`EDITED`/`APPLY_FAILED` proposal → event; on a terminal one → `bad-transition`
+- [x] `evolve` exposes the last-set `modelAffecting` (default from birth)
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T23: `interpret.ts` carries hot-spot fields into `Propose Building Block`
@@ -440,9 +440,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-13
 **Tools**: NONE
 **Done when**:
-- [ ] A `propose-building-block` track with `blockKind:'hot-spot'` derives a `Building Block Proposed` carrying the kind + fields
-- [ ] Existing capture-derivation tests unaffected
-- [ ] `pnpm test` green
+- [x] A `propose-building-block` track with `blockKind:'hot-spot'` derives a `Building Block Proposed` carrying the kind + fields
+- [x] Existing capture-derivation tests unaffected
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T24: `accept.ts` — hot-spot proposal → raise-hot-spot (+ follow-on annotate)
@@ -453,10 +453,10 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-15
 **Tools**: Skill `anoria-commons:distributed-systems`
 **Done when**:
-- [ ] Accept a hot-spot proposal annotating a live event → GET /board shows a hot-spot block annotating it, `Proposal` `APPLIED` (acceptance test 4 — indistinguishable from a directly-flagged one)
-- [ ] One contribution yielding a hot-spot proposal **and** a building-block proposal: rejecting one leaves the other (acceptance test 11)
-- [ ] A failed follow-on annotate leaves the hot spot unannotated, `Proposal` still `APPLIED`
-- [ ] `pnpm test` green
+- [x] Accept a hot-spot proposal annotating a live event → GET /board shows a hot-spot block annotating it, `Proposal` `APPLIED` (acceptance test 4 — indistinguishable from a directly-flagged one)
+- [x] One contribution yielding a hot-spot proposal **and** a building-block proposal: rejecting one leaves the other (acceptance test 11)
+- [x] A failed follow-on annotate leaves the hot spot unannotated, `Proposal` still `APPLIED`
+- [x] `pnpm test` green
 **Tests**: integration · **Gate**: full
 
 ### T25: `POST /proposals/:id/kind` route + `proposalsView` carries `modelAffecting`
@@ -467,8 +467,8 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-16
 **Tools**: NONE
 **Done when**:
-- [ ] Flip a hot-spot proposal's kind via the route → `GET /sessions/:id/proposals` shows the new `modelAffecting`
-- [ ] `pnpm check && pnpm build` green (Phase 5 close)
+- [x] Flip a hot-spot proposal's kind via the route → `GET /sessions/:id/proposals` shows the new `modelAffecting`
+- [x] `pnpm check && pnpm build` green (Phase 5 close)
 **Tests**: integration · **Gate**: build
 
 ### Phase 6 — Question-track judgments
