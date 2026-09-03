@@ -760,9 +760,9 @@ and `deriveProposeResolution` in `interpret.ts`. **Phase 5 (T21/T28) must keep t
 **Requirement**: S4-38
 **Tools**: Skill `testing-boss`
 **Done when**:
-- [ ] A pending resolution keeps the poll active; it stops when none pending (sensor: poll `resolutions` not `board`)
-- [ ] Drawer renders resolutions with a jump chevron
-- [ ] `pnpm check && pnpm build` green (Phase 9 close)
+- [x] A pending resolution keeps the poll active; it stops when none pending (sensor: poll `resolutions` not `board`)
+- [x] Drawer renders resolutions with a jump chevron
+- [x] `pnpm check && pnpm build` green (Phase 9 close)
 **Tests**: unit · **Gate**: build
 
 ### Phase 10 — App: close ceremony + impeccable + changeset
