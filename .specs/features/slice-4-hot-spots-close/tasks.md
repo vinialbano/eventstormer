@@ -136,9 +136,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-01, S4-05
 **Tools**: MCP NONE · Skill `anoria-commons:domain-modeling` (slim write model — only what invariants read)
 **Done when**:
-- [ ] Types compile; `emptySnapshot().hotSpotCount === 0`
-- [ ] `reference` is NOT on the write model (no invariant reads it)
-- [ ] `pnpm check && pnpm build` green
+- [x] Types compile; `emptySnapshot().hotSpotCount === 0`
+- [x] `reference` is NOT on the write model (no invariant reads it)
+- [x] `pnpm check && pnpm build` green
 **Tests**: none (schema/types — build gate) · **Gate**: build
 
 ### T2: `evolve` — raise-hot-spot / annotate / unannotate
@@ -149,9 +149,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-01, S4-02
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] Given a raise then annotate, `writeModel.annotates` holds exactly that edge, asserted against a spelled-out literal (L-001)
-- [ ] `unannotate` on a hot spot annotating nothing leaves `annotates` unchanged
-- [ ] `pnpm test` green; domain coverage ≥ 90 %; test count recorded
+- [x] Given a raise then annotate, `writeModel.annotates` holds exactly that edge, asserted against a spelled-out literal (L-001)
+- [x] `unannotate` on a hot spot annotating nothing leaves `annotates` unchanged
+- [x] `pnpm test` green; domain coverage ≥ 90 %; test count recorded
 **Tests**: unit · **Gate**: quick
 
 ### T3: `project` — raise-hot-spot / annotate / unannotate + `hotSpotCount`
@@ -162,8 +162,8 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-05, S4-04 (F08 count)
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] `project` over `[raise, annotate]` yields a snapshot whose hot-spot block `.annotates` equals the literal target id and `hotSpotCount === 1`
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] `project` over `[raise, annotate]` yields a snapshot whose hot-spot block `.annotates` equals the literal target id and `hotSpotCount === 1`
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T4: `decide` — raise-hot-spot / annotate / unannotate
@@ -174,10 +174,10 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-01, S4-02
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] G/W/T tests through the operation for: duplicate hot-spot id → `duplicate-id`; annotate unknown/withdrawn target → matching rejection, log unchanged; annotate targeting a hot spot → `kind-permission`; unannotate with no annotation → `missing-edge`
-- [ ] `switch-exhaustiveness-check` still green (the three kinds now have real arms)
-- [ ] cognitive-complexity lint green on `decide.ts`
-- [ ] `pnpm test` green
+- [x] G/W/T tests through the operation for: duplicate hot-spot id → `duplicate-id`; annotate unknown/withdrawn target → matching rejection, log unchanged; annotate targeting a hot spot → `kind-permission`; unannotate with no annotation → `missing-edge`
+- [x] `switch-exhaustiveness-check` still green (the three kinds now have real arms)
+- [x] cognitive-complexity lint green on `decide.ts`
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: quick
 
 ### T5: Reword preserves annotation + fold-consistency property covers the new kinds
@@ -188,9 +188,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-07, S4-05 (S4 success criterion — fold invariant)
 **Tools**: Skill `testing-boss` (discrimination — a non-writing fold must fail a distinct-value assertion)
 **Done when**:
-- [ ] Reword-after-annotate test asserts the annotation survives, against a literal
-- [ ] Property test emits the 3 new kinds and passes
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] Reword-after-annotate test asserts the annotation survives, against a literal
+- [x] Property test emits the 3 new kinds and passes
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### Phase 2 — Board: resolve + reopen + withdraw cascades
@@ -203,9 +203,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-03, S4-04
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] `project` over `[raise, resolve(ref='B fixed it'), reopen]` yields `resolved:false` with `reference` still `'B fixed it'` (acceptance test 19a — value retained), asserted against literals
-- [ ] `reinstate` after `withdraw` on a hot spot → naked block (acceptance test 17)
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] `project` over `[raise, resolve(ref='B fixed it'), reopen]` yields `resolved:false` with `reference` still `'B fixed it'` (acceptance test 19a — value retained), asserted against literals
+- [x] `reinstate` after `withdraw` on a hot spot → naked block (acceptance test 17)
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T7: `decide` — resolve / reopen (+ reference-present guard, Zod research)
@@ -216,11 +216,11 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-03, S4-04
 **Tools**: MCP `context7` (Zod v4 object-key optionality) · Skill `anoria-commons:software-design` (error contract — classify by retry behaviour)
 **Done when**:
-- [ ] A `resolve` payload with **no** `reference` key is rejected (`schema`), snapshot unchanged — tested for both absent and `undefined`
-- [ ] A `resolve` with `reference: null` is **accepted** (a recorded value, F08)
-- [ ] resolve non-hot-spot → `kind-permission`; resolve already-resolved → `already-resolved` (acceptance test 39 half); reopen an open hot spot → `not-resolved`
-- [ ] The frozen `v:1` `Operation` shape is not otherwise mutated (append-only)
-- [ ] `pnpm test` green
+- [x] A `resolve` payload with **no** `reference` key is rejected (`schema`), snapshot unchanged — tested for both absent and `undefined`
+- [x] A `resolve` with `reference: null` is **accepted** (a recorded value, F08)
+- [x] resolve non-hot-spot → `kind-permission`; resolve already-resolved → `already-resolved` (acceptance test 39 half); reopen an open hot spot → `not-resolved`
+- [x] The frozen `v:1` `Operation` shape is not otherwise mutated (append-only)
+- [x] `pnpm test` green
 **Tests**: unit · **Gate**: quick
 
 ### T8: Withdraw cascades — annotated block → hot spots; hot spot → unannotate
@@ -231,10 +231,10 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4-06
 **Tools**: Skill `anoria-commons:domain-modeling`
 **Done when**:
-- [ ] Given `H` annotates `E`, `withdraw(E)` → `[withdraw(E), withdraw(H)]`; no dangling annotation in the snapshot (acceptance test 21), asserted against a literal event list
-- [ ] `withdraw(H)` where `H` annotates `E` → `[withdraw(H), unannotate(H)]`; `E` untouched
-- [ ] Two hot spots annotating one block → both withdrawn, deterministic order
-- [ ] `pnpm test` green; domain coverage ≥ 90 %
+- [x] Given `H` annotates `E`, `withdraw(E)` → `[withdraw(E), withdraw(H)]`; no dangling annotation in the snapshot (acceptance test 21), asserted against a literal event list
+- [x] `withdraw(H)` where `H` annotates `E` → `[withdraw(H), unannotate(H)]`; `E` untouched
+- [x] Two hot spots annotating one block → both withdrawn, deterministic order
+- [x] `pnpm test` green; domain coverage ≥ 90 %
 **Tests**: unit · **Gate**: quick
 
 ### T9: Full-fold replay consistency incl. hot-spot state
@@ -245,9 +245,9 @@ T47 → T48 → T49 → T50 → T51
 **Requirement**: S4 success criterion (fold invariant), acceptance test 18a
 **Tools**: Skill `testing-boss`
 **Done when**:
-- [ ] A hand-built log with every hot-spot op replays to a snapshot pinned to a spelled-out literal (not compared to another projection — `docs/testing.md`)
-- [ ] Property test green with resolve/reopen in the arbitrary
-- [ ] `pnpm check && pnpm build` green (Phase 2 close)
+- [x] A hand-built log with every hot-spot op replays to a snapshot pinned to a spelled-out literal (not compared to another projection — `docs/testing.md`)
+- [x] Property test green with resolve/reopen in the arbitrary
+- [x] `pnpm check && pnpm build` green (Phase 2 close)
 **Tests**: unit · **Gate**: build
 
 ### Phase 3 — Board: snapshot HTTP + direct flag capability
