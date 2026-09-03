@@ -18,5 +18,6 @@ export { WorkshopId } from '~/plumbing/ids.ts'
 export const SessionId = z.string().brand<'SessionId'>()
 export const ContributionId = z.string().brand<'ContributionId'>()
 export const ProposalId = z.string().brand<'ProposalId'>()
+export const ResolutionId = z.string().brand<'ResolutionId'>()
 export const QuestionId = z.string().brand<'QuestionId'>()
 export const BuildingBlockId = z.string().brand<'BuildingBlockId'>()
