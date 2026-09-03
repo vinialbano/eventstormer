@@ -11,6 +11,9 @@ export interface SessionWriteModel {
   closed: boolean
   questions: Map<QuestionId, 'open' | 'resolved'>
   interpreted: Set<ContributionId>
+  /** `${questionId}::${personName}` for every absent stakeholder already named —
+   * `Name Absent Stakeholder` is once per pair. */
+  absentStakeholders: Set<string>
 }
 
 export const emptySession = (): SessionWriteModel => ({
@@ -18,6 +21,7 @@ export const emptySession = (): SessionWriteModel => ({
   closed: false,
   questions: new Map(),
   interpreted: new Set(),
+  absentStakeholders: new Set(),
 })
 
 /** Why a `Session` command was rejected — every reason is *systemic*. */
@@ -78,6 +82,29 @@ export type SessionCommand =
       contributionId: ContributionId
       format: string
       note: string
+      at: string
+    }
+  | {
+      type: 'Reveal Knowledge Gap'
+      sessionId: SessionId
+      questionId: QuestionId
+      byContributionId: ContributionId
+      detail?: string
+      at: string
+    }
+  | {
+      type: 'Name Absent Stakeholder'
+      sessionId: SessionId
+      questionId: QuestionId
+      byContributionId: ContributionId
+      personName: string
+      at: string
+    }
+  | {
+      type: 'Confirm Complete Perspective'
+      sessionId: SessionId
+      questionId: QuestionId
+      byContributionId: ContributionId
       at: string
     }
   | { type: 'Close Session'; sessionId: SessionId; workshopId: WorkshopId; at: string }

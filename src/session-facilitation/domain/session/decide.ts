@@ -82,6 +82,70 @@ const decideAnswerQuestion = (
   ])
 }
 
+const decideRevealKnowledgeGap = (
+  writeModel: SessionWriteModel,
+  command: CommandOf<'Reveal Knowledge Gap'>,
+): Decision => {
+  const status = writeModel.questions.get(command.questionId)
+  if (status === undefined || status === 'resolved') return ok([])
+  return ok([
+    {
+      v: 1,
+      type: 'Knowledge Gap Revealed',
+      sessionId: command.sessionId,
+      questionId: command.questionId,
+      byContributionId: command.byContributionId,
+      ...(command.detail === undefined ? {} : { detail: command.detail }),
+      at: command.at,
+    },
+  ])
+}
+
+const decideConfirmCompletePerspective = (
+  writeModel: SessionWriteModel,
+  command: CommandOf<'Confirm Complete Perspective'>,
+): Decision => {
+  const status = writeModel.questions.get(command.questionId)
+  if (status === undefined || status === 'resolved') return ok([])
+  return ok([
+    {
+      v: 1,
+      type: 'Complete Perspective Confirmed',
+      sessionId: command.sessionId,
+      questionId: command.questionId,
+      byContributionId: command.byContributionId,
+      at: command.at,
+    },
+  ])
+}
+
+/**
+ * Once per `(questionId, personName)` — a second naming of the same person on the
+ * same question is `ok([])`. Not gated on the question being open: naming the
+ * first absent stakeholder resolves the question, and a second distinct name in
+ * the same interpretation must still land.
+ */
+const decideNameAbsentStakeholder = (
+  writeModel: SessionWriteModel,
+  command: CommandOf<'Name Absent Stakeholder'>,
+): Decision => {
+  if (!writeModel.questions.has(command.questionId)) return ok([])
+  if (writeModel.absentStakeholders.has(`${command.questionId}::${command.personName}`)) {
+    return ok([])
+  }
+  return ok([
+    {
+      v: 1,
+      type: 'Absent Stakeholder Named',
+      sessionId: command.sessionId,
+      questionId: command.questionId,
+      byContributionId: command.byContributionId,
+      personName: command.personName,
+      at: command.at,
+    },
+  ])
+}
+
 const decideInterpret = (
   writeModel: SessionWriteModel,
   command: CommandOf<'Interpret Contribution'>,
@@ -178,6 +242,12 @@ export const decide = (
       return decideInterpret(writeModel, command)
     case 'Fail Interpretation':
       return decideFailInterpretation(writeModel, command)
+    case 'Reveal Knowledge Gap':
+      return decideRevealKnowledgeGap(writeModel, command)
+    case 'Name Absent Stakeholder':
+      return decideNameAbsentStakeholder(writeModel, command)
+    case 'Confirm Complete Perspective':
+      return decideConfirmCompletePerspective(writeModel, command)
     case 'Attribute Contribution':
       return decideAttribute(command)
     case 'Close Session':

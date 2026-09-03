@@ -446,3 +446,131 @@ describe('Session.decide — Close Session', () => {
     if (isOk(result)) expect(result.value).toEqual([])
   })
 })
+
+describe('Session.decide — question-track judgments', () => {
+  const asked = (): SessionEvent[] => [
+    ...startedStream,
+    { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'q?' },
+  ]
+
+  it('Reveal Knowledge Gap on an open question emits the event and carries an optional detail', () => {
+    const result = decide(replay(asked()), {
+      type: 'Reveal Knowledge Gap',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_1'),
+      detail: 'nobody owns returns',
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Knowledge Gap Revealed',
+          sessionId,
+          questionId: 'q_1',
+          byContributionId: 'c_1',
+          detail: 'nobody owns returns',
+        },
+      ])
+    }
+  })
+
+  it('Reveal Knowledge Gap resolves the question — a second reveal is ok([])', () => {
+    const stream = [
+      ...asked(),
+      { v: 1, at, type: 'Knowledge Gap Revealed', sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') } as SessionEvent,
+    ]
+    expect(replay(stream).questions.get(toQuestionId('q_1'))).toBe('resolved')
+    const result = decide(replay(stream), {
+      type: 'Reveal Knowledge Gap',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_2'),
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('a judgment on an unknown question is ok([])', () => {
+    const result = decide(replay(asked()), {
+      type: 'Confirm Complete Perspective',
+      sessionId,
+      questionId: toQuestionId('q_unknown'),
+      byContributionId: toContributionId('c_1'),
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('Confirm Complete Perspective on an open question emits and resolves it', () => {
+    const result = decide(replay(asked()), {
+      type: 'Confirm Complete Perspective',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_1'),
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Complete Perspective Confirmed',
+          sessionId,
+          questionId: 'q_1',
+          byContributionId: 'c_1',
+        },
+      ])
+      expect(replay([...asked(), ...result.value]).questions.get(toQuestionId('q_1'))).toBe('resolved')
+    }
+  })
+
+  it('Name Absent Stakeholder — two different people on one question emit two events', () => {
+    const first = decide(replay(asked()), {
+      type: 'Name Absent Stakeholder',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_1'),
+      personName: 'ops lead',
+      at,
+    })
+    expect(isOk(first)).toBe(true)
+    const afterFirst = isOk(first) ? [...asked(), ...first.value] : asked()
+    const second = decide(replay(afterFirst), {
+      type: 'Name Absent Stakeholder',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_1'),
+      personName: 'finance partner',
+      at,
+    })
+    expect(isOk(second)).toBe(true)
+    if (isOk(first) && isOk(second)) {
+      expect(first.value[0]).toMatchObject({ type: 'Absent Stakeholder Named', personName: 'ops lead' })
+      expect(second.value[0]).toMatchObject({ type: 'Absent Stakeholder Named', personName: 'finance partner' })
+    }
+  })
+
+  it('Name Absent Stakeholder — the same person twice on one question is ok([]) the second time', () => {
+    const stream = [
+      ...asked(),
+      { v: 1, at, type: 'Absent Stakeholder Named', sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1'), personName: 'ops lead' } as SessionEvent,
+    ]
+    const result = decide(replay(stream), {
+      type: 'Name Absent Stakeholder',
+      sessionId,
+      questionId: toQuestionId('q_1'),
+      byContributionId: toContributionId('c_2'),
+      personName: 'ops lead',
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+})

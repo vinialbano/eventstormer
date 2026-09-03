@@ -48,3 +48,33 @@ describe('Session.evolve / replay', () => {
     expect(base).toEqual(emptySession())
   })
 })
+
+describe('Session.evolve — question-track judgments', () => {
+  const base: SessionEvent[] = [
+    { v: 1, at, type: 'Session Started', sessionId, workshopId },
+    { v: 1, at, type: 'Question Asked', sessionId, questionId: toQuestionId('q_1'), kind: 'phase', text: 'q?' },
+  ]
+
+  it('Absent Stakeholder Named resolves the question and records the (question, person) pair', () => {
+    const writeModel = replay([
+      ...base,
+      { v: 1, at, type: 'Absent Stakeholder Named', sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1'), personName: 'ops lead' },
+    ])
+    expect(writeModel.questions.get(toQuestionId('q_1'))).toBe('resolved')
+    expect(writeModel.absentStakeholders.has('q_1::ops lead')).toBe(true)
+    expect(writeModel.absentStakeholders.has('q_1::finance partner')).toBe(false)
+  })
+
+  it('Knowledge Gap Revealed and Complete Perspective Confirmed each resolve the question', () => {
+    expect(
+      replay([...base, { v: 1, at, type: 'Knowledge Gap Revealed', sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') }]).questions.get(toQuestionId('q_1')),
+    ).toBe('resolved')
+    expect(
+      replay([...base, { v: 1, at, type: 'Complete Perspective Confirmed', sessionId, questionId: toQuestionId('q_1'), byContributionId: toContributionId('c_1') }]).questions.get(toQuestionId('q_1')),
+    ).toBe('resolved')
+  })
+
+  it('emptySession starts with an empty absentStakeholders set', () => {
+    expect(emptySession().absentStakeholders).toEqual(new Set())
+  })
+})
