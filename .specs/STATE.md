@@ -52,12 +52,13 @@ capture.
 ## Handoff
 
 - **Feature**: `slice-4-hot-spots-close` (`.specs/features/slice-4-hot-spots-close/`) — GitHub **#41** · parent effort map #9 · version target **0.5.0**
-- **Phase / Task**: Execute — Batches 1–3 done (T1–T25). Next: Batch 4 (Phases 6+7, T26–T35).
-- **Branch**: `slice-4-hot-spots-close` (not pushed). Head at T25 `8552485`. `pnpm check` + `pnpm build` green, **837 tests** (baseline 718).
+- **Phase / Task**: Execute — Batches 1–4 done (T1–T35). Next: Batch 5 (Phase 8, T36–T41 + T40b).
+- **Branch**: `slice-4-hot-spots-close` (not pushed). Head `8d58eae`. `pnpm check` + `pnpm build` green, **875 tests** (baseline 718).
 - **Completed**: `spec.md`/`context.md`/`design.md`/`tasks.md`. AD-032/033/034. Issues #41/#42/#43 updated. **T1–T9** (board hot-spot ops + cascades: `9e477ee`..`9b2645f`). **T10–T19** (board HTTP + `flag-hot-spot` + `Resolution` aggregate + `review-resolution` + propose-resolution track: `59d0f2e`..`6130b96`).
 - **In-progress**: none (Batch 3 not yet dispatched).
 - **Deviations logged** (all sound): flag-hot-spot carries `author` in the body (ADR-003); a hot spot may be the first block on a board (dropped the empty-board 404); `Hot Spot Resolution Rejected.reason` is `z.string().min(1)` passing the raw board rejection kind; **propose-resolution track built in Phase 4 (T16)**; **T20: `modelAffecting` is `z.boolean().optional()` not `.default(true)`** — `.default` widens the output type and forces the field at ~10 sites; consumers read `?? true` (SPEC_DEVIATION markers in `interpreted-track.ts` + `events.ts`); `mapTurn` gained a `resolveBlockId` param; `Propose Building Block` command carries `modelAffecting?`/`annotatesTargetId?`. `FacilitationTurnSchema` optional count now **4** (≤ 24).
-- **Next step**: dispatch Batch 4 (Phases 6+7, T26–T35). **T29 back-edge fix**: T29 does only the three `deriveSession` cases; a NEW Phase-8 task (call it T40b) adds the `Complete Perspective Confirmed → Stakeholder Check Recorded` append + owns acceptance test 44 — renumber in tasks.md. Then B5 (T36–T41), B6 (T42–T46), B7 (T47–T51), then the Verifier.
+- **Next step**: dispatch Batch 5 (Phase 8 F09 workshop state, T36–T41 + **T40b**: `Complete Perspective Confirmed → Stakeholder Check Recorded` append in `interpret.ts`, owns acceptance test 44 + the workshop-qualification half). Then B6 (T42–T46 app rendering), B7 (T47–T51 close ceremony + changeset), then the Verifier.
+- **B4 notes**: knowledge-gap field is `detail?` (not design.md's `absentDetail?`); `FacilitationTurnSchema` optional count now **5**; T33 `closeTargets` counts a proposal apply-failed if `APPLY_FAILED` OR already lapsed-from-apple-failed (finishClose lapses before the sweep); `SessionCloseDeps`/`InterpretContributionDeps`/`CloseSessionDeps` `db` widened with `& HotSpotSweepDb`.
 - **Execution notes**: SSH signing has a confirm-prompt timeout — succeeds on retry (2–3×), not a hard lock. Workers own their own commits; orchestrator stays hands-off the tree. Gate every file-adding task on `pnpm check` (not `pnpm test` — it skips `vue-tsc`/`knip`).
 - **Blockers**: none
 - **Branch**: none yet (still on `main`)
