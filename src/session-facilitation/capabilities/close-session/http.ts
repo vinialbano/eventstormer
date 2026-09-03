@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { SessionId } from '~/plumbing/ids.ts'
+import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import { decide } from '../../domain/session/decide.ts'
 import { replay } from '../../domain/session/replay.ts'
 import { SessionEvent } from '../../domain/schema/events.ts'
@@ -13,6 +14,10 @@ import type { CloseSessionDeps } from './deps.ts'
  * facts only, then `finishClose` flips the `session_index` row and
  * lapses the session's non-terminal proposals. A re-run is a clean no-op; a
  * crash mid-close self-heals via `reconcilePendingDerivations`.
+ *
+ * The response carries `hotSpotCount` and `noHotSpotsIsASignal` (true iff the
+ * count is 0 at close) — a board with no hot spots is a signal to keep
+ * interpreting, distinct from a pass or a failure.
  */
 export const closeSessionRoutes = (deps: CloseSessionDeps) =>
   new Hono().post('/sessions/:id/close', (context) => {
@@ -35,5 +40,10 @@ export const closeSessionRoutes = (deps: CloseSessionDeps) =>
     }
 
     finishClose(deps, sessionId)
-    return context.json({ ok: true as const }, 200)
+
+    const { hotSpotCount } = readBoardSnapshot({ store: deps.store }, workshopId)
+    return context.json(
+      { ok: true as const, hotSpotCount, noHotSpotsIsASignal: hotSpotCount === 0 },
+      200,
+    )
   })
