@@ -52,7 +52,8 @@ capture.
 ## Handoff
 
 - **Feature**: `slice-4-hot-spots-close` (`.specs/features/slice-4-hot-spots-close/`) — GitHub **#41** · parent effort map #9 · version target **0.5.0**
-- **Phase / Task**: **Execute complete — Verifier pending.** All 51 tasks (T1–T51) committed on `slice-4-hot-spots-close`.
+- **Phase / Task**: **Execute complete — Verifier FAIL, fix iteration 1 complete (4/4 gaps resolved).** All 51 tasks (T1–T51) + 4 Verifier fix commits on `slice-4-hot-spots-close`.
+- **Verifier fix iteration 1 (2026-09-03)** — `9e8f100` Gap 1 (`decideClose` excludes `kind:'scope'` questions from `unresolvedQuestionIds`; `Session` write model tracks `scopeQuestions`; exact E2E hot-spot count restored) · `7b9084e` Gap 2 (test — the `duplicate-id`-as-success marker rewrite in `hot-spot-sweep.ts`, deterministic id + marker-table wipe) · `d2bc234` Gap 3 (test — acceptance test 11: co-proposed `Resolution` + `Proposal` from one turn are independent; rejecting one leaves the other) · `006fe48` Gap 4 (test — acceptance test 48: `sessionSummary` re-read after close is deeply equal). `pnpm check` (984 tests) + `pnpm build` + `pnpm test:e2e` (5) all green. Re-dispatch the Verifier over `bc34642..HEAD`.
 - **Branch**: `slice-4-hot-spots-close` (not pushed). `pnpm check && pnpm build && pnpm test:e2e` all green — **~987 tests** + 5 E2E. `.changeset/slice-4-hot-spots-close.md` = `minor` (→ 0.5.0); `package.json` `version` untouched (ADR-009).
 - **Batch 7 (Phase 10, T47–T51)**: `76a72fc` T47 (`.impeccable/surfaces/src-app-capture-loop-close.md`) · `8c485e7` T48 (`use-close-ceremony.ts` + `transport/close.ts`, idle→stakeholder→problem→confirm→closed; only `confirm` POSTs `/close`) · `4adc730` T49 (`CloseCeremony.vue` + FacilitatorDock wiring; equal-sized choose/skip; reduced-motion) · `feaa3c3` T50 (4th E2E macro stage: flag → resolve → close ceremony → CLOSED + reload; `mapTurn` resolves a `propose-resolution` `hotSpotId` label) · T51 (this: changeset + status flips + this snapshot).
 - **Next step**: dispatch the Verifier sub-agent (fresh, author≠verifier) over the whole `slice-4-hot-spots-close` diff (`bc34642..HEAD`) with `validate.md` → `.specs/features/slice-4-hot-spots-close/validation.md`.
@@ -205,6 +206,12 @@ check && pnpm build` green. Deviations:
 - `not-to-dev-dep` `-test.ts` carve-out is slightly broad (a prod file named `x-test.ts` would be
   exempt) — tighten.
 - README stale layout; `.node-version` file; the hard `**/domain/** ≥ 90%` coverage glob.
+- **Scope question when scope is genuinely never set** — Verifier fix iteration 1 (2026-09-03)
+  made `decideClose` exclude `kind:'scope'` questions from `unresolvedQuestionIds`, so a session
+  closed without `Scope Set` no longer sweeps its scope question into a hot spot. That is
+  acceptable at v1 (the scope question is answered by `Scope Set` on the `Workshop`, not a region
+  that was never opened), but a session with no scope at all is a louder problem than a stray hot
+  spot — decide in Slice 6 whether close should surface "no scope was set" as its own signal.
 - Corrupt-DB-file edge case has no test; S0-11 concurrent-append AC is exercised only as the
   sequential stale-position path.
 - ~~The R3 spike still needs a live run~~ **DONE 2026-08-29** (AD-015). Findings:

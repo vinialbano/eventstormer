@@ -186,3 +186,24 @@ holding the session OPEN until confirm; F09 stakeholder check + chosen-problem q
 **Next steps**: address Gap 1 (behavioural spec fix + restore the exact E2E assertion) and Gap 2
 (sensor survivor) before merge; Gaps 3–4 are coverage top-ups. Bounded fix→re-verify loop, max
 3 iterations.
+
+---
+
+## Addendum — Verifier fix iteration 1 (2026-09-03)
+
+Author: fix implementer (`slice4-fix1`), independent of the Verifier. All four ranked gaps
+resolved; `pnpm check` (984 tests, baseline 979), `pnpm build`, and `pnpm test:e2e` (5/5) green.
+
+| Gap | Commit | Resolution |
+| --- | ------ | ---------- |
+| 1 — scope question swept on every close | `9e8f100` (`fix`) | `Session` write model gains `scopeQuestions: Set<QuestionId>`, populated in `evolve` on `Question Asked {kind:'scope'}`. `decideClose` filters those ids out of `unresolvedQuestionIds`, so the close sweep (`reconcileHotSpots.closeTargets`) never sees the scope question. Acceptance test 43 / P1-close AC1+AC4 now hold in the real flow. New `decide` test (scope + free question open → `unresolvedQuestionIds` is exactly `[free]`) and `reconcileHotSpots` test (scope-only open question → zero close-sweep hot spots). **E2E exact count restored** — `e2e/capture-loop.spec.ts` asserts `/Hot spots\s*2/` after close+reload (the two the person flagged), replacing the tolerant `>=` workaround. Follow-up recorded in STATE.md: a session with *no* `Scope Set` at all is a Slice-6 concern (surface "no scope" as its own close signal). |
+| 2 — surviving mutant M5 (`duplicate-id` marker write) | `7b9084e` (`test`) | `hot-spot-sweep.test.ts` gains a case: a deterministic building-block id (via `vi.mock` of `~/plumbing/ids.ts`, `mockReturnValueOnce` ×2), one successful `reconcileHotSpots` (raise + marker), then `DELETE FROM hot_spot_sweep` to simulate a crash between `applyOperation` and `markSwept`; the re-run reuses the id, the board returns `duplicate-id`, and the branch treats it as success — asserts the marker is rewritten and no second board hot spot appears. Verified kill: dropping `|| raised.error.kind === 'duplicate-id'` fails the new test. No production change. |
+| 3 — acceptance test 11 thin | `d2bc234` (`test`) | `interpret.test.ts`: one `Contribution Interpreted` carrying both a `propose-building-block` and a `propose-resolution` track births `p_1` (Proposal) and `r_1` (Resolution) as separate streams; `Reject Resolution` on `r_1` → `r_1` disposition `REJECTED` while `p_1` stays `PROPOSED` with its stream unchanged. |
+| 4 — acceptance test 48 thin | `006fe48` (`test`) | `session-summary.test.ts`: over the terminal (closed) stream, `sessionSummary(events, 3)` computed twice is deeply equal — the "re-reading it after close SHALL yield the same result" half of the AC. |
+
+**Requirement traceability**: S4-27 and S4-29 move **⚠️ Needs Fix → ✅ Verified** — the close
+sweep-set / `Session Closed`-set consistency now holds for the right reason (both correctly
+exclude the scope question).
+
+**Verdict**: all four gaps closed within iteration 1 of 3. Ready for Verifier re-dispatch over
+`bc34642..HEAD`.
