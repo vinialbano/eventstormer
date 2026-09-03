@@ -5,6 +5,7 @@ import { sessionProposalIds } from '../domain/read-models/session-summary.ts'
 import { decide as decideProposal } from '../domain/proposal/decide.ts'
 import { replay as replayProposal } from '../domain/proposal/replay.ts'
 import { ProposalEvent, SessionEvent } from '../domain/schema/events.ts'
+import { type HotSpotSweepDb, reconcileHotSpots } from './hot-spot-sweep.ts'
 import { close as closeIndexRow, type SessionIndexDb } from './session-index.ts'
 import { proposalStream, sessionStream, storedOps } from './streams.ts'
 
@@ -19,7 +20,7 @@ import { proposalStream, sessionStream, storedOps } from './streams.ts'
  */
 export interface SessionCloseDeps {
   store: EventStore
-  db: SessionIndexDb
+  db: SessionIndexDb & HotSpotSweepDb
   clock: Clock
 }
 
@@ -46,4 +47,8 @@ export const finishClose = (deps: SessionCloseDeps, sessionId: SessionId): void 
       deps.store.append(proposalStream(proposalId), rows.length - 1, storedOps(decided.value))
     }
   }
+
+  // The close sweep runs after the lapse so an APPLY_FAILED proposal's lapse and
+  // its hot spot are consistent as of one pass. Idempotent — a re-run raises nothing new.
+  reconcileHotSpots(deps, sessionId)
 }

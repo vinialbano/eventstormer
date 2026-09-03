@@ -20,6 +20,7 @@ import { replay as replayResolution } from '../../domain/resolution/replay.ts'
 import { decide as decideSession } from '../../domain/session/decide.ts'
 import { replay as replaySession } from '../../domain/session/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
+import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
 import { mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
 import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
@@ -447,6 +448,7 @@ export const reconcilePendingDerivations = (deps: InterpretContributionDeps): vo
     for (const event of events) {
       if (event.type === 'Contribution Interpreted') deriveTracks(deps, event)
     }
+    reconcileHotSpots(deps, sessionId)
     if (events.some((event) => event.type === 'Session Closed')) finishClose(deps, sessionId)
   }
 }

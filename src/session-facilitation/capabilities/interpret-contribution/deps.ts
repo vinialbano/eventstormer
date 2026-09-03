@@ -4,6 +4,7 @@ import type { ContributionId, SessionId } from '~/plumbing/ids.ts'
 import type { Facilitator } from '../../infrastructure/facilitator/port.ts'
 import type { TrackIdMint } from '../../infrastructure/facilitator/map.ts'
 import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
+import type { HotSpotSweepDb } from '../../infrastructure/hot-spot-sweep.ts'
 import type { SessionIndexDb } from '../../infrastructure/session-index.ts'
 
 /**
@@ -22,7 +23,7 @@ export interface InFlightGuard {
 /** What the interpretation tick functions need from the composition root. */
 export interface InterpretContributionDeps {
   store: EventStore
-  db: SessionIndexDb & DerivedTrackDb
+  db: SessionIndexDb & DerivedTrackDb & HotSpotSweepDb
   clock: Clock
   facilitator: Facilitator
   inFlight: InFlightGuard
