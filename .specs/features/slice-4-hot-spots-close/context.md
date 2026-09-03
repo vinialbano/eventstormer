@@ -12,9 +12,9 @@ F08 (hot spots — both creation routes, the two-kind split, the annotation casc
 the close-time sweep, the deliberate resolve/reopen mechanic), F09 (stakeholder check and
 chosen problem, recorded on the workshop), F18 (the `close-session` step — question sweep +
 summary consistency). The facilitator learns three question-track judgments and two proposal
-tracks (hot spot, resolution) — nothing else. The in-process event bus is built here with its
-first real subscriber. No downloadable artifact, no facilitator relation/pivotal tracks, no
-reword-hold-back gate.
+tracks (hot spot, resolution) — nothing else. `Raise Hot Spot` is delivered as choreography
+over persisted facts (AD-032), not an event bus. No downloadable artifact, no facilitator
+relation/pivotal tracks, no reword-hold-back gate.
 
 ---
 
@@ -40,7 +40,8 @@ reword-hold-back gate.
 - **Direct route** — a person capability: `raise-hot-spot` (+ optional `annotate`), no review,
   author `{ accepter: { name: creatorName } }`. UI: a minimal "flag a hot spot" affordance on
   a selected building block or on nothing.
-- **Close sweep + question-track route** — created directly via the event bus, no review.
+- **Close sweep + question-track route** — raised by the `reconcileHotSpots` pass over persisted
+  facts (AD-032), no review.
 - Acceptance test 4: all three are indistinguishable once raised.
 
 ### Hot-spot `kind` is a create-time choice, never mutated
@@ -69,14 +70,17 @@ reword-hold-back gate.
   picker runs. `Close Session` fires on final confirmation, running the atomic sweep.
 - Pin the phase model + the guard (what is still accepted during closing) as an AD in Design.
 
-### The event bus (AD-019) — synchronous, one publisher, one subscriber
+### `Raise Hot Spot` delivery — choreography, no event bus (AD-032, supersedes AD-019)
 
-- `plumbing/` — a synchronous in-process publish/subscribe matching the sync EventStore
-  (AD-013). Port + adapter + shared contract test (the AD-007 seam discipline).
-- Only subscriber: a `Raise Hot Spot` handler. Publishers: the close sweep and the
-  knowledge-gap / absent-stakeholder judgments. Fire-and-forget, tolerable-loss, idempotent
-  (keyed on question id / absent-stakeholder name).
-- No speculative abstraction — every part has a real caller this slice.
+- Design reversed the AD-019 event-bus direction. `session-facilitation` writes its facts
+  (`Session Closed`, `Knowledge Gap Revealed`, `Absent Stakeholder Named`) on its own streams;
+  a `reconcileHotSpots` pass folded into `reconcilePendingDerivations` + `finishClose` reads
+  them and calls `applyOperation(raise-hot-spot)` idempotently.
+- A `hot_spot_sweep` marker table gates each key (`kg:<qId>` | `absent:<qId>:<slug>` |
+  `q:<qId>` | `proposal:<pId>` | `absent-sc:<slug>`); a `duplicate-id` from the board counts
+  as success. The raise id is derived from the workshop id + sweep key so a retry collides.
+- A synchronous 1-publisher/1-subscriber in-process bus is a disguised orchestrator `knip`
+  would flag — choreography over persisted facts is the shape AD-018 / AD-021 established.
 
 ### Close summary "freeze" rides on terminality (AD-023 stands)
 

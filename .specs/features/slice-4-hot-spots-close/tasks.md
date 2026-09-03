@@ -18,7 +18,7 @@ discrimination sensor).
 **Decisions**: `.specs/STATE.md` AD-005, AD-006, AD-008, AD-009, AD-013, AD-014, AD-015,
 AD-016, AD-017, AD-018, AD-021, AD-022, AD-023, AD-024, AD-026, AD-028, AD-029, **AD-032**,
 **AD-033**, **AD-034**
-**Status**: Done — Execute complete (T1–T51), Verifier pending
+**Status**: Done — Execute complete (T1–T51), Verifier PASS
 
 Create branch `slice-4-hot-spots-close` off `main` before T1. Do not edit `package.json`
 `version` (ADR-009); T51 adds a `minor` changeset only (target 0.5.0).

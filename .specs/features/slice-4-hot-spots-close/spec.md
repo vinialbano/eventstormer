@@ -4,7 +4,8 @@ GitHub issue: [#41](https://github.com/vinialbano/eventstormer/issues/41) ·
 Blocked by #40 (Slice 3, merged) · Blocks #42 (Slice 5) ·
 Parent effort map #9 · Version target **0.5.0** (`minor` changeset)
 
-**Status**: Done — Execute complete (T1–T51), Verifier pending.
+**Status**: Done — Execute complete (T1–T51), Verifier PASS. PR #90 review fixes: see
+`../slice-4-review-fixes/`.
 
 ## Problem Statement
 
@@ -79,8 +80,8 @@ Every ambiguity is resolved or recorded here — nothing is left silently unclea
 | `Resolution` is a new aggregate (not a `Proposal` variant) | New `session-facilitation/domain/resolution/` — `PROPOSED ⇄ EDITED → ACCEPTED → APPLIED \| LAPSED`, `REJECTED` terminal; every apply bounce is terminal (no retry). Its own stream, own capability (`review-resolution`). | Canvas "Why `Proposal` and `Resolution` are two aggregates" — divergent outcomes, a scarce `Open` state, terminal bounce. | **y** — canvas |
 | Resolve/apply correlation | Synchronous, like the accept chain (AD-016/AD-017): `review-resolution` accept calls `applyOperation(workshopId, resolve-op)`, reads the `Result`, records `Hot Spot Resolved` (ok) or `Hot Spot Resolution Rejected` (board rejection — `not-a-hot-spot` / `withdrawn-target` / `already-resolved`) on the `Resolution` stream. No persistent correlation id on the board. | AD-016 per-context-transaction rule; acceptance test 39 (second resolution → LAPSED "already resolved"). | **y** — AD-016/17 |
 | `reopen` trigger | A direct person action — `POST /workshops/:id/board/hot-spots/:blockId/reopen` → `applyOperation(reopen-op)`. Not a proposal, not a facilitator judgement. Snapshot: `resolved: false`, `reference` value retained. | F08 "A resolved hot spot can be reopened if the resolution turns out wrong"; acceptance test 19 / 19a. | **Design** |
-| Question-track events | `Session` decider + events gain `Knowledge Gap Revealed`, `Absent Stakeholder Named` (once per named person), `Complete Perspective Confirmed` — each marks its question `resolved`; the first two publish a `Raise Hot Spot` intent, the third sets the workshop's chosen-problem qualification. Turn schema gains the matching tracks. | Canvas Policies table; acceptance tests 1, 2, 5, 34, 43, 44. | **Design** |
-| In-process event bus (AD-019) | Built in `plumbing/` this slice — a **synchronous** in-process publish/subscribe (matching the sync EventStore, AD-013). First and only subscriber: a `Raise Hot Spot` handler driven by the close sweep and the two question-track judgments. `Raise Hot Spot` is fire-and-forget, tolerable-loss (canvas). | AD-019 — "the bus is built there, with its first real subscriber." No speculative abstraction: one publisher, one subscriber, both real. | **Design** — pin the port shape + delivery semantics |
+| Question-track events | `Session` decider + events gain `Knowledge Gap Revealed`, `Absent Stakeholder Named` (once per named person), `Complete Perspective Confirmed` — each marks its question `resolved`; the first two become `raise-hot-spot` operations via the reconciliation pass, the third sets the workshop's chosen-problem qualification. Turn schema gains the matching tracks. | Canvas Policies table; acceptance tests 1, 2, 5, 34, 43, 44. | **Design** |
+| `Raise Hot Spot` delivery — **no event bus** (AD-032, supersedes AD-019) | `session-facilitation` writes `Session Closed` / `Knowledge Gap Revealed` / `Absent Stakeholder Named` on its own streams; a hot-spot reconciliation pass folded into `reconcilePendingDerivations` + `finishClose` reads them and calls `applyOperation(raise-hot-spot)` idempotently, gated by a `hot_spot_sweep` marker table. | AD-032 — a synchronous 1-publisher/1-subscriber in-process bus is a disguised orchestrator `knip` would flag; choreography over persisted facts is the established shape (AD-018, AD-021). | **Design** — AD-032 |
 | Close-time summary "freeze" | No struct is frozen into `Session Closed` (AD-023 stands — it carries only `{ unresolvedQuestionIds, at }`). "Consistent as of the close" is guaranteed because `CLOSED` is terminal and `sessionSummary(...)` is a pure read-time projection over the terminal stream. The AC is satisfied by a test asserting the projection is stable post-close, plus that the unresolved-question sweep and the projection see the same set. | AD-023 — "derived state is never frozen into a domain event." | **y** — AD-023 |
 | Apply-failed proposal → hot spot at close | The close sweep raises a `Raise Hot Spot` for every `Proposal` in `APPLY_FAILED` (canvas; acceptance test 36). Slice 1's T22 deviation noted a genuine `APPLY_FAILED` was unreachable for id-minting kinds; with `annotate`/`resolve`/hot-spot targets in play it is now reachable, so this path is implemented and tested. | Canvas `Session Closed` policy; acceptance tests 29, 36. | **Design** |
 | F09 chosen-problem candidates | Exactly the hot spots **open** at the moment the picker is shown (a resolved one is never offered). Picking one records `{ problemHotSpotId, qualification: 'firm' \| 'provisional' }`; "Somebody" + names → one absent-stakeholder hot spot per person + `provisional`. Skip records `{ reason: 'none-chosen' \| 'no-impediments-yet' }`. | F09 capabilities + experience; acceptance test — "Problem candidates are exactly the hot spots currently open". | **Design** |
@@ -90,8 +91,11 @@ Every ambiguity is resolved or recorded here — nothing is left silently unclea
 | `GET /board` shape | Adds per hot-spot block `{ annotates, resolved, reference }` and a top-level `hotSpotCount`. Existing keys unchanged. | Client renders callouts + count; determinism boundary unchanged (no pixels). | **Design** |
 | Does closing require every open **proposal/resolution** disposed first? | No. Close lapses them (canvas — `PROPOSED`/`EDITED`/held → LAPSED quiet; `APPLY_FAILED` → LAPSED + hot spot). The person is not forced to clear the drawer. | Canvas `Session Closed` policy; "The system may suggest, never force an order of steps." | **y** — canvas |
 
-**Open questions:** none — all resolved or logged above. The five **Design** rows are resolved
-*directions* with a chosen default; each becomes an AD in the Design phase.
+**Open questions:** none — all resolved or logged above. The **Design** rows are resolved
+*directions* with a chosen default; each becomes an AD in the Design phase. One reversal in
+Design: the in-process event bus (AD-019) was **not** built — AD-032 delivers `Raise Hot Spot`
+as choreography over persisted facts (`hot_spot_sweep` marker table + `reconcileHotSpots`),
+matching AD-018 / AD-021. See `design.md` AD-032 and `.specs/STATE.md`.
 
 ---
 
@@ -352,8 +356,8 @@ is CLOSED and the drawer/board reflect the sweep.
 | S4-22 | `Session` decider + events: `Absent Stakeholder Named` (once per person, resolves Q + Raise Hot Spot) | Design | Pending |
 | S4-23 | `Session` decider + events: `Complete Perspective Confirmed` (resolves Q + sets qualification) | Design | Pending |
 | S4-24 | Turn schema + `interpret` derivation: knowledge-gap / absent-stakeholder / complete-perspective tracks | Design | Pending |
-| S4-25 | In-process synchronous event bus in `plumbing/`; port + adapter + contract test | Design | Pending |
-| S4-26 | `Raise Hot Spot` subscriber — the only subscriber; fire-and-forget, idempotent | Design | Pending |
+| S4-25 | ~~In-process synchronous event bus in `plumbing/`~~ — **superseded by AD-032**: no bus. Replaced by the `hot_spot_sweep` marker table + `reconcileHotSpots` choreography. | AD-032 | Superseded |
+| S4-26 | ~~`Raise Hot Spot` subscriber~~ — **superseded by AD-032**: `reconcileHotSpots` reads persisted facts and raises idempotently, no subscriber. | AD-032 | Superseded |
 | S4-27 | Close sweep: unresolved questions → hot spots (idempotent, keyed on question id) | Design | Pending |
 | S4-28 | Close sweep: `APPLY_FAILED` proposals → `LAPSED` + hot spot | Design | Pending |
 | S4-29 | Close: summary is a stable post-close projection; sweep set == `Session Closed` set | Design | Pending |

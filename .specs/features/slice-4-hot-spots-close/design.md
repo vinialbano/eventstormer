@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/slice-4-hot-spots-close/spec.md`
 **Context**: `.specs/features/slice-4-hot-spots-close/context.md`
-**Status**: Done — Execute complete, Verifier pending
+**Status**: Done — Execute complete, Verifier PASS
 
 ---
 
@@ -265,7 +265,7 @@ includes the schema-walk test that fails if the count exceeds 24.
   `domain/schema/interpreted-track.ts`, `turn-schema.ts`, `map.ts`, `interpret.ts`.
 - **Changes**:
   - `SessionEvent` union gains `Knowledge Gap Revealed { sessionId, questionId,
-    byContributionId, absentDetail? }`, `Absent Stakeholder Named { sessionId, questionId,
+    byContributionId, detail? }`, `Absent Stakeholder Named { sessionId, questionId,
     byContributionId, personName }`, `Complete Perspective Confirmed { sessionId, questionId,
     byContributionId }`.
   - `Session.decide` gains the three commands; each requires the question `open`, marks it
