@@ -32,6 +32,7 @@ describe('useBoardViewState', () => {
       ],
       follows: [{ predecessor: 'eA', successor: 'eB' }],
       causedBy: [],
+      hotSpotCount: 0,
     })
     const view = useBoardViewState(snapshot)
 
@@ -57,6 +58,7 @@ describe('useBoardViewState', () => {
       ],
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
     })
     const view = useBoardViewState(snapshot)
 
@@ -69,5 +71,95 @@ describe('useBoardViewState', () => {
 
     view.showWithdrawn.value = false
     expect(view.timeline.value.tracks).toEqual([])
+  })
+
+  it('groups hot-spot callouts by target, lists unannotated ones, and counts from the snapshot', () => {
+    const snapshot = ref<BoardSnapshot>({
+      position: 6,
+      blocks: [
+        {
+          id: 'eA',
+          kind: 'domain-event',
+          label: 'Payment captured',
+          withdrawn: false,
+          placement: 'timeline',
+          pivotal: false,
+        },
+        {
+          id: 'h1',
+          kind: 'hot-spot',
+          label: 'Refund path unclear',
+          withdrawn: false,
+          placement: 'backlog',
+          pivotal: false,
+          modelAffecting: true,
+          annotates: 'eA',
+          resolved: true,
+          reference: 'we added a retry step',
+        },
+        {
+          id: 'h2',
+          kind: 'hot-spot',
+          label: 'Who owns dunning?',
+          withdrawn: false,
+          placement: 'backlog',
+          pivotal: false,
+          modelAffecting: false,
+          annotates: null,
+          resolved: false,
+          reference: null,
+        },
+      ],
+      follows: [],
+      causedBy: [],
+      hotSpotCount: 2,
+    })
+    const view = useBoardViewState(snapshot)
+
+    expect(view.hotSpots.value.annotated.get('eA')).toEqual([
+      {
+        hotSpotId: 'h1',
+        label: 'Refund path unclear',
+        modelAffecting: true,
+        resolved: true,
+        reference: 'we added a retry step',
+      },
+    ])
+    expect(view.hotSpots.value.unannotated).toEqual([
+      {
+        hotSpotId: 'h2',
+        label: 'Who owns dunning?',
+        modelAffecting: false,
+        resolved: false,
+        reference: null,
+      },
+    ])
+    expect(view.hotSpots.value.count).toBe(2)
+  })
+
+  it('drops a withdrawn hot spot from the callouts and list', () => {
+    const snapshot = ref<BoardSnapshot>({
+      position: 7,
+      blocks: [
+        {
+          id: 'h1',
+          kind: 'hot-spot',
+          label: 'Stale concern',
+          withdrawn: true,
+          placement: 'backlog',
+          pivotal: false,
+          annotates: null,
+          resolved: false,
+        },
+      ],
+      follows: [],
+      causedBy: [],
+      hotSpotCount: 0,
+    })
+    const view = useBoardViewState(snapshot)
+
+    expect(view.hotSpots.value.annotated.size).toBe(0)
+    expect(view.hotSpots.value.unannotated).toEqual([])
+    expect(view.hotSpots.value.count).toBe(0)
   })
 })

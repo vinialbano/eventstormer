@@ -78,6 +78,11 @@ interface BoardBlock {
   placement: 'backlog' | 'timeline'
   pivotal: boolean
   provenance?: { accepter: { name: string } } | undefined
+  /** Hot-spot blocks only (`kind === 'hot-spot'`). */
+  modelAffecting?: boolean
+  annotates?: string | null
+  resolved?: boolean
+  reference?: unknown
 }
 
 export interface BoardSnapshot {
@@ -85,6 +90,8 @@ export interface BoardSnapshot {
   blocks: BoardBlock[]
   follows: { predecessor: string; successor: string }[]
   causedBy: { cause: string; effect: string }[]
+  /** Non-withdrawn hot-spot blocks in the snapshot. */
+  hotSpotCount: number
 }
 
 export interface AccountSnapshot {

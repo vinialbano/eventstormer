@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { fetchBoard, HttpError } from '../transport/board.ts'
 import type { BoardSnapshot } from '../types.ts'
 
-const EMPTY: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [] }
+const EMPTY: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [], hotSpotCount: 0 }
 
 /**
  * The `board` store — cold-loads from `/workshops/:id/board` (ADR-007). The

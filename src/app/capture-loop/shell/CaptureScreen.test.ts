@@ -124,7 +124,7 @@ describe('CaptureScreen', () => {
         overflow: false,
       },
     ]
-    let boardSnapshot: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [] }
+    let boardSnapshot: BoardSnapshot = { position: -1, blocks: [], follows: [], causedBy: [], hotSpotCount: 0 }
     const activeSession = (): SessionView =>
       sessionView({
         contributions: [{ contributionId: 'c1', status: 'derived' }],
@@ -156,6 +156,7 @@ describe('CaptureScreen', () => {
           ],
           follows: [],
           causedBy: [],
+          hotSpotCount: 0,
         }
         proposalCards[0] = {
           proposalId: 'p1',

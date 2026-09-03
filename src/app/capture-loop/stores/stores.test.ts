@@ -110,6 +110,7 @@ describe('board store', () => {
       ],
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
     }
     const fetchMock = vi.fn().mockResolvedValue(json(snapshot))
     vi.stubGlobal('fetch', fetchMock)
@@ -127,7 +128,7 @@ describe('board store', () => {
     const store = useBoardStore()
     await store.load('w1')
 
-    expect(store.snapshot).toEqual({ position: -1, blocks: [], follows: [], causedBy: [] })
+    expect(store.snapshot).toEqual({ position: -1, blocks: [], follows: [], causedBy: [], hotSpotCount: 0 })
     expect(store.error).toBeNull()
   })
 })
