@@ -24,6 +24,7 @@ const seedResolution = (extra: ResolutionEvent[] = []): void => {
       opVersion: 1,
       operation: {
         v: 1,
+        at,
         type: 'Resolution Proposed',
         resolutionId,
         sessionId,
@@ -49,6 +50,7 @@ const seedSessionTrack = (): void => {
       opVersion: 1,
       operation: {
         v: 1,
+        at,
         type: 'Contribution Interpreted',
         sessionId,
         contributionId: c1,
