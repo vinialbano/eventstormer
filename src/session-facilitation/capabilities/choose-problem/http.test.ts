@@ -41,8 +41,15 @@ const workshopEvents = (store: EventStore): WorkshopEvent[] =>
   store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation))
 
 describe('POST /workshops/:id/chosen-problem', () => {
-  it('records Problem Chosen for a currently-open hot spot', async () => {
+  it('records Problem Chosen for a currently-open hot spot — firm after a complete stakeholder check', async () => {
     const store = seededStore()
+    store.append(workshopStream(workshopId), 0, [
+      {
+        at,
+        opVersion: 1,
+        operation: { v: 1, type: 'Stakeholder Check Recorded', workshopId, complete: true, absentNames: [], at },
+      },
+    ])
     const hotSpotId = raiseHotSpot(store, 'Payments keep timing out')
 
     const response = await post(store, { problemHotSpotId: hotSpotId })
@@ -55,6 +62,14 @@ describe('POST /workshops/:id/chosen-problem', () => {
       problemHotSpotId: hotSpotId,
       qualification: 'firm',
     })
+  })
+
+  it('records the provisional qualification when no stakeholder check ran', async () => {
+    const store = seededStore()
+    const hotSpotId = raiseHotSpot(store, 'Payments keep timing out')
+
+    await post(store, { problemHotSpotId: hotSpotId })
+    expect(workshopEvents(store).at(-1)).toMatchObject({ type: 'Problem Chosen', qualification: 'provisional' })
   })
 
   it('records the provisional qualification when the stakeholder check was incomplete', async () => {

@@ -219,7 +219,7 @@ describe('Workshop.decide — Choose Problem / Skip Problem Choice', () => {
     if (isOk(result)) expect(result.value[0]).toMatchObject({ type: 'Problem Chosen', qualification: 'firm' })
   })
 
-  it('qualifies a chosen problem firm when no stakeholder check ran', () => {
+  it('qualifies a chosen problem provisional when no stakeholder check ran', () => {
     const result = decide(replay([started]), {
       type: 'Choose Problem',
       workshopId,
@@ -227,7 +227,7 @@ describe('Workshop.decide — Choose Problem / Skip Problem Choice', () => {
       at,
     })
     expect(isOk(result)).toBe(true)
-    if (isOk(result)) expect(result.value[0]).toMatchObject({ type: 'Problem Chosen', qualification: 'firm' })
+    if (isOk(result)) expect(result.value[0]).toMatchObject({ type: 'Problem Chosen', qualification: 'provisional' })
   })
 
   it('emits Problem Choice Skipped carrying the reason', () => {

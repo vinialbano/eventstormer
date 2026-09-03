@@ -76,7 +76,7 @@ const decideChooseProblem = (
       type: 'Problem Chosen',
       workshopId: command.workshopId,
       problemHotSpotId: command.problemHotSpotId,
-      qualification: writeModel.stakeholderComplete === false ? 'provisional' : 'firm',
+      qualification: writeModel.stakeholderComplete === true ? 'firm' : 'provisional',
       at: command.at,
     },
   ])
