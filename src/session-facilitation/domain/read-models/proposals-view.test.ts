@@ -47,11 +47,33 @@ describe('proposalsView', () => {
         blockKind: 'domain-event',
         label: 'Block p_1',
         bar: 'strict',
+        modelAffecting: true,
         disposition: 'PROPOSED',
         held: false,
         overflow: false,
       },
     ])
+  })
+
+  it('a hot-spot proposal carries its kind, and a Proposal Kind Set flips it', () => {
+    const events: ProposalEvent[] = [
+      {
+        v: 1,
+        at,
+        type: 'Building Block Proposed',
+        proposalId: pid('h_1'),
+        sessionId,
+        contributionId: c1,
+        blockKind: 'hot-spot',
+        label: 'Hot spot h_1',
+        bar: 'strict',
+        modelAffecting: true,
+      },
+      { v: 1, at, type: 'Proposal Kind Set', proposalId: pid('h_1'), modelAffecting: false },
+    ]
+    const [card] = proposalsView(interpretedWith([pid('h_1')]), [{ proposalId: pid('h_1'), events }])
+    expect(card?.blockKind).toBe('hot-spot')
+    expect(card?.modelAffecting).toBe(false)
   })
 
   it('reflects the latest edited label and the held marker', () => {

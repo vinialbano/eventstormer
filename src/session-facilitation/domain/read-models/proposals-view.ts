@@ -20,6 +20,9 @@ interface ProposalCard {
   blockKind: InterpretedBlockKind
   label: string
   bar: InterpretationBar
+  /** The hot-spot kind the person can flip before accepting; `true` (model-affecting)
+   * for every non-hot-spot proposal, and the default for a hot-spot proposal. */
+  modelAffecting: boolean
   disposition: Disposition
   held: boolean
   overflow: boolean
@@ -52,6 +55,7 @@ export const proposalCard = (events: ProposalEvent[], overflow = false): Proposa
     blockKind: birth.blockKind,
     label: lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label,
     bar: birth.bar,
+    modelAffecting: writeModel.modelAffecting,
     disposition: writeModel.disposition,
     held: writeModel.held,
     overflow,

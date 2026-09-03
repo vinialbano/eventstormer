@@ -35,6 +35,26 @@ const seedProposal = (id: string, label = `Block ${id}`): void => {
   ])
 }
 
+const seedHotSpotProposal = (id: string): void => {
+  store.append(proposalStream(id as ProposalId), -1, [
+    {
+      at,
+      opVersion: 1,
+      operation: {
+        v: 1,
+        type: 'Building Block Proposed',
+        proposalId: id,
+        sessionId,
+        contributionId: c1,
+        blockKind: 'hot-spot',
+        label: `Hot spot ${id}`,
+        bar: 'strict',
+        at,
+      },
+    },
+  ])
+}
+
 const proposalTypes = (id: string): string[] =>
   store.read(proposalStream(id as ProposalId)).map((row) => (row.operation as { type: string }).type)
 
@@ -105,6 +125,46 @@ describe('POST /proposals/:id/{edit,reject,hold,unhold}', () => {
     expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({ error: 'invalid-body' })
     expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
+})
+
+describe('POST /proposals/:id/kind', () => {
+  it('flips a hot-spot proposal to informational → 200 and a Proposal Kind Set event', async () => {
+    seedHotSpotProposal('p_1')
+    const response = await post('/proposals/p_1/kind', { modelAffecting: false })
+    expect(response.status).toBe(200)
+    const set = store
+      .read(proposalStream('p_1' as ProposalId))
+      .map((row) => ProposalEvent.parse(row.operation))
+      .find((event) => event.type === 'Proposal Kind Set')
+    expect(set?.type === 'Proposal Kind Set' && set.modelAffecting).toBe(false)
+  })
+
+  it('flipping to the value it already has → 200 and no event appended', async () => {
+    seedHotSpotProposal('p_1')
+    const response = await post('/proposals/p_1/kind', { modelAffecting: true })
+    expect(response.status).toBe(200)
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
+
+  it('kind after reject → 409 and no further event', async () => {
+    seedHotSpotProposal('p_1')
+    await post('/proposals/p_1/reject')
+    const response = await post('/proposals/p_1/kind', { modelAffecting: false })
+    expect(response.status).toBe(409)
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed', 'Proposal Rejected'])
+  })
+
+  it('malformed body → 400', async () => {
+    seedHotSpotProposal('p_1')
+    const response = await post('/proposals/p_1/kind', { modelAffecting: 'no' })
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'invalid-body' })
+  })
+
+  it('unknown proposal → 404', async () => {
+    const response = await post('/proposals/p_missing/kind', { modelAffecting: false })
+    expect(response.status).toBe(404)
   })
 })
 

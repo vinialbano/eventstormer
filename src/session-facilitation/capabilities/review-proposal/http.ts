@@ -12,13 +12,21 @@ import { acceptRoutes } from './accept.ts'
 import type { ReviewProposalDeps } from './deps.ts'
 
 const EditBody = z.object({ label: z.string() })
+const KindBody = z.object({ modelAffecting: z.boolean() })
 
 const readProposal = (deps: ReviewProposalDeps, id: ProposalId): ProposalEvent[] =>
   deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
 
 type Reviewed = Extract<
   ProposalCommand,
-  { type: 'Edit Proposal' | 'Reject Proposal' | 'Hold Proposal' | 'Unhold Proposal' }
+  {
+    type:
+      | 'Edit Proposal'
+      | 'Set Proposal Kind'
+      | 'Reject Proposal'
+      | 'Hold Proposal'
+      | 'Unhold Proposal'
+  }
 >
 
 const statusFor = (kind: string): 400 | 404 | 409 =>
@@ -38,8 +46,9 @@ const act = (deps: ReviewProposalDeps, id: ProposalId, command: Reviewed) => {
 }
 
 /**
- * `POST /proposals/:id/{edit,reject,hold,unhold}` — one `Proposal.decide` each,
- * appended only when `decide` emits (an idempotent no-op skips the append). Hold
+ * `POST /proposals/:id/{edit,kind,reject,hold,unhold}` — one `Proposal.decide`
+ * each, appended only when `decide` emits (an idempotent no-op skips the append).
+ * `kind` flips a hot-spot proposal's `modelAffecting` before it is accepted; Hold
  * / Unhold are a reversible marker orthogonal to the disposition.
  *
  * `GET /sessions/:id/proposals` — this session's pending + terminal proposals
@@ -54,6 +63,20 @@ export const reviewProposalRoutes = (deps: ReviewProposalDeps) =>
       if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
       const outcome = act(deps, id, { type: 'Edit Proposal', proposalId: id, label: body.data.label, at: deps.clock() })
       return outcome.error === undefined ? context.json({ ok: true as const }, 200) : context.json({ error: outcome.error }, outcome.status)
+    })
+    .post('/proposals/:id/kind', async (context) => {
+      const id = context.req.param('id') as ProposalId
+      const body = KindBody.safeParse(await context.req.json().catch(() => null))
+      if (!body.success) return context.json({ error: 'invalid-body' as const }, 400)
+      const outcome = act(deps, id, {
+        type: 'Set Proposal Kind',
+        proposalId: id,
+        modelAffecting: body.data.modelAffecting,
+        at: deps.clock(),
+      })
+      return outcome.error === undefined
+        ? context.json({ ok: true as const }, 200)
+        : context.json({ error: outcome.error }, outcome.status)
     })
     .post('/proposals/:id/reject', (context) => {
       const id = context.req.param('id') as ProposalId
