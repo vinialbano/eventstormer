@@ -52,10 +52,13 @@ capture.
 ## Handoff
 
 - **Feature**: `slice-4-hot-spots-close` (`.specs/features/slice-4-hot-spots-close/`) — GitHub **#41** · parent effort map #9 · version target **0.5.0**
-- **Phase / Task**: Tasks written (T1–T51, 10 phases) — awaiting user confirmation of the skill/MCP map + sub-agent decision, then Execute
-- **Completed**: `spec.md` (S4-01…S4-43), `context.md`, `design.md`, `tasks.md` (Test Coverage Matrix + Gate Commands + granularity/cross-check/co-location tables all ✅ except the T29 back-edge note). New **AD-032** (choreography, supersedes AD-019 — no event bus), **AD-033** (slice 4 = strictly F08/F09/F18), **AD-034** (two-phase close). Issues #41/#42/#43 updated.
-- **In-progress**: none
-- **Next step**: confirm the skill/MCP mapping + batch-vs-inline; then create branch `slice-4-hot-spots-close` off `main` and Execute. **Apply the T29 back-edge fix (option b) at Execute** — split the `Stakeholder Check Recorded` append into a new Phase-8 task (T40.5), renumber.
+- **Phase / Task**: Execute — Batches 1 & 2 done (T1–T19). Next: Batch 3 (Phase 5, T20–T25).
+- **Branch**: `slice-4-hot-spots-close` (not pushed). Head `6d83974`. `pnpm check` + `pnpm build` green, 814 tests (baseline 718).
+- **Completed**: `spec.md`/`context.md`/`design.md`/`tasks.md`. AD-032/033/034. Issues #41/#42/#43 updated. **T1–T9** (board hot-spot ops + cascades: `9e477ee`..`9b2645f`). **T10–T19** (board HTTP + `flag-hot-spot` + `Resolution` aggregate + `review-resolution` + propose-resolution track: `59d0f2e`..`6130b96`).
+- **In-progress**: none (Batch 3 not yet dispatched).
+- **Deviations logged** (all sound): flag-hot-spot carries `author` in the body (domain-model-capture must not read a session-facilitation stream — ADR-003); a hot spot may be the first block on a board (dropped the empty-board 404); `Hot Spot Resolution Rejected.reason` is `z.string().min(1)` passing the raw board rejection kind, not the design's enum; **propose-resolution track built in Phase 4 (T16) not Phase 5** — T21/T28 must keep `FacilitationTurnSchema` optional count ≤ 24.
+- **Next step**: dispatch Batch 3 (T20–T25). Then B4 (T26–T35, incl. the T29 back-edge fix — split `Stakeholder Check Recorded` append into a Phase-8 task, renumber), B5 (T36–T41), B6 (T42–T46), B7 (T47–T51), then the Verifier.
+- **Execution notes**: SSH signing has a confirm-prompt timeout — succeeds on retry (2–3×), not a hard lock. Workers own their own commits; orchestrator stays hands-off the tree. Gate every file-adding task on `pnpm check` (not `pnpm test` — it skips `vue-tsc`/`knip`).
 - **Blockers**: none
 - **Branch**: none yet (still on `main`)
 - **Key design points**: `Raise Hot Spot` = choreography reconciled by the scheduler tick (`hot-spot-sweep.ts` + `hot_spot_sweep` marker table, migration `id:2`); resolve chain stays synchronous (AD-016/17); `Resolution` is a new aggregate mirroring `Proposal` minus `APPLY_FAILED`; board write model gains `annotates` + `hotSpotResolved`, snapshot gains per-hot-spot `annotates`/`resolved`/`reference` + `hotSpotCount`; `Question Asked.kind` gains `'stakeholder'`; `InterpretedBlockKind` gains `'hot-spot'`. Research flag: verify `z.unknown()` on a required `reference` key actually fails `.parse` when absent (likely not — needs a `.refine`/decider re-check).
