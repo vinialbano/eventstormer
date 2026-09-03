@@ -6,7 +6,7 @@ import type { SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { readBoardSnapshot } from '../../domain-model-capture/api.ts'
 import { applySessionFacilitationMigrations } from './migrations.ts'
 import { markSwept, readSweptKeys, reconcileHotSpots } from './hot-spot-sweep.ts'
-import { sessionStream, workshopStream } from './streams.ts'
+import { proposalStream, sessionStream, workshopStream } from './streams.ts'
 
 let db: DatabaseSync
 
@@ -37,6 +37,9 @@ const hotSpotLabels = (store: EventStore): string[] =>
   readBoardSnapshot({ store }, workshopId)
     .blocks.filter((block) => block.kind === 'hot-spot')
     .map((block) => block.label)
+
+const sweptQuestionIds = (): string[] =>
+  [...readSweptKeys(db)].filter((key) => key.startsWith('q:')).map((key) => key.slice(2))
 
 describe('hot_spot_sweep markers', () => {
   it('readSweptKeys is empty before any raise', () => {
@@ -132,5 +135,98 @@ describe('reconcileHotSpots — knowledge gaps and absent stakeholders', () => {
     reconcileHotSpots({ store, db, clock }, sessionId)
     expect(readSweptKeys(db)).toEqual(new Set(['kg:q_1']))
     expect(hotSpotLabels(inner)).toEqual(['Who else?'])
+  })
+})
+
+describe('reconcileHotSpots — the close sweep', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  })
+
+  const seedClosed = (
+    store: EventStore,
+    options: { unresolved: string[]; interpreted?: Record<string, unknown>[]; extra?: Record<string, unknown>[] },
+  ): void => {
+    store.append(workshopStream(workshopId), -1, [
+      op({ type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana' }),
+    ])
+    store.append(sessionStream(sessionId), -1, [
+      op({ type: 'Session Started', sessionId, workshopId }),
+      op({ type: 'Question Asked', sessionId, questionId: 'q_1', kind: 'phase', text: 'What is Q1?' }),
+      op({ type: 'Question Asked', sessionId, questionId: 'q_2', kind: 'phase', text: 'What is Q2?' }),
+      op({ type: 'Question Answered', sessionId, questionId: 'q_1', byContributionId: 'c_1' }),
+      ...(options.interpreted ?? []).map((event) => op(event)),
+      ...(options.extra ?? []).map((event) => op(event)),
+      op({ type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: options.unresolved }),
+    ])
+  }
+
+  it('raises exactly one hot spot for the still-open question (test 43)', () => {
+    const store = createMemoryEventStore()
+    seedClosed(store, { unresolved: ['q_2'] })
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    expect(hotSpotLabels(store)).toEqual(['What is Q2?'])
+    expect(sweptQuestionIds()).toEqual(['q_2'])
+  })
+
+  it('sweeps a question left open by an off-topic contribution that produced a proposal (tests 5, 34)', () => {
+    const store = createMemoryEventStore()
+    store.append(proposalStream('p_1' as never), -1, [
+      op({ type: 'Building Block Proposed', proposalId: 'p_1', sessionId, contributionId: 'c_2', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' }),
+    ])
+    seedClosed(store, {
+      unresolved: ['q_2'],
+      interpreted: [
+        {
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_2',
+          tracks: [{ track: 'propose-building-block', proposalId: 'p_1', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' }],
+        },
+      ],
+    })
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    // the open question is swept; the still-PROPOSED proposal is not
+    expect(hotSpotLabels(store)).toEqual(['What is Q2?'])
+  })
+
+  it('raises a hot spot for a proposal left in APPLY_FAILED at close (test 36)', () => {
+    const store = createMemoryEventStore()
+    store.append(proposalStream('p_1' as never), -1, [
+      op({ type: 'Building Block Proposed', proposalId: 'p_1', sessionId, contributionId: 'c_2', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' }),
+      op({ type: 'Proposal Accepted', proposalId: 'p_1', accepter: 'Dana', buildingBlockId: 'b_1' }),
+      op({ type: 'Operation Rejected', proposalId: 'p_1', reason: 'withdrawn-target' }),
+    ])
+    seedClosed(store, {
+      unresolved: [],
+      interpreted: [
+        {
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_2',
+          tracks: [{ track: 'propose-building-block', proposalId: 'p_1', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' }],
+        },
+      ],
+    })
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    expect(hotSpotLabels(store)).toEqual(['Could not apply: Loan recorded'])
+    expect(readSweptKeys(db)).toEqual(new Set(['proposal:p_1']))
+  })
+
+  it('the set of questions swept equals Session Closed.unresolvedQuestionIds (test 43 consistency)', () => {
+    const store = createMemoryEventStore()
+    seedClosed(store, { unresolved: ['q_1', 'q_2'] })
+
+    reconcileHotSpots({ store, db, clock }, sessionId)
+    reconcileHotSpots({ store, db, clock }, sessionId)
+
+    expect(sweptQuestionIds().toSorted()).toEqual(['q_1', 'q_2'])
+    expect(hotSpotLabels(store).toSorted()).toEqual(['What is Q1?', 'What is Q2?'])
   })
 })

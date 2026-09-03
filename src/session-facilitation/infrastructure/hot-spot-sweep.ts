@@ -3,8 +3,10 @@ import type { EventStore } from '~/plumbing/event-store/port.ts'
 import { newBuildingBlockId } from '~/plumbing/ids.ts'
 import type { SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { applyOperation, Operation } from '../../domain-model-capture/api.ts'
-import { SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
-import { sessionStream, workshopStream } from './streams.ts'
+import { replay as replayProposal } from '../domain/proposal/replay.ts'
+import { sessionProposalIds } from '../domain/read-models/session-summary.ts'
+import { ProposalEvent, SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
+import { proposalStream, sessionStream, workshopStream } from './streams.ts'
 
 /**
  * The `hot_spot_sweep` marker table — a `sweep_key` row means the hot-spot
@@ -84,22 +86,72 @@ export const reconcileHotSpots = (deps: ReconcileHotSpotsDeps, sessionId: Sessio
     if (event.type === 'Question Asked') questionText.set(event.questionId, event.text)
   }
 
-  const targets: SweepTarget[] = []
-  for (const event of events) {
+  raiseAll(deps, workshopId, [
+    ...factTargets(events, questionText),
+    ...closeTargets(deps, events, questionText),
+  ])
+}
+
+/** The always-on facts — a revealed knowledge gap or a named absent stakeholder. */
+const factTargets = (
+  events: SessionEvent[],
+  questionText: Map<string, string>,
+): SweepTarget[] =>
+  events.flatMap((event): SweepTarget[] => {
     if (event.type === 'Knowledge Gap Revealed') {
-      targets.push({
-        key: `kg:${event.questionId}`,
-        label: questionText.get(event.questionId) ?? event.detail ?? 'Knowledge gap',
-      })
-    } else if (event.type === 'Absent Stakeholder Named') {
-      targets.push({
-        key: `absent:${event.questionId}:${slug(event.personName)}`,
-        label: `Absent: ${event.personName}`,
-      })
+      return [
+        {
+          key: `kg:${event.questionId}`,
+          label: questionText.get(event.questionId) ?? event.detail ?? 'Knowledge gap',
+        },
+      ]
     }
+    if (event.type === 'Absent Stakeholder Named') {
+      return [
+        {
+          key: `absent:${event.questionId}:${slug(event.personName)}`,
+          label: `Absent: ${event.personName}`,
+        },
+      ]
+    }
+    return []
+  })
+
+/** The close sweep — every still-unresolved question and every APPLY_FAILED proposal. */
+const closeTargets = (
+  deps: ReconcileHotSpotsDeps,
+  events: SessionEvent[],
+  questionText: Map<string, string>,
+): SweepTarget[] => {
+  const closed = events.find((event) => event.type === 'Session Closed')
+  if (closed === undefined) return []
+
+  const questions: SweepTarget[] = closed.unresolvedQuestionIds.map((questionId) => ({
+    key: `q:${questionId}`,
+    label: questionText.get(questionId) ?? 'Unanswered question',
+  }))
+
+  const proposals: SweepTarget[] = []
+  for (const proposalId of sessionProposalIds(events)) {
+    const proposalEvents = deps.store
+      .read(proposalStream(proposalId))
+      .map((row) => ProposalEvent.parse(row.operation))
+    // APPLY_FAILED, or already lapsed from APPLY_FAILED by finishClose — the
+    // lapse and the hot spot are consistent whichever ran first.
+    const applyFailed =
+      replayProposal(proposalEvents).disposition === 'APPLY_FAILED' ||
+      proposalEvents.some(
+        (event) => event.type === 'Proposal Lapsed' && event.cause === 'apply-failed',
+      )
+    if (!applyFailed) continue
+    const label = proposalEvents.find((event) => event.type === 'Building Block Proposed')?.label
+    proposals.push({
+      key: `proposal:${proposalId}`,
+      label: label === undefined ? 'Proposal could not be applied' : `Could not apply: ${label}`,
+    })
   }
 
-  raiseAll(deps, workshopId, targets)
+  return [...questions, ...proposals]
 }
 
 const raiseAll = (
