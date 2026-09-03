@@ -16,7 +16,65 @@ describe('readBoardSnapshot', () => {
       blocks: [],
       follows: [],
       causedBy: [],
+      hotSpotCount: 0,
     })
+  })
+
+  it('serialises an annotated resolved hot spot with its annotates/resolved/reference and hotSpotCount', () => {
+    const store = createMemoryEventStore()
+    const deps = { store, clock }
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'capture-domain-event', id: 'e_1', label: 'Payment taken' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'raise-hot-spot', id: 'h_1', label: 'Payment keeps timing out' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'annotate', hotSpot: 'h_1', target: 'e_1' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'resolve', target: 'h_1', reference: 'added a retry with backoff' }),
+    )
+
+    const snapshot = readBoardSnapshot({ store }, workshopId)
+    expect(snapshot.hotSpotCount).toBe(1)
+    expect(snapshot.blocks).toContainEqual(
+      expect.objectContaining({
+        id: 'h_1',
+        kind: 'hot-spot',
+        annotates: 'e_1',
+        resolved: true,
+        reference: 'added a retry with backoff',
+      }),
+    )
+  })
+
+  it('round-trips through JSON — Map blocks become an array, hotSpotCount survives', () => {
+    const store = createMemoryEventStore()
+    const deps = { store, clock }
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'raise-hot-spot', id: 'h_1', label: 'Unowned decision' }),
+    )
+    applyOperation(
+      deps,
+      workshopId,
+      Operation.parse({ author, kind: 'raise-hot-spot', id: 'h_2', label: 'Second gap' }),
+    )
+
+    const snapshot = readBoardSnapshot({ store }, workshopId)
+    const parsed = JSON.parse(JSON.stringify(snapshot)) as typeof snapshot
+    expect(parsed.hotSpotCount).toBe(2)
+    expect(parsed.blocks.map((block) => block.id).toSorted()).toEqual(['h_1', 'h_2'])
   })
 
   it('includes a withdrawn block with its id, label, and withdrawn true', () => {
