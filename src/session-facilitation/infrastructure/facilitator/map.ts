@@ -59,6 +59,23 @@ export const mapTurn = (
         return { track: 'attribute-to-other-format', format: track.format, note: track.note }
       case 'answer-question':
         return { track: 'answer-question', questionId: QuestionIdSchema.parse(track.questionId) }
+      case 'reveal-knowledge-gap':
+        return {
+          track: 'reveal-knowledge-gap',
+          questionId: QuestionIdSchema.parse(track.questionId),
+          ...(track.detail === undefined ? {} : { detail: track.detail }),
+        }
+      case 'name-absent-stakeholder':
+        return {
+          track: 'name-absent-stakeholder',
+          questionId: QuestionIdSchema.parse(track.questionId),
+          personName: track.personName,
+        }
+      case 'confirm-complete-perspective':
+        return {
+          track: 'confirm-complete-perspective',
+          questionId: QuestionIdSchema.parse(track.questionId),
+        }
       case 'propose-resolution':
         return {
           track: 'propose-resolution',

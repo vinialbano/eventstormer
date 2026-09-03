@@ -76,6 +76,33 @@ describe('InterpretedTrack — the stored discriminated union', () => {
     expect(() => InterpretedTrack.parse({ track: 'summarise' })).toThrow()
   })
 
+  it('round-trips the three question-track judgment strands', () => {
+    expect(
+      InterpretedTrack.parse({
+        track: 'reveal-knowledge-gap',
+        questionId: 'q_1',
+        detail: 'nobody owns returns',
+      }),
+    ).toEqual({ track: 'reveal-knowledge-gap', questionId: 'q_1', detail: 'nobody owns returns' })
+    expect(InterpretedTrack.parse({ track: 'reveal-knowledge-gap', questionId: 'q_1' })).toEqual({
+      track: 'reveal-knowledge-gap',
+      questionId: 'q_1',
+    })
+    expect(
+      InterpretedTrack.parse({
+        track: 'name-absent-stakeholder',
+        questionId: 'q_1',
+        personName: 'ops lead',
+      }),
+    ).toEqual({ track: 'name-absent-stakeholder', questionId: 'q_1', personName: 'ops lead' })
+    expect(() =>
+      InterpretedTrack.parse({ track: 'name-absent-stakeholder', questionId: 'q_1', personName: '' }),
+    ).toThrow()
+    expect(
+      InterpretedTrack.parse({ track: 'confirm-complete-perspective', questionId: 'q_1' }),
+    ).toEqual({ track: 'confirm-complete-perspective', questionId: 'q_1' })
+  })
+
   it('has no empty ({}) subschema — every field is concretely typed, no z.unknown()', () => {
     const json = JSON.stringify(z.toJSONSchema(InterpretedTrack))
     expect(json).not.toContain('{}')

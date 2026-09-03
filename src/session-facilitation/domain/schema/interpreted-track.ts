@@ -73,11 +73,37 @@ const proposeResolution = z.object({
   reference: z.string().min(1),
 })
 
+/**
+ * The three question-track judgments — each names one open question the
+ * contribution settles without answering it outright. They reuse the
+ * `answer-question` shape (one `questionId`); the hot-spot raise a knowledge gap
+ * or an absent stakeholder implies is left to the reconciliation pass.
+ */
+const revealKnowledgeGap = z.object({
+  track: z.literal('reveal-knowledge-gap'),
+  questionId: QuestionId,
+  detail: z.string().min(1).optional(),
+})
+
+const nameAbsentStakeholder = z.object({
+  track: z.literal('name-absent-stakeholder'),
+  questionId: QuestionId,
+  personName: z.string().min(1),
+})
+
+const confirmCompletePerspective = z.object({
+  track: z.literal('confirm-complete-perspective'),
+  questionId: QuestionId,
+})
+
 export const InterpretedTrack = z.discriminatedUnion('track', [
   proposeBuildingBlock,
   flagPhase,
   attributeToOtherFormat,
   answerQuestion,
   proposeResolution,
+  revealKnowledgeGap,
+  nameAbsentStakeholder,
+  confirmCompletePerspective,
 ])
 export type InterpretedTrack = z.infer<typeof InterpretedTrack>

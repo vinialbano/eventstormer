@@ -48,8 +48,9 @@ describe('FacilitationTurnSchema — Anthropic structured-output limits', () => 
       const required = new Set(node.required ?? [])
       for (const key of Object.keys(node.properties)) if (!required.has(key)) optionalCount += 1
     })
-    // evidenceSpan, modelAffecting, annotatesTargetId (propose-building-block) + questionText (nextMove).
-    expect(optionalCount).toBe(4)
+    // evidenceSpan, modelAffecting, annotatesTargetId (propose-building-block),
+    // detail (reveal-knowledge-gap) + questionText (nextMove).
+    expect(optionalCount).toBe(5)
     expect(optionalCount).toBeLessThanOrEqual(24)
   })
 
@@ -118,6 +119,18 @@ describe('FacilitationTurnSchema — the hard ceilings', () => {
       modelAffecting: false,
       annotatesTargetId: 'Refund issued',
     })
+  })
+
+  it('round-trips the three question-track judgment strands through the union', () => {
+    expect(
+      FacilitationTrack.parse({ track: 'reveal-knowledge-gap', questionId: 'q_1', detail: 'unowned' }),
+    ).toEqual({ track: 'reveal-knowledge-gap', questionId: 'q_1', detail: 'unowned' })
+    expect(
+      FacilitationTrack.parse({ track: 'name-absent-stakeholder', questionId: 'q_1', personName: 'ops lead' }),
+    ).toEqual({ track: 'name-absent-stakeholder', questionId: 'q_1', personName: 'ops lead' })
+    expect(
+      FacilitationTrack.parse({ track: 'confirm-complete-perspective', questionId: 'q_1' }),
+    ).toEqual({ track: 'confirm-complete-perspective', questionId: 'q_1' })
   })
 
   it('rejects a proposal label longer than 200 characters', () => {

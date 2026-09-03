@@ -102,6 +102,12 @@ type FlagPhaseTrack = Extract<InterpretedTrack, { track: 'flag-phase' }>
 type AttributeTrack = Extract<InterpretedTrack, { track: 'attribute-to-other-format' }>
 type AnswerTrack = Extract<InterpretedTrack, { track: 'answer-question' }>
 type ProposeResolutionTrack = Extract<InterpretedTrack, { track: 'propose-resolution' }>
+type RevealKnowledgeGapTrack = Extract<InterpretedTrack, { track: 'reveal-knowledge-gap' }>
+type NameAbsentStakeholderTrack = Extract<InterpretedTrack, { track: 'name-absent-stakeholder' }>
+type ConfirmCompletePerspectiveTrack = Extract<
+  InterpretedTrack,
+  { track: 'confirm-complete-perspective' }
+>
 
 const deriveProposeBuildingBlock = (
   deps: InterpretContributionDeps,
@@ -209,6 +215,53 @@ const deriveProposeResolution = (
   }
 }
 
+const deriveRevealKnowledgeGap = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: RevealKnowledgeGapTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Reveal Knowledge Gap',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    ...(track.detail === undefined ? {} : { detail: track.detail }),
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
+const deriveNameAbsentStakeholder = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: NameAbsentStakeholderTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Name Absent Stakeholder',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    personName: track.personName,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
+const deriveConfirmCompletePerspective = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: ConfirmCompletePerspectiveTrack,
+): void => {
+  const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
+    type: 'Confirm Complete Perspective',
+    sessionId: event.sessionId,
+    questionId: track.questionId,
+    byContributionId: event.contributionId,
+    at: event.at,
+  })
+  if (decided.ok) appendSession(deps, event.sessionId, decided.value)
+}
+
 const deriveFreeFollowUp = (deps: InterpretContributionDeps, event: Interpreted): void => {
   if (event.askQuestionId === undefined || event.askQuestionText === undefined) return
   const decided = decideSession(replaySession(readSession(deps, event.sessionId)), {
@@ -252,6 +305,15 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
         break
       case 'propose-resolution':
         deriveProposeResolution(deps, event, track)
+        break
+      case 'reveal-knowledge-gap':
+        deriveRevealKnowledgeGap(deps, event, track)
+        break
+      case 'name-absent-stakeholder':
+        deriveNameAbsentStakeholder(deps, event, track)
+        break
+      case 'confirm-complete-perspective':
+        deriveConfirmCompletePerspective(deps, event, track)
         break
     }
 
