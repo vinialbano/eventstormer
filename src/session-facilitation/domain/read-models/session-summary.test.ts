@@ -56,6 +56,38 @@ describe('sessionProposalIds', () => {
     ]
     expect(sessionProposalIds(events)).toEqual(['p_1', 'p_2', 'p_3'])
   })
+
+  it('also folds model-change proposal ids, skipping a heldBack pivotal / reword', () => {
+    const events: SessionEvent[] = [
+      {
+        v: 1,
+        at,
+        type: 'Contribution Interpreted',
+        sessionId,
+        contributionId: toContributionId('c_1'),
+        tracks: [
+          proposeTrack('p_1'),
+          {
+            track: 'propose-relation',
+            proposalId: 'p_rel' as never,
+            relationKind: 'sequence',
+            predecessor: 'b_a' as never,
+            successor: 'b_b' as never,
+          },
+          {
+            track: 'propose-pivotal',
+            proposalId: 'p_piv' as never,
+            pivotalKind: 'mark-pivotal',
+            target: 'b_a' as never,
+            heldBack: false,
+            eventLabel: 'Loan recorded',
+          },
+          { track: 'propose-reword', newLabel: 'Loan booked', heldBack: true, targetLabel: 'Loan recorded' },
+        ],
+      },
+    ]
+    expect(sessionProposalIds(events)).toEqual(['p_1', 'p_rel', 'p_piv'])
+  })
 })
 
 describe('sessionSummary — read-time projection over a canned stream', () => {

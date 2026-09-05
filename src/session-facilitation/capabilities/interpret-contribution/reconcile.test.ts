@@ -305,6 +305,59 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         .map((row) => (row.operation as { type: string }).type),
     ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
   })
+
+  it('lapses a PROPOSED model-change proposal at close (sessionProposalIds covers relation tracks)', () => {
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_1',
+          tracks: [
+            {
+              track: 'propose-relation',
+              proposalId: 'p_rel',
+              relationKind: 'sequence',
+              predecessor: 'bb_a',
+              successor: 'bb_b',
+            },
+          ],
+          at,
+        },
+      },
+      {
+        at,
+        opVersion: 1,
+        operation: { v: 1, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [], at },
+      },
+    ])
+    store.append(proposalStream('p_rel' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Model Change Proposed',
+          proposalId: 'p_rel',
+          sessionId,
+          contributionId: 'c_1',
+          intent: { kind: 'relation', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
+          at,
+        },
+      },
+    ])
+
+    reconcilePendingDerivations(deps())
+
+    expect(
+      store
+        .read(proposalStream('p_rel' as ProposalId))
+        .map((row) => (row.operation as { type: string }).type),
+    ).toEqual(['Model Change Proposed', 'Proposal Lapsed'])
+  })
 })
 
 describe('reconcilePendingDerivations — hot-spot close sweep', () => {
