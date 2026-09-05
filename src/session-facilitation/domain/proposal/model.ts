@@ -1,5 +1,9 @@
 import type { BuildingBlockId, ContributionId, ProposalId, SessionId } from '~/plumbing/ids.ts'
+import type { ProposalEvent } from '../schema/events.ts'
 import type { InterpretedBlockKind, InterpretationBar } from '../schema/interpreted-track.ts'
+
+type Intent = Extract<ProposalEvent, { type: 'Model Change Proposed' }>['intent']
+type ModelChangeChanged = Extract<ProposalEvent, { type: 'Model Change Edited' }>['changed']
 
 /**
  * The `Proposal` disposition machine:
@@ -36,6 +40,10 @@ export interface ProposalWriteModel {
   /** The current kind of a hot-spot proposal: the birth value, overridden by the
    * last `Proposal Kind Set`. `true` (model-affecting) for a plain capture. */
   modelAffecting: boolean
+  /** Which birth fired — a proposed building block or a proposed model change.
+   * `undefined` before birth. The accept handler reads the `intent` off the birth
+   * event, not the fold, so the full `Intent` is deliberately not held here. */
+  birthKind?: 'block' | 'model-change'
   buildingBlockId?: BuildingBlockId
 }
 
@@ -69,10 +77,20 @@ export type ProposalCommand =
   | { type: 'Edit Proposal'; proposalId: ProposalId; label: string; at: string }
   | { type: 'Set Proposal Kind'; proposalId: ProposalId; modelAffecting: boolean; at: string }
   | {
+      type: 'Propose Model Change'
+      proposalId: ProposalId
+      sessionId: SessionId
+      contributionId: ContributionId
+      intent: Intent
+      at: string
+    }
+  | { type: 'Edit Model Change'; proposalId: ProposalId; changed: ModelChangeChanged; at: string }
+  | {
       type: 'Accept Proposal'
       proposalId: ProposalId
       accepter: string
-      buildingBlockId: BuildingBlockId
+      /** Absent for a model-change proposal — it mints no `BuildingBlockId`. */
+      buildingBlockId?: BuildingBlockId
       at: string
     }
   | { type: 'Reject Proposal'; proposalId: ProposalId; at: string }

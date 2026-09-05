@@ -314,7 +314,8 @@ const ProposalAccepted = z.object({
   type: z.literal('Proposal Accepted'),
   proposalId: ProposalId,
   accepter: z.string().min(1),
-  buildingBlockId: BuildingBlockId,
+  /** Absent when the accepted proposal is a model change — it mints no block. */
+  buildingBlockId: BuildingBlockId.optional(),
 })
 
 const ProposalRejected = z.object({

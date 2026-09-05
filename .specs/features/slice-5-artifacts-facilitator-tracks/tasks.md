@@ -11,7 +11,18 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
 ---
 
 **Design**: `.specs/features/slice-5-artifacts-facilitator-tracks/design.md`
-**Status**: Draft (revised 2026-09-05 after the four-lens adversarial review)
+**Status**: In Progress
+
+## Execution Log
+
+- **Batch 1 (Phase 1 — T1, T1a, T1b, T2, T3, T3a, T4) ✅** — `b33927a` T1 · `eef3b67` T1a ·
+  `b448e66` T1b · `a342e26` T2 · `90f58b4` T3 · `035cda5` T3a · `99a0b26` T4. 1023 tests
+  (986 → +37), `pnpm check` green. SPEC_DEVIATION in `map.ts` `rewordTrack`: a same-turn
+  reword whose target has no `BuildingBlockId` yet (ids minted at accept) is **dropped**, not
+  surfaced as a "held" notice — FREW-03 ("SHALL NOT be held") satisfied; a later
+  contribution's reword resolves normally. Phase 2/3 owns accept-time handling. Exports added:
+  `InterpretedRelationKind` / `RelationField` / `RELATION_FIELDS` (interpreted-track), `Intent`
+  (events); `deriveTracks` currently `continue`s past the model-change kinds (T7 picks them up).
 
 ---
 

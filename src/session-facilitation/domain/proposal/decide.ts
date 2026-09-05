@@ -44,6 +44,34 @@ const decidePropose = (
   ])
 }
 
+const decideProposeModelChange = (
+  writeModel: ProposalWriteModel,
+  command: CommandOf<'Propose Model Change'>,
+): Decision => {
+  if (writeModel.born) return ok([])
+  return ok([
+    {
+      v: 1,
+      type: 'Model Change Proposed',
+      proposalId: command.proposalId,
+      sessionId: command.sessionId,
+      contributionId: command.contributionId,
+      intent: command.intent,
+      at: command.at,
+    },
+  ])
+}
+
+const decideEditModelChange = (
+  writeModel: ProposalWriteModel,
+  command: CommandOf<'Edit Model Change'>,
+): Decision => {
+  if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
+  return ok([
+    { v: 1, type: 'Model Change Edited', proposalId: command.proposalId, changed: command.changed, at: command.at },
+  ])
+}
+
 const decideEdit = (writeModel: ProposalWriteModel, command: CommandOf<'Edit Proposal'>): Decision => {
   if (!REVIEWABLE.has(writeModel.disposition)) return badTransition(writeModel, command.type)
   if (command.label.length > LABEL_MAX) {
@@ -81,7 +109,7 @@ const decideAccept = (
       type: 'Proposal Accepted',
       proposalId: command.proposalId,
       accepter: command.accepter,
-      buildingBlockId: command.buildingBlockId,
+      ...(command.buildingBlockId === undefined ? {} : { buildingBlockId: command.buildingBlockId }),
       at: command.at,
     },
   ])
@@ -158,9 +186,12 @@ export const decide = (
   command: ProposalCommand,
 ): Result<ProposalEvent[], ProposalRejection> => {
   if (command.type === 'Propose Building Block') return decidePropose(writeModel, command)
+  if (command.type === 'Propose Model Change') return decideProposeModelChange(writeModel, command)
   if (!writeModel.born) return err({ kind: 'not-born', classification: 'systemic' })
 
   switch (command.type) {
+    case 'Edit Model Change':
+      return decideEditModelChange(writeModel, command)
     case 'Edit Proposal':
       return decideEdit(writeModel, command)
     case 'Set Proposal Kind':
