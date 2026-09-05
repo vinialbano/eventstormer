@@ -1,4 +1,4 @@
-import { readBoardSnapshot, readBuildingBlocks } from '../../../domain-model-capture/api.ts'
+import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import type {
   BuildingBlockId,
   ContributionId,
@@ -23,7 +23,8 @@ import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
 import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
-import { mapTurn } from '../../infrastructure/facilitator/map.ts'
+import { hasModelStructure } from '../../domain/model-readiness.ts'
+import { type BoardState, mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
 import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
 import { finishClose } from '../../infrastructure/session-close.ts'
@@ -428,11 +429,27 @@ const runInterpretation = async (
       return
     }
 
-    const blockIdByLabel = new Map<string, BuildingBlockId>()
-    for (const block of readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId)) {
-      if (!blockIdByLabel.has(block.label)) blockIdByLabel.set(block.label, block.id)
+    // One board read, taken after the model call returns: it drives both
+    // endpoint-label resolution and the F04 / F07 readiness gates, so a held /
+    // released decision is never made against a board that has since changed.
+    const snapshot = readBoardSnapshot({ store: deps.store }, workshopId)
+    const idByLabel = new Map<string, BuildingBlockId | undefined>()
+    for (const block of snapshot.blocks) {
+      if (block.withdrawn) continue
+      idByLabel.set(block.label, idByLabel.has(block.label) ? undefined : block.id)
     }
-    const mapped = mapTurn(turn.value, deps.mint, (label) => blockIdByLabel.get(label))
+    const resolveBlockId = (label: string): BuildingBlockId | undefined => idByLabel.get(label)
+    const placedDomainEvents = new Set(
+      snapshot.blocks
+        .filter((block) => !block.withdrawn && block.kind === 'domain-event' && block.placement === 'timeline')
+        .map((block) => block.id),
+    )
+    const boardState: BoardState = {
+      placedEventCount: placedDomainEvents.size,
+      hasStructure: hasModelStructure(snapshot),
+      isPlacedDomainEvent: (id) => placedDomainEvents.has(id),
+    }
+    const mapped = mapTurn(turn.value, deps.mint, resolveBlockId, boardState)
     const asking: { askQuestionId?: QuestionId; askQuestionText?: string } =
       turn.value.nextMove.move === 'ask' &&
       turn.value.nextMove.questionText !== undefined &&

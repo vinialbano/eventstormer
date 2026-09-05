@@ -95,7 +95,7 @@ const confirmCompletePerspective = z.object({
 })
 
 /** The board relation kinds the facilitator may propose (not `unsequence`). */
-const InterpretedRelationKind = z.enum([
+export const InterpretedRelationKind = z.enum([
   'sequence',
   'insert-between',
   'place',
@@ -103,12 +103,20 @@ const InterpretedRelationKind = z.enum([
   'link-cause',
   'unlink-cause',
 ])
-type InterpretedRelationKind = z.infer<typeof InterpretedRelationKind>
+export type InterpretedRelationKind = z.infer<typeof InterpretedRelationKind>
+
+export type RelationField =
+  | 'predecessor'
+  | 'successor'
+  | 'inserted'
+  | 'cause'
+  | 'effect'
+  | 'target'
 
 /** Which named endpoint fields a `propose-relation` track carries per kind — it
- * mirrors the `Operation` union exactly, so the accept path reads it field to
- * field with no positional spread. */
-const RELATION_FIELDS: Record<InterpretedRelationKind, readonly RelationField[]> = {
+ * mirrors the `Operation` union exactly and gives the endpoint-label array its
+ * order, so the accept path reads it field to field with no positional spread. */
+export const RELATION_FIELDS: Record<InterpretedRelationKind, readonly RelationField[]> = {
   sequence: ['predecessor', 'successor'],
   'insert-between': ['predecessor', 'inserted', 'successor'],
   place: ['target'],
@@ -117,7 +125,6 @@ const RELATION_FIELDS: Record<InterpretedRelationKind, readonly RelationField[]>
   'unlink-cause': ['cause', 'effect'],
 }
 
-type RelationField = 'predecessor' | 'successor' | 'inserted' | 'cause' | 'effect' | 'target'
 const ALL_RELATION_FIELDS: readonly RelationField[] = [
   'predecessor',
   'successor',

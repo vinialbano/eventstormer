@@ -622,6 +622,48 @@ describe('interpretContribution — FIFO and one-in-flight', () => {
   })
 })
 
+describe('interpretContribution — model-change readiness gates use the post-call board snapshot', () => {
+  const rewordTurn = turn([
+    { track: 'propose-reword', targetLabel: 'Book borrowed', newLabel: 'Book loaned' },
+  ])
+  const storedTracks = (): unknown[] =>
+    only('Contribution Interpreted').flatMap((event) => event.tracks)
+
+  it('releases a reword (heldBack false, target resolved) when the board has structure at snapshot time', async () => {
+    seedBoardTopology() // two placed events, one follows edge, one pivotal
+    seedSession()
+    contribute('call it a loan not a borrow', 'c_1')
+
+    await interpretContribution(deps([rewordTurn]))
+
+    expect(storedTracks()).toEqual([
+      {
+        track: 'propose-reword',
+        proposalId: 'p_1',
+        target: 'bb_a',
+        newLabel: 'Book loaned',
+        heldBack: false,
+        targetLabel: 'Book borrowed',
+      },
+    ])
+  })
+
+  it('holds a reword back when the board has no structure at snapshot time', async () => {
+    // one lone capture, no edge, no pivotal
+    store.append(boardStream, store.read(boardStream).length - 1, [
+      { at, opVersion: 1, operation: { v: 1, kind: 'capture-domain-event', id: 'bb_a', label: 'Book borrowed', author: boardAuthor } },
+    ])
+    seedSession()
+    contribute('call it a loan not a borrow', 'c_1')
+
+    await interpretContribution(deps([rewordTurn]))
+
+    expect(storedTracks()).toEqual([
+      { track: 'propose-reword', newLabel: 'Book loaned', heldBack: true, targetLabel: 'Book borrowed' },
+    ])
+  })
+})
+
 describe('interpretContribution — the turn input carries board topology', () => {
   it('renders each placed event with its follows link, pivotal marker, and a timeline count from readBoardSnapshot', async () => {
     seedBoardTopology()

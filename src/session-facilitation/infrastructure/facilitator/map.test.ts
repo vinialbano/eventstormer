@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildingBlockId, ProposalId, QuestionId, ResolutionId } from '~/plumbing/ids.ts'
 import type { FacilitationTurn } from './turn-schema.ts'
-import { mapTurn, type TrackIdMint } from './map.ts'
+import { type BoardState, mapTurn, type TrackIdMint } from './map.ts'
 
 /** A deterministic mint — `p_1`, `p_2`, … / `q_1`, `q_2`, … in call order. */
 const countingMint = (): TrackIdMint => {
@@ -172,5 +172,147 @@ describe('mapTurn — FacilitationTurn → InterpretedTrack[] with minted ids', 
   it('omits askQuestionId when nextMove.move is "acknowledge"', () => {
     const turn: FacilitationTurn = { interpretation: [], nextMove: { move: 'acknowledge' } }
     expect(mapTurn(turn, countingMint())).toEqual({ tracks: [] })
+  })
+})
+
+const ACK = { move: 'acknowledge' as const }
+const board = (over: Partial<BoardState> = {}): BoardState => ({
+  placedEventCount: 0,
+  hasStructure: false,
+  isPlacedDomainEvent: () => false,
+  ...over,
+})
+const resolver =
+  (map: Record<string, BuildingBlockId>) =>
+  (label: string): BuildingBlockId | undefined =>
+    map[label]
+
+describe('mapTurn — propose-relation', () => {
+  const ids = resolver({ A: 'bb_a' as BuildingBlockId, B: 'bb_b' as BuildingBlockId, C: 'bb_c' as BuildingBlockId })
+
+  it('emits named endpoint fields matching the relationKind', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [{ track: 'propose-relation', relationKind: 'sequence', endpoints: ['A', 'B'], rationale: 'x' }],
+      nextMove: ACK,
+    }
+    expect(mapTurn(turn, countingMint(), ids, board()).tracks).toEqual([
+      { track: 'propose-relation', proposalId: 'p_1', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
+    ])
+  })
+
+  it('maps insert-between to predecessor/inserted/successor in endpoint order', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        { track: 'propose-relation', relationKind: 'insert-between', endpoints: ['A', 'C', 'B'], rationale: 'x' },
+      ],
+      nextMove: ACK,
+    }
+    expect(mapTurn(turn, countingMint(), ids, board()).tracks).toEqual([
+      {
+        track: 'propose-relation',
+        proposalId: 'p_1',
+        relationKind: 'insert-between',
+        predecessor: 'bb_a',
+        inserted: 'bb_c',
+        successor: 'bb_b',
+      },
+    ])
+  })
+
+  it('drops the track when an endpoint label does not resolve', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [{ track: 'propose-relation', relationKind: 'sequence', endpoints: ['A', 'Z'], rationale: 'x' }],
+      nextMove: ACK,
+    }
+    expect(mapTurn(turn, countingMint(), ids, board()).tracks).toEqual([])
+  })
+
+  it('drops the track when the arity is wrong for the relationKind', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [{ track: 'propose-relation', relationKind: 'sequence', endpoints: ['A'], rationale: 'x' }],
+      nextMove: ACK,
+    }
+    expect(mapTurn(turn, countingMint(), ids, board()).tracks).toEqual([])
+  })
+
+  it('drops the track when two endpoints resolve to the same block', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [{ track: 'propose-relation', relationKind: 'sequence', endpoints: ['A', 'A'], rationale: 'x' }],
+      nextMove: ACK,
+    }
+    expect(mapTurn(turn, countingMint(), ids, board()).tracks).toEqual([])
+  })
+})
+
+describe('mapTurn — propose-pivotal', () => {
+  const ids = resolver({ 'Loan recorded': 'bb_a' as BuildingBlockId })
+  const track = { track: 'propose-pivotal' as const, pivotalKind: 'mark-pivotal' as const, eventLabel: 'Loan recorded' }
+
+  it('releases with a target + proposalId when the event is placed and the board has enough events', () => {
+    const state = board({ placedEventCount: 5, isPlacedDomainEvent: (id) => id === 'bb_a' })
+    expect(mapTurn({ interpretation: [track], nextMove: ACK }, countingMint(), ids, state).tracks).toEqual([
+      {
+        track: 'propose-pivotal',
+        proposalId: 'p_1',
+        pivotalKind: 'mark-pivotal',
+        target: 'bb_a',
+        heldBack: false,
+        eventLabel: 'Loan recorded',
+      },
+    ])
+  })
+
+  it('holds the track back (no proposalId/target) below the placed-event threshold', () => {
+    const state = board({ placedEventCount: 4, isPlacedDomainEvent: (id) => id === 'bb_a' })
+    expect(mapTurn({ interpretation: [track], nextMove: ACK }, countingMint(), ids, state).tracks).toEqual([
+      { track: 'propose-pivotal', pivotalKind: 'mark-pivotal', heldBack: true, eventLabel: 'Loan recorded' },
+    ])
+  })
+
+  it('drops the track when the label is not a placed domain event', () => {
+    const state = board({ placedEventCount: 9, isPlacedDomainEvent: () => false })
+    expect(mapTurn({ interpretation: [track], nextMove: ACK }, countingMint(), ids, state).tracks).toEqual([])
+  })
+})
+
+describe('mapTurn — propose-reword', () => {
+  const ids = resolver({ 'Loan recorded': 'bb_a' as BuildingBlockId })
+  const track = {
+    track: 'propose-reword' as const,
+    targetLabel: 'Loan recorded',
+    newLabel: 'Loan booked',
+  }
+
+  it('holds the reword back on a structureless board', () => {
+    expect(
+      mapTurn({ interpretation: [track], nextMove: ACK }, countingMint(), ids, board({ hasStructure: false })).tracks,
+    ).toEqual([{ track: 'propose-reword', newLabel: 'Loan booked', heldBack: true, targetLabel: 'Loan recorded' }])
+  })
+
+  it('releases the reword once the board has structure', () => {
+    expect(
+      mapTurn({ interpretation: [track], nextMove: ACK }, countingMint(), ids, board({ hasStructure: true })).tracks,
+    ).toEqual([
+      {
+        track: 'propose-reword',
+        proposalId: 'p_1',
+        target: 'bb_a',
+        newLabel: 'Loan booked',
+        heldBack: false,
+        targetLabel: 'Loan recorded',
+      },
+    ])
+  })
+
+  it('does not hold a reword whose target was proposed earlier in the same turn', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        { track: 'propose-building-block', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' },
+        { track: 'propose-reword', targetLabel: 'Loan recorded', newLabel: 'Loan booked' },
+      ],
+      nextMove: ACK,
+    }
+    const mapped = mapTurn(turn, countingMint(), resolver({}), board({ hasStructure: false }))
+    expect(mapped.tracks.some((entry) => entry.track === 'propose-reword' && entry.heldBack)).toBe(false)
   })
 })
