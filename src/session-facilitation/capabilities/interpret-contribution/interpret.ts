@@ -12,6 +12,7 @@ import { type FacilitationBlock, facilitationContext } from '../../domain/read-m
 import { priorSessionHistory, sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { sessionView } from '../../domain/read-models/session-view.ts'
 import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import type { Intent } from '../../domain/schema/events.ts'
 import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import { decide as decideProposal } from '../../domain/proposal/decide.ts'
 import { replay as replayProposal } from '../../domain/proposal/replay.ts'
@@ -264,6 +265,59 @@ const deriveProposeResolution = (
   }
 }
 
+type RelationTrack = Extract<InterpretedTrack, { track: 'propose-relation' }>
+type PivotalTrack = Extract<InterpretedTrack, { track: 'propose-pivotal' }>
+type RewordTrack = Extract<InterpretedTrack, { track: 'propose-reword' }>
+
+const relationIntent = (track: RelationTrack): Intent => ({
+  kind: 'relation',
+  relationKind: track.relationKind,
+  ...(track.predecessor === undefined ? {} : { predecessor: track.predecessor }),
+  ...(track.successor === undefined ? {} : { successor: track.successor }),
+  ...(track.inserted === undefined ? {} : { inserted: track.inserted }),
+  ...(track.cause === undefined ? {} : { cause: track.cause }),
+  ...(track.effect === undefined ? {} : { effect: track.effect }),
+  ...(track.target === undefined ? {} : { target: track.target }),
+})
+
+/**
+ * Birth the `Model Change Proposed` a non-`heldBack` relation / pivotal / reword
+ * track implies. A held track (below the F07 pivotal threshold or the F04
+ * structure gate) births nothing — the notice is `sessionView`'s job. The append
+ * uses `expectedPosition: -1`, so a re-run over an already-born stream is a
+ * no-op — the commit-point stays `Contribution Interpreted`.
+ */
+const deriveModelChange = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: RelationTrack | PivotalTrack | RewordTrack,
+): void => {
+  let intent: Intent
+  if (track.track === 'propose-relation') {
+    intent = relationIntent(track)
+  } else {
+    if (track.heldBack || track.proposalId === undefined || track.target === undefined) return
+    intent =
+      track.track === 'propose-pivotal'
+        ? { kind: 'pivotal', pivotalKind: track.pivotalKind, target: track.target }
+        : { kind: 'reword', target: track.target, newLabel: track.newLabel }
+  }
+  const proposalId = track.proposalId
+  if (proposalId === undefined) return
+
+  const decided = decideProposal(replayProposal(readProposal(deps, proposalId)), {
+    type: 'Propose Model Change',
+    proposalId,
+    sessionId: event.sessionId,
+    contributionId: event.contributionId,
+    intent,
+    at: event.at,
+  })
+  if (decided.ok && decided.value.length > 0) {
+    deps.store.append(proposalStream(proposalId), -1, storedOps(decided.value))
+  }
+}
+
 const deriveRevealKnowledgeGap = (
   deps: InterpretContributionDeps,
   event: Interpreted,
@@ -383,9 +437,8 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
       case 'propose-relation':
       case 'propose-pivotal':
       case 'propose-reword':
-        // Model-change proposal births are derived alongside the accept chain;
-        // leave the track unmarked so that derivation still picks it up.
-        continue
+        deriveModelChange(deps, event, track)
+        break
     }
 
     markDerivedTrack(deps.db, event.contributionId, index)

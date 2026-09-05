@@ -664,6 +664,66 @@ describe('interpretContribution — model-change readiness gates use the post-ca
   })
 })
 
+describe('interpretContribution — model-change track derivation', () => {
+  const relationTurn = turn([
+    {
+      track: 'propose-relation',
+      relationKind: 'sequence',
+      endpoints: ['Book borrowed', 'Book returned'],
+      rationale: 'the return follows the borrow',
+    },
+  ])
+
+  it('births one Model Change Proposed carrying the named-field intent for a non-held relation track', async () => {
+    seedBoardTopology()
+    seedSession()
+    contribute('a member returns after borrowing', 'c_1')
+
+    await interpretContribution(deps([relationTurn]))
+
+    const events = proposalEvents('p_1')
+    expect(events.map((event) => event.type)).toEqual(['Model Change Proposed'])
+    const [birth] = events
+    expect(birth?.type === 'Model Change Proposed' && birth.intent).toEqual({
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+    expect(readDerivedTrackKeys(db)).toEqual(new Set(['c_1::0']))
+  })
+
+  it('births nothing for a heldBack reword track', async () => {
+    // one lone capture — no structure, so the reword is held
+    store.append(boardStream, store.read(boardStream).length - 1, [
+      { at, opVersion: 1, operation: { v: 1, kind: 'capture-domain-event', id: 'bb_a', label: 'Book borrowed', author: boardAuthor } },
+    ])
+    seedSession()
+    contribute('call it a loan', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'propose-reword', targetLabel: 'Book borrowed', newLabel: 'Book loaned' }])]),
+    )
+
+    expect(store.read({ context: 'session-facilitation', aggregate: 'proposal', id: 'p_1' })).toEqual([])
+    expect(readDerivedTrackKeys(db)).toEqual(new Set(['c_1::0']))
+  })
+
+  it('is idempotent — a reconcile re-run over an already-born stream adds no second birth', async () => {
+    seedBoardTopology()
+    seedSession()
+    contribute('a member returns after borrowing', 'c_1')
+
+    await interpretContribution(deps([relationTurn]))
+    expect(proposalEvents('p_1')).toHaveLength(1)
+
+    db.prepare('DELETE FROM derived_track WHERE contribution_id = ? AND track_index = ?').run('c_1', 0)
+    reconcilePendingDerivations(deps([]))
+
+    expect(proposalEvents('p_1').map((event) => event.type)).toEqual(['Model Change Proposed'])
+  })
+})
+
 describe('interpretContribution — the turn input carries board topology', () => {
   it('renders each placed event with its follows link, pivotal marker, and a timeline count from readBoardSnapshot', async () => {
     seedBoardTopology()
