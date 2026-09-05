@@ -11,6 +11,10 @@ export const evolve = (writeModel: ProposalWriteModel, event: ProposalEvent): Pr
         held: false,
         modelAffecting: event.modelAffecting ?? true,
       }
+    case 'Model Change Proposed':
+      return { born: true, disposition: 'PROPOSED', held: false, modelAffecting: true }
+    case 'Model Change Edited':
+      return { ...writeModel, disposition: 'EDITED' }
     case 'Proposal Edited':
       return { ...writeModel, disposition: 'EDITED' }
     case 'Proposal Kind Set':

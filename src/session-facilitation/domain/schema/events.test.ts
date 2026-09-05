@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ProposalEvent, SessionEvent, WorkshopEvent } from './events.ts'
+import { Intent, ProposalEvent, SessionEvent, WorkshopEvent } from './events.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 
@@ -375,5 +375,62 @@ describe('ProposalEvent SSOT', () => {
   it('has no overflow field on Building Block Proposed', () => {
     const parsed = ProposalEvent.parse({ ...buildingBlockProposed, overflow: true })
     expect(parsed).not.toHaveProperty('overflow')
+  })
+
+  it('Intent validates each kind and rejects a relation intent with an unknown relationKind', () => {
+    expect(Intent.parse({ kind: 'relation', relationKind: 'place', target: 'bb_a' }).kind).toBe('relation')
+    expect(Intent.parse({ kind: 'pivotal', pivotalKind: 'unmark-pivotal', target: 'bb_a' }).kind).toBe('pivotal')
+    expect(Intent.parse({ kind: 'reword', target: 'bb_a', newLabel: 'x' }).kind).toBe('reword')
+    expect(() => Intent.parse({ kind: 'relation', relationKind: 'unsequence', target: 'bb_a' })).toThrow()
+    expect(() => Intent.parse({ kind: 'pivotal', pivotalKind: 'mark-pivotal' })).toThrow()
+  })
+
+  it('parses a Model Change Proposed carrying a relation intent with named endpoint fields', () => {
+    const proposed = {
+      v: 1,
+      at,
+      type: 'Model Change Proposed',
+      proposalId: 'p_1',
+      sessionId: 's_1',
+      contributionId: 'c_1',
+      intent: { kind: 'relation', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
+    }
+    const parsed = ProposalEvent.parse(proposed)
+    expect(parsed).toEqual(proposed)
+    expect(() => ProposalEvent.parse({ ...proposed, v: 2 })).toThrow()
+  })
+
+  it('parses a Model Change Proposed carrying a pivotal intent and a reword intent', () => {
+    const base = {
+      v: 1,
+      at,
+      type: 'Model Change Proposed' as const,
+      proposalId: 'p_1',
+      sessionId: 's_1',
+      contributionId: 'c_1',
+    }
+    expect(
+      ProposalEvent.parse({ ...base, intent: { kind: 'pivotal', pivotalKind: 'mark-pivotal', target: 'bb_a' } }),
+    ).toMatchObject({ intent: { kind: 'pivotal', target: 'bb_a' } })
+    expect(
+      ProposalEvent.parse({ ...base, intent: { kind: 'reword', target: 'bb_a', newLabel: 'Loan booked' } }),
+    ).toMatchObject({ intent: { kind: 'reword', newLabel: 'Loan booked' } })
+    expect(() =>
+      ProposalEvent.parse({ ...base, intent: { kind: 'reword', target: 'bb_a', newLabel: 'x'.repeat(201) } }),
+    ).toThrow()
+  })
+
+  it('Model Change Edited carries only the mutable fields, never kind, and requires an ISO at', () => {
+    const edited = {
+      v: 1,
+      at,
+      type: 'Model Change Edited',
+      proposalId: 'p_1',
+      changed: { successor: 'bb_c' },
+    }
+    expect(ProposalEvent.parse(edited)).toEqual(edited)
+    const parsed = ProposalEvent.parse({ ...edited, changed: { newLabel: 'Loan booked', kind: 'reword' } })
+    expect(parsed.type === 'Model Change Edited' && parsed.changed).not.toHaveProperty('kind')
+    expect(() => ProposalEvent.parse({ ...edited, at: 'not-a-date' })).toThrow()
   })
 })
