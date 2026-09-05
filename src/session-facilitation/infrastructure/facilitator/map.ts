@@ -35,56 +35,72 @@ export const mapTurn = (
   mint: TrackIdMint,
   resolveBlockId: (label: string) => BuildingBlockId | undefined = () => undefined,
 ): MappedTurn => {
-  const tracks: InterpretedTrack[] = turn.interpretation.map((track): InterpretedTrack => {
+  const tracks: InterpretedTrack[] = turn.interpretation.flatMap((track): InterpretedTrack[] => {
     switch (track.track) {
+      case 'propose-relation':
+      case 'propose-pivotal':
+      case 'propose-reword':
+        return []
       case 'propose-building-block': {
         const annotatesTargetId =
           track.annotatesTargetId === undefined ? undefined : resolveBlockId(track.annotatesTargetId)
-        return {
-          track: 'propose-building-block',
-          proposalId: mint.proposalId(),
-          blockKind: track.blockKind,
-          label: track.label,
-          bar: track.bar,
-          ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
-          ...(track.modelAffecting === undefined ? {} : { modelAffecting: track.modelAffecting }),
-          ...(annotatesTargetId === undefined ? {} : { annotatesTargetId }),
-        }
+        return [
+          {
+            track: 'propose-building-block',
+            proposalId: mint.proposalId(),
+            blockKind: track.blockKind,
+            label: track.label,
+            bar: track.bar,
+            ...(track.evidenceSpan === undefined ? {} : { evidenceSpan: track.evidenceSpan }),
+            ...(track.modelAffecting === undefined ? {} : { modelAffecting: track.modelAffecting }),
+            ...(annotatesTargetId === undefined ? {} : { annotatesTargetId }),
+          },
+        ]
       }
       case 'flag-phase':
-        return {
-          track: 'flag-phase',
-          questionId: mint.questionId(),
-          questionText: track.questionText,
-        }
+        return [
+          {
+            track: 'flag-phase',
+            questionId: mint.questionId(),
+            questionText: track.questionText,
+          },
+        ]
       case 'attribute-to-other-format':
-        return { track: 'attribute-to-other-format', format: track.format, note: track.note }
+        return [{ track: 'attribute-to-other-format', format: track.format, note: track.note }]
       case 'answer-question':
-        return { track: 'answer-question', questionId: QuestionIdSchema.parse(track.questionId) }
+        return [{ track: 'answer-question', questionId: QuestionIdSchema.parse(track.questionId) }]
       case 'reveal-knowledge-gap':
-        return {
-          track: 'reveal-knowledge-gap',
-          questionId: QuestionIdSchema.parse(track.questionId),
-          ...(track.detail === undefined ? {} : { detail: track.detail }),
-        }
+        return [
+          {
+            track: 'reveal-knowledge-gap',
+            questionId: QuestionIdSchema.parse(track.questionId),
+            ...(track.detail === undefined ? {} : { detail: track.detail }),
+          },
+        ]
       case 'name-absent-stakeholder':
-        return {
-          track: 'name-absent-stakeholder',
-          questionId: QuestionIdSchema.parse(track.questionId),
-          personName: track.personName,
-        }
+        return [
+          {
+            track: 'name-absent-stakeholder',
+            questionId: QuestionIdSchema.parse(track.questionId),
+            personName: track.personName,
+          },
+        ]
       case 'confirm-complete-perspective':
-        return {
-          track: 'confirm-complete-perspective',
-          questionId: QuestionIdSchema.parse(track.questionId),
-        }
+        return [
+          {
+            track: 'confirm-complete-perspective',
+            questionId: QuestionIdSchema.parse(track.questionId),
+          },
+        ]
       case 'propose-resolution':
-        return {
-          track: 'propose-resolution',
-          resolutionId: mint.resolutionId(),
-          hotSpotId: resolveBlockId(track.hotSpotId) ?? BuildingBlockIdSchema.parse(track.hotSpotId),
-          reference: track.reference,
-        }
+        return [
+          {
+            track: 'propose-resolution',
+            resolutionId: mint.resolutionId(),
+            hotSpotId: resolveBlockId(track.hotSpotId) ?? BuildingBlockIdSchema.parse(track.hotSpotId),
+            reference: track.reference,
+          },
+        ]
     }
   })
 

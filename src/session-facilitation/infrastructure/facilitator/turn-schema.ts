@@ -128,6 +128,50 @@ const confirmCompletePerspective = z.object({
     ),
 })
 
+const proposeRelation = z.object({
+  track: z.literal('propose-relation'),
+  relationKind: z
+    .enum(['sequence', 'insert-between', 'place', 'unplace', 'link-cause', 'unlink-cause'])
+    .describe(
+      'The relation to assert: "sequence" (A is followed by B), "insert-between" (put C between an existing A→B pair), "place" (put an event on the timeline), "unplace" (take it back to the backlog), "link-cause" (A causes B), "unlink-cause" (remove that causal link).',
+    ),
+  endpoints: z
+    .array(z.string().min(1))
+    .min(1)
+    .max(3)
+    .describe(
+      'The building blocks the relation connects, named by their EXACT current board labels, in order: place/unplace = 1 label; sequence/link-cause/unlink-cause = 2 (predecessor then successor, or cause then effect); insert-between = 3 (predecessor, the inserted event, successor). 1–3 entries.',
+    ),
+  rationale: z
+    .string()
+    .min(1)
+    .describe('One line on why the contribution implies this relation.'),
+})
+
+const proposePivotal = z.object({
+  track: z.literal('propose-pivotal'),
+  pivotalKind: z
+    .enum(['mark-pivotal', 'unmark-pivotal'])
+    .describe('"mark-pivotal" to flag an event as a milestone worth navigating by, "unmark-pivotal" to remove that flag.'),
+  eventLabel: z
+    .string()
+    .min(1)
+    .describe('The exact current board label of the placed domain event to mark or unmark. Only propose this on a board that already has a spine worth navigating.'),
+})
+
+const proposeReword = z.object({
+  track: z.literal('propose-reword'),
+  targetLabel: z
+    .string()
+    .min(1)
+    .describe('The exact current board label of the building block to reword. Only propose a reword once the model has structure (relations or pivotal marks).'),
+  newLabel: z
+    .string()
+    .min(1)
+    .max(200)
+    .describe('The replacement label, 1–200 characters. Keep the person\'s own wording wherever it is usable.'),
+})
+
 export const FacilitationTrack = z.discriminatedUnion('track', [
   proposeBuildingBlock,
   flagPhase,
@@ -137,6 +181,9 @@ export const FacilitationTrack = z.discriminatedUnion('track', [
   revealKnowledgeGap,
   nameAbsentStakeholder,
   confirmCompletePerspective,
+  proposeRelation,
+  proposePivotal,
+  proposeReword,
 ])
 export type FacilitationTrack = z.infer<typeof FacilitationTrack>
 

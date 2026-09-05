@@ -139,3 +139,62 @@ describe('FacilitationTurnSchema — the hard ceilings', () => {
     ).toThrow()
   })
 })
+
+describe('FacilitationTurnSchema — the model-change strands', () => {
+  it('accepts a propose-relation strand with a relation kind, endpoint labels, and a rationale', () => {
+    const parsed = FacilitationTrack.parse({
+      track: 'propose-relation',
+      relationKind: 'sequence',
+      endpoints: ['Book borrowed', 'Book returned'],
+      rationale: 'the expert said one follows the other',
+    })
+    expect(parsed).toEqual({
+      track: 'propose-relation',
+      relationKind: 'sequence',
+      endpoints: ['Book borrowed', 'Book returned'],
+      rationale: 'the expert said one follows the other',
+    })
+  })
+
+  it('rejects a propose-relation strand with more than 3 endpoints or an empty endpoint list', () => {
+    expect(() =>
+      FacilitationTrack.parse({
+        track: 'propose-relation',
+        relationKind: 'insert-between',
+        endpoints: ['A', 'B', 'C', 'D'],
+        rationale: 'x',
+      }),
+    ).toThrow()
+    expect(() =>
+      FacilitationTrack.parse({
+        track: 'propose-relation',
+        relationKind: 'place',
+        endpoints: [],
+        rationale: 'x',
+      }),
+    ).toThrow()
+  })
+
+  it('accepts a propose-pivotal strand naming a pivotal kind and an event label', () => {
+    expect(
+      FacilitationTrack.parse({
+        track: 'propose-pivotal',
+        pivotalKind: 'mark-pivotal',
+        eventLabel: 'Loan recorded',
+      }),
+    ).toEqual({ track: 'propose-pivotal', pivotalKind: 'mark-pivotal', eventLabel: 'Loan recorded' })
+  })
+
+  it('accepts a propose-reword strand and rejects a newLabel over 200 characters', () => {
+    expect(
+      FacilitationTrack.parse({ track: 'propose-reword', targetLabel: 'Loan recorded', newLabel: 'Loan booked' }),
+    ).toEqual({ track: 'propose-reword', targetLabel: 'Loan recorded', newLabel: 'Loan booked' })
+    expect(() =>
+      FacilitationTrack.parse({
+        track: 'propose-reword',
+        targetLabel: 'Loan recorded',
+        newLabel: 'x'.repeat(201),
+      }),
+    ).toThrow()
+  })
+})
