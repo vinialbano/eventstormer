@@ -13,12 +13,30 @@ import type { SessionSummary } from './session-summary.ts'
 
 const RECENT_TRANSCRIPT = 20
 
+/**
+ * A board block as the facilitator context carries it. `placement` / `pivotal` /
+ * `followedBy` / `causes` are present once the board has topology — they let the
+ * model reference an existing endpoint pair when it proposes a relation.
+ */
+export interface FacilitationBlock {
+  kind: string
+  label: string
+  placement?: 'backlog' | 'timeline'
+  pivotal?: boolean
+  /** Successor labels: events this one is directly followed by. */
+  followedBy?: string[]
+  /** Effect labels: events this one is a recorded cause of. */
+  causes?: string[]
+}
+
 export interface FacilitationContextInput {
   recentTranscript: string[]
   openQuestions: string[]
   scopeStatement?: string
   priorSummaries: SessionSummary[]
-  buildingBlocks: { kind: string; label: string }[]
+  buildingBlocks: FacilitationBlock[]
+  /** Count of events placed on the timeline — the "N events on the timeline" line. */
+  timelineEventCount: number
 }
 
 export type FacilitationContext = Omit<FacilitationContextInput, 'recentTranscript'> & {
@@ -31,6 +49,7 @@ export const facilitationContext = (input: FacilitationContextInput): Facilitati
   ...(input.scopeStatement === undefined ? {} : { scopeStatement: input.scopeStatement }),
   priorSummaries: input.priorSummaries,
   buildingBlocks: input.buildingBlocks,
+  timelineEventCount: input.timelineEventCount,
 })
 
 const looksLikePhaseName = (label: string): boolean => {

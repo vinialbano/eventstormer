@@ -58,9 +58,18 @@ describe('buildTurnInput — per-turn assembly', () => {
       },
     ],
     buildingBlocks: [
-      { kind: 'domain-event', label: 'Book returned' },
+      {
+        kind: 'domain-event',
+        label: 'Book borrowed',
+        placement: 'timeline',
+        pivotal: true,
+        followedBy: ['Book returned'],
+        causes: ['Late fee assessed'],
+      },
+      { kind: 'domain-event', label: 'Book returned', placement: 'timeline', pivotal: false },
       { kind: 'actor', label: 'Member' },
     ],
+    timelineEventCount: 2,
   }
   const assembled = buildTurnInput(context, { speaker: 'Dana', body: 'A member borrowed a book.' })
 
@@ -86,10 +95,25 @@ describe('buildTurnInput — per-turn assembly', () => {
 
   it('renders a "(not set yet)" scope and "(none)" lists when the context is empty', () => {
     const empty = buildTurnInput(
-      { recentTranscript: [], openQuestions: [], priorSummaries: [], buildingBlocks: [] },
+      {
+        recentTranscript: [],
+        openQuestions: [],
+        priorSummaries: [],
+        buildingBlocks: [],
+        timelineEventCount: 0,
+      },
       { speaker: 'Dana', body: 'hello' },
     )
     expect(empty).toContain('(not set yet)')
     expect(empty).toContain('(none)')
+    expect(empty).toContain('0 events on the timeline')
+  })
+
+  it('renders each placed block with its placement, pivotal marker, and follows/causedBy links', () => {
+    expect(assembled).toContain(
+      'domain-event: Book borrowed (on timeline; pivotal; then: Book returned; causes: Late fee assessed)',
+    )
+    expect(assembled).toContain('domain-event: Book returned (on timeline)')
+    expect(assembled).toContain('2 events on the timeline')
   })
 })

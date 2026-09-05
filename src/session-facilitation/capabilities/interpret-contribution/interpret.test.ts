@@ -109,6 +109,22 @@ const contribute = (body: string, id: string, sessionId: SessionId = defaultSess
   ])
 }
 
+const boardStream = { context: 'domain-model-capture', aggregate: 'board', id: workshopId } as const
+const boardAuthor = { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } }
+
+/** Seed a two-event timeline with a `follows` edge and one pivotal mark. */
+const seedBoardTopology = (): void => {
+  const op = (operation: Record<string, unknown>) => ({ at, opVersion: 1, operation })
+  store.append(boardStream, store.read(boardStream).length - 1, [
+    op({ v: 1, kind: 'capture-domain-event', id: 'bb_a', label: 'Book borrowed', author: boardAuthor }),
+    op({ v: 1, kind: 'capture-domain-event', id: 'bb_b', label: 'Book returned', author: boardAuthor }),
+    op({ v: 1, kind: 'place', target: 'bb_a', author: boardAuthor }),
+    op({ v: 1, kind: 'place', target: 'bb_b', author: boardAuthor }),
+    op({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author: boardAuthor }),
+    op({ v: 1, kind: 'mark-pivotal', target: 'bb_a', author: boardAuthor }),
+  ])
+}
+
 const sessionEvents = (sessionId: SessionId = defaultSessionId): SessionEvent[] =>
   store.read(sessionStream(sessionId)).map((row) => SessionEvent.parse(row.operation))
 
@@ -603,6 +619,28 @@ describe('interpretContribution — FIFO and one-in-flight', () => {
 
     expect(sessionEvents().some((event) => event.type === 'Contribution Interpreted')).toBe(false)
     expect(interpretCalls).toBe(0)
+  })
+})
+
+describe('interpretContribution — the turn input carries board topology', () => {
+  it('renders each placed event with its follows link, pivotal marker, and a timeline count from readBoardSnapshot', async () => {
+    seedBoardTopology()
+    seedSession()
+    contribute('a member borrowed a book', 'c_1')
+
+    let captured = ''
+    const dependencies = deps([turn([])])
+    dependencies.facilitator.interpret = (input) => {
+      captured = input.prompt
+      interpretCalls += 1
+      return Promise.resolve(ok(turn([])))
+    }
+
+    await interpretContribution(dependencies)
+
+    expect(captured).toContain('domain-event: Book borrowed (on timeline; pivotal; then: Book returned)')
+    expect(captured).toContain('domain-event: Book returned (on timeline)')
+    expect(captured).toContain('2 events on the timeline')
   })
 })
 

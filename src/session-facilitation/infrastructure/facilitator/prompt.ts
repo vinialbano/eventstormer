@@ -10,8 +10,10 @@ import type { FacilitationContext } from '../../domain/read-models/facilitation.
  * measures generalisation, not memorisation).
  *
  * `buildTurnInput(context, segment)` is the changing part — the assembled
- * `facilitationContext` (itself built from `readBuildingBlocks`, not the op log —
- * T5b defers op-log-order caching) plus the new contribution.
+ * `facilitationContext` (itself built from `readBoardSnapshot`, not the op log)
+ * plus the new contribution. The board block list carries each placed event's
+ * `follows` / `causedBy` links and pivotal mark so the model can name an
+ * endpoint pair when it proposes a relation.
  */
 
 const FEW_SHOT = `
@@ -88,6 +90,21 @@ export const buildInstructions = (): string =>
 const bulletList = (items: string[]): string =>
   items.length === 0 ? '(none)' : items.map((item) => `- ${item}`).join('\n')
 
+const blockLine = (block: FacilitationContext['buildingBlocks'][number]): string => {
+  const markers: string[] = []
+  if (block.placement === 'timeline') markers.push('on timeline')
+  if (block.placement === 'backlog') markers.push('in backlog')
+  if (block.pivotal === true) markers.push('pivotal')
+  if (block.followedBy !== undefined && block.followedBy.length > 0) {
+    markers.push(`then: ${block.followedBy.join(', ')}`)
+  }
+  if (block.causes !== undefined && block.causes.length > 0) {
+    markers.push(`causes: ${block.causes.join(', ')}`)
+  }
+  const suffix = markers.length === 0 ? '' : ` (${markers.join('; ')})`
+  return `${block.kind}: ${block.label}${suffix}`
+}
+
 export const buildTurnInput = (
   context: FacilitationContext,
   segment: { speaker: string; body: string },
@@ -97,7 +114,10 @@ export const buildTurnInput = (
     context.scopeStatement ?? '(not set yet)',
     '',
     '## Building blocks on the board so far',
-    bulletList(context.buildingBlocks.map((block) => `${block.kind}: ${block.label}`)),
+    bulletList(context.buildingBlocks.map(blockLine)),
+    '',
+    `## Timeline`,
+    `${String(context.timelineEventCount)} events on the timeline`,
     '',
     '## Prior sessions',
     context.priorSummaries.length === 0

@@ -1,4 +1,4 @@
-import { readBuildingBlocks } from '../../../domain-model-capture/api.ts'
+import { readBoardSnapshot, readBuildingBlocks } from '../../../domain-model-capture/api.ts'
 import type {
   BuildingBlockId,
   ContributionId,
@@ -8,7 +8,7 @@ import type {
   SessionId,
   WorkshopId,
 } from '~/plumbing/ids.ts'
-import { facilitationContext } from '../../domain/read-models/facilitation.ts'
+import { type FacilitationBlock, facilitationContext } from '../../domain/read-models/facilitation.ts'
 import { priorSessionHistory, sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { sessionView } from '../../domain/read-models/session-view.ts'
 import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
@@ -73,8 +73,43 @@ const appendWorkshop = (
 }
 
 /**
+ * The board blocks + timeline count the facilitator context carries — labels,
+ * placement, pivotal marks, and the `follows` / `causedBy` topology (resolved to
+ * labels) so the model can name an existing endpoint pair for a relation.
+ */
+const boardTopology = (
+  deps: InterpretContributionDeps,
+  workshopId: WorkshopId,
+): { buildingBlocks: FacilitationBlock[]; timelineEventCount: number } => {
+  const snapshot = readBoardSnapshot({ store: deps.store }, workshopId)
+  const labelOf = new Map(snapshot.blocks.map((block) => [block.id, block.label]))
+  const buildingBlocks = snapshot.blocks
+    .filter((block) => !block.withdrawn)
+    .map((block): FacilitationBlock => {
+      const followedBy = snapshot.follows
+        .filter((edge) => edge.predecessor === block.id)
+        .flatMap((edge) => labelOf.get(edge.successor) ?? [])
+      const causes = snapshot.causedBy
+        .filter((edge) => edge.cause === block.id)
+        .flatMap((edge) => labelOf.get(edge.effect) ?? [])
+      return {
+        kind: block.kind,
+        label: block.label,
+        placement: block.placement,
+        pivotal: block.pivotal,
+        ...(followedBy.length === 0 ? {} : { followedBy }),
+        ...(causes.length === 0 ? {} : { causes }),
+      }
+    })
+  const timelineEventCount = snapshot.blocks.filter(
+    (block) => !block.withdrawn && block.kind === 'domain-event' && block.placement === 'timeline',
+  ).length
+  return { buildingBlocks, timelineEventCount }
+}
+
+/**
  * Assemble the facilitator's per-turn context: the workshop scope, the current
- * building blocks (`readBuildingBlocks`, not the op log), the prior closed
+ * board topology (`readBoardSnapshot`, not the op log), the prior closed
  * sessions' summaries, and this session's open questions + recent transcript.
  */
 const assembleFacilitationContext = (
@@ -86,9 +121,7 @@ const assembleFacilitationContext = (
     (event) => event.type === 'Scope Set',
   )?.statement
 
-  const buildingBlocks = readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId).map(
-    (block) => ({ kind: block.kind, label: block.label }),
-  )
+  const { buildingBlocks, timelineEventCount } = boardTopology(deps, workshopId)
 
   const view = sessionView(events)
 
@@ -108,6 +141,7 @@ const assembleFacilitationContext = (
     ...(scopeStatement === undefined ? {} : { scopeStatement }),
     priorSummaries: priorSessionHistory(priors),
     buildingBlocks,
+    timelineEventCount,
   })
 }
 
