@@ -24,6 +24,15 @@ describe('buildInstructions — the system prompt (ADR-005)', () => {
     expect(instructions).toContain('do not emit v, author, or ids')
   })
 
+  it('names the three model-change strands with when-to-use guidance', () => {
+    expect(instructions).toContain('propose-relation')
+    expect(instructions).toContain('implies an order, a cause, a placement')
+    expect(instructions).toContain('propose-pivotal')
+    expect(instructions).toContain('spine worth navigating')
+    expect(instructions).toContain('propose-reword')
+    expect(instructions).toContain('only when the model already has structure')
+  })
+
   it('draws its few-shot examples from library lending, never the restaurant/kitchen eval domain', () => {
     expect(instructions).toContain('library lending')
     expect(instructions).toContain('book returned')
