@@ -379,6 +379,12 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
       case 'confirm-complete-perspective':
         deriveConfirmCompletePerspective(deps, event, track)
         break
+      case 'propose-relation':
+      case 'propose-pivotal':
+      case 'propose-reword':
+        // Model-change proposal births are derived alongside the accept chain;
+        // leave the track unmarked so that derivation still picks it up.
+        continue
     }
 
     markDerivedTrack(deps.db, event.contributionId, index)
