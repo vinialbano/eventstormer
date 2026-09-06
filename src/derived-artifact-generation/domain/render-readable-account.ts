@@ -18,7 +18,7 @@ const blockLine = (block: AccountBlock): string => {
   return block.withdrawn ? `- ${kind} (withdrawn): ${block.label}` : `- ${kind}: ${block.label}`
 }
 
-const quoteLine = (text: string): string =>
+export const quoteLine = (text: string): string =>
   text.split('\n').map((line) => `> ${line}`).join('\n')
 
 const placedEvents = (blocks: readonly AccountBlock[]): AccountBlock[] =>
