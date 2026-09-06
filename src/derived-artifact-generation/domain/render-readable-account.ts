@@ -2,7 +2,7 @@ import type { BuildingBlockId } from '~/plumbing/ids.ts'
 import { byId, connectedComponents, longestPathRanks, undirectedNeighbours } from './graph.ts'
 import type { AccountBlock, AccountDocument, AccountInput, ReferenceSite } from './model.ts'
 
-const kindWord = (kind: AccountBlock['kind']): 'Event' | 'Actor' | 'System' => {
+export const kindWord = (kind: AccountBlock['kind']): 'Event' | 'Actor' | 'System' => {
   switch (kind) {
     case 'domain-event':
       return 'Event'
