@@ -62,6 +62,25 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
   gap (spec pins `disposition` + shape, not the human phrasing) — chosen deterministic:
   `"<relationKind>: <labels joined by →>"`, `"<pivotalKind>: <label>"`, `"reword: <old> → <new>"`.
   `contributorCounts` lists every `Contribution Made` speaker (design "per contributor").
+- **Batch 4 (Phase 5 — T14–T18) ✅** — `6186976` T14 (graph.ts pure move) · `81d7013` T15
+  (`model-json` Zod + SF `ArtifactSource`/`StakeholderCheck`/`ChosenProblem` type re-exports) ·
+  `f7ae46f` T16 (`serialise`) · `9b9d030` T17 (`deserialise` + fast-check round-trip) ·
+  `dbfcfaa` T18 (`model-export` capability + `/workshops/:id/artifacts/model`). 1107 tests
+  (+29). Architecture correction: DAG `domain/` can't import a context `api.ts`, so
+  `model-json` re-declares the workshop sub-shapes as local Zod and binds the SF type at the
+  capability seam. Added `readSessionRecordPosition` to SF infra + `api.ts` (composite-stamp
+  source — design didn't name where it comes from; sums session-record stream lengths). 500
+  body `{ error: 'model-render-failed' }` (spec pins status only).
+- **Batch 5 (Phase 6 — T19–T22) ✅** — `0002da4` T19 (`render-summary`) · `0720669` T20
+  (`summary` capability + `/artifacts/summary`) · `711fad1` T21 (`render-transcript`, pure
+  formatting) · `f8ff80c` T22 (`session-transcript` capability + `/sessions/:id/artifacts/transcript`).
+  1133 tests (+26), build + e2e green. `kindWord` / `quoteLine` exported from
+  `render-readable-account.ts`. SPEC_DEVIATION (T22): format+scope come from the
+  `SessionTranscript` contract, not a second `readArtifactSource` call (design §11/§14). 404
+  bodies `{ error: 'workshop-not-found' | 'session-not-found' }`; 500
+  `{ error: '<artifact>-render-failed' }`. **T27 must add the summary + transcript routes to
+  ARCHITECTURE.md §5.** (SSH signing re-locked on T22 — committed by the orchestrator after
+  unlock.)
 - **Batch 3 (Phase 3 head — T9) ✅ (earlier).** T9 complete + gated green
   (`pnpm check` 1052 tests +13, `pnpm build`, `pnpm test:e2e` 5/5) — **staged, uncommitted**
   (`accept.ts` + `accept.test.ts`). The signing agent refuses to sign (`agent refused
