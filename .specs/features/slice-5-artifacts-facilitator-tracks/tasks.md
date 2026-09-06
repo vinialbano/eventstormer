@@ -23,6 +23,23 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
   contribution's reword resolves normally. Phase 2/3 owns accept-time handling. Exports added:
   `InterpretedRelationKind` / `RelationField` / `RELATION_FIELDS` (interpreted-track), `Intent`
   (events); `deriveTracks` currently `continue`s past the model-change kinds (T7 picks them up).
+- **Batch 2 (Phase 2 — T5, T6, T7, T8, T8a) ✅** — `aa009da` T5 · `8436482` T6 · `ee6fbb0` T7 ·
+  `9ef0c35` T8 · `e125982` T8a. 1039 tests (+16), `pnpm check` green. `replay.ts` needed no
+  change (birth-agnostic `evolve`). **AD-038 consequence flagged for the Verifier/maintainer**:
+  `resolve` idempotency means a competing `Resolution` for an already-resolved hot spot now
+  converges `APPLIED` (was `LAPSED` / `already-resolved`) — slice-4 `review-resolution`
+  acceptance test 39 updated to match; `LAPSE_REASONS` still lists the now-unreachable
+  `'already-resolved'` (harmless, out of scope — clean up in T27 or Slice 6). `Intent` =
+  `Extract<ProposalEvent,{type:'Model Change Proposed'}>['intent']`.
+- **Batch 3 (Phases 3–4 — T9–T13) ⏸ BLOCKED on SSH signing.** T9 complete + gated green
+  (`pnpm check` 1052 tests +13, `pnpm build`, `pnpm test:e2e` 5/5) — **staged, uncommitted**
+  (`accept.ts` + `accept.test.ts`). The signing agent refuses to sign (`agent refused
+  operation`); lefthook `block-main`/`lint`/`commitlint` all pass — a signature prompt, not a
+  red gate (AGENTS.md). T10–T13 not started (each needs its own commit). **Resume: unlock the
+  key (`ssh-add`), then re-dispatch Batch 3 from T9's commit + T10.** T9 same-turn-reword note:
+  `deriveTracks` births the block-proposal before the reword in track order, so accepting in
+  order applies the reword after its target block — AD-036's ordering intent is met for the
+  normal case; the seam still drops a same-turn reword whose target is unresolvable.
 
 ---
 
