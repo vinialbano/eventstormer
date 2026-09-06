@@ -86,6 +86,69 @@ const seedProposal = (id: string, extra: ProposalEvent[] = [], birth: BirthOverr
   }
 }
 
+const author = { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } }
+
+type Intent =
+  | {
+      kind: 'relation'
+      relationKind: 'sequence' | 'insert-between' | 'place' | 'unplace' | 'link-cause' | 'unlink-cause'
+      predecessor?: string
+      successor?: string
+      inserted?: string
+      cause?: string
+      effect?: string
+      target?: string
+    }
+  | { kind: 'pivotal'; pivotalKind: 'mark-pivotal' | 'unmark-pivotal'; target: string }
+  | { kind: 'reword'; target: string; newLabel: string }
+
+const seedModelChange = (id: string, intent: Intent, extra: ProposalEvent[] = []): void => {
+  store.append(proposalStream(id as ProposalId), -1, [
+    {
+      at,
+      opVersion: 1,
+      operation: {
+        v: 1,
+        type: 'Model Change Proposed',
+        proposalId: id,
+        sessionId,
+        contributionId: 'c_1',
+        intent,
+        at,
+      },
+    },
+  ])
+  if (extra.length > 0) {
+    store.append(
+      proposalStream(id as ProposalId),
+      0,
+      extra.map((operation) => ({ at, opVersion: 1, operation })),
+    )
+  }
+}
+
+const seedBoardOp = (operation: Record<string, unknown>): void => {
+  store.append(boardStream, store.read(boardStream).length - 1, [{ at, opVersion: 1, operation }])
+}
+
+const seedBoardActor = (id: string, label: string): void => {
+  seedBoardOp({ v: 1, kind: 'identify-actor', id, label, author })
+}
+
+const closeSession = (): void => {
+  store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+    {
+      at,
+      opVersion: 1,
+      operation: { v: 1, type: 'Session Closed', sessionId, workshopId, unresolvedQuestionIds: [], at },
+    },
+  ])
+}
+
+const follows = () => readBoardSnapshot(deps(), workshopId).follows
+const blockById = (id: string) =>
+  readBoardSnapshot(deps(), workshopId).blocks.find((block) => block.id === id)
+
 const proposalTypes = (id: string): string[] =>
   store.read(proposalStream(id as ProposalId)).map((row) => (row.operation as { type: string }).type)
 
@@ -268,5 +331,195 @@ describe('POST /proposals/:id/accept — hot-spot proposals', () => {
       { id: expect.any(String) as string, kind: 'domain-event', label: 'Order placed' },
     ])
     expect(readBoardSnapshot(deps(), workshopId).hotSpotCount).toBe(0)
+  })
+
+  it('rejects a late accept onto a closed session with 409 session-closed, board untouched', async () => {
+    seedProposal('p_1')
+    closeSession()
+
+    const response = await accept('p_1')
+    expect(response.status).toBe(409)
+    expect(await response.json()).toEqual({ error: 'session-closed' })
+    expect(readBuildingBlocks(deps(), workshopId)).toEqual([])
+    expect(proposalTypes('p_1')).toEqual(['Building Block Proposed'])
+  })
+})
+
+describe('POST /proposals/:id/accept — model-change proposals', () => {
+  it('accepting a sequence proposal applies the follows edge', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedModelChange('p_seq', {
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+
+    const body = (await (await accept('p_seq')).json()) as { proposal: { disposition: string } }
+    expect(body.proposal.disposition).toBe('APPLIED')
+    expect(follows()).toEqual([{ predecessor: 'bb_a', successor: 'bb_b' }])
+    expect(proposalTypes('p_seq')).toEqual(['Model Change Proposed', 'Proposal Accepted', 'Operation Applied'])
+  })
+
+  it('accepting a link-cause proposal applies the causedBy edge', async () => {
+    seedBoardActor('bb_clerk', 'Clerk')
+    seedBoardBlock('bb_e', 'Loan recorded')
+    seedModelChange('p_lc', {
+      kind: 'relation',
+      relationKind: 'link-cause',
+      cause: 'bb_clerk',
+      effect: 'bb_e',
+    })
+
+    await accept('p_lc')
+    expect(readBoardSnapshot(deps(), workshopId).causedBy).toEqual([{ cause: 'bb_clerk', effect: 'bb_e' }])
+  })
+
+  it('accepting a mark-pivotal proposal marks the target pivotal', async () => {
+    seedBoardBlock('bb_p', 'Milestone')
+    seedModelChange('p_mp', { kind: 'pivotal', pivotalKind: 'mark-pivotal', target: 'bb_p' })
+
+    await accept('p_mp')
+    expect(blockById('bb_p')?.pivotal).toBe(true)
+  })
+
+  it('accepting a reword proposal changes the block label', async () => {
+    seedBoardBlock('bb_r', 'Old label')
+    seedModelChange('p_rw', { kind: 'reword', target: 'bb_r', newLabel: 'New label' })
+
+    await accept('p_rw')
+    expect(blockById('bb_r')?.label).toBe('New label')
+  })
+
+  it('applies the last Model Change Edited over the birth intent', async () => {
+    seedBoardBlock('bb_r', 'Old label')
+    seedModelChange('p_rw', { kind: 'reword', target: 'bb_r', newLabel: 'First' }, [
+      { v: 1, at, type: 'Model Change Edited', proposalId: 'p_rw' as ProposalId, changed: { newLabel: 'Edited' } },
+    ])
+
+    await accept('p_rw')
+    expect(blockById('bb_r')?.label).toBe('Edited')
+  })
+
+  it('rejecting a model-change proposal leaves the board unchanged and the proposal REJECTED', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedModelChange('p_x', {
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+
+    expect((await reject('p_x')).status).toBe(200)
+    expect(proposalTypes('p_x')).toEqual(['Model Change Proposed', 'Proposal Rejected'])
+    expect(follows()).toEqual([])
+  })
+
+  it('a planted cycle is APPLY_FAILED and surfaced, with the pre-existing edge intact', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author })
+    seedModelChange('p_cyc', {
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_b',
+      successor: 'bb_a',
+    })
+
+    const body = (await (await accept('p_cyc')).json()) as {
+      proposal: { disposition: string; applyFailedReason?: string }
+    }
+    expect(body.proposal.disposition).toBe('APPLY_FAILED')
+    expect(body.proposal.applyFailedReason).toBe('cycle')
+    expect(follows()).toEqual([{ predecessor: 'bb_a', successor: 'bb_b' }])
+  })
+
+  it('an insert-between with no existing edge is APPLY_FAILED', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedBoardBlock('bb_c', 'C')
+    seedModelChange('p_ib', {
+      kind: 'relation',
+      relationKind: 'insert-between',
+      predecessor: 'bb_a',
+      inserted: 'bb_c',
+      successor: 'bb_b',
+    })
+
+    const body = (await (await accept('p_ib')).json()) as {
+      proposal: { disposition: string; applyFailedReason?: string }
+    }
+    expect(body.proposal.disposition).toBe('APPLY_FAILED')
+    expect(body.proposal.applyFailedReason).toBe('missing-edge')
+  })
+
+  it('re-accepting an already-applied relation proposal converges to APPLIED with one edge', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedModelChange('p_seq', {
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+
+    await accept('p_seq')
+    const body = (await (await accept('p_seq')).json()) as { proposal: { disposition: string } }
+    expect(body.proposal.disposition).toBe('APPLIED')
+    expect(follows()).toHaveLength(1)
+  })
+
+  it('a second competing track for the same pair accepts as APPLIED, no duplicate edge', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    const intent = {
+      kind: 'relation' as const,
+      relationKind: 'sequence' as const,
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    }
+    seedModelChange('p_1', intent)
+    seedModelChange('p_2', intent)
+
+    await accept('p_1')
+    const body = (await (await accept('p_2')).json()) as { proposal: { disposition: string } }
+    expect(body.proposal.disposition).toBe('APPLIED')
+    expect(follows()).toHaveLength(1)
+    expect(proposalTypes('p_2')).toEqual(['Model Change Proposed', 'Proposal Accepted', 'Operation Applied'])
+  })
+
+  it('recovers the crash window: edge on the board, outcome commit lost, re-accept → APPLIED', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author })
+    seedModelChange(
+      'p_cw',
+      { kind: 'relation', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
+      [{ v: 1, at, type: 'Proposal Accepted', proposalId: 'p_cw' as ProposalId, accepter: 'Dana' }],
+    )
+
+    const body = (await (await accept('p_cw')).json()) as { proposal: { disposition: string } }
+    expect(body.proposal.disposition).toBe('APPLIED')
+    expect(follows()).toHaveLength(1)
+  })
+
+  it('rejects a late model-change accept onto a closed session, leaving it re-lapsable', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedModelChange('p_cl', {
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+    closeSession()
+
+    const response = await accept('p_cl')
+    expect(response.status).toBe(409)
+    expect(await response.json()).toEqual({ error: 'session-closed' })
+    expect(follows()).toEqual([])
+    expect(proposalTypes('p_cl')).toEqual(['Model Change Proposed'])
   })
 })
