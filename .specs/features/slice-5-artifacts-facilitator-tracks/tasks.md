@@ -31,7 +31,19 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
   acceptance test 39 updated to match; `LAPSE_REASONS` still lists the now-unreachable
   `'already-resolved'` (harmless, out of scope — clean up in T27 or Slice 6). `Intent` =
   `Extract<ProposalEvent,{type:'Model Change Proposed'}>['intent']`.
-- **Batch 3 (Phases 3–4 — T9–T13) ⏸ BLOCKED on SSH signing.** T9 complete + gated green
+- **Batch 3b (Phases 3–4 remainder — T10, T11, T12, T13) ✅** — `a0dbd82` T10 · `72c67ed` T11 ·
+  `9f331cc` T12 · `dfea5e3` T13. 1078 tests (1052 → +26), `pnpm check` green. `proposalCard`
+  gained an optional `resolveLabel` hook + an `intent` card for model-change proposals (block-only
+  fields now optional on the DTO); `review-proposal` `GET /sessions/:id/proposals` and
+  `readSessionTranscript` both supply it from a board-snapshot read. `POST /proposals/:id/edit`
+  branches on the birth event — model-change edit body is `{ field, label }` / `{ newLabel }`,
+  unknown label → 422. `SessionTranscript` = `session-transcript-contract.ts` (Zod) +
+  `session-transcript.ts` (fold) + `read-session-transcript.ts` (infra), all exported from
+  `api.ts`. `summary` string format on the intent card / transcript proposal is a spec-precision
+  gap (spec pins `disposition` + shape, not the human phrasing) — chosen deterministic:
+  `"<relationKind>: <labels joined by →>"`, `"<pivotalKind>: <label>"`, `"reword: <old> → <new>"`.
+  `contributorCounts` lists every `Contribution Made` speaker (design "per contributor").
+- **Batch 3 (Phase 3 head — T9) ✅ (earlier).** T9 complete + gated green
   (`pnpm check` 1052 tests +13, `pnpm build`, `pnpm test:e2e` 5/5) — **staged, uncommitted**
   (`accept.ts` + `accept.test.ts`). The signing agent refuses to sign (`agent refused
   operation`); lefthook `block-main`/`lint`/`commitlint` all pass — a signature prompt, not a
