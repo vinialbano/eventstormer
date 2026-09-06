@@ -182,10 +182,19 @@ describe('evolve (write-model fold)', () => {
     expect(writeModel.hotSpotResolved.get(bid('h1'))).toBe(false)
   })
 
-  it('place, unplace, and mark-pivotal do not touch the write model', () => {
+  it('place and unplace do not touch the write model', () => {
     const base = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
     expect(evolve(base, op({ kind: 'place', target: 'e1' }))).toEqual(base)
     expect(evolve(base, op({ kind: 'unplace', target: 'e1' }))).toEqual(base)
-    expect(evolve(base, op({ kind: 'mark-pivotal', target: 'e1' }))).toEqual(base)
+  })
+
+  it('mark-pivotal / unmark-pivotal maintain the pivotal set', () => {
+    const base = evolve(emptyWriteModel(), op({ kind: 'capture-domain-event', id: 'e1', label: 'x' }))
+    const marked = evolve(base, op({ kind: 'mark-pivotal', target: 'e1' }))
+    expect(marked.pivotal.has(bid('e1'))).toBe(true)
+    const unmarked = evolve(marked, op({ kind: 'unmark-pivotal', target: 'e1' }))
+    expect(unmarked.pivotal.has(bid('e1'))).toBe(false)
+    // withdrawing a pivotal block drops it from the set
+    expect(evolve(marked, op({ kind: 'withdraw', target: 'e1' })).pivotal.has(bid('e1'))).toBe(false)
   })
 })

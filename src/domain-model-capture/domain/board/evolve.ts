@@ -13,6 +13,7 @@ const cloneWriteModel = (writeModel: BoardWriteModel): BoardWriteModel => ({
   causedBy: cloneAdjacency(writeModel.causedBy),
   annotates: new Map(writeModel.annotates),
   hotSpotResolved: new Map(writeModel.hotSpotResolved),
+  pivotal: new Set(writeModel.pivotal),
 })
 
 const addEdge = (
@@ -58,8 +59,9 @@ const dropIncident = (writeModel: BoardWriteModel, id: BuildingBlockId): void =>
 /**
  * The write-model fold — pure, returns a new struct, never mutates its
  * argument. Capture / withdraw / reinstate update `blocks`; relation ops update
- * `follows` / `causedBy`; withdraw also drops every incident edge. Placement
- * and pivotal live on the snapshot fold, not here.
+ * `follows` / `causedBy`; withdraw also drops every incident edge;
+ * `mark-pivotal` / `unmark-pivotal` maintain `pivotal` for the idempotency guard.
+ * Placement lives on the snapshot fold, not here.
  */
 export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteModel => {
   const next = cloneWriteModel(writeModel)
@@ -78,6 +80,7 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
       const block = next.blocks.get(op.target)
       if (block) next.blocks.set(op.target, { ...block, withdrawn: true })
       next.annotates.delete(op.target)
+      next.pivotal.delete(op.target)
       dropIncident(next, op.target)
       break
     }
@@ -123,11 +126,15 @@ export const evolve = (writeModel: BoardWriteModel, op: Operation): BoardWriteMo
     case 'reopen':
       next.hotSpotResolved.set(op.target, false)
       break
+    case 'mark-pivotal':
+      next.pivotal.add(op.target)
+      break
+    case 'unmark-pivotal':
+      next.pivotal.delete(op.target)
+      break
     case 'reword':
     case 'place':
     case 'unplace':
-    case 'mark-pivotal':
-    case 'unmark-pivotal':
       break
   }
 

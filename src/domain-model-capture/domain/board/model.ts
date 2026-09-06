@@ -21,8 +21,10 @@ export interface WriteBlock {
  * The slim write model `decide` guards on: only what an invariant
  * reads. `follows` is predecessor → successors; `causedBy` is effect → causes.
  * `annotates` holds the live hot-spot → target edge (one per hot spot);
- * `hotSpotResolved` is what the `resolve` / `reopen` guards read. A hot spot's
- * `reference` is not here — no invariant reads it.
+ * `hotSpotResolved` is what the `resolve` / `reopen` guards read; `pivotal` is
+ * the set of currently-pivotal blocks, read by the `mark-pivotal` /
+ * `unmark-pivotal` idempotency guards. A hot spot's `reference` is not here — no
+ * invariant reads it.
  */
 export interface BoardWriteModel {
   blocks: Map<BuildingBlockId, WriteBlock>
@@ -30,6 +32,7 @@ export interface BoardWriteModel {
   causedBy: Map<BuildingBlockId, Set<BuildingBlockId>>
   annotates: Map<BuildingBlockId, BuildingBlockId>
   hotSpotResolved: Map<BuildingBlockId, boolean>
+  pivotal: Set<BuildingBlockId>
 }
 
 export const emptyWriteModel = (): BoardWriteModel => ({
@@ -38,6 +41,7 @@ export const emptyWriteModel = (): BoardWriteModel => ({
   causedBy: new Map(),
   annotates: new Map(),
   hotSpotResolved: new Map(),
+  pivotal: new Set(),
 })
 
 /** A projected Building Block in the read-model snapshot. */
