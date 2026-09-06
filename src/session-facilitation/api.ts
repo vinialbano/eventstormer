@@ -36,6 +36,11 @@ export type { InFlightGuard, InterpretContributionDeps } from './capabilities/in
 
 export { applySessionFacilitationMigrations } from './infrastructure/migrations.ts'
 export { readArtifactSource } from './infrastructure/read-artifact-source.ts'
+export type {
+  ArtifactSource,
+  ChosenProblem,
+  StakeholderCheck,
+} from './domain/read-models/artifact-source.ts'
 export { readSessionTranscript } from './infrastructure/read-session-transcript.ts'
 export { SessionTranscript } from './domain/read-models/session-transcript-contract.ts'
 export type { SessionIndexDb } from './infrastructure/session-index.ts'
