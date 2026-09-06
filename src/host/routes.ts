@@ -1,5 +1,9 @@
 import { Hono } from 'hono'
-import { modelExportRoutes, readableAccountRoutes } from '../derived-artifact-generation/api.ts'
+import {
+  modelExportRoutes,
+  readableAccountRoutes,
+  summaryRoutes,
+} from '../derived-artifact-generation/api.ts'
 import { boardAccessRoutes, editModelRoutes, flagHotSpotRoutes } from '../domain-model-capture/api.ts'
 import {
   chooseProblemRoutes,
@@ -33,6 +37,7 @@ export const createRoutes = (config: HostConfig) => {
     .route('/api', flagHotSpotRoutes(io))
     .route('/api', readableAccountRoutes({ store, db }))
     .route('/api', modelExportRoutes({ store, db, clock }))
+    .route('/api', summaryRoutes({ store, db, clock }))
     .route('/api', startWorkshopRoutes(io))
     .route('/api', setScopeRoutes(io))
     .route('/api', startSessionRoutes(withDb))
