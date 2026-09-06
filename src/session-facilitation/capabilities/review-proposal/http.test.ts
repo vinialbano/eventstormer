@@ -201,4 +201,85 @@ describe('GET /sessions/:id/proposals', () => {
     expect(proposals.map((proposal) => proposal.proposalId)).toEqual([...ids])
     expect(proposals.every((proposal) => typeof proposal.overflow === 'boolean')).toBe(true)
   })
+
+  it('returns the model-change intent card with endpoints resolved to current board labels', async () => {
+    const workshopId = 'w_1'
+    store.append(
+      { context: 'domain-model-capture', aggregate: 'board', id: workshopId },
+      -1,
+      (
+        [
+          ['bb_a', 'Loan requested'],
+          ['bb_b', 'Loan approved'],
+        ] as const
+      ).map(([id, label]) => ({
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          kind: 'capture-domain-event',
+          id,
+          label,
+          author: { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } },
+        },
+      })),
+    )
+    store.append(sessionStream(sessionId), -1, [
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: c1,
+          tracks: [
+            {
+              track: 'propose-relation',
+              proposalId: 'mc_1',
+              relationKind: 'sequence',
+              predecessor: 'bb_a',
+              successor: 'bb_b',
+            },
+          ],
+          at,
+        },
+      },
+    ])
+    store.append(proposalStream('mc_1' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Model Change Proposed',
+          proposalId: 'mc_1',
+          sessionId,
+          contributionId: c1,
+          intent: {
+            kind: 'relation',
+            relationKind: 'sequence',
+            predecessor: 'bb_a',
+            successor: 'bb_b',
+          },
+          at,
+        },
+      },
+    ])
+
+    const response = await routes().request(`/sessions/${sessionId}/proposals`)
+    expect(response.status).toBe(200)
+    const { proposals } = (await response.json()) as {
+      proposals: { proposalId: string; intent?: { kind: string; summary: string; endpoints?: { id: string; label: string }[] } }[]
+    }
+    expect(proposals[0]?.intent).toEqual({
+      kind: 'relation',
+      summary: 'sequence: Loan requested → Loan approved',
+      endpoints: [
+        { id: 'bb_a', label: 'Loan requested' },
+        { id: 'bb_b', label: 'Loan approved' },
+      ],
+    })
+  })
 })

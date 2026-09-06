@@ -136,3 +136,189 @@ describe('proposalsView', () => {
     expect(cards).toEqual([])
   })
 })
+
+describe('proposalsView — model-change intent card', () => {
+  const bb = (value: string): BuildingBlockId => value as BuildingBlockId
+
+  const interpretedWithTrack = (track: unknown): SessionEvent[] => [
+    {
+      v: 1,
+      at,
+      type: 'Contribution Interpreted',
+      sessionId,
+      contributionId: c1,
+      tracks: [track as never],
+    },
+  ]
+
+  const modelChangeBirth = (proposalId: ProposalId, intent: unknown): ProposalEvent => ({
+    v: 1,
+    at,
+    type: 'Model Change Proposed',
+    proposalId,
+    sessionId,
+    contributionId: c1,
+    intent: intent as never,
+  })
+
+  const labels = new Map<string, string>([
+    ['bb_a', 'Loan requested'],
+    ['bb_b', 'Loan approved'],
+  ])
+  const resolveLabel = (id: BuildingBlockId): string | undefined => labels.get(id)
+
+  it('renders a relation intent with endpoints resolved to current labels', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-relation',
+        proposalId: pid('p_1'),
+        relationKind: 'sequence',
+        predecessor: bb('bb_a'),
+        successor: bb('bb_b'),
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [
+            modelChangeBirth(pid('p_1'), {
+              kind: 'relation',
+              relationKind: 'sequence',
+              predecessor: bb('bb_a'),
+              successor: bb('bb_b'),
+            }),
+          ],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card?.intent).toEqual({
+      kind: 'relation',
+      summary: 'sequence: Loan requested → Loan approved',
+      endpoints: [
+        { id: 'bb_a', label: 'Loan requested' },
+        { id: 'bb_b', label: 'Loan approved' },
+      ],
+    })
+    expect(card?.blockKind).toBeUndefined()
+  })
+
+  it('renders a pivotal intent with the target label', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-pivotal',
+        proposalId: pid('p_1'),
+        pivotalKind: 'mark-pivotal',
+        target: bb('bb_b'),
+        heldBack: false,
+        eventLabel: 'Loan approved',
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [
+            modelChangeBirth(pid('p_1'), { kind: 'pivotal', pivotalKind: 'mark-pivotal', target: bb('bb_b') }),
+          ],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card?.intent).toEqual({
+      kind: 'pivotal',
+      summary: 'mark-pivotal: Loan approved',
+      target: { id: 'bb_b', label: 'Loan approved' },
+    })
+  })
+
+  it('renders a reword intent with the old and new label', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-reword',
+        proposalId: pid('p_1'),
+        target: bb('bb_a'),
+        newLabel: 'Loan application received',
+        heldBack: false,
+        targetLabel: 'Loan requested',
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [
+            modelChangeBirth(pid('p_1'), {
+              kind: 'reword',
+              target: bb('bb_a'),
+              newLabel: 'Loan application received',
+            }),
+          ],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card?.intent).toEqual({
+      kind: 'reword',
+      summary: 'reword: Loan requested → Loan application received',
+      target: { id: 'bb_a', label: 'Loan requested' },
+      newLabel: 'Loan application received',
+    })
+  })
+
+  it('falls back to the endpoint id when a label cannot be resolved (withdrawn block)', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-relation',
+        proposalId: pid('p_1'),
+        relationKind: 'sequence',
+        predecessor: bb('bb_a'),
+        successor: bb('bb_gone'),
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [
+            modelChangeBirth(pid('p_1'), {
+              kind: 'relation',
+              relationKind: 'sequence',
+              predecessor: bb('bb_a'),
+              successor: bb('bb_gone'),
+            }),
+          ],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card?.intent?.endpoints).toEqual([
+      { id: 'bb_a', label: 'Loan requested' },
+      { id: 'bb_gone', label: 'bb_gone' },
+    ])
+  })
+
+  it('reflects the last Model Change Edited over the birth intent', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-relation',
+        proposalId: pid('p_1'),
+        relationKind: 'sequence',
+        predecessor: bb('bb_a'),
+        successor: bb('bb_b'),
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [
+            modelChangeBirth(pid('p_1'), {
+              kind: 'relation',
+              relationKind: 'sequence',
+              predecessor: bb('bb_a'),
+              successor: bb('bb_a'),
+            }),
+            { v: 1, at, type: 'Model Change Edited', proposalId: pid('p_1'), changed: { successor: bb('bb_b') } },
+          ],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card?.intent?.endpoints).toEqual([
+      { id: 'bb_a', label: 'Loan requested' },
+      { id: 'bb_b', label: 'Loan approved' },
+    ])
+  })
+})

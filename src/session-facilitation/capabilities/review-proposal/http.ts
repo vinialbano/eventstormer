@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import type { ProposalId, SessionId } from '~/plumbing/ids.ts'
+import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
+import type { BuildingBlockId, ProposalId, SessionId } from '~/plumbing/ids.ts'
 import { proposalsView } from '../../domain/read-models/proposals-view.ts'
 import { sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { decide } from '../../domain/proposal/decide.ts'
@@ -103,5 +104,15 @@ export const reviewProposalRoutes = (deps: ReviewProposalDeps) =>
         proposalId,
         events: readProposal(deps, proposalId),
       }))
-      return context.json({ proposals: proposalsView(sessionEvents, streams) })
+
+      const started = sessionEvents.find((event) => event.type === 'Session Started')
+      const labels =
+        started?.type === 'Session Started'
+          ? new Map(
+              readBoardSnapshot(deps, started.workshopId).blocks.map((block) => [block.id, block.label]),
+            )
+          : new Map<BuildingBlockId, string>()
+      const resolveLabel = (id: BuildingBlockId): string | undefined => labels.get(id)
+
+      return context.json({ proposals: proposalsView(sessionEvents, streams, resolveLabel) })
     })
