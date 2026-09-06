@@ -35,7 +35,10 @@ export { createInFlightGuard } from './capabilities/interpret-contribution/in-fl
 export type { InFlightGuard, InterpretContributionDeps } from './capabilities/interpret-contribution/deps.ts'
 
 export { applySessionFacilitationMigrations } from './infrastructure/migrations.ts'
-export { readArtifactSource } from './infrastructure/read-artifact-source.ts'
+export {
+  readArtifactSource,
+  readSessionRecordPosition,
+} from './infrastructure/read-artifact-source.ts'
 export type {
   ArtifactSource,
   ChosenProblem,

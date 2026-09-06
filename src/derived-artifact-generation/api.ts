@@ -5,3 +5,5 @@
  */
 export { readableAccountRoutes } from './capabilities/readable-account/http.ts'
 export type { ReadableAccountDeps } from './capabilities/readable-account/deps.ts'
+export { modelExportRoutes } from './capabilities/model-export/http.ts'
+export type { ModelExportDeps } from './capabilities/model-export/deps.ts'
