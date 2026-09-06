@@ -111,6 +111,55 @@ describe('sessionView — open questions', () => {
   })
 })
 
+describe('sessionView — held-back track notices', () => {
+  const interpretedWith = (tracks: InterpretedTrack[]): SessionEvent[] => [
+    ...base,
+    { v: 1, at, type: 'Contribution Interpreted', sessionId, contributionId: toContributionId('c_1'), tracks },
+  ]
+
+  it('a held-back reword track renders a facilitator notice turn', () => {
+    const view = sessionView(
+      interpretedWith([
+        { track: 'propose-reword', newLabel: 'Loan application received', heldBack: true, targetLabel: 'Loan requested' },
+      ]),
+    )
+    expect(view.transcript).toContainEqual({
+      kind: 'notice',
+      speaker: 'facilitator',
+      text: 'Reword of "Loan requested" held until the model has structure',
+      at,
+    })
+  })
+
+  it('a held-back pivotal track renders a facilitator notice turn', () => {
+    const view = sessionView(
+      interpretedWith([{ track: 'propose-pivotal', pivotalKind: 'mark-pivotal', heldBack: true, eventLabel: 'Loan approved' }]),
+    )
+    expect(view.transcript).toContainEqual({
+      kind: 'notice',
+      speaker: 'facilitator',
+      text: 'Pivotal mark for "Loan approved" held — not enough events yet',
+      at,
+    })
+  })
+
+  it('a released reword track renders no notice', () => {
+    const view = sessionView(
+      interpretedWith([
+        {
+          track: 'propose-reword',
+          proposalId: 'p_1' as never,
+          target: 'bb_1' as never,
+          newLabel: 'Loan application received',
+          heldBack: false,
+          targetLabel: 'Loan requested',
+        },
+      ]),
+    )
+    expect(view.transcript.some((turn) => turn.kind === 'notice')).toBe(false)
+  })
+})
+
 describe('sessionView — per-contribution interpretation status + fullyDerived', () => {
   const interpreted: SessionEvent[] = [
     ...base,
