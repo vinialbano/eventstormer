@@ -54,6 +54,7 @@ const BlockJson = z.object({
   resolved: z.boolean().optional(),
   reference: z.unknown().optional(),
 })
+export type ModelBlock = z.infer<typeof BlockJson>
 
 const FollowsJson = z.object({ predecessor: z.string(), successor: z.string() })
 const CausedByJson = z.object({ cause: z.string(), effect: z.string() })
@@ -79,3 +80,6 @@ export const ModelJson = z
   .strict()
 
 export type ModelJson = z.infer<typeof ModelJson>
+
+/** The workshop record embedded in a `ModelJson` — a subset of `ArtifactSource`. */
+export type ModelWorkshop = ModelJson['workshop']
