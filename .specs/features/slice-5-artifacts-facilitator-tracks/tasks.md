@@ -15,6 +15,25 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
 
 ## Execution Log
 
+- **Batch 4 (Phase 5 — T14, T15, T16, T17, T18) ✅** — `6186976` T14 · `81d7013` T15 ·
+  `f7ae46f` T16 · `9b9d030` T17 · `dbfcfaa` T18. 1107 tests (1078 → +29), `pnpm check` green;
+  T18 also `pnpm build` + `pnpm test:e2e` 5/5. `graph.ts` exports `byId` /
+  `undirectedNeighbours` / `connectedComponents` / `longestPathRanks` (pure move; readable-account
+  goldens byte-identical). `model-json.ts` exports `ModelJson` (Zod, strict root, collections
+  capped at `MODEL_JSON_COLLECTION_CAP = 10_000`), `ModelBlock`, `ModelWorkshop`. `serialise.ts`
+  exports `serialise` + `SerialiseInput`; `deserialise.ts` exports `deserialise` + `InvalidModelJson`.
+  DAG `domain/` stays plumbing-only (AGENTS.md line 32 + `domain-imports-nothing-above`): the
+  `ModelJson` workshop sub-shapes are re-declared as Zod there rather than imported from
+  `session-facilitation/api.ts`, and `serialise`/`deserialise` operate on DAG-local
+  `{ snapshot, source }` shapes (structurally identical to `PublishedBoardSnapshot` blocks +
+  the `ArtifactSource` workshop subset); the SF `ArtifactSource` type is bound at the `model-export`
+  capability seam. **Extra file vs task "Where"**: `session-facilitation` gained
+  `readSessionRecordPosition` (in `read-artifact-source.ts`, re-exported from `api.ts`) — the
+  design/task never named the source of `sessionRecordPosition` for AD-037's composite stamp; it
+  sums the session-record stream lengths across the workshop's sessions. **Spec-precision gaps**:
+  the 500 body shape is `{ error: 'model-render-failed' }` (spec pins status only); "no `await`
+  between the board + source reads" is asserted structurally (synchronous EventStore port + all
+  reads completing + a code comment), not as a runtime observation.
 - **Batch 1 (Phase 1 — T1, T1a, T1b, T2, T3, T3a, T4) ✅** — `b33927a` T1 · `eef3b67` T1a ·
   `b448e66` T1b · `a342e26` T2 · `90f58b4` T3 · `035cda5` T3a · `99a0b26` T4. 1023 tests
   (986 → +37), `pnpm check` green. SPEC_DEVIATION in `map.ts` `rewordTrack`: a same-turn
