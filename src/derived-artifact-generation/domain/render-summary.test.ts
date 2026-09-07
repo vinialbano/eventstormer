@@ -191,6 +191,57 @@ describe('renderSummary', () => {
     expect(section.indexOf('Loan recorded')).toBeLessThan(section.indexOf('Book shelved'))
   })
 
+  it('breaks a spine tie at equal longest-path rank by ascending id', () => {
+    // Two pivotal events on separate tracks — both at longest-path rank 0.
+    // Declared id-descending (e2 before e1) so a rank-only sort would keep that order.
+    const input: SummaryInput = {
+      boardPosition: 1,
+      sessionRecordPosition: 1,
+      renderedAt: at,
+      snapshot: {
+        blocks: [
+          { id: id('e2'), kind: 'domain-event', label: 'Zebra tagged', withdrawn: false, placement: 'timeline', pivotal: true },
+          { id: id('e1'), kind: 'domain-event', label: 'Apple picked', withdrawn: false, placement: 'timeline', pivotal: true },
+        ],
+        follows: [],
+        causedBy: [],
+      },
+      source: {
+        format: 'big-picture',
+        scope: null,
+        narratorCount: 1,
+        stakeholderCheck: { run: false },
+        chosenProblem: { notRun: true },
+        openModelAffectingHotSpots: [],
+      },
+    }
+    const markdown = renderSummary(input).markdown
+    const spine = markdown.slice(markdown.indexOf('## Spine'), markdown.indexOf('## Shape'))
+    expect(spine.indexOf('Apple picked')).toBeLessThan(spine.indexOf('Zebra tagged'))
+  })
+
+  it('renders a byte-identical spine at equal rank when the block array is reversed', () => {
+    const build = (blocks: SummaryInput['snapshot']['blocks']): SummaryInput => ({
+      boardPosition: 1,
+      sessionRecordPosition: 1,
+      renderedAt: at,
+      snapshot: { blocks, follows: [], causedBy: [] },
+      source: {
+        format: 'big-picture',
+        scope: null,
+        narratorCount: 1,
+        stakeholderCheck: { run: false },
+        chosenProblem: { notRun: true },
+        openModelAffectingHotSpots: [],
+      },
+    })
+    const blocks: SummaryInput['snapshot']['blocks'] = [
+      { id: id('e2'), kind: 'domain-event', label: 'Zebra tagged', withdrawn: false, placement: 'timeline', pivotal: true },
+      { id: id('e1'), kind: 'domain-event', label: 'Apple picked', withdrawn: false, placement: 'timeline', pivotal: true },
+    ]
+    expect(renderSummary(build(blocks)).markdown).toBe(renderSummary(build([...blocks].reverse())).markdown)
+  })
+
   it('does not declare compatibility with any external documentation toolchain', () => {
     const markdown = renderSummary(rich()).markdown.toLowerCase()
     for (const claim of ['compatible', 'compatibility', 'mermaid', 'plantuml', 'docusaurus']) {
