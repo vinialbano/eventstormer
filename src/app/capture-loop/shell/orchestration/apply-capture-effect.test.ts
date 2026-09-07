@@ -15,6 +15,7 @@ const ports = (): CaptureEffectPorts => ({
   proposals: port(),
   board: port(),
   account: port(),
+  artifacts: port(),
 })
 
 // Suite: apply-capture-effect
@@ -29,6 +30,7 @@ describe('applyCaptureZoneEvent', () => {
 
     expect(effectPorts.board.load).toHaveBeenCalledWith('w1')
     expect(effectPorts.account.load).toHaveBeenCalledWith('w1')
+    expect(effectPorts.artifacts.refetch).toHaveBeenCalled()
     expect(effectPorts.session.refetch).not.toHaveBeenCalled()
     expect(effectPorts.proposals.refetch).not.toHaveBeenCalled()
   })
@@ -43,5 +45,6 @@ describe('applyCaptureZoneEvent', () => {
     expect(effectPorts.proposals.refetch).toHaveBeenCalled()
     expect(effectPorts.board.load).not.toHaveBeenCalled()
     expect(effectPorts.account.load).not.toHaveBeenCalled()
+    expect(effectPorts.artifacts.refetch).not.toHaveBeenCalled()
   })
 })

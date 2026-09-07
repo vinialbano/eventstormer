@@ -25,7 +25,7 @@ verifier sub-agent with `isolation: "worktree"`. The `Stop` gate runs `pnpm chec
 live tree; a mutation in flight there reads as a red gate on a codebase that is actually green,
 and the main agent has no reliable way to tell the two apart.
 
-### Capture-loop sensors (M1–M7)
+### Capture-loop sensors (M1–M10)
 
 | Mutant | Fault | Sensor suite |
 | ------ | ----- | ------------ |
@@ -38,6 +38,8 @@ and the main agent has no reliable way to tell the two apart.
 | M6 | Wire `onMutated` → `onBoardDirty` in orchestration adapter | `use-capture-orchestration.integration.test.ts` |
 | M7 | Skip `boardDirty()` after a successful direct flag POST in `use-flag-hot-spot.ts` | `use-flag-hot-spot.test.ts`, `use-flag-hot-spot.integration.test.ts` |
 | M8 | Move the `closeSession` call from `confirm` into `submitProblem` in `use-close-ceremony.ts` (freeze the session before the final press) | `use-close-ceremony.test.ts`, `use-close-ceremony.integration.test.ts` |
+| M9 | Drop `'artifacts'` from the `board-dirty` refetch targets in `refetch-graph.ts` (the live artifacts panel stops re-rendering on an applied operation) | `refetch-graph.test.ts`, `apply-capture-effect.test.ts` |
+| M10 | Make the `artifacts` store `refetch()` return early when it already holds a value (a re-fetch after an applied operation is skipped, the panel goes stale) | `artifacts.integration.test.ts` |
 
 ## Coverage
 
