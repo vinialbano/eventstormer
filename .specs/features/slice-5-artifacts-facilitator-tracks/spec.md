@@ -401,50 +401,50 @@ card present); same-contribution carve-out test; `hasModelStructure` unit test.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| JSON-01 | P1: Model as structured JSON | Design | Pending |
-| JSON-02 | P1: Model as structured JSON | Design | Pending |
-| JSON-03 | P1: Model as structured JSON | Design | Pending |
-| JSON-04 | P1: Model as structured JSON | Design | Pending |
-| JSON-05 | P1: Model as structured JSON | Design | Pending |
-| JSON-06 | P1: Model as structured JSON | Design | Pending |
-| JSON-07 | P1: Model as structured JSON | Design | Pending |
-| SUM-01 | P1: Deterministic model summary | Design | Pending |
-| SUM-02 | P1: Deterministic model summary | Design | Pending |
-| SUM-03 | P1: Deterministic model summary | Design | Pending |
-| SUM-04 | P1: Deterministic model summary | Design | Pending |
-| SUM-05 | P1: Deterministic model summary | Design | Pending |
-| SUM-06 | P1: Deterministic model summary | Design | Pending |
-| SUM-07 | P1: Deterministic model summary | Design | Pending |
-| SUM-08 | P1: Deterministic model summary (no external-toolchain claim) | Design | Pending |
-| SUM-09 | P1: Deterministic model summary (total-order rendering) | Design | Pending |
-| TX-01 | P1: Verbatim session-transcript export | Design | Pending |
-| TX-02 | P1: Verbatim session-transcript export | Design | Pending |
-| TX-03 | P1: Verbatim session-transcript export | Design | Pending |
-| TX-04 | P1: Verbatim session-transcript export | Design | Pending |
-| TX-05 | P1: Verbatim session-transcript export | Design | Pending |
-| TX-06 | P1: Verbatim session-transcript export | Design | Pending |
-| TX-07 | P1: Verbatim session-transcript export | Design | Pending |
-| FREL-01 | P1: Facilitator proposes relation operations | Design | Pending |
-| FREL-02 | P1: Facilitator proposes relation operations | Design | Pending |
-| FREL-03 | P1: Facilitator proposes relation operations | Design | Pending |
-| FREL-04 | P1: Facilitator proposes relation operations | Design | Pending |
-| FREL-05 | P1: Facilitator proposes relation operations | Design | Pending |
-| FREL-06 | P1: Facilitator proposes relation operations | Design | Pending |
-| FREL-07 | P1: Facilitator proposes relation operations (already-satisfied → APPLIED) | Design | Pending |
-| FREL-08 | P1: Facilitator proposes relation operations (prompt strand + board topology) | Design | Pending |
-| FPIV-01 | P1: Facilitator proposes pivotal marks | Design | Pending |
-| FPIV-02 | P1: Facilitator proposes pivotal marks (below-threshold → heldBack) | Design | Pending |
-| FPIV-03 | P1: Facilitator proposes pivotal marks | Design | Pending |
-| FPIV-04 | P1: Facilitator proposes pivotal marks | Design | Pending |
-| FREW-01 | P1: F04 reword-hold-back gate | Design | Pending |
-| FREW-02 | P1: F04 reword-hold-back gate | Design | Pending |
-| FREW-03 | P1: F04 reword-hold-back gate | Design | Pending |
-| FREW-04 | P1: F04 reword-hold-back gate | Design | Pending |
-| FREW-05 | P1: F04 reword-hold-back gate (named domain predicate, held/released test) | Design | Pending |
-| FREW-06 | P1: F04 reword-hold-back gate (held track not retroactively surfaced) | Design | Pending |
-| REL-01 | `minor` changeset (target 0.6.0) present | Execute | Pending |
-| REL-02 | Issue #42 split + follow-on issue filed; ADR-008 "deliberately untested" note added | Execute | Pending |
-| REL-03 | ARCHITECTURE.md §5 `/api` surface list gains the three artifact routes | Execute | Pending |
+| JSON-01 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| JSON-02 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| JSON-03 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| JSON-04 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| JSON-05 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| JSON-06 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| JSON-07 |  P1: Model as structured JSON |  Design | ✅ Verified |
+| SUM-01 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-02 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-03 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-04 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-05 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-06 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-07 |  P1: Deterministic model summary |  Design | ✅ Verified |
+| SUM-08 |  P1: Deterministic model summary (no external-toolchain claim) |  Design | ✅ Verified |
+| SUM-09 |  P1: Deterministic model summary (total-order rendering) |  Design | ⚠️ Verified (weak test) |
+| TX-01 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| TX-02 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| TX-03 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| TX-04 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| TX-05 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| TX-06 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| TX-07 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
+| FREL-01 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
+| FREL-02 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
+| FREL-03 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
+| FREL-04 |  P1: Facilitator proposes relation operations |  Design | ⚠️ Partial (live smoke pending) |
+| FREL-05 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
+| FREL-06 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
+| FREL-07 |  P1: Facilitator proposes relation operations (already-satisfied → APPLIED) |  Design | ✅ Verified |
+| FREL-08 |  P1: Facilitator proposes relation operations (prompt strand + board topology) |  Design | ✅ Verified |
+| FPIV-01 |  P1: Facilitator proposes pivotal marks |  Design | ✅ Verified |
+| FPIV-02 |  P1: Facilitator proposes pivotal marks (below-threshold → heldBack) |  Design | ✅ Verified |
+| FPIV-03 |  P1: Facilitator proposes pivotal marks |  Design | ✅ Verified |
+| FPIV-04 |  P1: Facilitator proposes pivotal marks |  Design | ✅ Verified |
+| FREW-01 |  P1: F04 reword-hold-back gate |  Design | ✅ Verified |
+| FREW-02 |  P1: F04 reword-hold-back gate |  Design | ✅ Verified |
+| FREW-03 |  P1: F04 reword-hold-back gate |  Design | ⚠️ Verified (deviation) |
+| FREW-04 |  P1: F04 reword-hold-back gate |  Design | ✅ Verified |
+| FREW-05 |  P1: F04 reword-hold-back gate (named domain predicate, held/released test) |  Design | ✅ Verified |
+| FREW-06 |  P1: F04 reword-hold-back gate (held track not retroactively surfaced) |  Design | ✅ Verified |
+| REL-01 |  `minor` changeset (target 0.6.0) present |  Execute | ✅ Verified |
+| REL-02 |  Issue #42 split + follow-on issue filed; ADR-008 "deliberately untested" note added |  Execute | ⚠️ Verified (maintainer step) |
+| REL-03 |  ARCHITECTURE.md §5 `/api` surface list gains the three artifact routes |  Execute | ✅ Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
