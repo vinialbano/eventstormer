@@ -16,7 +16,7 @@ in the diff. One task carries an accepted, pre-agreed partial:
 | Task | Status | Notes |
 | ---- | ------ | ----- |
 | T1–T25, T27 | ✅ Done | Committed, gated green per the Execution Log |
-| T26 | ⚠️ Partial | Script `scripts/smoke-facilitation-schema.ts` + `pnpm smoke:facilitation-schema` shipped; **the live structured-output call was never made** (no `ANTHROPIC_API_KEY`). Flagged in the handoff as a maintainer manual step (AD-027, out of CI). |
+| T26 | ✅ Done | Script + `pnpm smoke:facilitation-schema` shipped. **Live run 2026-09-07 (`8de1dad`): PASS** — real `claude-sonnet-5` structured-output call, no HTTP 400, model produced all three new strands. `research/research-aisdk.md` "SLICE 5" records the LIVE RESULT. |
 
 ---
 
@@ -72,7 +72,7 @@ Evidence-or-zero. `file:line` is the covering assertion. 44 requirement IDs.
 | FREL-01 `propose-relation` track for the 6 kinds | schema + seam | `turn-schema.test.ts:144`; `interpreted-track.test.ts`; `map.test.ts` relation cases | ✅ |
 | FREL-02 flows through F05 path; accept applies the `Operation` | `Model Change Proposed` birth → accept → board | `accept.test.ts:349` sequence→follows, `:365` link-cause→causedBy; `interpret.test.ts:677` birth | ✅ (server path; **UI card absent — see Deviation 3**) |
 | FREL-03 unknown/ambiguous endpoint label → track dropped, no Proposal | drop at seam | `map.test.ts:216` (unresolved), `:238` equal endpoints, `:230` wrong arity | ✅ |
-| FREL-04 assembled schema ≤24 optionals, no `z.unknown()`, no empty sub-schema — **and a live smoke check** | count == 5; live call | `turn-schema.test.ts:44` optional count, `:57` no empty `{}` | ⚠️ **GAP (partial)** — the live structured-output smoke was **not run** (T26 pending, no API key). Pre-agreed out-of-CI (AD-027) but FREL-04 AC 2 says "verified … before Execute closes". |
+| FREL-04 assembled schema ≤24 optionals, no `z.unknown()`, no empty sub-schema — **and a live smoke check** | count == 5; live call | `turn-schema.test.ts:44` optional count, `:57` no empty `{}`; **live run `8de1dad` — PASS** (`research/research-aisdk.md` SLICE 5) | ✅ **PASS** — static assertions + a real `claude-sonnet-5` structured-output call that returned all three new strands. |
 | FREL-05 reject → model unchanged, `REJECTED` | — | `accept.test.ts:405` | ✅ |
 | FREL-06 unappliable accept → `APPLY_FAILED`, person told | cycle / no-edge | `accept.test.ts:420` planted cycle → `APPLY_FAILED` + `applyFailedReason:'cycle'`; `:439` insert-between no edge | ✅ |
 | FREL-07 effect already holds → no-op, `APPLIED` (AD-038) | `decide` → `ok([])` | `board/decide.test.ts` (duplicate sequence/link-cause → `ok([])`); `accept.test.ts:458` re-accept → APPLIED one edge, `:474` competing track, `:493` crash-window | ✅ |
@@ -109,8 +109,11 @@ Evidence-or-zero. `file:line` is the covering assertion. 44 requirement IDs.
 | REL-02 issue split + ADR-008 note | `README.md:68-70` "deliberately untested" line present; issue `gh` edits are a documented maintainer action (tasks.md Batch 6) | ⚠️ Doc note ✅; the GitHub issue split is unverifiable from the tree (maintainer step, as designed) |
 | REL-03 ARCHITECTURE.md §5 gains the 3 routes | `ARCHITECTURE.md:274` lists `/workshops/:id/artifacts/{model,summary}` + `/sessions/:sessionId/artifacts/transcript` | ✅ |
 
-**Status**: 40/44 clean ✅ · 4 flagged (SUM-09 weak-test, FREL-04 live-smoke pending, FREW-03
-precision+deviation, REL-02 maintainer step) — none is a shipped-behaviour defect.
+**Status** (after fix iteration 1 + the live smoke): **43/44 clean ✅** · 1 flagged — REL-02's
+GitHub issue split is a maintainer `gh` action, unverifiable from the tree by design (the
+ADR-008 note and changeset are present). SUM-09 weak test → fixed (`a15144b`); FREL-04 live
+smoke → PASS (`8de1dad`); FREW-03 → pinned as intended v1 behaviour (`8e6b0ab`). No
+shipped-behaviour defect.
 
 ---
 
@@ -307,10 +310,11 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | SUM-09 | Implementing | ⚠️ Verified (weak test — Fix 1) |
 | TX-01..07 | Implementing | ✅ Verified |
 | FREL-01..03, FREL-05..08 | Implementing | ✅ Verified |
-| FREL-04 | Implementing | ⚠️ Partially Verified (static ✅; live smoke pending — Fix 3) |
+| FREL-04 | Implementing | ✅ Verified — static + live smoke PASS (8de1dad) |
 | FPIV-01..04 | Implementing | ✅ Verified |
 | FREW-01..02, FREW-04..06 | Implementing | ✅ Verified |
-| FREW-03 | Implementing | ⚠️ Verified (literal AC met; deviation — Fix 2) |
+| FREW-03 | Implementing | ✅ Verified — pinned as intended v1 behaviour (`8e6b0ab`) |
+| FREL-04 | Implementing | ✅ Verified — static + live smoke PASS (`8de1dad`) |
 | REL-01, REL-03 | Implementing | ✅ Verified |
 | REL-02 | Implementing | ⚠️ Verified (README/ADR note ✅; issue split is a maintainer step) |
 
@@ -318,13 +322,15 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 
 ## Summary
 
-**Overall**: ✅ **Ready to merge** — with follow-ups.
+**Overall**: ✅ **Ready to merge.**
 
-**Spec-anchored check**: 40/44 ACs clean; 4 flagged (1 weak test, 1 pending live smoke, 1
-literal-met deviation, 1 maintainer step) — **0 shipped-behaviour defects**.
-**Sensor**: 5/6 mutations killed; 1 survivor is a test-discrimination gap on SUM-09 (code correct).
-**Gate**: `pnpm check` 1146 passed (+160), `pnpm build` green, `pnpm test:e2e` 6 passed on a
-clean run (one pre-existing baseline flake under load).
+**Spec-anchored check**: **43/44 ACs clean** after fix iteration 1 + the live smoke; 1 flagged
+(REL-02 — the GitHub issue split is a maintainer `gh` action, unverifiable from the tree by
+design). **0 shipped-behaviour defects.**
+**Sensor**: **6/6 mutations killed** (SUM-09 survivor closed by `a15144b`).
+**Gate**: `pnpm check` 1148 passed (+162), `pnpm build` green, `pnpm test:e2e` 6 passed on a
+clean run (the earlier `capture-loop.spec.ts:117` flake reproduces on the pre-feature baseline
+`0c8a6b4` — pre-existing timing sensitivity, not a slice-5 regression).
 
 **What works**: All three artifacts (JSON export + round-trip, deterministic summary, verbatim
 transcript) are pure, deterministic, stamped, 404/500-correct, and side-effect-free. The
@@ -332,11 +338,15 @@ transcript) are pure, deterministic, stamped, 404/500-correct, and side-effect-f
 convergence, the F04/F07 readiness predicates, endpoint resolution and label-drop at the seam,
 and the closed-session accept guard are all thoroughly covered server-side. `depcruise` clean.
 
-**Issues found**: (1) SUM-09 `(rank,id)` tie-break untested at equal rank — add a fixture.
-(2) Same-turn reword silently dropped — decide intended behaviour + pin a test. (3) FREL-04
-live schema smoke never run — maintainer must run `pnpm smoke:facilitation-schema` before
-real-model use. (4) Dead `already-related`/`already-resolved` variants — Slice 6 cleanup.
-(5) No dock UI for model-change proposals — folded to the follow-on; keep F04/F07 UI as pending.
+**Resolved in fix iteration 1**: (1) SUM-09 `(rank,id)` tie-break — equal-rank fixture added
+(`a15144b`), sensor 5 now killed. (2) Same-turn reword drop — pinned as intended v1 behaviour
+with an explicit assertion (`8e6b0ab`). (3) FREL-04 live schema smoke — **run 2026-09-07,
+PASS** (`8de1dad`; `research/research-aisdk.md`).
 
-**Next steps**: Fixes 1 and 2 as bounded fix tasks this slice if desired; Fixes 3–5 tracked in
-the handoff / follow-on issue. None blocks the merge of the tested code.
+**Remaining (tracked, non-blocking)**: Dead `already-related`/`already-resolved` board error
+variants → Slice 6 cleanup. No dock UI for model-change proposals → Slice 5b (server path
+complete + tested; e2e accepts via `POST /proposals/:id/accept`). The `gh` issue re-scope →
+maintainer.
+
+**Next steps**: merge PR #91; maintainer runs the `gh` re-scope commands (`7f3aaa7` commit
+body / `tasks.md`).
