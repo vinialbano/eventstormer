@@ -648,3 +648,22 @@ explicitly.
 
 `oneOf → anyOf` round-trip: **not fully confirmed** (never got a clean call) but **not the
 problem** — no `oneOf` error at any point. A clean confirmation comes with Slice 1's projection.
+
+---
+
+## SLICE 5 — assembled turn schema live check
+
+**Date:** 2026-09-07 · **Status: PENDING a maintainer run** (`pnpm smoke:facilitation-schema`
+with `ANTHROPIC_API_KEY` set — no key was available in the execution environment).
+
+`scripts/smoke-facilitation-schema.ts` (`pnpm smoke:facilitation-schema`) wraps the assembled
+`FacilitationTurnSchema` — the eight original strands plus Slice 5's `propose-relation` /
+`propose-pivotal` / `propose-reword` — in `Output.object({ schema })` and makes ONE real
+structured-output call exactly as `anthropic-adapter.ts` does (`structuredOutputMode:
+'outputFormat'`, `effort: 'low'`, model `claude-sonnet-5`, `instructions` role). It prints
+`PASS` and the parsed output, or `FAIL` with the HTTP 400 body.
+
+This is FREL-04's manual half and is out of CI by AD-027. `turn-schema.test.ts` already asserts
+the derived JSON Schema stays within Anthropic's ≤ 24-optional ceiling (optional count == 5) and
+has no empty `{}` sub-schema, so the live call is expected to pass; run it to confirm before the
+release, and record `PASS <date>` or the 400 body here.
