@@ -2,7 +2,7 @@
 
 **Date**: 2026-09-07
 **Spec**: `.specs/features/slice-5-artifacts-facilitator-tracks/spec.md`
-**Diff range**: `0c8a6b4..7f3aaa7` (planning commit `2ffe038` + 36 task/doc commits)
+**Diff range**: `0c8a6b4..1f1fcdc` (planning commit `2ffe038` + task/doc commits through the fix iteration and issue re-scope)
 **Verifier**: independent sub-agent (author ≠ verifier)
 **Mode**: Code + tests
 
@@ -235,13 +235,13 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 ## Gate Check
 
 - **Gate command**: `pnpm check && pnpm build && pnpm test:e2e`
-- **`pnpm check`**: ✅ 1146 passed / 133 files / 0 failed / 0 skipped; typecheck, lint, depcruise (358 modules, 0 violations), knip all green
+- **`pnpm check`**: ✅ 1148 passed / 133 files / 0 failed / 0 skipped; typecheck, lint, depcruise (358 modules, 0 violations), knip all green (initial verification run 1146; +2 in fix iteration 1 — `a15144b` SUM-09 equal-rank fixture, `8e6b0ab` FREW-03 pin)
 - **`pnpm build`**: ✅ built (`dist/` produced; only the pre-existing chunk-size advisory)
 - **`pnpm test:e2e`**: ✅ **6 passed** on a clean run (`capture-loop` ×4, `capture-loop-no-optimism`, `artifacts-and-relations`)
   - The `hot spots and close … ceremony` spec (`capture-loop.spec.ts:117`) failed twice under heavy parallel machine load (multiple concurrent Playwright/Vite instances during verification), then **passed cleanly** once load cleared. **The identical failure reproduces on the pre-feature baseline `0c8a6b4`** — it is a pre-existing timing-sensitive flake, not a slice-5 regression. CI is the authority.
 - **Test count before feature**: 986
-- **Test count after feature**: 1146
-- **Delta**: **+160** new tests
+- **Test count after feature**: 1148
+- **Delta**: **+162** new tests
 - **Skipped**: none
 - **Failures**: none on a clean run
 
@@ -307,16 +307,15 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | --- | --- | --- |
 | JSON-01..07 | Implementing | ✅ Verified |
 | SUM-01..08 | Implementing | ✅ Verified |
-| SUM-09 | Implementing | ⚠️ Verified (weak test — Fix 1) |
+| SUM-09 | Implementing | ✅ Verified — equal-rank fixture added in fix iteration 1 (`a15144b`) |
 | TX-01..07 | Implementing | ✅ Verified |
 | FREL-01..03, FREL-05..08 | Implementing | ✅ Verified |
-| FREL-04 | Implementing | ✅ Verified — static + live smoke PASS (8de1dad) |
 | FPIV-01..04 | Implementing | ✅ Verified |
 | FREW-01..02, FREW-04..06 | Implementing | ✅ Verified |
 | FREW-03 | Implementing | ✅ Verified — pinned as intended v1 behaviour (`8e6b0ab`) |
 | FREL-04 | Implementing | ✅ Verified — static + live smoke PASS (`8de1dad`) |
 | REL-01, REL-03 | Implementing | ✅ Verified |
-| REL-02 | Implementing | ⚠️ Verified (README/ADR note ✅; issue split is a maintainer step) |
+| REL-02 | Implementing | ✅ Verified — #42 retitled, #92 filed 2026-09-07 (`1f1fcdc`) |
 
 ---
 

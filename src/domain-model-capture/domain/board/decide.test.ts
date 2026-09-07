@@ -646,6 +646,22 @@ describe('decide — insert-between', () => {
     }
   })
 
+  it('treats a re-run insert-between after it applied as an idempotent no-op (ok([]))', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      { kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' },
+    ])
+    const result = decide(
+      writeModel,
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+    )
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
   it('rejects insert-between when C can reach A as a cycle', () => {
     const writeModel = given([
       { kind: 'capture-domain-event', id: 'eA', label: 'a' },
@@ -735,13 +751,22 @@ describe('decide — link-cause / unlink-cause', () => {
     }
   })
 
-  it('rejects unlink-cause of an unknown pair as missing-edge', () => {
+  it('treats unlink-cause of an absent link as an idempotent no-op (ok([]))', () => {
     const writeModel = given(actorAndEvent)
     const result = decide(writeModel, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
-    expect(isErr(result)).toBe(true)
-    if (isErr(result)) {
-      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
-    }
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('treats a second unlink-cause after the link is gone as an idempotent no-op (ok([]))', () => {
+    const writeModel = given([
+      ...actorAndEvent,
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+      { kind: 'unlink-cause', cause: 'a1', effect: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
   })
 
   it('rejects missing or withdrawn endpoints with existing rejection kinds', () => {

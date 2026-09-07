@@ -327,6 +327,16 @@ const decideInsertBetween = (
     'only domain events may be sequenced',
   )
   if (!successor.ok) return successor
+  // The insert already holds — predecessor→inserted→successor present, direct
+  // edge gone — an idempotent no-op (see `decideSequence`), so an accept-chain
+  // retry after a lost outcome commit converges to APPLIED.
+  if (
+    writeModel.follows.get(operation.predecessor)?.has(operation.inserted) === true &&
+    writeModel.follows.get(operation.inserted)?.has(operation.successor) === true &&
+    writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true
+  ) {
+    return ok([])
+  }
   if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true) {
     return err({ kind: 'missing-edge', classification: 'systemic' })
   }
@@ -378,8 +388,10 @@ const decideUnlinkCause = (
       reason: 'causedBy only links an actor or system to a domain event',
     })
   }
+  // The link is already absent — the intent ("no such link") holds, an idempotent
+  // no-op (see `decideSequence`), so an accept-chain retry converges to APPLIED.
   if (writeModel.causedBy.get(operation.effect)?.has(operation.cause) !== true) {
-    return err({ kind: 'missing-edge', classification: 'systemic' })
+    return ok([])
   }
   return ok([operation])
 }

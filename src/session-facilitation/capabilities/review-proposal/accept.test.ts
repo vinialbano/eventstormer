@@ -505,6 +505,44 @@ describe('POST /proposals/:id/accept — model-change proposals', () => {
     expect(follows()).toHaveLength(1)
   })
 
+  it('converges an insert-between model change to APPLIED on re-accept after it applied', async () => {
+    seedBoardBlock('bb_a', 'A')
+    seedBoardBlock('bb_b', 'B')
+    seedBoardBlock('bb_c', 'C')
+    seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author })
+    seedModelChange('p_ib', {
+      kind: 'relation',
+      relationKind: 'insert-between',
+      predecessor: 'bb_a',
+      inserted: 'bb_c',
+      successor: 'bb_b',
+    })
+
+    await accept('p_ib')
+    const body = (await (await accept('p_ib')).json()) as { proposal: { disposition: string } }
+    expect(body.proposal.disposition).toBe('APPLIED')
+    expect(follows()).toEqual([
+      { predecessor: 'bb_a', successor: 'bb_c' },
+      { predecessor: 'bb_c', successor: 'bb_b' },
+    ])
+  })
+
+  it('converges an unlink-cause model change to APPLIED on re-accept after it applied', async () => {
+    seedBoardActor('bb_x', 'Clerk')
+    seedBoardBlock('bb_e', 'Loan recorded')
+    seedBoardOp({ v: 1, kind: 'link-cause', cause: 'bb_x', effect: 'bb_e', author })
+    seedModelChange('p_ul', {
+      kind: 'relation',
+      relationKind: 'unlink-cause',
+      cause: 'bb_x',
+      effect: 'bb_e',
+    })
+
+    await accept('p_ul')
+    const body = (await (await accept('p_ul')).json()) as { proposal: { disposition: string } }
+    expect(body.proposal.disposition).toBe('APPLIED')
+  })
+
   it('rejects a late model-change accept onto a closed session, leaving it re-lapsable', async () => {
     seedBoardBlock('bb_a', 'A')
     seedBoardBlock('bb_b', 'B')

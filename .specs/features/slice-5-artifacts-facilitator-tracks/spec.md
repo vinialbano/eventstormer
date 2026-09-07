@@ -420,7 +420,7 @@ card present); same-contribution carve-out test; `hasModelStructure` unit test.
 | SUM-06 |  P1: Deterministic model summary |  Design | ✅ Verified |
 | SUM-07 |  P1: Deterministic model summary |  Design | ✅ Verified |
 | SUM-08 |  P1: Deterministic model summary (no external-toolchain claim) |  Design | ✅ Verified |
-| SUM-09 |  P1: Deterministic model summary (total-order rendering) |  Design | ⚠️ Verified (weak test) |
+| SUM-09 |  P1: Deterministic model summary (total-order rendering) |  Design | ✅ Verified (equal-rank fixture added in fix iteration 1 — see validation.md) |
 | TX-01 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
 | TX-02 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
 | TX-03 |  P1: Verbatim session-transcript export |  Design | ✅ Verified |
@@ -431,7 +431,7 @@ card present); same-contribution carve-out test; `hasModelStructure` unit test.
 | FREL-01 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
 | FREL-02 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
 | FREL-03 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
-| FREL-04 |  P1: Facilitator proposes relation operations |  Design | ⚠️ Partial (live smoke pending) |
+| FREL-04 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified (live schema smoke PASS in fix iteration 1 — see validation.md / research-aisdk.md) |
 | FREL-05 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
 | FREL-06 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
 | FREL-07 |  P1: Facilitator proposes relation operations (already-satisfied → APPLIED) |  Design | ✅ Verified |
@@ -447,7 +447,7 @@ card present); same-contribution carve-out test; `hasModelStructure` unit test.
 | FREW-05 |  P1: F04 reword-hold-back gate (named domain predicate, held/released test) |  Design | ✅ Verified |
 | FREW-06 |  P1: F04 reword-hold-back gate (held track not retroactively surfaced) |  Design | ✅ Verified |
 | REL-01 |  `minor` changeset (target 0.6.0) present |  Execute | ✅ Verified |
-| REL-02 |  Issue #42 split + follow-on issue filed; ADR-008 "deliberately untested" note added |  Execute | ⚠️ Verified (maintainer step) |
+| REL-02 |  Issue #42 split + follow-on issue filed; ADR-008 "deliberately untested" note added |  Execute | ✅ Verified (#42 retitled, #92 filed — 2026-09-07, `1f1fcdc`) |
 | REL-03 |  ARCHITECTURE.md §5 `/api` surface list gains the three artifact routes |  Execute | ✅ Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`

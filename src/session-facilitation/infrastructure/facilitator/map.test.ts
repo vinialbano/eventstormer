@@ -324,4 +324,16 @@ describe('mapTurn — propose-reword', () => {
       ),
     ).toHaveLength(1)
   })
+
+  it('the same-turn carve-out is order-independent — reword track before its block', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        { track: 'propose-reword', targetLabel: 'Loan recorded', newLabel: 'Loan booked' },
+        { track: 'propose-building-block', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' },
+      ],
+      nextMove: ACK,
+    }
+    const mapped = mapTurn(turn, countingMint(), resolver({}), board({ hasStructure: false }))
+    expect(mapped.tracks.some((entry) => entry.track === 'propose-reword' && entry.heldBack)).toBe(false)
+  })
 })

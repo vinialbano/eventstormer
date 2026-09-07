@@ -148,7 +148,13 @@ export const mapTurn = (
   resolveBlockId: (label: string) => BuildingBlockId | undefined = () => undefined,
   boardState: BoardState = EMPTY_BOARD,
 ): MappedTurn => {
-  const labelsProposedThisTurn = new Set<string>()
+  // Pre-pass so the reword carve-out is order-independent: a reword whose target
+  // is authored in this same turn is not held, no matter which track comes first.
+  const labelsProposedThisTurn = new Set<string>(
+    turn.interpretation.flatMap((track) =>
+      track.track === 'propose-building-block' ? [track.label] : [],
+    ),
+  )
 
   const tracks: InterpretedTrack[] = turn.interpretation.flatMap((track): InterpretedTrack[] => {
     switch (track.track) {
@@ -159,7 +165,6 @@ export const mapTurn = (
       case 'propose-reword':
         return rewordTrack(track, mint, resolveBlockId, boardState, labelsProposedThisTurn)
       case 'propose-building-block': {
-        labelsProposedThisTurn.add(track.label)
         const annotatesTargetId =
           track.annotatesTargetId === undefined ? undefined : resolveBlockId(track.annotatesTargetId)
         return [
