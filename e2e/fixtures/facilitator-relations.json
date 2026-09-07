@@ -1,0 +1,43 @@
+{
+  "openings": [
+    {
+      "questionText": "What business are we mapping in this session?",
+      "scopeStatement": "A restaurant kitchen fulfilling dine-in orders."
+    }
+  ],
+  "turns": [
+    {
+      "interpretation": [
+        {
+          "track": "propose-building-block",
+          "blockKind": "domain-event",
+          "label": "Order placed",
+          "bar": "strict"
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "interpretation": [
+        {
+          "track": "propose-building-block",
+          "blockKind": "domain-event",
+          "label": "Order cooked",
+          "bar": "strict"
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    },
+    {
+      "interpretation": [
+        {
+          "track": "propose-relation",
+          "relationKind": "sequence",
+          "endpoints": ["Order placed", "Order cooked"],
+          "rationale": "The order is cooked after it is placed."
+        }
+      ],
+      "nextMove": { "move": "acknowledge" }
+    }
+  ]
+}
