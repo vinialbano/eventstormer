@@ -26,7 +26,7 @@ const appendResolution = (
 }
 
 /** Board rejections that lapse the resolution rather than surface an error. */
-const LAPSE_REASONS = new Set(['kind-permission', 'withdrawn-target', 'already-resolved', 'unknown-target'])
+const LAPSE_REASONS = new Set(['kind-permission', 'withdrawn-target', 'unknown-target'])
 
 /**
  * `POST /resolutions/:id/accept` — the synchronous cross-context resolve chain,

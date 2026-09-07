@@ -271,7 +271,7 @@ body)* · `/workshops/:id/{stakeholder-check,chosen-problem}` · `/sessions/:id/
 
 **Reads:** `GET` `/workshops/:id/session` · `/sessions/:id/proposals` · `/workshops/:id/board` ·
 `/workshops/:id/board/blocks/:blockId/references` · `/workshops/:id/readable-account` ·
-`/workshops/:id/artifacts/{model,summary,transcript}`
+`/workshops/:id/artifacts/{model,summary}` · `/workshops/:id/sessions/:sessionId/artifacts/transcript`
 
 **Not routes** (in-process): `apply-operation`, `raise`/`resolve-hot-spot`,
 `interpret-contribution` / `ask-opening-question` / `reconcile-pending-derivations` (the `host/`

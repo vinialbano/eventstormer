@@ -11,9 +11,46 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
 ---
 
 **Design**: `.specs/features/slice-5-artifacts-facilitator-tracks/design.md`
-**Status**: In Progress
+**Status**: Execute complete — Verifier pending
 
 ## Execution Log
+
+- **Batch 6 (Phase 7 remainder — T24b, T25, T26, T27) ✅** — `841b50c` T24b · `028da53` T25 ·
+  `d34df41` T26 · T27 (this commit). `pnpm check` + `pnpm build` + `pnpm test:e2e` (6 specs)
+  green. **T24b**: `src/app/capture-loop/shell/artifacts/ArtifactsDrawer.vue` +
+  `render-artifact-markdown.ts` (markdown-it + DOMPurify, verbatim) + a `Download` wall toggle in
+  `CaptureScreen.vue`, mutually exclusive with `Readable account`; 8 component tests (bytes
+  render, markdown, re-render on model change, stamped download, 404 error state + Try again,
+  roving-tabindex focus order, reduced-motion, transcript-unavailable). **T25**:
+  `e2e/artifacts-and-relations.spec.ts` + a third Playwright project (`artifacts`, port 5180) on
+  its own dev server + `e2e/fixtures/facilitator-relations.json` — real contribution → scripted
+  `propose-relation` sequence → seam births the `Proposal` → accept via `POST
+  /proposals/:id/accept` (SPEC_DEVIATION: the dock has no model-change card; folded into the
+  follow-on) → board `follows` edge → the in-app artifacts panel's model export carries both
+  endpoint ids + `boardPosition`/`sessionRecordPosition`/`renderedAt`. Existing 5 e2e specs
+  unaffected. **T26**: `scripts/smoke-facilitation-schema.ts` + `pnpm smoke:facilitation-schema`
+  — wraps the assembled `FacilitationTurnSchema` in `Output.object` and makes one real
+  structured-output call as `anthropic-adapter.ts` does. **No `ANTHROPIC_API_KEY` available →
+  live run PENDING a maintainer `pnpm smoke:facilitation-schema`**; `research/research-aisdk.md`
+  records it. **T27**: `minor` changeset (→ 0.6.0); `README.md` gained the ADR-008 "deliberately
+  untested" list + the verbatim relation/pivotal/reword line (design §17); `ARCHITECTURE.md` §5
+  `/api` Reads list corrected to `/workshops/:id/artifacts/{model,summary}` +
+  `/workshops/:id/sessions/:sessionId/artifacts/transcript`; `review-resolution/accept.ts`
+  `LAPSE_REASONS` dropped the unreachable `'already-resolved'` (AD-038); `.specs/STATE.md`
+  Handoff rewritten. `package.json` `version` untouched (ADR-009).
+
+  **Maintainer `gh` commands (NOT run by the agent — run these after merge):**
+
+  ```
+  gh issue edit 42 --title "Slice 5 — artifacts + facilitator tracks"
+
+  gh issue create \
+    --title "Slice 5b — facilitator eval + demo seed" \
+    --body "F11 facilitator eval suite + \`pnpm seed\` demo session + the recorded walkthrough — split out of #42 when Slice 5 was re-scoped to artifacts + facilitator tracks. Child of #9. Blocked by #42. Blocks #43. Also covers the in-dock model-change proposal card (relation / pivotal / reword), unbuilt in v1 — the e2e (T25) accepts via \`POST /proposals/:id/accept\`."
+
+  # then add the new issue number to #43's blocked-by:
+  gh issue edit 43 --add-label blocked   # and note "blocked by <new issue>" in #43's body
+  ```
 
 - **Batch 4 (Phase 5 — T14, T15, T16, T17, T18) ✅** — `6186976` T14 · `81d7013` T15 ·
   `f7ae46f` T16 · `9b9d030` T17 · `dbfcfaa` T18. 1107 tests (1078 → +29), `pnpm check` green;

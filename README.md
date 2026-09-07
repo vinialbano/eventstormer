@@ -57,8 +57,17 @@ shell/parent value beats both). Keep real secrets in `.env.local` — the test r
 
 **Not built:**
 
-- Derived artifacts (context folder exists; no `src/` yet).
-- The remaining Slice 5 eval cases (phase flagged, deeper-format, integration).
+- The Slice 5 eval suite, `pnpm seed`, and the recorded walkthrough (re-filed as a follow-on).
+- The remaining eval cases (phase flagged, deeper-format, integration).
+
+**Deliberately untested (ADR-008):**
+
+- Facilitator judgment quality (eval only, non-deterministic — reported `k/N`); real Anthropic
+  HTTP calls (mocked in unit tests); graph-layout visuals (`playwright-cli` manual); concurrency
+  beyond the one-open-session constraint (F14); voice (F17); performance / load.
+- The real model's decision to propose a relation / pivotal / reword — the schema, seam, gates,
+  apply chain and lifecycle are unit/integration-tested with a hand-authored model response and
+  one scripted-facilitator e2e; no test in v1 exercises the real model producing these strands.
 
 <!-- eval:results -->
 Results are produced by `pnpm eval --report`.
