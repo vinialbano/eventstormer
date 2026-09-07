@@ -304,7 +304,7 @@ describe('mapTurn — propose-reword', () => {
     ])
   })
 
-  it('does not hold a reword whose target was proposed earlier in the same turn', () => {
+  it('drops — does not hold — a reword whose target was proposed earlier in the same turn', () => {
     const turn: FacilitationTurn = {
       interpretation: [
         { track: 'propose-building-block', blockKind: 'domain-event', label: 'Loan recorded', bar: 'strict' },
@@ -313,6 +313,15 @@ describe('mapTurn — propose-reword', () => {
       nextMove: ACK,
     }
     const mapped = mapTurn(turn, countingMint(), resolver({}), board({ hasStructure: false }))
+    // v1 pinned behaviour: the same-turn carve-out clears heldBack, but the target
+    // has no BuildingBlockId yet, so the released strand is dropped entirely — no
+    // propose-reword strand, held or otherwise. The block proposal carries the wording.
+    expect(mapped.tracks.filter((entry) => entry.track === 'propose-reword')).toEqual([])
     expect(mapped.tracks.some((entry) => entry.track === 'propose-reword' && entry.heldBack)).toBe(false)
+    expect(
+      mapped.tracks.filter(
+        (entry) => entry.track === 'propose-building-block' && entry.label === 'Loan recorded',
+      ),
+    ).toHaveLength(1)
   })
 })

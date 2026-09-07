@@ -124,11 +124,11 @@ const rewordTrack = (
     ]
   }
   const target = resolveBlockId(track.targetLabel)
-  // SPEC_DEVIATION: a same-turn reword target has no BuildingBlockId yet (ids are
-  // minted at accept), and a released strand needs one. When the target cannot be
-  // resolved on the board the strand is dropped — never surfaced as a "held until
-  // structure" notice, which would misdescribe a block the person is still
-  // authoring. A later contribution's reword resolves normally once accepted.
+  // Pinned v1 behaviour: a same-contribution reword can't resolve to a board id
+  // yet — ids are minted at accept — so it is dropped rather than held. It is
+  // never surfaced as a "held until structure" notice, which would misdescribe a
+  // block the person is still authoring, and their own block proposal already
+  // carries the wording. A later contribution's reword resolves once accepted.
   if (target === undefined) return []
   return [
     {

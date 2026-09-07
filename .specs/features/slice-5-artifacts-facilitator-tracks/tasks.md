@@ -73,10 +73,12 @@ flow and Critical Rules.** Do not search for skill files by filesystem path.
   reads completing + a code comment), not as a runtime observation.
 - **Batch 1 (Phase 1 — T1, T1a, T1b, T2, T3, T3a, T4) ✅** — `b33927a` T1 · `eef3b67` T1a ·
   `b448e66` T1b · `a342e26` T2 · `90f58b4` T3 · `035cda5` T3a · `99a0b26` T4. 1023 tests
-  (986 → +37), `pnpm check` green. SPEC_DEVIATION in `map.ts` `rewordTrack`: a same-turn
+  (986 → +37), `pnpm check` green. Pinned v1 behaviour in `map.ts` `rewordTrack`: a same-turn
   reword whose target has no `BuildingBlockId` yet (ids minted at accept) is **dropped**, not
-  surfaced as a "held" notice — FREW-03 ("SHALL NOT be held") satisfied; a later
-  contribution's reword resolves normally. Phase 2/3 owns accept-time handling. Exports added:
+  surfaced as a "held" notice — FREW-03 ("SHALL NOT be held") satisfied; the person's block
+  proposal already carries the wording; a later contribution's reword resolves normally. Pinned
+  by `map.test.ts` ("drops — does not hold — a reword whose target was proposed earlier in the
+  same turn"). Exports added:
   `InterpretedRelationKind` / `RelationField` / `RELATION_FIELDS` (interpreted-track), `Intent`
   (events); `deriveTracks` currently `continue`s past the model-change kinds (T7 picks them up).
 - **Batch 2 (Phase 2 — T5, T6, T7, T8, T8a) ✅** — `aa009da` T5 · `8436482` T6 · `ee6fbb0` T7 ·
