@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, toRef, watch } from 'vue'
 import ReadableAccountDrawer from './account/ReadableAccountDrawer.vue'
+import ArtifactsDrawer from './artifacts/ArtifactsDrawer.vue'
 import { BoardWall, type BoardBlockInput } from '../board/index.ts'
 import FacilitatorDock from '../dock/FacilitatorDock.vue'
 import { useCaptureOrchestration } from './composables/use-capture-orchestration.ts'
@@ -17,7 +18,7 @@ import { useBoardViewState } from '../view-state/board-view.ts'
 const props = defineProps<{ id: string }>()
 
 const orch = useCaptureOrchestration(toRef(props, 'id'))
-const { session, board, account } = orch
+const { session, board, account, artifacts } = orch
 const boardView = useBoardViewState(toRef(board, 'snapshot'))
 const { showWithdrawn, timeline, hotSpots } = boardView
 
@@ -36,6 +37,7 @@ const onFlagHotSpot = (request: { targetId: string | null; label: string }): voi
 const startingSession = ref(false)
 const loaded = ref(false)
 const accountOpen = ref(false)
+const artifactsOpen = ref(false)
 
 const blocks = computed((): BoardBlockInput[] =>
   board.snapshot.blocks.map((block) => ({
@@ -85,7 +87,17 @@ const startSession = async (): Promise<void> => {
 
 const toggleAccount = (): Promise<void> => {
   accountOpen.value = !accountOpen.value
+  if (accountOpen.value) artifactsOpen.value = false
   if (accountOpen.value && account.document === null) return account.load(props.id)
+  return Promise.resolve()
+}
+
+const toggleArtifacts = (): Promise<void> => {
+  artifactsOpen.value = !artifactsOpen.value
+  if (artifactsOpen.value) accountOpen.value = false
+  if (artifactsOpen.value && artifacts.workshopId === null) {
+    return artifacts.load(props.id, session.sessionId)
+  }
   return Promise.resolve()
 }
 
@@ -129,6 +141,17 @@ onMounted(coldLoad)
       Readable account
     </button>
     <ReadableAccountDrawer v-if="accountOpen" />
+
+    <button
+      type="button"
+      class="screen__account screen__artifacts"
+      aria-label="Download"
+      :aria-expanded="artifactsOpen"
+      @click="toggleArtifacts"
+    >
+      Download
+    </button>
+    <ArtifactsDrawer v-if="artifactsOpen" />
     <div id="reword-portal" class="screen__reword-portal" />
 
     <div v-if="needsSession" class="screen__gate">
@@ -215,6 +238,9 @@ onMounted(coldLoad)
   font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;
+}
+.screen__artifacts {
+  top: 64px;
 }
 .screen__account:focus-visible {
   outline: 2px solid var(--color-event-strong);
