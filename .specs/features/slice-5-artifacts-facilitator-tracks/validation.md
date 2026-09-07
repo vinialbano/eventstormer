@@ -50,7 +50,7 @@ Evidence-or-zero. `file:line` is the covering assertion. 44 requirement IDs.
 | SUM-06 no JSON/transcript side effect | — | `summary/http.test.ts:113` | ✅ |
 | SUM-07 empty sections explicit "not run"/none | never omitted | `render-summary.test.ts` empty-workshop golden (every section renders a line) | ✅ |
 | SUM-08 no external-toolchain claim | — | golden asserts absent | ✅ |
-| SUM-09 ordered sections a **total order `(rank,id)`** | byte-stable regardless of log order | `render-summary.test.ts:164` shuffled-snapshot byte-equal; `:182` rank-0 precedes rank-1 | ⚠️ **Spec-precision / weak test** — the `id` tie-break at *equal rank* is never exercised (see Sensor mutation 5, survived). Code is correct (`render-summary.ts:93`). |
+| SUM-09 ordered sections a **total order `(rank,id)`** | byte-stable regardless of log order | `render-summary.test.ts:164` shuffled-snapshot byte-equal; `:182` rank-0 precedes rank-1; **equal-rank tie-break + reversed-array fixtures (fix `a15144b`)** | ✅ **PASS** — Sensor 5 now killed. |
 
 ### P1: Verbatim session-transcript export (TX-01..07)
 
@@ -125,11 +125,11 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | 2 | `deserialise.ts:31` | drop `causedBy` in the rebuild (`causedBy: []`) | ✅ Killed — `deserialise.test.ts` round-trip + fast-check property |
 | 3 | `board/decide.ts:236` | AD-038: existing `sequence` edge returns `ok([operation])` instead of `ok([])` | ✅ Killed — `board/decide.test.ts` idempotency case |
 | 4 | `map.ts:115` | reword hold gate `!hasStructure` → `hasStructure` | ✅ Killed — `map.test.ts:286` + `:292` (held/released pair) |
-| 5 | `render-summary.ts:93` | spine/branch-point `(rank,id)` tie-break dropped (`return rankDiff`) | ❌ **Survived** — no test has two spine members at equal longest-path rank |
+| 5 | `render-summary.ts:93` | spine/branch-point `(rank,id)` tie-break dropped (`return rankDiff`) | ✅ **Killed on re-verification** — fix `a15144b` added `render-summary.test.ts` equal-rank fixture + reversed-array variant; transient re-mutation → 2 tests fail, reverted |
 | 6 | `session-transcript.ts:88` | contributor `accepted` count skipped (`if (false)`) | ✅ Killed — `session-transcript.test.ts` contributor-count case |
 
 **Sensor depth**: lightweight (6 mutations, highest-risk new logic)
-**Result**: 5/6 killed — ⚠️ 1 survivor (test-strength gap on SUM-09, code is correct)
+**Result**: initial 5/6 killed → **6/6 after fix iteration 1** (`a15144b` SUM-09, `8e6b0ab` FREW-03 pin). Final gate `pnpm check` **1148** + `pnpm build` + `pnpm test:e2e` 6/6 all green (incl. the previously-flaky `capture-loop.spec.ts:117`).
 
 ---
 
