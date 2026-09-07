@@ -11,7 +11,8 @@
  * `effort: 'low'`, model `claude-sonnet-5`, `instructions` role)?
  *
  * Run: `pnpm smoke:facilitation-schema` (sets `JITI_TSCONFIG_PATHS=1` for the
- * `~/` alias). The key is read from `.env` (ADR-011) or the environment; with no
+ * `~/` alias). The key is read from `.env.local` then `.env` (ADR-011 — the same
+ * files `pnpm dev` uses), else the ambient environment; with no
  * key it prints "skipped — no ANTHROPIC_API_KEY" and exits 0.
  */
 import { anthropic } from '@ai-sdk/anthropic'
@@ -29,10 +30,12 @@ const NARRATION =
   'read "order placed".'
 
 async function main(): Promise<void> {
-  try {
-    process.loadEnvFile()
-  } catch {
-    /* no .env file — fall back to the ambient environment */
+  for (const file of ['.env.local', '.env']) {
+    try {
+      process.loadEnvFile(file)
+    } catch {
+      /* file absent — try the next, then the ambient environment */
+    }
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     console.log('skipped — no ANTHROPIC_API_KEY')
