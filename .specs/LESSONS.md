@@ -104,6 +104,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: accept.test.ts:120 (src/domain-model-capture/domain/board)
 - last seen: 2026-09-07T20:46:03Z
 
+### L-016 — When an idempotency/convergence rule is hand-written case-by-case across a family of deciders, a newly-reachable case silently misses it — enumerate every member of the family against the rule, don't pattern-match a few.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `domain-model-capture/domain/board/decide.ts` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: PR#91 B1 / accept.test.ts:458,472,493 (domain-model-capture/domain/board/decide.ts)
+- last seen: 2026-09-08T01:06:45Z
+
+### L-017 — A discrimination-sensor fixture that exercises one variant (one relationKind) to stand for a whole family lets a defect in the other variants survive; vary the discriminant across convergence fixtures.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `sensor-design` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: PR#91 B1 (sensor-design)
+- last seen: 2026-09-08T01:06:46Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

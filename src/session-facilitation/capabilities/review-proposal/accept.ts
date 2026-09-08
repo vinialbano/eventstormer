@@ -282,9 +282,11 @@ type ApplyResult = ReturnType<typeof applyOperation>
 
 /**
  * Record the board apply outcome on the `Proposal` — its own transaction, never
- * batched with the board append. `duplicate-id` on a re-accept after a prior
- * apply is the idempotency signal, recorded as applied. Returns the board
- * position on success, `null` otherwise.
+ * batched with the board append. A re-accept after a prior apply converges to
+ * APPLIED by one of two routes: an id-minting operation re-runs to `duplicate-id`
+ * (mapped to applied here); a relation / pivotal / resolve operation whose effect
+ * already holds re-runs to `ok([])` (an empty decision — already `applied.ok`).
+ * Returns the board position on success, `null` otherwise.
  */
 const recordApplyOutcome = (
   deps: ReviewProposalDeps,

@@ -242,6 +242,18 @@ describe('mapTurn — propose-relation', () => {
     }
     expect(mapTurn(turn, countingMint(), ids, board()).tracks).toEqual([])
   })
+
+  it('does not consume a proposalId for a dropped relation track', () => {
+    const turn: FacilitationTurn = {
+      interpretation: [
+        { track: 'propose-relation', relationKind: 'sequence', endpoints: ['A', 'Z'], rationale: 'x' },
+        { track: 'propose-building-block', blockKind: 'domain-event', label: 'Order placed', bar: 'strict' },
+      ],
+      nextMove: ACK,
+    }
+    const [block] = mapTurn(turn, countingMint(), ids, board()).tracks
+    expect(block).toMatchObject({ track: 'propose-building-block', proposalId: 'p_1' })
+  })
 })
 
 describe('mapTurn — propose-pivotal', () => {

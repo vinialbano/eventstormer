@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 16,
+  "next_id": 18,
   "lessons": [
     {
       "id": "L-001",
@@ -274,6 +274,42 @@
       ],
       "created": "2026-09-07T20:46:03Z",
       "last_seen": "2026-09-07T20:46:03Z"
+    },
+    {
+      "id": "L-016",
+      "key": "ac_gap::when an idempotency convergence rule is hand written case by case across a family of deciders a newly reachable case silently misses it enumerate every member of the family against the rule don t pattern match a few",
+      "text": "When an idempotency/convergence rule is hand-written case-by-case across a family of deciders, a newly-reachable case silently misses it — enumerate every member of the family against the rule, don't pattern-match a few.",
+      "signal": "ac_gap",
+      "scope": "domain-model-capture/domain/board/decide.ts",
+      "status": "candidate",
+      "features": [
+        "slice-5-artifacts-facilitator-tracks"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PR#91 B1 / accept.test.ts:458,472,493 (domain-model-capture/domain/board/decide.ts)"
+      ],
+      "created": "2026-09-08T01:06:45Z",
+      "last_seen": "2026-09-08T01:06:45Z"
+    },
+    {
+      "id": "L-017",
+      "key": "surviving_mutant::a discrimination sensor fixture that exercises one variant one relationkind to stand for a whole family lets a defect in the other variants survive vary the discriminant across convergence fixtures",
+      "text": "A discrimination-sensor fixture that exercises one variant (one relationKind) to stand for a whole family lets a defect in the other variants survive; vary the discriminant across convergence fixtures.",
+      "signal": "surviving_mutant",
+      "scope": "sensor-design",
+      "status": "candidate",
+      "features": [
+        "slice-5-artifacts-facilitator-tracks"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PR#91 B1 (sensor-design)"
+      ],
+      "created": "2026-09-08T01:06:46Z",
+      "last_seen": "2026-09-08T01:06:46Z"
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 **Date**: 2026-09-07
 **Spec**: `.specs/features/slice-5-artifacts-facilitator-tracks/spec.md`
-**Diff range**: `0c8a6b4..1f1fcdc` (planning commit `2ffe038` + task/doc commits through the fix iteration and issue re-scope)
+**Diff range**: `0c8a6b4..aca9775` (planning commit `2ffe038` + task/doc commits through the fix iteration, the issue re-scope, and the PR #91 review fix `aca9775`)
 **Verifier**: independent sub-agent (author ≠ verifier)
 **Mode**: Code + tests
 
@@ -10,7 +10,7 @@
 
 ## Task Completion
 
-All 32 tasks (T1–T27, incl. T1a/T1b/T3a/T8a/T24a/T24b) are marked done in `tasks.md` and land
+All 33 tasks (T1–T27, incl. T1a/T1b/T3a/T8a/T24a/T24b) are marked done in `tasks.md` and land
 in the diff. One task carries an accepted, pre-agreed partial:
 
 | Task | Status | Notes |
@@ -75,7 +75,7 @@ Evidence-or-zero. `file:line` is the covering assertion. 44 requirement IDs.
 | FREL-04 assembled schema ≤24 optionals, no `z.unknown()`, no empty sub-schema — **and a live smoke check** | count == 5; live call | `turn-schema.test.ts:44` optional count, `:57` no empty `{}`; **live run `8de1dad` — PASS** (`research/research-aisdk.md` SLICE 5) | ✅ **PASS** — static assertions + a real `claude-sonnet-5` structured-output call that returned all three new strands. |
 | FREL-05 reject → model unchanged, `REJECTED` | — | `accept.test.ts:405` | ✅ |
 | FREL-06 unappliable accept → `APPLY_FAILED`, person told | cycle / no-edge | `accept.test.ts:420` planted cycle → `APPLY_FAILED` + `applyFailedReason:'cycle'`; `:439` insert-between no edge | ✅ |
-| FREL-07 effect already holds → no-op, `APPLIED` (AD-038) | `decide` → `ok([])` | `board/decide.test.ts` (duplicate sequence/link-cause → `ok([])`); `accept.test.ts:458` re-accept → APPLIED one edge, `:474` competing track, `:493` crash-window | ✅ |
+| FREL-07 effect already holds → no-op, `APPLIED` (AD-038) | `decide` → `ok([])` | `board/decide.test.ts` (duplicate sequence/link-cause, re-run insert-between, absent/already-gone unlink-cause → `ok([])`); `accept.test.ts:458` re-accept → APPLIED one edge, `:474` competing track, `:493` crash-window, `:508` insert-between converges, `:530` unlink-cause converges | ✅ (every facilitator-reachable kind — `insert-between` / `unlink-cause` added in `aca9775`) |
 | FREL-08 prompt names strand + turn input carries topology | menu + `follows`/`causedBy`/pivotal | `prompt.test.ts` (strand names + guidance); `interpret.test.ts:728` topology rendered from `readBoardSnapshot` | ✅ |
 | Edge: two endpoints → same block → dropped (no self-edge) | — | `map.test.ts:238` | ✅ |
 | Edge: two tracks same pair → 2 Proposals, 2nd accept no-op APPLIED | — | `accept.test.ts:474` | ✅ |
@@ -106,14 +106,15 @@ Evidence-or-zero. `file:line` is the covering assertion. 44 requirement IDs.
 | Criterion | Evidence | Result |
 | --- | --- | --- |
 | REL-01 `minor` changeset (→0.6.0) | `.changeset/slice-5-artifacts-facilitator-tracks.md` — `minor`, names F10/F19/F04/F07, AD-035/036/037/038 | ✅ |
-| REL-02 issue split + ADR-008 note | `README.md:68-70` "deliberately untested" line present; issue `gh` edits are a documented maintainer action (tasks.md Batch 6) | ⚠️ Doc note ✅; the GitHub issue split is unverifiable from the tree (maintainer step, as designed) |
+| REL-02 issue split + ADR-008 note | `README.md:68-70` "deliberately untested" line present; #42 retitled + #92 "Slice 5b" filed 2026-09-07 (`1f1fcdc`), confirmed via `gh` | ✅ |
 | REL-03 ARCHITECTURE.md §5 gains the 3 routes | `ARCHITECTURE.md:274` lists `/workshops/:id/artifacts/{model,summary}` + `/sessions/:sessionId/artifacts/transcript` | ✅ |
 
-**Status** (after fix iteration 1 + the live smoke): **43/44 clean ✅** · 1 flagged — REL-02's
-GitHub issue split is a maintainer `gh` action, unverifiable from the tree by design (the
-ADR-008 note and changeset are present). SUM-09 weak test → fixed (`a15144b`); FREL-04 live
-smoke → PASS (`8de1dad`); FREW-03 → pinned as intended v1 behaviour (`8e6b0ab`). No
-shipped-behaviour defect.
+**Status** (after fix iteration 1, the live smoke, and the PR #91 review fix `aca9775`):
+**44/44 clean ✅**. SUM-09 weak test → fixed (`a15144b`); FREL-04 live smoke → PASS
+(`8de1dad`); FREW-03 → pinned as intended v1 behaviour (`8e6b0ab`); REL-02 → #42 retitled + #92
+filed 2026-09-07 (`1f1fcdc`). One shipped-behaviour defect (B1 — `insert-between` / `unlink-cause`
+retries not converging to `APPLIED`) was found in PR #91 review and fixed in `aca9775`; see the
+Post-verification fix section below.
 
 ---
 
@@ -132,7 +133,7 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | 6 | `session-transcript.ts:88` | contributor `accepted` count skipped (`if (false)`) | ✅ Killed — `session-transcript.test.ts` contributor-count case |
 
 **Sensor depth**: lightweight (6 mutations, highest-risk new logic)
-**Result**: initial 5/6 killed → **6/6 after fix iteration 1** (`a15144b` SUM-09, `8e6b0ab` FREW-03 pin). Final gate `pnpm check` **1148** + `pnpm build` + `pnpm test:e2e` 6/6 all green (incl. the previously-flaky `capture-loop.spec.ts:117`).
+**Result**: initial 5/6 killed → **6/6 after fix iteration 1** (`a15144b` SUM-09, `8e6b0ab` FREW-03 pin). Final gate `pnpm check` **1154** + `pnpm build` + `pnpm test:e2e` 6/6 all green (incl. the previously-flaky `capture-loop.spec.ts:117`); the count moved 1148 → 1153 in the post-verification fix `aca9775` (B1 + W1 tests), then → 1154 with the review doc-sweep pass (one `map.test.ts` id-space case).
 
 ---
 
@@ -228,20 +229,20 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | Data lifecycle | ✅ N/A — nothing materialised; `sessionProposalIds` is code-only over existing streams (`session-summary.test.ts`) |
 | Observability | ✅ N/A — new strands ride the existing model-call JSONL wrapper |
 | External-dependency failure | ✅ N/A — new strands add schema only |
-| State-transition integrity | ✅ `decide` rejects `Edit Model Change` outside `REVIEWABLE` (`proposal/decide.test.ts`); closed-session accept guarded (`accept.test.ts:336,508`); machine property extended (`machine.property.test.ts`) |
+| State-transition integrity | ✅ `decide` rejects `Edit Model Change` outside `REVIEWABLE` (`proposal/decide.test.ts`); closed-session accept guarded (`accept.test.ts:336,546`); machine property extended (`machine.property.test.ts`) |
 
 ---
 
 ## Gate Check
 
 - **Gate command**: `pnpm check && pnpm build && pnpm test:e2e`
-- **`pnpm check`**: ✅ 1148 passed / 133 files / 0 failed / 0 skipped; typecheck, lint, depcruise (358 modules, 0 violations), knip all green (initial verification run 1146; +2 in fix iteration 1 — `a15144b` SUM-09 equal-rank fixture, `8e6b0ab` FREW-03 pin)
+- **`pnpm check`**: ✅ 1154 passed / 133 files / 0 failed / 0 skipped; typecheck, lint, depcruise (358 modules, 0 violations), knip all green (initial verification run 1146; +2 in fix iteration 1 — `a15144b` SUM-09 equal-rank fixture, `8e6b0ab` FREW-03 pin; +5 in the post-verification fix `aca9775` — B1 `decide.test.ts` / `accept.test.ts` convergence cases + W1 `map.test.ts` order-independent reword; +1 in the review doc-sweep — `map.test.ts` dropped-relation id-space case)
 - **`pnpm build`**: ✅ built (`dist/` produced; only the pre-existing chunk-size advisory)
 - **`pnpm test:e2e`**: ✅ **6 passed** on a clean run (`capture-loop` ×4, `capture-loop-no-optimism`, `artifacts-and-relations`)
   - The `hot spots and close … ceremony` spec (`capture-loop.spec.ts:117`) failed twice under heavy parallel machine load (multiple concurrent Playwright/Vite instances during verification), then **passed cleanly** once load cleared. **The identical failure reproduces on the pre-feature baseline `0c8a6b4`** — it is a pre-existing timing-sensitive flake, not a slice-5 regression. CI is the authority.
 - **Test count before feature**: 986
-- **Test count after feature**: 1148
-- **Delta**: **+162** new tests
+- **Test count after feature**: 1154
+- **Delta**: **+168** new tests
 - **Skipped**: none
 - **Failures**: none on a clean run
 
@@ -314,8 +315,41 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | FREW-01..02, FREW-04..06 | Implementing | ✅ Verified |
 | FREW-03 | Implementing | ✅ Verified — pinned as intended v1 behaviour (`8e6b0ab`) |
 | FREL-04 | Implementing | ✅ Verified — static + live smoke PASS (`8de1dad`) |
+| FREL-07 | Implementing | ✅ Verified — every facilitator-reachable kind converges; `insert-between` / `unlink-cause` closed in `aca9775` (B1) |
 | REL-01, REL-03 | Implementing | ✅ Verified |
 | REL-02 | Implementing | ✅ Verified — #42 retitled, #92 filed 2026-09-07 (`1f1fcdc`) |
+
+---
+
+## Post-verification fix (`aca9775`) — PR #91 review
+
+Round-1 automated review of PR #91 found one BLOCK and one WARN that the Verifier's discrimination
+sensor had missed; both were fixed on the branch and re-gated green (`pnpm check` 1148 → 1153;
+→ 1154 after the subsequent review doc-sweep pass).
+
+- **B1 (BLOCK) — `insert-between` / `unlink-cause` facilitator proposals never converged to
+  `APPLIED` after a retry.** The AD-038 "effect already holds → `ok([])`" branch was added to five
+  board deciders but not to `decideInsertBetween` / `decideUnlinkCause`, both facilitator-reachable
+  via `RelationIntentKind`. An AD-016 crash-window re-accept (or two identical tracks in one turn)
+  left the board mutated while the `Proposal` stream and the F19 transcript were stuck on a
+  spurious `APPLY_FAILED` with no path back. The three convergence tests all used
+  `relationKind: 'sequence'`, so the sensor never probed the gap. **Fix** — `decideInsertBetween`
+  returns `ok([])` when `predecessor→inserted→successor` holds with the direct edge gone;
+  `decideUnlinkCause` returns `ok([])` on an absent link (first-attempt "no such link" and
+  "already unlinked" are indistinguishable from the write model — accepted). `unsequence` /
+  `unannotate` keep a genuine `missing-edge` (not proposal-reachable). New coverage:
+  `board/decide.test.ts` (re-run insert-between, absent + already-gone unlink-cause → `ok([])`)
+  and `accept.test.ts:508` / `:530` (both kinds converge to `APPLIED` on re-accept after apply).
+
+- **W1 (WARN) — same-turn reword was order-dependent.** `labelsProposedThisTurn` was built
+  incrementally during the `flatMap`, so a `propose-reword` track emitted before its sibling
+  `propose-building-block` track on a structureless board was wrongly `heldBack`. **Fix** — build
+  the set in a pre-pass over `turn.interpretation` before the `flatMap`; drop the incremental
+  `.add`. New `map.test.ts` fixture puts the reword track first and asserts it is not held.
+
+W2 (resolution-race losing-racer signal) and W5 (same-target reword lost-update) are accepted,
+deferred to feature work, and tracked on #92; NOTEs 1–8 and the quick-win refactors are left for
+a follow-up.
 
 ---
 
@@ -323,11 +357,14 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 
 **Overall**: ✅ **Ready to merge.**
 
-**Spec-anchored check**: **43/44 ACs clean** after fix iteration 1 + the live smoke; 1 flagged
-(REL-02 — the GitHub issue split is a maintainer `gh` action, unverifiable from the tree by
-design). **0 shipped-behaviour defects.**
-**Sensor**: **6/6 mutations killed** (SUM-09 survivor closed by `a15144b`).
-**Gate**: `pnpm check` 1148 passed (+162), `pnpm build` green, `pnpm test:e2e` 6 passed on a
+**Spec-anchored check**: **44/44 ACs clean** after fix iteration 1, the live smoke, and the
+PR #91 review fix `aca9775`. One shipped-behaviour defect (B1 — `insert-between` / `unlink-cause`
+retries not converging to `APPLIED`) was found in PR #91 review and fixed in `aca9775`; see the
+Post-verification fix section.
+**Sensor**: **6/6 mutations killed** (SUM-09 survivor closed by `a15144b`); B1 was a gap the
+lightweight 6-mutation sensor did not probe (all convergence fixtures used `relationKind:
+'sequence'`) — now covered by dedicated `insert-between` / `unlink-cause` cases.
+**Gate**: `pnpm check` 1154 passed (+168), `pnpm build` green, `pnpm test:e2e` 6 passed on a
 clean run (the earlier `capture-loop.spec.ts:117` flake reproduces on the pre-feature baseline
 `0c8a6b4` — pre-existing timing sensitivity, not a slice-5 regression).
 
@@ -342,10 +379,12 @@ and the closed-session accept guard are all thoroughly covered server-side. `dep
 with an explicit assertion (`8e6b0ab`). (3) FREL-04 live schema smoke — **run 2026-09-07,
 PASS** (`8de1dad`; `research/research-aisdk.md`).
 
+**Resolved in the PR #91 review fix (`aca9775`)**: B1 — `insert-between` / `unlink-cause` retry
+convergence; W1 — order-independent same-turn reword. See the Post-verification fix section.
+
 **Remaining (tracked, non-blocking)**: Dead `already-related`/`already-resolved` board error
 variants → Slice 6 cleanup. No dock UI for model-change proposals → Slice 5b (server path
-complete + tested; e2e accepts via `POST /proposals/:id/accept`). The `gh` issue re-scope →
-maintainer.
+complete + tested; e2e accepts via `POST /proposals/:id/accept`). Resolution-race / same-target
+reword losing-racer signal (W2 / W5) → #92.
 
-**Next steps**: merge PR #91; maintainer runs the `gh` re-scope commands (`7f3aaa7` commit
-body / `tasks.md`).
+**Next steps**: merge PR #91.

@@ -57,7 +57,7 @@ export interface MappedTurn {
 
 const relationTrack = (
   track: Extract<FacilitationTurn['interpretation'][number], { track: 'propose-relation' }>,
-  proposalId: ProposalId,
+  mint: TrackIdMint,
   resolveBlockId: (label: string) => BuildingBlockId | undefined,
 ): InterpretedTrack[] => {
   const fields = RELATION_FIELDS[track.relationKind]
@@ -72,7 +72,10 @@ const relationTrack = (
     if (id === undefined) return []
     named[field] = id
   }
-  return [{ track: 'propose-relation', proposalId, relationKind: track.relationKind, ...named }]
+  // Mint only once the track survives every drop check, as `pivotalTrack` does.
+  return [
+    { track: 'propose-relation', proposalId: mint.proposalId(), relationKind: track.relationKind, ...named },
+  ]
 }
 
 const pivotalTrack = (
@@ -159,7 +162,7 @@ export const mapTurn = (
   const tracks: InterpretedTrack[] = turn.interpretation.flatMap((track): InterpretedTrack[] => {
     switch (track.track) {
       case 'propose-relation':
-        return relationTrack(track, mint.proposalId(), resolveBlockId)
+        return relationTrack(track, mint, resolveBlockId)
       case 'propose-pivotal':
         return pivotalTrack(track, mint, resolveBlockId, boardState)
       case 'propose-reword':
