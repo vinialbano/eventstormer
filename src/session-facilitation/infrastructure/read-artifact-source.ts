@@ -29,6 +29,24 @@ const parseProposal = (store: EventStore, proposalId: ProposalId): ProposalEvent
   store.read(proposalStream(proposalId)).map((row) => ProposalEvent.parse(row.operation))
 
 /**
+ * The composite version stamp's session half — the total number of
+ * session-record events across every session the workshop has held (mirrors how
+ * `readArtifactSource` enumerates the session streams). `readSessionTranscript`
+ * stamps one session's stream length; a derived workshop-wide artifact sums them.
+ */
+export const readSessionRecordPosition = (
+  deps: { store: EventStore; db: SessionIndexDb },
+  workshopId: WorkshopId,
+): number => {
+  const { open, closed } = sessionIdsFor(deps.db, workshopId)
+  const sessionIds = open === undefined ? closed : [...closed, open]
+  return sessionIds.reduce(
+    (total, sessionId) => total + deps.store.read(sessionStream(sessionId)).length,
+    0,
+  )
+}
+
+/**
  * Load workshop, session, and proposal streams and fold them into quoted
  * evidence plus coverage inputs. An empty workshop stream is not-found;
  * a started workshop with no contributions is a known-empty source.

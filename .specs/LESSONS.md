@@ -80,6 +80,48 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/session-facilitation/infrastructure/hot-spot-sweep.ts:203 (session-facilitation/infrastructure)
 - last seen: 2026-09-03T18:14:35Z
 
+### L-012 — When an AC demands a total order with a secondary tie-break key (e.g. (rank, id)), add a fixture where the primary key ties so the tie-break is actually exercised — a shuffled-snapshot determinism test alone does not reach it.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/derived-artifact-generation/domain` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: render-summary.ts:93 (src/derived-artifact-generation/domain)
+- last seen: 2026-09-07T20:46:02Z
+
+### L-013 — A seam that resolves a label to an id will silently drop any track whose target id is minted later (same-turn creations); if the design says that track must be carried, resolve it at accept time from the sibling proposal, and pin the surviving-or-dropped outcome with an explicit assertion, not just !heldBack.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `src/session-facilitation/infrastructure/facilitator` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: map.ts:127 (src/session-facilitation/infrastructure/facilitator)
+- last seen: 2026-09-07T20:46:02Z
+
+### L-014 — An AC that requires a live external-provider check (structured-output smoke) is not satisfied by static schema assertions; if the live run cannot happen in Execute, mark the AC partially-verified and make the run a blocking maintainer handoff step, not a silent TODO.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `facilitator/turn-schema` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: FREL-04 (facilitator/turn-schema)
+- last seen: 2026-09-07T20:46:02Z
+
+### L-015 — When a new AD makes an old error path unreachable, grep the whole error union and every consumer switch for the dead variant in the same slice — dropping only the one LAPSE_REASONS entry leaves dead branches in the decider error type and downstream views.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `src/domain-model-capture/domain/board` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: accept.test.ts:120 (src/domain-model-capture/domain/board)
+- last seen: 2026-09-07T20:46:03Z
+
+### L-016 — When an idempotency/convergence rule is hand-written case-by-case across a family of deciders, a newly-reachable case silently misses it — enumerate every member of the family against the rule, don't pattern-match a few.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `domain-model-capture/domain/board/decide.ts` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: PR#91 B1 / accept.test.ts:458,472,493 (domain-model-capture/domain/board/decide.ts)
+- last seen: 2026-09-08T01:06:45Z
+
+### L-017 — A discrimination-sensor fixture that exercises one variant (one relationKind) to stand for a whole family lets a defect in the other variants survive; vary the discriminant across convergence fixtures.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `sensor-design` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: PR#91 B1 (sensor-design)
+- last seen: 2026-09-08T01:06:46Z
+
+### L-018 — A convergence test that calls the handler twice proves nothing when the first call already reaches the terminal state and the second short-circuits at the route guard — reproduce the partial-failure state explicitly (seed the stuck intermediate events, then ONE call) or the test passes with the fix reverted.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/session-facilitation/capabilities/review-proposal` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: accept.test.ts crash-window convergence tests (aca9775) (src/session-facilitation/capabilities/review-proposal)
+- last seen: 2026-09-08T02:00:58Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

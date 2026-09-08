@@ -20,7 +20,9 @@ describe('facilitationContext — assembly', () => {
       scopeStatement: 'Library lending.',
       priorSummaries: [summary],
       buildingBlocks: [{ kind: 'domain-event', label: 'Loan recorded' }],
+      timelineEventCount: 3,
     })
+    expect(context.timelineEventCount).toBe(3)
     expect(context.recentTranscript).toHaveLength(20)
     expect(context.recentTranscript[0]).toBe('line 5')
     expect(context.recentTranscript.at(-1)).toBe('line 24')
@@ -36,6 +38,7 @@ describe('facilitationContext — assembly', () => {
       openQuestions: [],
       priorSummaries: [],
       buildingBlocks: [],
+      timelineEventCount: 0,
     })
     expect(context).not.toHaveProperty('scopeStatement')
   })

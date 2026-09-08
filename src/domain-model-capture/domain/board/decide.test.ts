@@ -377,6 +377,7 @@ describe('decide — place / unplace', () => {
         causedBy: new Map(),
         annotates: new Map(),
         hotSpotResolved: new Map(),
+        pivotal: new Set(),
       }
       for (const operationKind of ['place', 'unplace'] as const) {
         const result = decide(writeModel, op({ kind: operationKind, target: 'x1' }))
@@ -441,16 +442,14 @@ describe('decide — sequence / unsequence', () => {
     }
   })
 
-  it('rejects a duplicate A→B as already-related', () => {
+  it('treats a duplicate A→B as an idempotent no-op (ok([]))', () => {
     const writeModel = given([
       ...threeEvents,
       { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
     ])
     const result = decide(writeModel, op({ kind: 'sequence', predecessor: 'eA', successor: 'eB' }))
-    expect(isErr(result)).toBe(true)
-    if (isErr(result)) {
-      expect(result.error).toEqual({ kind: 'already-related', classification: 'systemic' })
-    }
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
   })
 
   it('rejects unsequence of a missing pair as missing-edge', () => {
@@ -647,6 +646,22 @@ describe('decide — insert-between', () => {
     }
   })
 
+  it('treats a re-run insert-between after it applied as an idempotent no-op (ok([]))', () => {
+    const writeModel = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'capture-domain-event', id: 'eB', label: 'b' },
+      { kind: 'capture-domain-event', id: 'eC', label: 'c' },
+      { kind: 'sequence', predecessor: 'eA', successor: 'eB' },
+      { kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' },
+    ])
+    const result = decide(
+      writeModel,
+      op({ kind: 'insert-between', predecessor: 'eA', inserted: 'eC', successor: 'eB' }),
+    )
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
   it('rejects insert-between when C can reach A as a cycle', () => {
     const writeModel = given([
       { kind: 'capture-domain-event', id: 'eA', label: 'a' },
@@ -714,16 +729,14 @@ describe('decide — link-cause / unlink-cause', () => {
     }
   })
 
-  it('rejects a duplicate link-cause as already-related', () => {
+  it('treats a duplicate link-cause as an idempotent no-op (ok([]))', () => {
     const writeModel = given([
       ...actorAndEvent,
       { kind: 'link-cause', cause: 'a1', effect: 'eA' },
     ])
     const result = decide(writeModel, op({ kind: 'link-cause', cause: 'a1', effect: 'eA' }))
-    expect(isErr(result)).toBe(true)
-    if (isErr(result)) {
-      expect(result.error).toEqual({ kind: 'already-related', classification: 'systemic' })
-    }
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
   })
 
   it('unlinks an existing pair as a single unlink-cause', () => {
@@ -738,13 +751,22 @@ describe('decide — link-cause / unlink-cause', () => {
     }
   })
 
-  it('rejects unlink-cause of an unknown pair as missing-edge', () => {
+  it('treats unlink-cause of an absent link as an idempotent no-op (ok([]))', () => {
     const writeModel = given(actorAndEvent)
     const result = decide(writeModel, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
-    expect(isErr(result)).toBe(true)
-    if (isErr(result)) {
-      expect(result.error).toEqual({ kind: 'missing-edge', classification: 'systemic' })
-    }
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('treats a second unlink-cause after the link is gone as an idempotent no-op (ok([]))', () => {
+    const writeModel = given([
+      ...actorAndEvent,
+      { kind: 'link-cause', cause: 'a1', effect: 'eA' },
+      { kind: 'unlink-cause', cause: 'a1', effect: 'eA' },
+    ])
+    const result = decide(writeModel, op({ kind: 'unlink-cause', cause: 'a1', effect: 'eA' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
   })
 
   it('rejects missing or withdrawn endpoints with existing rejection kinds', () => {
@@ -839,25 +861,37 @@ describe('decide — link-cause / unlink-cause', () => {
 
 describe('decide — mark-pivotal / unmark-pivotal', () => {
   it('marks and unmarks a domain event as one-op arrays', () => {
-    const writeModel = given([{ kind: 'capture-domain-event', id: 'eA', label: 'a' }])
-    const marked = decide(writeModel, op({ kind: 'mark-pivotal', target: 'eA' }))
+    const captured = given([{ kind: 'capture-domain-event', id: 'eA', label: 'a' }])
+    const marked = decide(captured, op({ kind: 'mark-pivotal', target: 'eA' }))
     expect(isOk(marked)).toBe(true)
     if (isOk(marked)) expect(marked.value).toEqual([op({ kind: 'mark-pivotal', target: 'eA' })])
-    const unmarked = decide(writeModel, op({ kind: 'unmark-pivotal', target: 'eA' }))
+
+    const pivotal = given([
+      { kind: 'capture-domain-event', id: 'eA', label: 'a' },
+      { kind: 'mark-pivotal', target: 'eA' },
+    ])
+    const unmarked = decide(pivotal, op({ kind: 'unmark-pivotal', target: 'eA' }))
     expect(isOk(unmarked)).toBe(true)
     if (isOk(unmarked)) {
       expect(unmarked.value).toEqual([op({ kind: 'unmark-pivotal', target: 'eA' })])
     }
   })
 
-  it('accepts mark-pivotal of an already-pivotal event', () => {
+  it('treats mark-pivotal of an already-pivotal event as an idempotent no-op (ok([]))', () => {
     const writeModel = given([
       { kind: 'capture-domain-event', id: 'eA', label: 'a' },
       { kind: 'mark-pivotal', target: 'eA' },
     ])
     const result = decide(writeModel, op({ kind: 'mark-pivotal', target: 'eA' }))
     expect(isOk(result)).toBe(true)
-    if (isOk(result)) expect(result.value).toEqual([op({ kind: 'mark-pivotal', target: 'eA' })])
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('treats unmark-pivotal of a not-pivotal event as an idempotent no-op (ok([]))', () => {
+    const writeModel = given([{ kind: 'capture-domain-event', id: 'eA', label: 'a' }])
+    const result = decide(writeModel, op({ kind: 'unmark-pivotal', target: 'eA' }))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
   })
 
   it('rejects mark-pivotal of an actor as kind-permission', () => {
@@ -1143,13 +1177,11 @@ describe('decide — resolve / reopen', () => {
     if (isErr(result)) expect(result.error.kind).toBe('kind-permission')
   })
 
-  it('rejects a second resolve of an already-resolved hot spot as already-resolved', () => {
+  it('treats a second resolve of an already-resolved hot spot as an idempotent no-op (ok([]))', () => {
     const writeModel = given([...openHotSpot, { kind: 'resolve', target: 'h1', reference: 'first' }])
     const result = decide(writeModel, op({ kind: 'resolve', target: 'h1', reference: 'second' }))
-    expect(isErr(result)).toBe(true)
-    if (isErr(result)) {
-      expect(result.error).toEqual({ kind: 'already-resolved', classification: 'systemic', target: 'h1' })
-    }
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
   })
 
   it('reopens a resolved hot spot as a single reopen', () => {

@@ -133,3 +133,34 @@ export interface AccountSnapshot {
   position: number
   markdown: string
 }
+
+/** The three derived artifacts the live artifacts panel views and downloads. */
+export type ArtifactKind = 'model' | 'summary' | 'transcript'
+
+/**
+ * `GET /workshops/:id/artifacts/model` — the structured JSON export. The
+ * composite version stamp is embedded; the rest of the document (building
+ * blocks, relations, workshop record) is displayed and downloaded verbatim, so
+ * it is not mirrored field-by-field here.
+ */
+export interface ModelArtifact {
+  format: string
+  formatVersion: number
+  renderedAt: string
+  boardPosition: number
+  sessionRecordPosition: number
+  [key: string]: unknown
+}
+
+/** `GET /workshops/:id/artifacts/summary`. */
+export interface SummaryArtifact {
+  boardPosition: number
+  sessionRecordPosition: number
+  markdown: string
+}
+
+/** `GET /workshops/:id/sessions/:sessionId/artifacts/transcript`. */
+export interface TranscriptArtifact {
+  position: number
+  markdown: string
+}

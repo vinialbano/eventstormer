@@ -227,6 +227,74 @@ const BuildingBlockProposed = z.object({
   annotatesTargetId: BuildingBlockId.optional(),
 })
 
+/**
+ * A proposed board relation / pivotal / reword operation — the second `Proposal`
+ * birth beside `Building Block Proposed`. `Intent` is frozen once shipped: append
+ * `z.literal(2)` variants beside these, never mutate one. The id fields are
+ * **named** (never positional), so the accept path builds the `Operation` field
+ * to field.
+ */
+const RelationIntentKind = z.enum([
+  'sequence',
+  'insert-between',
+  'place',
+  'unplace',
+  'link-cause',
+  'unlink-cause',
+])
+
+const RelationIntent = z.object({
+  kind: z.literal('relation'),
+  relationKind: RelationIntentKind,
+  predecessor: BuildingBlockId.optional(),
+  successor: BuildingBlockId.optional(),
+  inserted: BuildingBlockId.optional(),
+  cause: BuildingBlockId.optional(),
+  effect: BuildingBlockId.optional(),
+  target: BuildingBlockId.optional(),
+})
+
+const PivotalIntent = z.object({
+  kind: z.literal('pivotal'),
+  pivotalKind: z.enum(['mark-pivotal', 'unmark-pivotal']),
+  target: BuildingBlockId,
+})
+
+const RewordIntent = z.object({
+  kind: z.literal('reword'),
+  target: BuildingBlockId,
+  newLabel: z.string().min(1).max(200),
+})
+
+export const Intent = z.discriminatedUnion('kind', [RelationIntent, PivotalIntent, RewordIntent])
+export type Intent = z.infer<typeof Intent>
+
+const ModelChangeProposed = z.object({
+  ...base,
+  type: z.literal('Model Change Proposed'),
+  proposalId: ProposalId,
+  sessionId: SessionId,
+  contributionId: ContributionId,
+  intent: Intent,
+})
+
+/** Only the mutable fields of the birth `intent` — never re-asserts `kind`
+ * (mirrors `Proposal Edited` carrying only `label`). */
+const ModelChangeEdited = z.object({
+  ...base,
+  type: z.literal('Model Change Edited'),
+  proposalId: ProposalId,
+  changed: z.object({
+    predecessor: BuildingBlockId.optional(),
+    successor: BuildingBlockId.optional(),
+    inserted: BuildingBlockId.optional(),
+    cause: BuildingBlockId.optional(),
+    effect: BuildingBlockId.optional(),
+    target: BuildingBlockId.optional(),
+    newLabel: z.string().min(1).max(200).optional(),
+  }),
+})
+
 const ProposalEdited = z.object({
   ...base,
   type: z.literal('Proposal Edited'),
@@ -246,7 +314,8 @@ const ProposalAccepted = z.object({
   type: z.literal('Proposal Accepted'),
   proposalId: ProposalId,
   accepter: z.string().min(1),
-  buildingBlockId: BuildingBlockId,
+  /** Absent when the accepted proposal is a model change — it mints no block. */
+  buildingBlockId: BuildingBlockId.optional(),
 })
 
 const ProposalRejected = z.object({
@@ -290,6 +359,8 @@ const ProposalLapsed = z.object({
 
 export const ProposalEvent = z.discriminatedUnion('type', [
   BuildingBlockProposed,
+  ModelChangeProposed,
+  ModelChangeEdited,
   ProposalEdited,
   ProposalKindSet,
   ProposalAccepted,

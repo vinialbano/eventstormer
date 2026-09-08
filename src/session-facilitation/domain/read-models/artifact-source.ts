@@ -19,9 +19,11 @@ export interface BoardBlockView {
   modelAffecting?: boolean | undefined
 }
 
-type StakeholderCheck = { run: false } | { run: true; complete: boolean; absentNames: string[] }
+export type StakeholderCheck =
+  | { run: false }
+  | { run: true; complete: boolean; absentNames: string[] }
 
-type ChosenProblem =
+export type ChosenProblem =
   | { notRun: true }
   | { skipped: true; reason: 'none-chosen' | 'no-impediments-yet' }
   | { chosen: true; hotSpotId: string; label: string; qualification: 'firm' | 'provisional' }

@@ -94,14 +94,130 @@ const confirmCompletePerspective = z.object({
   questionId: QuestionId,
 })
 
-export const InterpretedTrack = z.discriminatedUnion('track', [
-  proposeBuildingBlock,
-  flagPhase,
-  attributeToOtherFormat,
-  answerQuestion,
-  proposeResolution,
-  revealKnowledgeGap,
-  nameAbsentStakeholder,
-  confirmCompletePerspective,
+/** The board relation kinds the facilitator may propose (not `unsequence`). */
+export const InterpretedRelationKind = z.enum([
+  'sequence',
+  'insert-between',
+  'place',
+  'unplace',
+  'link-cause',
+  'unlink-cause',
 ])
+export type InterpretedRelationKind = z.infer<typeof InterpretedRelationKind>
+
+export type RelationField =
+  | 'predecessor'
+  | 'successor'
+  | 'inserted'
+  | 'cause'
+  | 'effect'
+  | 'target'
+
+/** Which named endpoint fields a `propose-relation` track carries per kind — it
+ * mirrors the `Operation` union exactly and gives the endpoint-label array its
+ * order, so the accept path reads it field to field with no positional spread. */
+export const RELATION_FIELDS: Record<InterpretedRelationKind, readonly RelationField[]> = {
+  sequence: ['predecessor', 'successor'],
+  'insert-between': ['predecessor', 'inserted', 'successor'],
+  place: ['target'],
+  unplace: ['target'],
+  'link-cause': ['cause', 'effect'],
+  'unlink-cause': ['cause', 'effect'],
+}
+
+const ALL_RELATION_FIELDS: readonly RelationField[] = [
+  'predecessor',
+  'successor',
+  'inserted',
+  'cause',
+  'effect',
+  'target',
+]
+
+/**
+ * The facilitator proposes a board relation operation — id-resolved at the
+ * anticorruption seam. The endpoint fields are **named** (never a positional
+ * array): exactly the set the corresponding `Operation` needs, checked against
+ * `relationKind` by the union refine.
+ */
+const proposeRelation = z.object({
+  track: z.literal('propose-relation'),
+  proposalId: ProposalId,
+  relationKind: InterpretedRelationKind,
+  predecessor: BuildingBlockId.optional(),
+  successor: BuildingBlockId.optional(),
+  inserted: BuildingBlockId.optional(),
+  cause: BuildingBlockId.optional(),
+  effect: BuildingBlockId.optional(),
+  target: BuildingBlockId.optional(),
+})
+
+/**
+ * The facilitator proposes a pivotal mark / unmark. Below the F07 readiness
+ * threshold the track is `heldBack` — it carries the `eventLabel` for the notice
+ * but no `proposalId` / `target` (no `Proposal` is born).
+ */
+const proposePivotal = z.object({
+  track: z.literal('propose-pivotal'),
+  proposalId: ProposalId.optional(),
+  pivotalKind: z.enum(['mark-pivotal', 'unmark-pivotal']),
+  target: BuildingBlockId.optional(),
+  heldBack: z.boolean(),
+  eventLabel: z.string().min(1),
+})
+
+/**
+ * The facilitator proposes a reword of an existing block. Held back until the
+ * model has structure (F04) — a held track carries `targetLabel` for the notice
+ * but no `proposalId` / `target`.
+ */
+const proposeReword = z.object({
+  track: z.literal('propose-reword'),
+  proposalId: ProposalId.optional(),
+  target: BuildingBlockId.optional(),
+  newLabel: z.string().min(1).max(200),
+  heldBack: z.boolean(),
+  targetLabel: z.string().min(1),
+})
+
+const relationFieldSetMatchesKind = (
+  track: z.infer<typeof proposeRelation>,
+): boolean => {
+  const expected = new Set<string>(RELATION_FIELDS[track.relationKind])
+  return ALL_RELATION_FIELDS.every((field) => (track[field] !== undefined) === expected.has(field))
+}
+
+/** `proposalId` and `target` are present exactly when the track is not held back. */
+const heldBackFieldsConsistent = (track: {
+  heldBack: boolean
+  proposalId?: unknown
+  target?: unknown
+}): boolean =>
+  (track.proposalId !== undefined) === !track.heldBack &&
+  (track.target !== undefined) === !track.heldBack
+
+export const InterpretedTrack = z
+  .discriminatedUnion('track', [
+    proposeBuildingBlock,
+    flagPhase,
+    attributeToOtherFormat,
+    answerQuestion,
+    proposeResolution,
+    revealKnowledgeGap,
+    nameAbsentStakeholder,
+    confirmCompletePerspective,
+    proposeRelation,
+    proposePivotal,
+    proposeReword,
+  ])
+  .refine(
+    (track) => track.track !== 'propose-relation' || relationFieldSetMatchesKind(track),
+    { error: 'propose-relation: the endpoint field set must match relationKind' },
+  )
+  .refine(
+    (track) =>
+      (track.track !== 'propose-pivotal' && track.track !== 'propose-reword') ||
+      heldBackFieldsConsistent(track),
+    { error: 'a held-back track carries no proposalId/target; a released one carries both' },
+  )
 export type InterpretedTrack = z.infer<typeof InterpretedTrack>

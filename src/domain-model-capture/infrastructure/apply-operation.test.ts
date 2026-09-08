@@ -55,6 +55,45 @@ describe('applyOperation — capture kinds return the operation id', () => {
   })
 })
 
+describe('applyOperation — an already-satisfied effect is an idempotent no-op', () => {
+  const seq = Operation.parse({ author, kind: 'sequence', predecessor: 'b_1', successor: 'b_2' })
+
+  it('re-applying an existing sequence appends nothing and returns the current position', () => {
+    const store = createMemoryEventStore()
+    applyOperation(depsFor(store), workshopId, captureOp('b_1', 'a'))
+    applyOperation(depsFor(store), workshopId, captureOp('b_2', 'b'))
+    const first = applyOperation(depsFor(store), workshopId, seq)
+    expect(isOk(first)).toBe(true)
+    const positionAfterFirst = store.read(boardStream(workshopId)).length - 1
+
+    const second = applyOperation(depsFor(store), workshopId, seq)
+
+    expect(isOk(second)).toBe(true)
+    if (isOk(second)) {
+      expect(second.value).toEqual({ resultingBuildingBlockId: 'b_2', nextPosition: positionAfterFirst })
+    }
+    // no new event was appended
+    expect(store.read(boardStream(workshopId)).length - 1).toBe(positionAfterFirst)
+    expect(snapshotOf(store).follows).toEqual([
+      { predecessor: 'b_1' as BuildingBlockId, successor: 'b_2' as BuildingBlockId },
+    ])
+  })
+
+  it('re-applying an existing mark-pivotal appends nothing', () => {
+    const store = createMemoryEventStore()
+    applyOperation(depsFor(store), workshopId, captureOp('b_1', 'a'))
+    const mark = Operation.parse({ author, kind: 'mark-pivotal', target: 'b_1' })
+    applyOperation(depsFor(store), workshopId, mark)
+    const position = store.read(boardStream(workshopId)).length - 1
+
+    const again = applyOperation(depsFor(store), workshopId, mark)
+
+    expect(isOk(again)).toBe(true)
+    if (isOk(again)) expect(again.value).toEqual({ resultingBuildingBlockId: 'b_1', nextPosition: position })
+    expect(store.read(boardStream(workshopId)).length - 1).toBe(position)
+  })
+})
+
 describe('applyOperation — target-bearing kinds return the target and do not throw', () => {
   it('reword returns the target id and the log carries the distinct new label', () => {
     const store = createMemoryEventStore()

@@ -1,5 +1,6 @@
 import type { ContributionId, QuestionId } from '~/plumbing/ids.ts'
 import type { SessionEvent } from '../schema/events.ts'
+import type { InterpretedTrack } from '../schema/interpreted-track.ts'
 
 /**
  * `sessionView` — the read model behind `GET /workshops/:id/session`. Pure fold
@@ -52,6 +53,31 @@ export interface SessionViewOptions {
 
 const trackKey = (contributionId: string, index: number): string =>
   `${contributionId}::${String(index)}`
+
+/** A held-back reword / pivotal track renders a facilitator notice turn, the same
+ * way `attribute-to-other-format` does — the person sees why no F05 card appeared. */
+const heldBackNotice = (track: InterpretedTrack, at: string): TranscriptTurn | undefined => {
+  if (track.track === 'propose-reword' && track.heldBack) {
+    return {
+      kind: 'notice',
+      speaker: 'facilitator',
+      text: `Reword of "${track.targetLabel}" held until the model has structure`,
+      at,
+    }
+  }
+  if (track.track === 'propose-pivotal' && track.heldBack) {
+    return {
+      kind: 'notice',
+      speaker: 'facilitator',
+      text: `Pivotal mark for "${track.eventLabel}" held — not enough events yet`,
+      at,
+    }
+  }
+  return undefined
+}
+
+const heldBackNotices = (tracks: readonly InterpretedTrack[], at: string): TranscriptTurn[] =>
+  tracks.map((track) => heldBackNotice(track, at)).filter((turn): turn is TranscriptTurn => turn !== undefined)
 
 export const sessionView = (
   events: SessionEvent[],
@@ -108,6 +134,7 @@ export const sessionView = (
         break
       case 'Contribution Interpreted':
         interpreted.set(event.contributionId, event.tracks.length)
+        transcript.push(...heldBackNotices(event.tracks, event.at))
         break
       case 'Contribution Interpretation Failed':
         failed.add(event.contributionId)

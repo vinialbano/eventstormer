@@ -180,6 +180,7 @@ export const runEval = async (options: RunEvalOptions): Promise<EvalRow[]> => {
     const context = facilitationContext({
       scopeStatement: fixture.scopeStatement,
       buildingBlocks: [],
+      timelineEventCount: 0,
       priorSummaries: [],
       openQuestions: [],
       recentTranscript: [],

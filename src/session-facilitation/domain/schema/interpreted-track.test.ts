@@ -108,3 +108,161 @@ describe('InterpretedTrack — the stored discriminated union', () => {
     expect(json).not.toContain('{}')
   })
 })
+
+describe('InterpretedTrack — the model-change strands', () => {
+  it('parses a propose-relation track whose named endpoint fields match its relationKind', () => {
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_1',
+        relationKind: 'sequence',
+        predecessor: 'bb_a',
+        successor: 'bb_b',
+      }),
+    ).toEqual({
+      track: 'propose-relation',
+      proposalId: 'p_1',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_2',
+        relationKind: 'insert-between',
+        predecessor: 'bb_a',
+        inserted: 'bb_x',
+        successor: 'bb_b',
+      }).track,
+    ).toBe('propose-relation')
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_3',
+        relationKind: 'place',
+        target: 'bb_a',
+      }).track,
+    ).toBe('propose-relation')
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_4',
+        relationKind: 'link-cause',
+        cause: 'bb_a',
+        effect: 'bb_b',
+      }).track,
+    ).toBe('propose-relation')
+  })
+
+  it('rejects a propose-relation track with the wrong endpoint field set for its kind', () => {
+    expect(() =>
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_1',
+        relationKind: 'sequence',
+        predecessor: 'bb_a',
+        target: 'bb_b',
+      }),
+    ).toThrow()
+    expect(() =>
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_1',
+        relationKind: 'place',
+        predecessor: 'bb_a',
+        successor: 'bb_b',
+      }),
+    ).toThrow()
+    expect(() =>
+      InterpretedTrack.parse({
+        track: 'propose-relation',
+        proposalId: 'p_1',
+        relationKind: 'sequence',
+        predecessor: 'bb_a',
+      }),
+    ).toThrow()
+  })
+
+  it('parses a released propose-pivotal track and a held-back one', () => {
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-pivotal',
+        proposalId: 'p_1',
+        pivotalKind: 'mark-pivotal',
+        target: 'bb_a',
+        heldBack: false,
+        eventLabel: 'Loan recorded',
+      }).track,
+    ).toBe('propose-pivotal')
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-pivotal',
+        pivotalKind: 'mark-pivotal',
+        heldBack: true,
+        eventLabel: 'Loan recorded',
+      }),
+    ).toEqual({
+      track: 'propose-pivotal',
+      pivotalKind: 'mark-pivotal',
+      heldBack: true,
+      eventLabel: 'Loan recorded',
+    })
+  })
+
+  it('rejects a propose-pivotal track whose heldBack flag disagrees with proposalId/target presence', () => {
+    expect(() =>
+      InterpretedTrack.parse({
+        track: 'propose-pivotal',
+        pivotalKind: 'mark-pivotal',
+        heldBack: false,
+        eventLabel: 'Loan recorded',
+      }),
+    ).toThrow()
+    expect(() =>
+      InterpretedTrack.parse({
+        track: 'propose-pivotal',
+        proposalId: 'p_1',
+        target: 'bb_a',
+        pivotalKind: 'mark-pivotal',
+        heldBack: true,
+        eventLabel: 'Loan recorded',
+      }),
+    ).toThrow()
+  })
+
+  it('parses a released propose-reword track and a held-back one, and rejects an inconsistent one', () => {
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-reword',
+        proposalId: 'p_1',
+        target: 'bb_a',
+        newLabel: 'Loan booked',
+        heldBack: false,
+        targetLabel: 'Loan recorded',
+      }).track,
+    ).toBe('propose-reword')
+    expect(
+      InterpretedTrack.parse({
+        track: 'propose-reword',
+        newLabel: 'Loan booked',
+        heldBack: true,
+        targetLabel: 'Loan recorded',
+      }),
+    ).toEqual({
+      track: 'propose-reword',
+      newLabel: 'Loan booked',
+      heldBack: true,
+      targetLabel: 'Loan recorded',
+    })
+    expect(() =>
+      InterpretedTrack.parse({
+        track: 'propose-reword',
+        target: 'bb_a',
+        newLabel: 'Loan booked',
+        heldBack: true,
+        targetLabel: 'Loan recorded',
+      }),
+    ).toThrow()
+  })
+})

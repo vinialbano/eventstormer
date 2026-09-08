@@ -231,8 +231,10 @@ const decideSequence = (writeModel: BoardWriteModel, operation: OpOf<'sequence'>
     'only domain events may be sequenced',
   )
   if (!successor.ok) return successor
+  // The edge already exists — the effect holds, so this is an idempotent no-op
+  // (an accept-chain retry after a lost outcome commit must converge to APPLIED).
   if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) === true) {
-    return err({ kind: 'already-related', classification: 'systemic' })
+    return ok([])
   }
   const path = cyclePathIfAdded(writeModel.follows, operation.predecessor, operation.successor)
   if (path) return err({ kind: 'cycle', classification: 'systemic', path })
@@ -325,6 +327,16 @@ const decideInsertBetween = (
     'only domain events may be sequenced',
   )
   if (!successor.ok) return successor
+  // The insert already holds — predecessor→inserted→successor present, direct
+  // edge gone — an idempotent no-op (see `decideSequence`), so an accept-chain
+  // retry after a lost outcome commit converges to APPLIED.
+  if (
+    writeModel.follows.get(operation.predecessor)?.has(operation.inserted) === true &&
+    writeModel.follows.get(operation.inserted)?.has(operation.successor) === true &&
+    writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true
+  ) {
+    return ok([])
+  }
   if (writeModel.follows.get(operation.predecessor)?.has(operation.successor) !== true) {
     return err({ kind: 'missing-edge', classification: 'systemic' })
   }
@@ -353,8 +365,9 @@ const decideLinkCause = (writeModel: BoardWriteModel, operation: OpOf<'link-caus
       reason: 'causedBy only links an actor or system to a domain event',
     })
   }
+  // The link already exists — an idempotent no-op (see `decideSequence`).
   if (writeModel.causedBy.get(operation.effect)?.has(operation.cause) === true) {
-    return err({ kind: 'already-related', classification: 'systemic' })
+    return ok([])
   }
   return ok([operation])
 }
@@ -375,8 +388,10 @@ const decideUnlinkCause = (
       reason: 'causedBy only links an actor or system to a domain event',
     })
   }
+  // The link is already absent — the intent ("no such link") holds, an idempotent
+  // no-op (see `decideSequence`), so an accept-chain retry converges to APPLIED.
   if (writeModel.causedBy.get(operation.effect)?.has(operation.cause) !== true) {
-    return err({ kind: 'missing-edge', classification: 'systemic' })
+    return ok([])
   }
   return ok([operation])
 }
@@ -392,6 +407,8 @@ const decideMarkPivotal = (
     'only a domain event may be marked pivotal',
   )
   if (!required.ok) return required
+  // Already pivotal — an idempotent no-op (see `decideSequence`).
+  if (writeModel.pivotal.has(operation.target)) return ok([])
   return ok([operation])
 }
 
@@ -406,6 +423,8 @@ const decideUnmarkPivotal = (
     'only a domain event may be marked pivotal',
   )
   if (!required.ok) return required
+  // Already not pivotal — an idempotent no-op.
+  if (!writeModel.pivotal.has(operation.target)) return ok([])
   return ok([operation])
 }
 
@@ -472,8 +491,9 @@ const decideResolve = (writeModel: BoardWriteModel, operation: OpOf<'resolve'>):
     'only a hot spot may be resolved',
   )
   if (!hotSpot.ok) return hotSpot
+  // Already resolved — an idempotent no-op (see `decideSequence`).
   if (writeModel.hotSpotResolved.get(operation.target) === true) {
-    return err({ kind: 'already-resolved', classification: 'systemic', target: operation.target })
+    return ok([])
   }
   return ok([operation])
 }

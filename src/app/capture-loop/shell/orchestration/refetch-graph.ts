@@ -4,7 +4,7 @@ export const REFETCH_BY_ZONE_EVENT: Readonly<
   Record<CaptureZoneEvent, readonly RefetchTarget[]>
 > = {
   mutated: ['session', 'proposals'],
-  'board-dirty': ['board', 'account'],
+  'board-dirty': ['board', 'account', 'artifacts'],
 } as const
 
 /** Every declared zone event has a refetch mapping. */

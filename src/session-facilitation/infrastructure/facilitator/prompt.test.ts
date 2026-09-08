@@ -24,6 +24,15 @@ describe('buildInstructions — the system prompt (ADR-005)', () => {
     expect(instructions).toContain('do not emit v, author, or ids')
   })
 
+  it('names the three model-change strands with when-to-use guidance', () => {
+    expect(instructions).toContain('propose-relation')
+    expect(instructions).toContain('implies an order, a cause, a placement')
+    expect(instructions).toContain('propose-pivotal')
+    expect(instructions).toContain('spine worth navigating')
+    expect(instructions).toContain('propose-reword')
+    expect(instructions).toContain('only when the model already has structure')
+  })
+
   it('draws its few-shot examples from library lending, never the restaurant/kitchen eval domain', () => {
     expect(instructions).toContain('library lending')
     expect(instructions).toContain('book returned')
@@ -49,9 +58,18 @@ describe('buildTurnInput — per-turn assembly', () => {
       },
     ],
     buildingBlocks: [
-      { kind: 'domain-event', label: 'Book returned' },
+      {
+        kind: 'domain-event',
+        label: 'Book borrowed',
+        placement: 'timeline',
+        pivotal: true,
+        followedBy: ['Book returned'],
+        causes: ['Late fee assessed'],
+      },
+      { kind: 'domain-event', label: 'Book returned', placement: 'timeline', pivotal: false },
       { kind: 'actor', label: 'Member' },
     ],
+    timelineEventCount: 2,
   }
   const assembled = buildTurnInput(context, { speaker: 'Dana', body: 'A member borrowed a book.' })
 
@@ -77,10 +95,25 @@ describe('buildTurnInput — per-turn assembly', () => {
 
   it('renders a "(not set yet)" scope and "(none)" lists when the context is empty', () => {
     const empty = buildTurnInput(
-      { recentTranscript: [], openQuestions: [], priorSummaries: [], buildingBlocks: [] },
+      {
+        recentTranscript: [],
+        openQuestions: [],
+        priorSummaries: [],
+        buildingBlocks: [],
+        timelineEventCount: 0,
+      },
       { speaker: 'Dana', body: 'hello' },
     )
     expect(empty).toContain('(not set yet)')
     expect(empty).toContain('(none)')
+    expect(empty).toContain('0 events on the timeline')
+  })
+
+  it('renders each placed block with its placement, pivotal marker, and follows/causedBy links', () => {
+    expect(assembled).toContain(
+      'domain-event: Book borrowed (on timeline; pivotal; then: Book returned; causes: Late fee assessed)',
+    )
+    expect(assembled).toContain('domain-event: Book returned (on timeline)')
+    expect(assembled).toContain('2 events on the timeline')
   })
 })

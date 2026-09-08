@@ -21,13 +21,25 @@ export interface SessionSummary {
 
 const RECENT_TURNS = 8
 
-/** Every `proposalId` this session proposed — a fold over `Contribution Interpreted` tracks. */
+/**
+ * Every `proposalId` this session proposed — a fold over `Contribution
+ * Interpreted` tracks. Covers `propose-building-block` and the three model-change
+ * tracks (`propose-relation` always carries a `proposalId`; a `heldBack`
+ * pivotal / reword carries none — it births no `Proposal`).
+ */
 export const sessionProposalIds = (events: SessionEvent[]): ProposalId[] => {
   const ids: ProposalId[] = []
   for (const event of events) {
     if (event.type !== 'Contribution Interpreted') continue
     for (const track of event.tracks) {
-      if (track.track === 'propose-building-block') ids.push(track.proposalId)
+      if (track.track === 'propose-building-block' || track.track === 'propose-relation') {
+        ids.push(track.proposalId)
+      } else if (
+        (track.track === 'propose-pivotal' || track.track === 'propose-reword') &&
+        track.proposalId !== undefined
+      ) {
+        ids.push(track.proposalId)
+      }
     }
   }
   return ids

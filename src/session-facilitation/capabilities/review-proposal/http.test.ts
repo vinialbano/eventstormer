@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { ContributionId, ProposalId, SessionId } from '~/plumbing/ids.ts'
+import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import { ProposalEvent } from '../../domain/schema/events.ts'
-import { proposalStream, sessionStream } from '../../infrastructure/streams.ts'
+import { proposalStream, sessionStream, workshopStream } from '../../infrastructure/streams.ts'
 import { reviewProposalRoutes } from './http.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
@@ -168,6 +169,73 @@ describe('POST /proposals/:id/kind', () => {
   })
 })
 
+describe('POST /proposals/:id/edit — model-change proposal', () => {
+  const workshopId = 'w_1'
+  const author = { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } }
+
+  const seedBoardAndStreams = (): void => {
+    store.append(workshopStream(workshopId as never), -1, [
+      { at, opVersion: 1, operation: { v: 1, type: 'Workshop Started', workshopId, format: 'big-picture', creatorName: 'Dana', at } },
+    ])
+    store.append({ context: 'domain-model-capture', aggregate: 'board', id: workshopId }, -1, [
+      ['bb_a', 'A'],
+      ['bb_b', 'B'],
+      ['bb_c', 'C'],
+    ].map(([id, label]) => ({
+      at,
+      opVersion: 1,
+      operation: { v: 1, kind: 'capture-domain-event', id, label, author },
+    })))
+    store.append(sessionStream(sessionId), -1, [
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
+    ])
+    store.append(proposalStream('mc_1' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Model Change Proposed',
+          proposalId: 'mc_1',
+          sessionId,
+          contributionId: c1,
+          intent: { kind: 'relation', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
+          at,
+        },
+      },
+    ])
+  }
+
+  it('resolves a new endpoint label and appends Model Change Edited { changed }', async () => {
+    seedBoardAndStreams()
+    const response = await post('/proposals/mc_1/edit', { field: 'successor', label: 'C' })
+    expect(response.status).toBe(200)
+    const edited = store
+      .read(proposalStream('mc_1' as ProposalId))
+      .map((row) => ProposalEvent.parse(row.operation))
+      .find((event) => event.type === 'Model Change Edited')
+    expect(edited?.type === 'Model Change Edited' && edited.changed).toEqual({ successor: 'bb_c' })
+  })
+
+  it('an unknown endpoint label → 422 and nothing appended', async () => {
+    seedBoardAndStreams()
+    const response = await post('/proposals/mc_1/edit', { field: 'successor', label: 'Nonexistent' })
+    expect(response.status).toBe(422)
+    await expect(response.json()).resolves.toEqual({ error: 'unknown-label' })
+    expect(proposalTypes('mc_1')).toEqual(['Model Change Proposed'])
+  })
+
+  it('edit-then-accept applies the edited intent', async () => {
+    seedBoardAndStreams()
+    await post('/proposals/mc_1/edit', { field: 'successor', label: 'C' })
+    const accepted = await post('/proposals/mc_1/accept')
+    expect(accepted.status).toBe(200)
+    expect(readBoardSnapshot({ store }, workshopId as never).follows).toEqual([
+      { predecessor: 'bb_a', successor: 'bb_c' },
+    ])
+  })
+})
+
 describe('GET /sessions/:id/proposals', () => {
   it('returns the session proposals from the read model', async () => {
     const ids = ['p_1', 'p_2'] as const
@@ -200,5 +268,86 @@ describe('GET /sessions/:id/proposals', () => {
     const { proposals } = (await response.json()) as { proposals: { proposalId: string; overflow: boolean }[] }
     expect(proposals.map((proposal) => proposal.proposalId)).toEqual([...ids])
     expect(proposals.every((proposal) => typeof proposal.overflow === 'boolean')).toBe(true)
+  })
+
+  it('returns the model-change intent card with endpoints resolved to current board labels', async () => {
+    const workshopId = 'w_1'
+    store.append(
+      { context: 'domain-model-capture', aggregate: 'board', id: workshopId },
+      -1,
+      (
+        [
+          ['bb_a', 'Loan requested'],
+          ['bb_b', 'Loan approved'],
+        ] as const
+      ).map(([id, label]) => ({
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          kind: 'capture-domain-event',
+          id,
+          label,
+          author: { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } },
+        },
+      })),
+    )
+    store.append(sessionStream(sessionId), -1, [
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId, workshopId, at } },
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: c1,
+          tracks: [
+            {
+              track: 'propose-relation',
+              proposalId: 'mc_1',
+              relationKind: 'sequence',
+              predecessor: 'bb_a',
+              successor: 'bb_b',
+            },
+          ],
+          at,
+        },
+      },
+    ])
+    store.append(proposalStream('mc_1' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Model Change Proposed',
+          proposalId: 'mc_1',
+          sessionId,
+          contributionId: c1,
+          intent: {
+            kind: 'relation',
+            relationKind: 'sequence',
+            predecessor: 'bb_a',
+            successor: 'bb_b',
+          },
+          at,
+        },
+      },
+    ])
+
+    const response = await routes().request(`/sessions/${sessionId}/proposals`)
+    expect(response.status).toBe(200)
+    const { proposals } = (await response.json()) as {
+      proposals: { proposalId: string; intent?: { kind: string; summary: string; endpoints?: { id: string; label: string }[] } }[]
+    }
+    expect(proposals[0]?.intent).toEqual({
+      kind: 'relation',
+      summary: 'sequence: Loan requested → Loan approved',
+      endpoints: [
+        { id: 'bb_a', label: 'Loan requested' },
+        { id: 'bb_b', label: 'Loan approved' },
+      ],
+    })
   })
 })

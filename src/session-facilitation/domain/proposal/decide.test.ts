@@ -238,6 +238,90 @@ describe('Proposal.decide — reject and apply outcomes', () => {
   })
 })
 
+describe('Proposal.decide — model-change birth & edit', () => {
+  const bb2 = 'b_2' as BuildingBlockId
+  const intent = {
+    kind: 'relation',
+    relationKind: 'sequence',
+    predecessor: bb,
+    successor: bb2,
+  } as const
+  const propose = {
+    type: 'Propose Model Change',
+    proposalId,
+    sessionId: 's_1' as SessionId,
+    contributionId: 'c_1' as ContributionId,
+    intent,
+    at,
+  } as const
+  const born: ProposalEvent = {
+    v: 1,
+    at,
+    type: 'Model Change Proposed',
+    proposalId,
+    sessionId: 's_1' as SessionId,
+    contributionId: 'c_1' as ContributionId,
+    intent,
+  }
+
+  it('Propose Model Change on an unborn proposal emits Model Change Proposed → born, PROPOSED, model-change', () => {
+    const result = decide(emptyProposal(), propose)
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([born])
+
+    const writeModel = replay([born])
+    expect(writeModel.born).toBe(true)
+    expect(writeModel.disposition).toBe('PROPOSED')
+    expect(writeModel.birthKind).toBe('model-change')
+  })
+
+  it('a repeated Propose Model Change is an idempotent no-op', () => {
+    const result = decide(replay([born]), propose)
+    expect(isOk(result) && result.value).toEqual([])
+  })
+
+  it('Edit Model Change is legal in REVIEWABLE and emits only the changed fields', () => {
+    const result = decide(replay([born]), {
+      type: 'Edit Model Change',
+      proposalId,
+      changed: { successor: 'b_9' as BuildingBlockId },
+      at,
+    })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([
+        { v: 1, at, type: 'Model Change Edited', proposalId, changed: { successor: 'b_9' } },
+      ])
+    }
+    expect(replay([born, ...(isOk(result) ? result.value : [])]).disposition).toBe('EDITED')
+  })
+
+  it('Edit Model Change outside REVIEWABLE is a bad-transition', () => {
+    const rejected = replay([born, { v: 1, at, type: 'Proposal Rejected', proposalId }])
+    const result = decide(rejected, {
+      type: 'Edit Model Change',
+      proposalId,
+      changed: { newLabel: 'x' },
+      at,
+    })
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) {
+      expect(result.error).toMatchObject({ kind: 'bad-transition', from: 'REJECTED' })
+    }
+  })
+
+  it('Accept Proposal for a model-change proposal succeeds with no buildingBlockId', () => {
+    const result = decide(replay([born]), { type: 'Accept Proposal', proposalId, accepter: 'Dana', at })
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual([{ v: 1, at, type: 'Proposal Accepted', proposalId, accepter: 'Dana' }])
+    }
+    const writeModel = replay([born, ...(isOk(result) ? result.value : [])])
+    expect(writeModel.disposition).toBe('ACCEPTED')
+    expect(writeModel.buildingBlockId).toBeUndefined()
+  })
+})
+
 describe('Proposal.decide — Set Proposal Kind', () => {
   const setKind = (modelAffecting: boolean) =>
     ({ type: 'Set Proposal Kind', proposalId, modelAffecting, at }) as const

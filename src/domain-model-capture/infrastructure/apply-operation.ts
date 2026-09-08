@@ -69,6 +69,13 @@ export const applyOperation = (
     const decided = decide(replayWriteModel(log), operation)
     if (!decided.ok) return decided
 
+    // An empty decision means the effect already holds (an already-satisfied
+    // relation / pivotal / resolve). Nothing to append — return the current
+    // position so an accept-chain retry converges to APPLIED.
+    if (decided.value.length === 0) {
+      return ok({ resultingBuildingBlockId: resultingBuildingBlockId(operation), nextPosition: position })
+    }
+
     const appended = deps.store.append(
       stream,
       position,

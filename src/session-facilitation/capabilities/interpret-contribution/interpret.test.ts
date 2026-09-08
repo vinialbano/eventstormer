@@ -109,6 +109,22 @@ const contribute = (body: string, id: string, sessionId: SessionId = defaultSess
   ])
 }
 
+const boardStream = { context: 'domain-model-capture', aggregate: 'board', id: workshopId } as const
+const boardAuthor = { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } }
+
+/** Seed a two-event timeline with a `follows` edge and one pivotal mark. */
+const seedBoardTopology = (): void => {
+  const op = (operation: Record<string, unknown>) => ({ at, opVersion: 1, operation })
+  store.append(boardStream, store.read(boardStream).length - 1, [
+    op({ v: 1, kind: 'capture-domain-event', id: 'bb_a', label: 'Book borrowed', author: boardAuthor }),
+    op({ v: 1, kind: 'capture-domain-event', id: 'bb_b', label: 'Book returned', author: boardAuthor }),
+    op({ v: 1, kind: 'place', target: 'bb_a', author: boardAuthor }),
+    op({ v: 1, kind: 'place', target: 'bb_b', author: boardAuthor }),
+    op({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author: boardAuthor }),
+    op({ v: 1, kind: 'mark-pivotal', target: 'bb_a', author: boardAuthor }),
+  ])
+}
+
 const sessionEvents = (sessionId: SessionId = defaultSessionId): SessionEvent[] =>
   store.read(sessionStream(sessionId)).map((row) => SessionEvent.parse(row.operation))
 
@@ -603,6 +619,130 @@ describe('interpretContribution — FIFO and one-in-flight', () => {
 
     expect(sessionEvents().some((event) => event.type === 'Contribution Interpreted')).toBe(false)
     expect(interpretCalls).toBe(0)
+  })
+})
+
+describe('interpretContribution — model-change readiness gates use the post-call board snapshot', () => {
+  const rewordTurn = turn([
+    { track: 'propose-reword', targetLabel: 'Book borrowed', newLabel: 'Book loaned' },
+  ])
+  const storedTracks = (): unknown[] =>
+    only('Contribution Interpreted').flatMap((event) => event.tracks)
+
+  it('releases a reword (heldBack false, target resolved) when the board has structure at snapshot time', async () => {
+    seedBoardTopology() // two placed events, one follows edge, one pivotal
+    seedSession()
+    contribute('call it a loan not a borrow', 'c_1')
+
+    await interpretContribution(deps([rewordTurn]))
+
+    expect(storedTracks()).toEqual([
+      {
+        track: 'propose-reword',
+        proposalId: 'p_1',
+        target: 'bb_a',
+        newLabel: 'Book loaned',
+        heldBack: false,
+        targetLabel: 'Book borrowed',
+      },
+    ])
+  })
+
+  it('holds a reword back when the board has no structure at snapshot time', async () => {
+    // one lone capture, no edge, no pivotal
+    store.append(boardStream, store.read(boardStream).length - 1, [
+      { at, opVersion: 1, operation: { v: 1, kind: 'capture-domain-event', id: 'bb_a', label: 'Book borrowed', author: boardAuthor } },
+    ])
+    seedSession()
+    contribute('call it a loan not a borrow', 'c_1')
+
+    await interpretContribution(deps([rewordTurn]))
+
+    expect(storedTracks()).toEqual([
+      { track: 'propose-reword', newLabel: 'Book loaned', heldBack: true, targetLabel: 'Book borrowed' },
+    ])
+  })
+})
+
+describe('interpretContribution — model-change track derivation', () => {
+  const relationTurn = turn([
+    {
+      track: 'propose-relation',
+      relationKind: 'sequence',
+      endpoints: ['Book borrowed', 'Book returned'],
+      rationale: 'the return follows the borrow',
+    },
+  ])
+
+  it('births one Model Change Proposed carrying the named-field intent for a non-held relation track', async () => {
+    seedBoardTopology()
+    seedSession()
+    contribute('a member returns after borrowing', 'c_1')
+
+    await interpretContribution(deps([relationTurn]))
+
+    const events = proposalEvents('p_1')
+    expect(events.map((event) => event.type)).toEqual(['Model Change Proposed'])
+    const [birth] = events
+    expect(birth?.type === 'Model Change Proposed' && birth.intent).toEqual({
+      kind: 'relation',
+      relationKind: 'sequence',
+      predecessor: 'bb_a',
+      successor: 'bb_b',
+    })
+    expect(readDerivedTrackKeys(db)).toEqual(new Set(['c_1::0']))
+  })
+
+  it('births nothing for a heldBack reword track', async () => {
+    // one lone capture — no structure, so the reword is held
+    store.append(boardStream, store.read(boardStream).length - 1, [
+      { at, opVersion: 1, operation: { v: 1, kind: 'capture-domain-event', id: 'bb_a', label: 'Book borrowed', author: boardAuthor } },
+    ])
+    seedSession()
+    contribute('call it a loan', 'c_1')
+
+    await interpretContribution(
+      deps([turn([{ track: 'propose-reword', targetLabel: 'Book borrowed', newLabel: 'Book loaned' }])]),
+    )
+
+    expect(store.read({ context: 'session-facilitation', aggregate: 'proposal', id: 'p_1' })).toEqual([])
+    expect(readDerivedTrackKeys(db)).toEqual(new Set(['c_1::0']))
+  })
+
+  it('is idempotent — a reconcile re-run over an already-born stream adds no second birth', async () => {
+    seedBoardTopology()
+    seedSession()
+    contribute('a member returns after borrowing', 'c_1')
+
+    await interpretContribution(deps([relationTurn]))
+    expect(proposalEvents('p_1')).toHaveLength(1)
+
+    db.prepare('DELETE FROM derived_track WHERE contribution_id = ? AND track_index = ?').run('c_1', 0)
+    reconcilePendingDerivations(deps([]))
+
+    expect(proposalEvents('p_1').map((event) => event.type)).toEqual(['Model Change Proposed'])
+  })
+})
+
+describe('interpretContribution — the turn input carries board topology', () => {
+  it('renders each placed event with its follows link, pivotal marker, and a timeline count from readBoardSnapshot', async () => {
+    seedBoardTopology()
+    seedSession()
+    contribute('a member borrowed a book', 'c_1')
+
+    let captured = ''
+    const dependencies = deps([turn([])])
+    dependencies.facilitator.interpret = (input) => {
+      captured = input.prompt
+      interpretCalls += 1
+      return Promise.resolve(ok(turn([])))
+    }
+
+    await interpretContribution(dependencies)
+
+    expect(captured).toContain('domain-event: Book borrowed (on timeline; pivotal; then: Book returned)')
+    expect(captured).toContain('domain-event: Book returned (on timeline)')
+    expect(captured).toContain('2 events on the timeline')
   })
 })
 

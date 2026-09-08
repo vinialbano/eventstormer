@@ -56,6 +56,7 @@ describe('capture-bootstrap', () => {
       proposals: port(),
       board,
       account: port(),
+      artifacts: port(),
     }
 
     await coldLoadCaptureScreen('w1', ports, () => viewWithContributions())
@@ -72,6 +73,7 @@ describe('capture-bootstrap', () => {
       proposals: port(),
       board,
       account: port(),
+      artifacts: port(),
     }
 
     await coldLoadCaptureScreen('w1', ports, () => null)

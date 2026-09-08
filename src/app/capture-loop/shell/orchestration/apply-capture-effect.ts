@@ -11,6 +11,7 @@ export interface CaptureEffectPorts {
   proposals: ReadModelPort
   board: ReadModelPort
   account: ReadModelPort
+  artifacts: ReadModelPort
 }
 
 export interface CaptureEffectContext {
@@ -29,6 +30,8 @@ const runTarget = async (
       return ports[target].load(context.workshopId)
     case 'proposals':
       return ports.proposals.refetch()
+    case 'artifacts':
+      return ports.artifacts.refetch()
   }
 }
 

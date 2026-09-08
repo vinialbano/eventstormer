@@ -1,4 +1,4 @@
-import { readBuildingBlocks } from '../../../domain-model-capture/api.ts'
+import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import type {
   BuildingBlockId,
   ContributionId,
@@ -8,10 +8,11 @@ import type {
   SessionId,
   WorkshopId,
 } from '~/plumbing/ids.ts'
-import { facilitationContext } from '../../domain/read-models/facilitation.ts'
+import { type FacilitationBlock, facilitationContext } from '../../domain/read-models/facilitation.ts'
 import { priorSessionHistory, sessionProposalIds } from '../../domain/read-models/session-summary.ts'
 import { sessionView } from '../../domain/read-models/session-view.ts'
 import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
+import type { Intent } from '../../domain/schema/events.ts'
 import type { InterpretedTrack } from '../../domain/schema/interpreted-track.ts'
 import { decide as decideProposal } from '../../domain/proposal/decide.ts'
 import { replay as replayProposal } from '../../domain/proposal/replay.ts'
@@ -23,7 +24,8 @@ import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
 import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
-import { mapTurn } from '../../infrastructure/facilitator/map.ts'
+import { hasModelStructure } from '../../domain/model-readiness.ts'
+import { type BoardState, mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
 import { openSessions, sessionIdsFor } from '../../infrastructure/session-index.ts'
 import { finishClose } from '../../infrastructure/session-close.ts'
@@ -73,8 +75,43 @@ const appendWorkshop = (
 }
 
 /**
+ * The board blocks + timeline count the facilitator context carries — labels,
+ * placement, pivotal marks, and the `follows` / `causedBy` topology (resolved to
+ * labels) so the model can name an existing endpoint pair for a relation.
+ */
+const boardTopology = (
+  deps: InterpretContributionDeps,
+  workshopId: WorkshopId,
+): { buildingBlocks: FacilitationBlock[]; timelineEventCount: number } => {
+  const snapshot = readBoardSnapshot({ store: deps.store }, workshopId)
+  const labelOf = new Map(snapshot.blocks.map((block) => [block.id, block.label]))
+  const buildingBlocks = snapshot.blocks
+    .filter((block) => !block.withdrawn)
+    .map((block): FacilitationBlock => {
+      const followedBy = snapshot.follows
+        .filter((edge) => edge.predecessor === block.id)
+        .flatMap((edge) => labelOf.get(edge.successor) ?? [])
+      const causes = snapshot.causedBy
+        .filter((edge) => edge.cause === block.id)
+        .flatMap((edge) => labelOf.get(edge.effect) ?? [])
+      return {
+        kind: block.kind,
+        label: block.label,
+        placement: block.placement,
+        pivotal: block.pivotal,
+        ...(followedBy.length === 0 ? {} : { followedBy }),
+        ...(causes.length === 0 ? {} : { causes }),
+      }
+    })
+  const timelineEventCount = snapshot.blocks.filter(
+    (block) => !block.withdrawn && block.kind === 'domain-event' && block.placement === 'timeline',
+  ).length
+  return { buildingBlocks, timelineEventCount }
+}
+
+/**
  * Assemble the facilitator's per-turn context: the workshop scope, the current
- * building blocks (`readBuildingBlocks`, not the op log), the prior closed
+ * board topology (`readBoardSnapshot`, not the op log), the prior closed
  * sessions' summaries, and this session's open questions + recent transcript.
  */
 const assembleFacilitationContext = (
@@ -86,9 +123,7 @@ const assembleFacilitationContext = (
     (event) => event.type === 'Scope Set',
   )?.statement
 
-  const buildingBlocks = readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId).map(
-    (block) => ({ kind: block.kind, label: block.label }),
-  )
+  const { buildingBlocks, timelineEventCount } = boardTopology(deps, workshopId)
 
   const view = sessionView(events)
 
@@ -108,6 +143,7 @@ const assembleFacilitationContext = (
     ...(scopeStatement === undefined ? {} : { scopeStatement }),
     priorSummaries: priorSessionHistory(priors),
     buildingBlocks,
+    timelineEventCount,
   })
 }
 
@@ -229,6 +265,59 @@ const deriveProposeResolution = (
   }
 }
 
+type RelationTrack = Extract<InterpretedTrack, { track: 'propose-relation' }>
+type PivotalTrack = Extract<InterpretedTrack, { track: 'propose-pivotal' }>
+type RewordTrack = Extract<InterpretedTrack, { track: 'propose-reword' }>
+
+const relationIntent = (track: RelationTrack): Intent => ({
+  kind: 'relation',
+  relationKind: track.relationKind,
+  ...(track.predecessor === undefined ? {} : { predecessor: track.predecessor }),
+  ...(track.successor === undefined ? {} : { successor: track.successor }),
+  ...(track.inserted === undefined ? {} : { inserted: track.inserted }),
+  ...(track.cause === undefined ? {} : { cause: track.cause }),
+  ...(track.effect === undefined ? {} : { effect: track.effect }),
+  ...(track.target === undefined ? {} : { target: track.target }),
+})
+
+/**
+ * Birth the `Model Change Proposed` a non-`heldBack` relation / pivotal / reword
+ * track implies. A held track (below the F07 pivotal threshold or the F04
+ * structure gate) births nothing — the notice is `sessionView`'s job. The append
+ * uses `expectedPosition: -1`, so a re-run over an already-born stream is a
+ * no-op — the commit-point stays `Contribution Interpreted`.
+ */
+const deriveModelChange = (
+  deps: InterpretContributionDeps,
+  event: Interpreted,
+  track: RelationTrack | PivotalTrack | RewordTrack,
+): void => {
+  let intent: Intent
+  if (track.track === 'propose-relation') {
+    intent = relationIntent(track)
+  } else {
+    if (track.heldBack || track.proposalId === undefined || track.target === undefined) return
+    intent =
+      track.track === 'propose-pivotal'
+        ? { kind: 'pivotal', pivotalKind: track.pivotalKind, target: track.target }
+        : { kind: 'reword', target: track.target, newLabel: track.newLabel }
+  }
+  const proposalId = track.proposalId
+  if (proposalId === undefined) return
+
+  const decided = decideProposal(replayProposal(readProposal(deps, proposalId)), {
+    type: 'Propose Model Change',
+    proposalId,
+    sessionId: event.sessionId,
+    contributionId: event.contributionId,
+    intent,
+    at: event.at,
+  })
+  if (decided.ok && decided.value.length > 0) {
+    deps.store.append(proposalStream(proposalId), -1, storedOps(decided.value))
+  }
+}
+
 const deriveRevealKnowledgeGap = (
   deps: InterpretContributionDeps,
   event: Interpreted,
@@ -345,6 +434,11 @@ const deriveTracks = (deps: InterpretContributionDeps, event: Interpreted): void
       case 'confirm-complete-perspective':
         deriveConfirmCompletePerspective(deps, event, track)
         break
+      case 'propose-relation':
+      case 'propose-pivotal':
+      case 'propose-reword':
+        deriveModelChange(deps, event, track)
+        break
     }
 
     markDerivedTrack(deps.db, event.contributionId, index)
@@ -388,11 +482,27 @@ const runInterpretation = async (
       return
     }
 
-    const blockIdByLabel = new Map<string, BuildingBlockId>()
-    for (const block of readBuildingBlocks({ store: deps.store, clock: deps.clock }, workshopId)) {
-      if (!blockIdByLabel.has(block.label)) blockIdByLabel.set(block.label, block.id)
+    // One board read, taken after the model call returns: it drives both
+    // endpoint-label resolution and the F04 / F07 readiness gates, so a held /
+    // released decision is never made against a board that has since changed.
+    const snapshot = readBoardSnapshot({ store: deps.store }, workshopId)
+    const idByLabel = new Map<string, BuildingBlockId | undefined>()
+    for (const block of snapshot.blocks) {
+      if (block.withdrawn) continue
+      idByLabel.set(block.label, idByLabel.has(block.label) ? undefined : block.id)
     }
-    const mapped = mapTurn(turn.value, deps.mint, (label) => blockIdByLabel.get(label))
+    const resolveBlockId = (label: string): BuildingBlockId | undefined => idByLabel.get(label)
+    const placedDomainEvents = new Set(
+      snapshot.blocks
+        .filter((block) => !block.withdrawn && block.kind === 'domain-event' && block.placement === 'timeline')
+        .map((block) => block.id),
+    )
+    const boardState: BoardState = {
+      placedEventCount: placedDomainEvents.size,
+      hasStructure: hasModelStructure(snapshot),
+      isPlacedDomainEvent: (id) => placedDomainEvents.has(id),
+    }
+    const mapped = mapTurn(turn.value, deps.mint, resolveBlockId, boardState)
     const asking: { askQuestionId?: QuestionId; askQuestionText?: string } =
       turn.value.nextMove.move === 'ask' &&
       turn.value.nextMove.questionText !== undefined &&

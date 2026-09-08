@@ -648,3 +648,34 @@ explicitly.
 
 `oneOf → anyOf` round-trip: **not fully confirmed** (never got a clean call) but **not the
 problem** — no `oneOf` error at any point. A clean confirmation comes with Slice 1's projection.
+
+---
+
+## SLICE 5 — assembled turn schema live check
+
+**Date:** 2026-09-07 · **Status: PASS** (run with `ANTHROPIC_API_KEY` from `.env.local`,
+`claude-sonnet-5`, real API).
+
+**LIVE RESULT (2026-09-07):** `PASS — the assembled FacilitationTurnSchema round-tripped.` No
+HTTP 400 at any point. The model returned a well-formed `interpretation` array that exercised
+all three Slice 5 strands — `propose-relation` (two `sequence` entries with a 2-label
+`endpoints` array), `propose-pivotal` (`mark-pivotal` + `eventLabel`), and `propose-reword`
+(`targetLabel` + `newLabel`) — alongside `propose-building-block`, with `nextMove.move:
+'acknowledge'`. The label-array shape for relation endpoints and the all-required-fields shape
+of the three new members are accepted by the structured-output grammar. FREL-04 is fully
+satisfied.
+
+The `loadEnvFile` call now tries `.env.local` then `.env` (this repo keeps the key in
+`.env.local`, the file `pnpm dev` uses).
+
+`scripts/smoke-facilitation-schema.ts` (`pnpm smoke:facilitation-schema`) wraps the assembled
+`FacilitationTurnSchema` — the eight original strands plus Slice 5's `propose-relation` /
+`propose-pivotal` / `propose-reword` — in `Output.object({ schema })` and makes ONE real
+structured-output call exactly as `anthropic-adapter.ts` does (`structuredOutputMode:
+'outputFormat'`, `effort: 'low'`, model `claude-sonnet-5`, `instructions` role). It prints
+`PASS` and the parsed output, or `FAIL` with the HTTP 400 body.
+
+This is FREL-04's manual half and is out of CI by AD-027. `turn-schema.test.ts` already asserts
+the derived JSON Schema stays within Anthropic's ≤ 24-optional ceiling (optional count == 5) and
+has no empty `{}` sub-schema, so the live call is expected to pass; run it to confirm before the
+release, and record `PASS <date>` or the 400 body here.

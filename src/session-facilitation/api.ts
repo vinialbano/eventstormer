@@ -35,7 +35,17 @@ export { createInFlightGuard } from './capabilities/interpret-contribution/in-fl
 export type { InFlightGuard, InterpretContributionDeps } from './capabilities/interpret-contribution/deps.ts'
 
 export { applySessionFacilitationMigrations } from './infrastructure/migrations.ts'
-export { readArtifactSource } from './infrastructure/read-artifact-source.ts'
+export {
+  readArtifactSource,
+  readSessionRecordPosition,
+} from './infrastructure/read-artifact-source.ts'
+export type {
+  ArtifactSource,
+  ChosenProblem,
+  StakeholderCheck,
+} from './domain/read-models/artifact-source.ts'
+export { readSessionTranscript } from './infrastructure/read-session-transcript.ts'
+export { SessionTranscript } from './domain/read-models/session-transcript-contract.ts'
 export type { SessionIndexDb } from './infrastructure/session-index.ts'
 export { createAnthropicFacilitator } from './infrastructure/facilitator/anthropic-adapter.ts'
 export type { Facilitator } from './infrastructure/facilitator/port.ts'

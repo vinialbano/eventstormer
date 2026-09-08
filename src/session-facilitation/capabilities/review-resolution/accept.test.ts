@@ -117,7 +117,7 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
     ).toBeGreaterThanOrEqual(2)
   })
 
-  it('a second resolution for an already-resolved hot spot LAPSES with the recorded reason and no retry (acceptance test 39)', async () => {
+  it('a second resolution for an already-resolved hot spot converges to APPLIED with no board change', async () => {
     raiseHotSpot('h_1')
     seedResolution('r_1', 'h_1', 'first fix')
     seedResolution('r_2', 'h_1', 'second fix')
@@ -126,19 +126,22 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
     const second = await accept('r_2')
     expect(second.status).toBe(200)
 
+    // The hot spot is already resolved — the board decider makes the re-apply an
+    // idempotent no-op, so the second resolution converges to APPLIED rather than
+    // a spurious apply-failure.
     expect(resolutionDisposition('r_1')).toBe('APPLIED')
-    expect(resolutionDisposition('r_2')).toBe('LAPSED')
+    expect(resolutionDisposition('r_2')).toBe('APPLIED')
 
-    const lapsed = store
+    const r2Events = store
       .read(resolutionStream('r_2' as ResolutionId))
       .map((row) => ResolutionEvent.parse(row.operation))
-      .find((event) => event.type === 'Hot Spot Resolution Rejected')
-    expect(lapsed?.type === 'Hot Spot Resolution Rejected' && lapsed.reason).toBe('already-resolved')
+    expect(r2Events.some((event) => event.type === 'Hot Spot Resolution Rejected')).toBe(false)
 
-    // the hot spot carries exactly one recorded reference — the first
+    // the hot spot carries exactly one recorded reference — the first; the no-op
+    // apply wrote nothing
     expect(hotSpotBlock('h_1')?.reference).toBe('first fix')
 
-    // no retry path — a third accept of r_2 stays LAPSED, appends nothing new
+    // idempotent — a third accept of r_2 stays APPLIED, appends nothing new
     const before = store.read(resolutionStream('r_2' as ResolutionId)).length
     await accept('r_2')
     expect(store.read(resolutionStream('r_2' as ResolutionId)).length).toBe(before)

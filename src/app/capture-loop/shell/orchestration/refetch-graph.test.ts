@@ -10,14 +10,15 @@ describe('refetch-graph', () => {
   it('pins mutated and board-dirty refetch targets', () => {
     expect(ZONE_EVENTS).toEqual(['mutated', 'board-dirty'])
     expect(refetchTargetsFor('mutated')).toEqual(['session', 'proposals'])
-    expect(refetchTargetsFor('board-dirty')).toEqual(['board', 'account'])
+    expect(refetchTargetsFor('board-dirty')).toEqual(['board', 'account', 'artifacts'])
     expect(REFETCH_BY_ZONE_EVENT.mutated).toEqual(['session', 'proposals'])
-    expect(REFETCH_BY_ZONE_EVENT['board-dirty']).toEqual(['board', 'account'])
+    expect(REFETCH_BY_ZONE_EVENT['board-dirty']).toEqual(['board', 'account', 'artifacts'])
   })
 
-  it('excludes board and account from mutated targets', () => {
+  it('excludes board, account, and artifacts from mutated targets', () => {
     const targets = refetchTargetsFor('mutated')
     expect(targets).not.toContain('board')
     expect(targets).not.toContain('account')
+    expect(targets).not.toContain('artifacts')
   })
 })

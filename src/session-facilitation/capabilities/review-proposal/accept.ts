@@ -5,6 +5,7 @@ import type { BuildingBlockId, ProposalId, SessionId, WorkshopId } from '~/plumb
 import { proposalCard } from '../../domain/read-models/proposals-view.ts'
 import { decide } from '../../domain/proposal/decide.ts'
 import { replay } from '../../domain/proposal/replay.ts'
+import { replay as replaySession } from '../../domain/session/replay.ts'
 import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { ProposalEvent, SessionEvent, WorkshopEvent } from '../../domain/schema/events.ts'
 import type { InterpretedBlockKind } from '../../domain/schema/interpreted-track.ts'
@@ -23,6 +24,28 @@ const OP_KIND: Partial<
   'hot-spot': 'raise-hot-spot',
 }
 
+interface Author {
+  proposer: { name: string }
+  accepter: { name: string }
+}
+type Intent = Extract<ProposalEvent, { type: 'Model Change Proposed' }>['intent']
+type IntentChange = Extract<ProposalEvent, { type: 'Model Change Edited' }>['changed']
+type BuildingBlockProposed = Extract<ProposalEvent, { type: 'Building Block Proposed' }>
+type ModelChangeProposed = Extract<ProposalEvent, { type: 'Model Change Proposed' }>
+interface Handled {
+  json: unknown
+  status: 200 | 409 | 422 | 500
+}
+
+const INTENT_ID_FIELDS = [
+  'predecessor',
+  'successor',
+  'inserted',
+  'cause',
+  'effect',
+  'target',
+] as const
+
 const readProposal = (deps: ReviewProposalDeps, id: ProposalId): ProposalEvent[] =>
   deps.store.read(proposalStream(id)).map((row) => ProposalEvent.parse(row.operation))
 
@@ -35,20 +58,157 @@ const appendProposal = (deps: ReviewProposalDeps, id: ProposalId, events: Propos
   deps.store.append(proposalStream(id), position, storedOps(events))
 }
 
+/** The last `Model Change Edited.changed` folded over the birth `intent`, field
+ * to field — no id minting, no positional spread. */
+const applyIntentChange = (intent: Intent, changed: IntentChange | undefined): Intent => {
+  if (changed === undefined) return intent
+  const next = { ...intent } as Record<string, unknown>
+  for (const field of INTENT_ID_FIELDS) {
+    if (changed[field] !== undefined) next[field] = changed[field]
+  }
+  if (changed.newLabel !== undefined && intent.kind === 'reword') next.newLabel = changed.newLabel
+  return next as Intent
+}
+
+/** Build the `Operation` payload from the resolved `Intent`, field to field. */
+const operationFromIntent = (intent: Intent, author: Author): Record<string, unknown> => {
+  if (intent.kind === 'relation') {
+    const named: Record<string, unknown> = {}
+    for (const field of INTENT_ID_FIELDS) {
+      const value = intent[field]
+      if (value !== undefined) named[field] = value
+    }
+    return { kind: intent.relationKind, ...named, author }
+  }
+  if (intent.kind === 'pivotal') return { kind: intent.pivotalKind, target: intent.target, author }
+  return { kind: 'reword', target: intent.target, label: intent.newLabel, author }
+}
+
+/** The block the operation results in — the outcome record's fallback id. */
+const intentTarget = (intent: Intent): BuildingBlockId => {
+  if (intent.kind !== 'relation') return intent.target
+  return (intent.successor ??
+    intent.effect ??
+    intent.inserted ??
+    intent.target ??
+    intent.predecessor ??
+    intent.cause) as BuildingBlockId
+}
+
+/** The accept-response card for a model-change proposal — disposition, held, and
+ * the `APPLY_FAILED` reason. The full intent card is `proposalsView`'s. */
+const modelChangeCard = (events: ProposalEvent[]) => {
+  const birth = events.find((event) => event.type === 'Model Change Proposed')
+  if (birth?.type !== 'Model Change Proposed') return undefined
+  const writeModel = replay(events)
+  const rejected = events.findLast((event) => event.type === 'Operation Rejected')
+  return {
+    proposalId: birth.proposalId,
+    contributionId: birth.contributionId,
+    intentKind: birth.intent.kind,
+    disposition: writeModel.disposition,
+    held: writeModel.held,
+    ...(rejected?.type === 'Operation Rejected' ? { applyFailedReason: rejected.reason } : {}),
+  }
+}
+
 /**
- * `POST /proposals/:id/accept` — the synchronous cross-context apply chain:
- *
- * 1. `Proposal.decide(Accept Proposal)` mints + stores the `BuildingBlockId`
- *    once; a re-accept reuses the stored one (idempotent while `ACCEPTED` /
- *    `APPLIED`, re-acceptable from `APPLY_FAILED`).
- * 2. Build + `.parse` the kind-specific `Operation` against the SSOT, author
- *    `{ proposer: 'facilitator', accepter: creatorName }`.
- * 3. `applyOperation` — no `expectedPosition`; it owns board concurrency.
- * 4. `Proposal.decide(Record Operation Applied | Rejected)` records the outcome.
- *
- * Each context commits its own stream in its own `EventStore.append` — the two
- * are NEVER one SQLite transaction. `duplicate-id` from the board on a re-accept
- * after apply is the idempotency signal → recorded as applied.
+ * Model-change branch: no `buildingBlockId` is minted; the `Operation` is built
+ * from the birth `intent` folded with the last `Model Change Edited`, field to
+ * field. An already-satisfied relation / pivotal effect returns `ok` at the
+ * current board position, so a crash-window retry converges to `APPLIED`.
+ */
+const acceptModelChange = (
+  deps: ReviewProposalDeps,
+  id: ProposalId,
+  birth: ModelChangeProposed,
+  events: ProposalEvent[],
+  workshopId: WorkshopId,
+  author: Author,
+): Handled => {
+  const writeModel = replay(events)
+  if (writeModel.disposition !== 'ACCEPTED') {
+    const accepted = decide(writeModel, {
+      type: 'Accept Proposal',
+      proposalId: id,
+      accepter: author.accepter.name,
+      at: deps.clock(),
+    })
+    if (!accepted.ok) return { json: { error: accepted.error.kind }, status: 409 }
+    appendProposal(deps, id, accepted.value)
+  }
+
+  const lastChange = events.filter((event) => event.type === 'Model Change Edited').at(-1)
+  const intent = applyIntentChange(
+    birth.intent,
+    lastChange?.type === 'Model Change Edited' ? lastChange.changed : undefined,
+  )
+  const operation = Operation.parse(operationFromIntent(intent, author))
+  const applied = applyOperation(deps, workshopId, operation)
+  const boardPosition = recordApplyOutcome(deps, id, intentTarget(intent), applied)
+  return { json: { boardPosition, proposal: modelChangeCard(readProposal(deps, id)) }, status: 200 }
+}
+
+/**
+ * Building-block branch: mint + store the `BuildingBlockId` once (a re-accept
+ * reuses the stored one), build the kind-specific `Operation`, apply, record the
+ * outcome, then — for a hot spot — attach it to the block it annotates.
+ */
+const acceptBuildingBlock = (
+  deps: ReviewProposalDeps,
+  id: ProposalId,
+  birth: BuildingBlockProposed,
+  events: ProposalEvent[],
+  workshopId: WorkshopId,
+  author: Author,
+): Handled => {
+  const writeModel = replay(events)
+  const lastEdit = events.findLast((event) => event.type === 'Proposal Edited')
+  const label = lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label
+
+  const opKind = OP_KIND[birth.blockKind]
+  if (opKind === undefined) return { json: { error: 'unsupported-block-kind' }, status: 422 }
+
+  let buildingBlockId: BuildingBlockId | undefined = writeModel.buildingBlockId
+  if (writeModel.disposition !== 'ACCEPTED') {
+    buildingBlockId = buildingBlockId ?? newBuildingBlockId()
+    const accepted = decide(writeModel, {
+      type: 'Accept Proposal',
+      proposalId: id,
+      accepter: author.accepter.name,
+      buildingBlockId,
+      at: deps.clock(),
+    })
+    if (!accepted.ok) return { json: { error: accepted.error.kind }, status: 409 }
+    appendProposal(deps, id, accepted.value)
+  }
+  if (buildingBlockId === undefined) return { json: { error: 'accept-failed' }, status: 500 }
+
+  const operation = Operation.parse({
+    kind: opKind,
+    id: buildingBlockId,
+    label,
+    ...(birth.blockKind === 'hot-spot' ? { modelAffecting: writeModel.modelAffecting } : {}),
+    author,
+  })
+
+  const applied = applyOperation(deps, workshopId, operation)
+  const boardPosition = recordApplyOutcome(deps, id, buildingBlockId, applied)
+
+  const hotSpotApplied = applied.ok || applied.error.kind === 'duplicate-id'
+  if (birth.blockKind === 'hot-spot' && birth.annotatesTargetId !== undefined && hotSpotApplied) {
+    annotateHotSpot(deps, workshopId, buildingBlockId, birth.annotatesTargetId, author)
+  }
+
+  return { json: { boardPosition, proposal: proposalCard(readProposal(deps, id)) }, status: 200 }
+}
+
+/**
+ * `POST /proposals/:id/accept` — the synchronous cross-context apply chain. Each
+ * context commits its own stream in its own `EventStore.append` — the two are
+ * NEVER one SQLite transaction. A closed session rejects a late accept (409
+ * `session-closed`, the Proposal left re-lapsable); an already-`APPLIED`
+ * proposal is an idempotent 200.
  */
 export const acceptRoutes = (deps: ReviewProposalDeps) =>
   new Hono().post('/proposals/:id/accept', (context) => {
@@ -56,15 +216,10 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
     const events = readProposal(deps, id)
     if (events.length === 0) return context.json({ error: 'unknown-proposal' as const }, 404)
 
-    const birth = events.find((event) => event.type === 'Building Block Proposed')
-    if (birth?.type !== 'Building Block Proposed') {
-      return context.json({ error: 'unknown-proposal' as const }, 404)
-    }
-    const lastEdit = events.findLast((event) => event.type === 'Proposal Edited')
-    const label = lastEdit?.type === 'Proposal Edited' ? lastEdit.label : birth.label
-
-    const opKind = OP_KIND[birth.blockKind]
-    if (opKind === undefined) return context.json({ error: 'unsupported-block-kind' as const }, 422)
+    const birth = events.find(
+      (event) => event.type === 'Building Block Proposed' || event.type === 'Model Change Proposed',
+    )
+    if (birth === undefined) return context.json({ error: 'unknown-proposal' as const }, 404)
 
     const sessionEvents = readSession(deps, birth.sessionId)
     const workshopId = sessionEvents.find((event) => event.type === 'Session Started')?.workshopId
@@ -73,54 +228,22 @@ export const acceptRoutes = (deps: ReviewProposalDeps) =>
       replayWorkshop(
         deps.store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation)),
       ).creatorName ?? 'unknown'
+    const author: Author = { proposer: { name: 'facilitator' }, accepter: { name: creatorName } }
 
-    const cardOf = () => proposalCard(readProposal(deps, id))
-
-    const writeModel = replay(events)
-    if (writeModel.disposition === 'APPLIED') {
-      return context.json({ boardPosition: null, proposal: cardOf() }, 200)
+    if (replay(events).disposition === 'APPLIED') {
+      const proposal =
+        birth.type === 'Model Change Proposed' ? modelChangeCard(events) : proposalCard(events)
+      return context.json({ boardPosition: null, proposal }, 200)
+    }
+    if (replaySession(sessionEvents).closed) {
+      return context.json({ error: 'session-closed' as const }, 409)
     }
 
-    // 1. accept — mint once, reuse the stored id on a re-accept
-    let buildingBlockId: BuildingBlockId | undefined = writeModel.buildingBlockId
-    if (writeModel.disposition !== 'ACCEPTED') {
-      buildingBlockId = buildingBlockId ?? newBuildingBlockId()
-      const accepted = decide(writeModel, {
-        type: 'Accept Proposal',
-        proposalId: id,
-        accepter: creatorName,
-        buildingBlockId,
-        at: deps.clock(),
-      })
-      if (!accepted.ok) return context.json({ error: accepted.error.kind }, 409)
-      appendProposal(deps, id, accepted.value)
-    }
-    if (buildingBlockId === undefined) return context.json({ error: 'accept-failed' as const }, 500)
-
-    // 2. build + parse the operation against the operation schema SSOT
-    const author = { proposer: { name: 'facilitator' }, accepter: { name: creatorName } }
-    const operation = Operation.parse({
-      kind: opKind,
-      id: buildingBlockId,
-      label,
-      ...(birth.blockKind === 'hot-spot' ? { modelAffecting: writeModel.modelAffecting } : {}),
-      author,
-    })
-
-    // 3. apply into domain-model-capture — its own transaction
-    const applied = applyOperation(deps, workshopId, operation)
-
-    // 4. record the outcome on the Proposal — its own transaction
-    const boardPosition = recordApplyOutcome(deps, id, buildingBlockId, applied)
-
-    // 5. hot spot only: attach it to the block it annotates — a second board
-    // transaction, logged (not surfaced) on rejection.
-    const hotSpotApplied = applied.ok || applied.error.kind === 'duplicate-id'
-    if (birth.blockKind === 'hot-spot' && birth.annotatesTargetId !== undefined && hotSpotApplied) {
-      annotateHotSpot(deps, workshopId, buildingBlockId, birth.annotatesTargetId, author)
-    }
-
-    return context.json({ boardPosition, proposal: cardOf() }, 200)
+    const handled =
+      birth.type === 'Model Change Proposed'
+        ? acceptModelChange(deps, id, birth, events, workshopId, author)
+        : acceptBuildingBlock(deps, id, birth, events, workshopId, author)
+    return context.json(handled.json, handled.status)
   })
 
 /**
@@ -133,7 +256,7 @@ const annotateHotSpot = (
   workshopId: WorkshopId,
   hotSpotId: BuildingBlockId,
   target: BuildingBlockId,
-  author: { proposer: { name: string }; accepter: { name: string } },
+  author: Author,
 ): void => {
   const annotated = applyOperation(
     deps,
@@ -159,9 +282,11 @@ type ApplyResult = ReturnType<typeof applyOperation>
 
 /**
  * Record the board apply outcome on the `Proposal` — its own transaction, never
- * batched with the board append. `duplicate-id` on a re-accept after a prior
- * apply is the idempotency signal, recorded as applied. Returns the board
- * position on success, `null` otherwise.
+ * batched with the board append. A re-accept after a prior apply converges to
+ * APPLIED by one of two routes: an id-minting operation re-runs to `duplicate-id`
+ * (mapped to applied here); a relation / pivotal / resolve operation whose effect
+ * already holds re-runs to `ok([])` (an empty decision — already `applied.ok`).
+ * Returns the board position on success, `null` otherwise.
  */
 const recordApplyOutcome = (
   deps: ReviewProposalDeps,

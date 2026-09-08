@@ -10,13 +10,28 @@ export const evolve = (writeModel: ProposalWriteModel, event: ProposalEvent): Pr
         disposition: 'PROPOSED',
         held: false,
         modelAffecting: event.modelAffecting ?? true,
+        birthKind: 'block',
       }
+    case 'Model Change Proposed':
+      return {
+        born: true,
+        disposition: 'PROPOSED',
+        held: false,
+        modelAffecting: true,
+        birthKind: 'model-change',
+      }
+    case 'Model Change Edited':
+      return { ...writeModel, disposition: 'EDITED' }
     case 'Proposal Edited':
       return { ...writeModel, disposition: 'EDITED' }
     case 'Proposal Kind Set':
       return { ...writeModel, modelAffecting: event.modelAffecting }
     case 'Proposal Accepted':
-      return { ...writeModel, disposition: 'ACCEPTED', buildingBlockId: event.buildingBlockId }
+      return {
+        ...writeModel,
+        disposition: 'ACCEPTED',
+        ...(event.buildingBlockId === undefined ? {} : { buildingBlockId: event.buildingBlockId }),
+      }
     case 'Proposal Rejected':
       return { ...writeModel, disposition: 'REJECTED' }
     case 'Proposal Held':

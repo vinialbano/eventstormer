@@ -10,8 +10,10 @@ import type { FacilitationContext } from '../../domain/read-models/facilitation.
  * measures generalisation, not memorisation).
  *
  * `buildTurnInput(context, segment)` is the changing part — the assembled
- * `facilitationContext` (itself built from `readBuildingBlocks`, not the op log —
- * T5b defers op-log-order caching) plus the new contribution.
+ * `facilitationContext` (itself built from `readBoardSnapshot`, not the op log)
+ * plus the new contribution. The board block list carries each placed event's
+ * `follows` / `causedBy` links and pivotal mark so the model can name an
+ * endpoint pair when it proposes a relation.
  */
 
 const FEW_SHOT = `
@@ -64,17 +66,44 @@ export const buildInstructions = (): string =>
     'THE MOVE MENU (nextMove.move): "ask" to pose a follow-up question (fill questionText),',
     '"acknowledge" to record the contribution and wait.',
     '',
+    'THE MODEL-CHANGE STRANDS. Beyond naming stickies you may propose changes to the model:',
+    '- propose-relation: when the contribution implies an order, a cause, a placement, or the',
+    '  removal of one. relationKind is sequence / insert-between / place / unplace / link-cause /',
+    '  unlink-cause. Name each endpoint by its EXACT current board label (see the building-blocks',
+    '  and timeline lists). If a label you need is not on the board, do not guess — omit the strand.',
+    '- propose-pivotal: only when the board already has a spine worth navigating (several placed',
+    '  events). Name the placed domain event to mark or unmark as a milestone.',
+    '- propose-reword: only when the model already has structure (relations or pivotal marks).',
+    '  Keep the person\'s own wording wherever it is usable; supply the exact current label and the',
+    '  new one.',
+    '',
     'THE OUTPUT CONTRACT. Return { interpretation, nextMove }. interpretation is 0–12',
     'independent strands read from the ONE contribution — any mix of propose-building-block,',
-    'flag-phase, attribute-to-other-format, and answer-question (when the contribution answers',
-    'an open question, by its id). Never more than 12 strands. A label is at most 200',
-    'characters. Do not emit v, author, or ids — those are supplied by the application.',
+    'flag-phase, attribute-to-other-format, answer-question (when the contribution answers',
+    'an open question, by its id), propose-relation, propose-pivotal, and propose-reword. Never',
+    'more than 12 strands. A label is at most 200 characters. Do not emit v, author, or ids —',
+    'those are supplied by the application.',
     '',
     FEW_SHOT,
   ].join('\n')
 
 const bulletList = (items: string[]): string =>
   items.length === 0 ? '(none)' : items.map((item) => `- ${item}`).join('\n')
+
+const blockLine = (block: FacilitationContext['buildingBlocks'][number]): string => {
+  const markers: string[] = []
+  if (block.placement === 'timeline') markers.push('on timeline')
+  if (block.placement === 'backlog') markers.push('in backlog')
+  if (block.pivotal === true) markers.push('pivotal')
+  if (block.followedBy !== undefined && block.followedBy.length > 0) {
+    markers.push(`then: ${block.followedBy.join(', ')}`)
+  }
+  if (block.causes !== undefined && block.causes.length > 0) {
+    markers.push(`causes: ${block.causes.join(', ')}`)
+  }
+  const suffix = markers.length === 0 ? '' : ` (${markers.join('; ')})`
+  return `${block.kind}: ${block.label}${suffix}`
+}
 
 export const buildTurnInput = (
   context: FacilitationContext,
@@ -85,7 +114,10 @@ export const buildTurnInput = (
     context.scopeStatement ?? '(not set yet)',
     '',
     '## Building blocks on the board so far',
-    bulletList(context.buildingBlocks.map((block) => `${block.kind}: ${block.label}`)),
+    bulletList(context.buildingBlocks.map(blockLine)),
+    '',
+    `## Timeline`,
+    `${String(context.timelineEventCount)} events on the timeline`,
     '',
     '## Prior sessions',
     context.priorSummaries.length === 0
