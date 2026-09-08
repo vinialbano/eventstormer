@@ -2,7 +2,7 @@
 
 **Date**: 2026-09-07
 **Spec**: `.specs/features/slice-5-artifacts-facilitator-tracks/spec.md`
-**Diff range**: `0c8a6b4..aca9775` (planning commit `2ffe038` + task/doc commits through the fix iteration, the issue re-scope, and the PR #91 review fix `aca9775`)
+**Diff range**: `0c8a6b4..HEAD` (planning commit `2ffe038` + task/doc commits through the fix iteration, the issue re-scope, the PR #91 review fix `aca9775`, the round-2 doc sweep `2b1cb83`, and the round-3 test/doc pass)
 **Verifier**: independent sub-agent (author ≠ verifier)
 **Mode**: Code + tests
 
@@ -75,7 +75,7 @@ Evidence-or-zero. `file:line` is the covering assertion. 44 requirement IDs.
 | FREL-04 assembled schema ≤24 optionals, no `z.unknown()`, no empty sub-schema — **and a live smoke check** | count == 5; live call | `turn-schema.test.ts:44` optional count, `:57` no empty `{}`; **live run `8de1dad` — PASS** (`research/research-aisdk.md` SLICE 5) | ✅ **PASS** — static assertions + a real `claude-sonnet-5` structured-output call that returned all three new strands. |
 | FREL-05 reject → model unchanged, `REJECTED` | — | `accept.test.ts:405` | ✅ |
 | FREL-06 unappliable accept → `APPLY_FAILED`, person told | cycle / no-edge | `accept.test.ts:420` planted cycle → `APPLY_FAILED` + `applyFailedReason:'cycle'`; `:439` insert-between no edge | ✅ |
-| FREL-07 effect already holds → no-op, `APPLIED` (AD-038) | `decide` → `ok([])` | `board/decide.test.ts` (duplicate sequence/link-cause, re-run insert-between, absent/already-gone unlink-cause → `ok([])`); `accept.test.ts:458` re-accept → APPLIED one edge, `:474` competing track, `:493` crash-window, `:508` insert-between converges, `:530` unlink-cause converges | ✅ (every facilitator-reachable kind — `insert-between` / `unlink-cause` added in `aca9775`) |
+| FREL-07 effect already holds → no-op, `APPLIED` (AD-038) | `decide` → `ok([])` | `board/decide.test.ts` (duplicate sequence/link-cause, re-run insert-between, absent/already-gone unlink-cause → `ok([])`); `accept.test.ts` re-accept → APPLIED one edge, competing track, and a crash-window enumeration over every relation / pivotal / reword kind (stuck-at-`ACCEPTED` → single `accept` → `APPLIED`, no second mutation) | ✅ (every facilitator-reachable kind — `insert-between` / `unlink-cause` added in `aca9775`; seam enumeration in the round-3 pass) |
 | FREL-08 prompt names strand + turn input carries topology | menu + `follows`/`causedBy`/pivotal | `prompt.test.ts` (strand names + guidance); `interpret.test.ts:728` topology rendered from `readBoardSnapshot` | ✅ |
 | Edge: two endpoints → same block → dropped (no self-edge) | — | `map.test.ts:238` | ✅ |
 | Edge: two tracks same pair → 2 Proposals, 2nd accept no-op APPLIED | — | `accept.test.ts:474` | ✅ |
@@ -133,7 +133,7 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 | 6 | `session-transcript.ts:88` | contributor `accepted` count skipped (`if (false)`) | ✅ Killed — `session-transcript.test.ts` contributor-count case |
 
 **Sensor depth**: lightweight (6 mutations, highest-risk new logic)
-**Result**: initial 5/6 killed → **6/6 after fix iteration 1** (`a15144b` SUM-09, `8e6b0ab` FREW-03 pin). Final gate `pnpm check` **1154** + `pnpm build` + `pnpm test:e2e` 6/6 all green (incl. the previously-flaky `capture-loop.spec.ts:117`); the count moved 1148 → 1153 in the post-verification fix `aca9775` (B1 + W1 tests), then → 1154 with the review doc-sweep pass (one `map.test.ts` id-space case).
+**Result**: initial 5/6 killed → **6/6 after fix iteration 1** (`a15144b` SUM-09, `8e6b0ab` FREW-03 pin). Final gate `pnpm check` **1160** + `pnpm build` + `pnpm test:e2e` 6/6 all green (incl. the previously-flaky `capture-loop.spec.ts:117`); the count moved 1148 → 1153 in the post-verification fix `aca9775` (B1 + W1 tests), → 1154 with the round-2 doc-sweep (one `map.test.ts` id-space case), → 1160 in the round-3 test pass (the `accept.test.ts` crash-window enumeration replaces 3 weak tests with 9).
 
 ---
 
@@ -185,14 +185,14 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
    pins `disposition` + shape, not the human phrasing. The chosen deterministic formats
    (`"<relationKind>: <labels joined by →>"` etc.) are reasonable. Spec-precision gap only.
 
-5. **T26 live structured-output smoke — PENDING** — **WARN / GAP against FREL-04 AC 2.** The
-   assembled 11-member `FacilitationTurnSchema` has **not** been sent to the real Anthropic
-   structured-output endpoint. `turn-schema.test.ts` proves optional-count == 5 and no empty
-   sub-schema; the `anthropic-contract` compile sensor is unaffected (no `Operation` union
-   change). That covers the *static* limits AD-015 is about, but AD-015's spike showed the
-   provider also rejects on total property count / nesting — only a live call proves the whole
-   assembled schema is accepted. **Must be a blocking manual step in the maintainer handoff
-   before the real facilitator is pointed at these strands.**
+5. **T26 live structured-output smoke — RAN 2026-09-07 (`8de1dad`, `claude-sonnet-5`): PASS.**
+   Flagged PENDING at the original verification: `turn-schema.test.ts` proves optional-count == 5
+   and no empty sub-schema, and the `anthropic-contract` compile sensor is unaffected (no
+   `Operation` union change), but those are only the *static* limits AD-015 is about — the spike
+   showed the provider also rejects on total property count / nesting, so a live call was still
+   owed. It was run in fix iteration 1: `pnpm smoke:facilitation-schema` sent the assembled
+   11-member schema to the real endpoint, no HTTP 400, and the model produced all three new
+   strands. `research/research-aisdk.md` "SLICE 5" records the live result. AC 2 is met.
 
 6. **500 body `{ error: '<artifact>-render-failed' }`, 404 shapes, "no `await` between reads"
    asserted structurally** — **NOTE.** Spec pins status codes; bodies + the synchronous-read
@@ -236,13 +236,13 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 ## Gate Check
 
 - **Gate command**: `pnpm check && pnpm build && pnpm test:e2e`
-- **`pnpm check`**: ✅ 1154 passed / 133 files / 0 failed / 0 skipped; typecheck, lint, depcruise (358 modules, 0 violations), knip all green (initial verification run 1146; +2 in fix iteration 1 — `a15144b` SUM-09 equal-rank fixture, `8e6b0ab` FREW-03 pin; +5 in the post-verification fix `aca9775` — B1 `decide.test.ts` / `accept.test.ts` convergence cases + W1 `map.test.ts` order-independent reword; +1 in the review doc-sweep — `map.test.ts` dropped-relation id-space case)
+- **`pnpm check`**: ✅ 1160 passed / 133 files / 0 failed / 0 skipped; typecheck, lint, depcruise (358 modules, 0 violations), knip all green (initial verification run 1146; +2 in fix iteration 1 — `a15144b` SUM-09 equal-rank fixture, `8e6b0ab` FREW-03 pin; +5 in the post-verification fix `aca9775` — B1 `decide.test.ts` / `accept.test.ts` convergence cases + W1 `map.test.ts` order-independent reword; +1 in the round-2 doc-sweep — `map.test.ts` dropped-relation id-space case; +6 net in the round-3 pass — `accept.test.ts` crash-window enumeration, +9 −3)
 - **`pnpm build`**: ✅ built (`dist/` produced; only the pre-existing chunk-size advisory)
 - **`pnpm test:e2e`**: ✅ **6 passed** on a clean run (`capture-loop` ×4, `capture-loop-no-optimism`, `artifacts-and-relations`)
   - The `hot spots and close … ceremony` spec (`capture-loop.spec.ts:117`) failed twice under heavy parallel machine load (multiple concurrent Playwright/Vite instances during verification), then **passed cleanly** once load cleared. **The identical failure reproduces on the pre-feature baseline `0c8a6b4`** — it is a pre-existing timing-sensitive flake, not a slice-5 regression. CI is the authority.
 - **Test count before feature**: 986
-- **Test count after feature**: 1154
-- **Delta**: **+168** new tests
+- **Test count after feature**: 1160
+- **Delta**: **+174** new tests
 - **Skipped**: none
 - **Failures**: none on a clean run
 
@@ -324,8 +324,8 @@ Scratch method: per-file `cp` backup, mutate, run covering tests, restore. Real 
 ## Post-verification fix (`aca9775`) — PR #91 review
 
 Round-1 automated review of PR #91 found one BLOCK and one WARN that the Verifier's discrimination
-sensor had missed; both were fixed on the branch and re-gated green (`pnpm check` 1148 → 1153;
-→ 1154 after the subsequent review doc-sweep pass).
+sensor had missed; both were fixed on the branch and re-gated green (`pnpm check` 1148 → 1153; → 1154 after the
+round-2 doc-sweep; → 1160 after the round-3 test pass).
 
 - **B1 (BLOCK) — `insert-between` / `unlink-cause` facilitator proposals never converged to
   `APPLIED` after a retry.** The AD-038 "effect already holds → `ok([])`" branch was added to five
@@ -338,8 +338,10 @@ sensor had missed; both were fixed on the branch and re-gated green (`pnpm check
   `decideUnlinkCause` returns `ok([])` on an absent link (first-attempt "no such link" and
   "already unlinked" are indistinguishable from the write model — accepted). `unsequence` /
   `unannotate` keep a genuine `missing-edge` (not proposal-reachable). New coverage:
-  `board/decide.test.ts` (re-run insert-between, absent + already-gone unlink-cause → `ok([])`)
-  and `accept.test.ts:508` / `:530` (both kinds converge to `APPLIED` on re-accept after apply).
+  `board/decide.test.ts` (re-run insert-between, absent + already-gone unlink-cause → `ok([])`).
+  The seam-level convergence tests added alongside `aca9775` were later found to pass for the
+  wrong reason (a double `accept` reaches `APPLIED` on the first call; the second is a route
+  no-op) — replaced in round 3, see below.
 
 - **W1 (WARN) — same-turn reword was order-dependent.** `labelsProposedThisTurn` was built
   incrementally during the `flatMap`, so a `propose-reword` track emitted before its sibling
@@ -353,6 +355,31 @@ a follow-up.
 
 ---
 
+## Post-verification fix (round 3) — PR #91 review
+
+Round-2 review left three doc WARNs and one testing gap. The doc WARNs (stale gate count, diff
+range, live-smoke and issue-rescope bullets still in the future tense) are reconciled in this
+file and `STATE.md`. The testing gap:
+
+- **The `aca9775` seam-level convergence tests did not reproduce the crash window.** They ran
+  `accept()` twice; the first call reaches `APPLIED` and the route short-circuits the second, so
+  the stuck-at-`ACCEPTED` state B1 needs was never simulated — reverting the `decideInsertBetween`
+  / `decideUnlinkCause` fix left them green. **Fix** — `accept.test.ts` now carries a
+  crash-window enumeration keyed on the `Intent` schema union: for every kind the facilitator can
+  propose (six relation, two pivotal, `reword`), it seeds the effect onto the board plus a lone
+  `Proposal Accepted` event, then a single `accept` must converge to `APPLIED` with no second
+  board mutation. A new `relationKind` / `pivotalKind` fails to typecheck until it declares its
+  fixture. Verified to fail on the reverted B1 fix. Replaces the three `sequence`-only /
+  double-`accept` tests. (Lessons L-016, L-017.)
+
+The `place` / `unplace` / `reword` deciders read the slim `BoardWriteModel`, which carries no
+placement or label, so they cannot short-circuit an already-satisfied effect to `ok([])` — they
+converge by a benign redundant re-apply instead. The enumeration pins that. A separate latent
+edge (target withdrawn *during* the crash window → `withdrawn-target` flips an applied proposal
+to `APPLY_FAILED`) needs a `BoardWriteModel` widen decision and is tracked for Slice 6 / #92.
+
+---
+
 ## Summary
 
 **Overall**: ✅ **Ready to merge.**
@@ -362,9 +389,11 @@ PR #91 review fix `aca9775`. One shipped-behaviour defect (B1 — `insert-betwee
 retries not converging to `APPLIED`) was found in PR #91 review and fixed in `aca9775`; see the
 Post-verification fix section.
 **Sensor**: **6/6 mutations killed** (SUM-09 survivor closed by `a15144b`); B1 was a gap the
-lightweight 6-mutation sensor did not probe (all convergence fixtures used `relationKind:
-'sequence'`) — now covered by dedicated `insert-between` / `unlink-cause` cases.
-**Gate**: `pnpm check` 1154 passed (+168), `pnpm build` green, `pnpm test:e2e` 6 passed on a
+lightweight 6-mutation sensor did not probe — now closed at both layers (per-kind `decide` unit
+tests + the `accept.test.ts` crash-window enumeration, verified to fail on the reverted fix).
+the pre-fix convergence fixtures had all used `relationKind: 'sequence'`, the one kind whose
+re-apply is naturally idempotent.
+**Gate**: `pnpm check` 1160 passed (+174), `pnpm build` green, `pnpm test:e2e` 6 passed on a
 clean run (the earlier `capture-loop.spec.ts:117` flake reproduces on the pre-feature baseline
 `0c8a6b4` — pre-existing timing sensitivity, not a slice-5 regression).
 

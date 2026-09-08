@@ -3,7 +3,7 @@ import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore, StreamKey } from '~/plumbing/event-store/port.ts'
 import type { BuildingBlockId, ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { readBoardSnapshot, readBuildingBlocks } from '../../../domain-model-capture/api.ts'
-import { ProposalEvent } from '../../domain/schema/events.ts'
+import { type Intent as SchemaIntent, ProposalEvent } from '../../domain/schema/events.ts'
 import { proposalStream, sessionStream, workshopStream } from '../../infrastructure/streams.ts'
 import { reviewProposalRoutes } from './http.ts'
 
@@ -490,58 +490,158 @@ describe('POST /proposals/:id/accept — model-change proposals', () => {
     expect(proposalTypes('p_2')).toEqual(['Model Change Proposed', 'Proposal Accepted', 'Operation Applied'])
   })
 
-  it('recovers the crash window: edge on the board, outcome commit lost, re-accept → APPLIED', async () => {
-    seedBoardBlock('bb_a', 'A')
-    seedBoardBlock('bb_b', 'B')
-    seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author })
-    seedModelChange(
-      'p_cw',
-      { kind: 'relation', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
-      [{ v: 1, at, type: 'Proposal Accepted', proposalId: 'p_cw' as ProposalId, accepter: 'Dana' }],
-    )
+  // Crash-window convergence. For every operation kind the facilitator can
+  // propose, an accept that finds the effect *already on the board* — the window
+  // where the board append committed but the outcome append was lost, so the
+  // proposal is stuck at ACCEPTED — must converge to APPLIED, never a spurious
+  // APPLY_FAILED, and never a second board mutation. The relation / pivotal
+  // tables are keyed on the `Intent` schema union: a new relationKind /
+  // pivotalKind fails to typecheck here until it declares its already-satisfied
+  // fixture, so a hand-written decider convergence branch can no longer be
+  // silently missed for one kind.
+  interface CrashCase {
+    seed: () => void
+    intent: Intent
+    assert: () => void
+  }
+  type RelationKind = Extract<SchemaIntent, { kind: 'relation' }>['relationKind']
+  type PivotalKind = Extract<SchemaIntent, { kind: 'pivotal' }>['pivotalKind']
 
-    const body = (await (await accept('p_cw')).json()) as { proposal: { disposition: string } }
-    expect(body.proposal.disposition).toBe('APPLIED')
-    expect(follows()).toHaveLength(1)
-  })
+  const relationCrashCases: Record<RelationKind, CrashCase> = {
+    sequence: {
+      seed: () => {
+        seedBoardBlock('bb_a', 'A')
+        seedBoardBlock('bb_b', 'B')
+        seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author })
+      },
+      intent: { kind: 'relation', relationKind: 'sequence', predecessor: 'bb_a', successor: 'bb_b' },
+      assert: () => {
+        expect(follows()).toEqual([{ predecessor: 'bb_a', successor: 'bb_b' }])
+      },
+    },
+    'insert-between': {
+      seed: () => {
+        seedBoardBlock('bb_a', 'A')
+        seedBoardBlock('bb_b', 'B')
+        seedBoardBlock('bb_c', 'C')
+        seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_c', author })
+        seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_c', successor: 'bb_b', author })
+      },
+      intent: {
+        kind: 'relation',
+        relationKind: 'insert-between',
+        predecessor: 'bb_a',
+        inserted: 'bb_c',
+        successor: 'bb_b',
+      },
+      assert: () => {
+        expect(follows()).toEqual([
+          { predecessor: 'bb_a', successor: 'bb_c' },
+          { predecessor: 'bb_c', successor: 'bb_b' },
+        ])
+      },
+    },
+    place: {
+      seed: () => {
+        seedBoardBlock('bb_a', 'A')
+        seedBoardOp({ v: 1, kind: 'place', target: 'bb_a', author })
+      },
+      intent: { kind: 'relation', relationKind: 'place', target: 'bb_a' },
+      assert: () => {
+        expect(blockById('bb_a')?.placement).toBe('timeline')
+      },
+    },
+    unplace: {
+      seed: () => {
+        seedBoardBlock('bb_a', 'A')
+      },
+      intent: { kind: 'relation', relationKind: 'unplace', target: 'bb_a' },
+      assert: () => {
+        expect(blockById('bb_a')?.placement).toBe('backlog')
+      },
+    },
+    'link-cause': {
+      seed: () => {
+        seedBoardActor('bb_x', 'Clerk')
+        seedBoardBlock('bb_e', 'Loan recorded')
+        seedBoardOp({ v: 1, kind: 'link-cause', cause: 'bb_x', effect: 'bb_e', author })
+      },
+      intent: { kind: 'relation', relationKind: 'link-cause', cause: 'bb_x', effect: 'bb_e' },
+      assert: () => {
+        expect(readBoardSnapshot(deps(), workshopId).causedBy).toEqual([
+          { cause: 'bb_x', effect: 'bb_e' },
+        ])
+      },
+    },
+    'unlink-cause': {
+      seed: () => {
+        seedBoardActor('bb_x', 'Clerk')
+        seedBoardBlock('bb_e', 'Loan recorded')
+      },
+      intent: { kind: 'relation', relationKind: 'unlink-cause', cause: 'bb_x', effect: 'bb_e' },
+      assert: () => {
+        expect(readBoardSnapshot(deps(), workshopId).causedBy).toEqual([])
+      },
+    },
+  }
 
-  it('converges an insert-between model change to APPLIED on re-accept after it applied', async () => {
-    seedBoardBlock('bb_a', 'A')
-    seedBoardBlock('bb_b', 'B')
-    seedBoardBlock('bb_c', 'C')
-    seedBoardOp({ v: 1, kind: 'sequence', predecessor: 'bb_a', successor: 'bb_b', author })
-    seedModelChange('p_ib', {
-      kind: 'relation',
-      relationKind: 'insert-between',
-      predecessor: 'bb_a',
-      inserted: 'bb_c',
-      successor: 'bb_b',
-    })
+  const pivotalCrashCases: Record<PivotalKind, CrashCase> = {
+    'mark-pivotal': {
+      seed: () => {
+        seedBoardBlock('bb_p', 'Milestone')
+        seedBoardOp({ v: 1, kind: 'mark-pivotal', target: 'bb_p', author })
+      },
+      intent: { kind: 'pivotal', pivotalKind: 'mark-pivotal', target: 'bb_p' },
+      assert: () => {
+        expect(blockById('bb_p')?.pivotal).toBe(true)
+      },
+    },
+    'unmark-pivotal': {
+      seed: () => {
+        seedBoardBlock('bb_p', 'Milestone')
+      },
+      intent: { kind: 'pivotal', pivotalKind: 'unmark-pivotal', target: 'bb_p' },
+      assert: () => {
+        expect(blockById('bb_p')?.pivotal).toBe(false)
+      },
+    },
+  }
 
-    await accept('p_ib')
-    const body = (await (await accept('p_ib')).json()) as { proposal: { disposition: string } }
-    expect(body.proposal.disposition).toBe('APPLIED')
-    expect(follows()).toEqual([
-      { predecessor: 'bb_a', successor: 'bb_c' },
-      { predecessor: 'bb_c', successor: 'bb_b' },
-    ])
-  })
+  const rewordCrashCase: CrashCase = {
+    seed: () => {
+      seedBoardBlock('bb_r', 'Renamed')
+    },
+    intent: { kind: 'reword', target: 'bb_r', newLabel: 'Renamed' },
+    assert: () => {
+      expect(blockById('bb_r')?.label).toBe('Renamed')
+    },
+  }
 
-  it('converges an unlink-cause model change to APPLIED on re-accept after it applied', async () => {
-    seedBoardActor('bb_x', 'Clerk')
-    seedBoardBlock('bb_e', 'Loan recorded')
-    seedBoardOp({ v: 1, kind: 'link-cause', cause: 'bb_x', effect: 'bb_e', author })
-    seedModelChange('p_ul', {
-      kind: 'relation',
-      relationKind: 'unlink-cause',
-      cause: 'bb_x',
-      effect: 'bb_e',
-    })
+  const crashCases: [string, CrashCase][] = [
+    ...Object.entries(relationCrashCases),
+    ...Object.entries(pivotalCrashCases),
+    ['reword', rewordCrashCase],
+  ]
 
-    await accept('p_ul')
-    const body = (await (await accept('p_ul')).json()) as { proposal: { disposition: string } }
-    expect(body.proposal.disposition).toBe('APPLIED')
-  })
+  it.each(crashCases)(
+    'converges a %s model change stuck at ACCEPTED to APPLIED, with no second board mutation',
+    async (kind, { seed, intent, assert }) => {
+      seed()
+      const id = `p_cw_${kind}`
+      seedModelChange(id, intent, [
+        { v: 1, at, type: 'Proposal Accepted', proposalId: id as ProposalId, accepter: 'Dana' },
+      ])
+
+      const body = (await (await accept(id)).json()) as { proposal: { disposition: string } }
+      expect(body.proposal.disposition).toBe('APPLIED')
+      assert()
+      expect(proposalTypes(id)).toEqual([
+        'Model Change Proposed',
+        'Proposal Accepted',
+        'Operation Applied',
+      ])
+    },
+  )
 
   it('rejects a late model-change accept onto a closed session, leaving it re-lapsable', async () => {
     seedBoardBlock('bb_a', 'A')

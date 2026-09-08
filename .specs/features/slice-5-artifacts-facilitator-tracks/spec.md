@@ -434,7 +434,7 @@ card present); same-contribution carve-out test; `hasModelStructure` unit test.
 | FREL-04 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified (live schema smoke PASS in fix iteration 1 — see validation.md / research-aisdk.md) |
 | FREL-05 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
 | FREL-06 |  P1: Facilitator proposes relation operations |  Design | ✅ Verified |
-| FREL-07 |  P1: Facilitator proposes relation operations (already-satisfied → APPLIED) |  Design | ✅ Verified |
+| FREL-07 |  P1: Facilitator proposes relation operations (already-satisfied → APPLIED) |  Design | ✅ Verified — `insert-between` / `unlink-cause` closed in `aca9775` (PR #91 B1); a crash-window enumeration over every facilitator-proposable kind added in the PR #91 round-3 pass (see validation.md) |
 | FREL-08 |  P1: Facilitator proposes relation operations (prompt strand + board topology) |  Design | ✅ Verified |
 | FPIV-01 |  P1: Facilitator proposes pivotal marks |  Design | ✅ Verified |
 | FPIV-02 |  P1: Facilitator proposes pivotal marks (below-threshold → heldBack) |  Design | ✅ Verified |

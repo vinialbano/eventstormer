@@ -116,6 +116,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: PR#91 B1 (sensor-design)
 - last seen: 2026-09-08T01:06:46Z
 
+### L-018 — A convergence test that calls the handler twice proves nothing when the first call already reaches the terminal state and the second short-circuits at the route guard — reproduce the partial-failure state explicitly (seed the stuck intermediate events, then ONE call) or the test passes with the fix reverted.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `src/session-facilitation/capabilities/review-proposal` · harmful: 0
+- features: slice-5-artifacts-facilitator-tracks
+- evidence: accept.test.ts crash-window convergence tests (aca9775) (src/session-facilitation/capabilities/review-proposal)
+- last seen: 2026-09-08T02:00:58Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
