@@ -819,5 +819,15 @@ Approved — In Progress. Branch `slice-5b-facilitator-eval-demo-seed` (planning
   README "Not built" bullets (Slice 5 eval suite / remaining eval cases) are now stale — left for
   the slice wrap / T18, outside T17's stated scope.
 - **Batch C T18** — pending (HITL live eval run).
-- **Batch D (T19–T21)** — pending.
+- **Batch D (T19–T21) ✅ 2026-09-09** — `c1f3b4a` T19 · `77bc177` T20 · `1bfa04e` T21. `pnpm
+  check` 1228 tests (+8) + `pnpm build` + `pnpm test:e2e` 6/6 green. AD-039 added to STATE.md
+  (T19). `.changeset/slice-5b-facilitator-eval-demo-seed.md` (`minor`). Notes: T19's
+  `scripts/seed/facilitator.test.ts` runs under `pnpm test` via a one-line `domain` Vitest
+  project glob extension (`scripts/**/*.test.ts`) — the project comment already invites a broad
+  glob. `src/host/seed.ts` builds stream keys as inline literals (never imports a context's
+  `infrastructure/streams.ts` — `host-imports-only-context-api`) and does raw
+  `DELETE FROM operation_log` on `config.db` for the `--force` wipe (a dev-tool concern, kept in
+  the one file). Pinned seed board: 11 domain events, 1 hot spot, 2 `follows` edges. Manual
+  `pnpm seed` smoke on a throwaway `EVENTSTORMER_DB`: seed exit 0 → re-run exit 1 (names
+  `--force`) → `--force` exit 0 with a fresh id.
 - **Verifier** — after Batch D.
