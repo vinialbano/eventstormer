@@ -167,6 +167,26 @@ const decideRecordRejected = (
   ])
 }
 
+const decideRecordSuperseded = (
+  writeModel: ProposalWriteModel,
+  command: CommandOf<'Record Model Change Superseded'>,
+): Decision => {
+  // Marker already folded, or the reword has not applied yet — nothing to
+  // record. Not an error: the sweep re-evaluates every tick.
+  if (writeModel.superseded === true) return ok([])
+  if (writeModel.disposition !== 'APPLIED') return ok([])
+  return ok([
+    {
+      v: 1,
+      type: 'Model Change Superseded',
+      proposalId: command.proposalId,
+      target: command.target,
+      supersededByLabel: command.supersededByLabel,
+      at: command.at,
+    },
+  ])
+}
+
 const decideLapse = (writeModel: ProposalWriteModel, command: CommandOf<'Lapse Proposal'>): Decision => {
   // Terminal or in-flight (`ACCEPTED`) — left to finish; nothing to lapse.
   if (TERMINAL.has(writeModel.disposition) || writeModel.disposition === 'ACCEPTED') return ok([])
@@ -208,6 +228,8 @@ export const decide = (
       return decideRecordApplied(writeModel, command)
     case 'Record Operation Rejected':
       return decideRecordRejected(writeModel, command)
+    case 'Record Model Change Superseded':
+      return decideRecordSuperseded(writeModel, command)
     case 'Lapse Proposal':
       return decideLapse(writeModel, command)
   }

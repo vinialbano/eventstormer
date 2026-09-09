@@ -375,3 +375,61 @@ describe('Proposal.decide — Set Proposal Kind', () => {
     ).toBe(false)
   })
 })
+
+describe('Proposal.decide — a superseding reword is recorded without leaving APPLIED', () => {
+  const rewordBirth: ProposalEvent = {
+    v: 1,
+    at,
+    type: 'Model Change Proposed',
+    proposalId,
+    sessionId: 's_1' as SessionId,
+    contributionId: 'c_1' as ContributionId,
+    intent: { kind: 'reword', target: bb, newLabel: 'order goes in' },
+  }
+  const acceptedNoBlock: ProposalEvent = { v: 1, at, type: 'Proposal Accepted', proposalId, accepter: 'Dana' }
+  const opApplied: ProposalEvent = { v: 1, at, type: 'Operation Applied', proposalId, resultingBuildingBlockId: bb }
+  const appliedStream = [rewordBirth, acceptedNoBlock, opApplied]
+  const recordSuperseded = {
+    type: 'Record Model Change Superseded',
+    proposalId,
+    target: bb,
+    supersededByLabel: 'order placed',
+    at,
+  } as const
+  const supersededEvent: ProposalEvent = {
+    v: 1,
+    at,
+    type: 'Model Change Superseded',
+    proposalId,
+    target: bb,
+    supersededByLabel: 'order placed',
+  }
+
+  it('Given(applied reword) When(Record Model Change Superseded) Then(Model Change Superseded)', () => {
+    const result = decide(replay(appliedStream), recordSuperseded)
+    expect(isOk(result) && result.value).toEqual([supersededEvent])
+  })
+
+  it('a second Record Model Change Superseded is an idempotent no-op', () => {
+    const result = decide(replay([...appliedStream, supersededEvent]), recordSuperseded)
+    expect(isOk(result) && result.value).toEqual([])
+  })
+
+  it('Record Model Change Superseded before the reword applied returns [] — not an error', () => {
+    const result = decide(replay([rewordBirth, acceptedNoBlock]), recordSuperseded)
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value).toEqual([])
+  })
+
+  it('replay of a stream ending Model Change Superseded stays APPLIED and is superseded', () => {
+    expect(replay([...appliedStream, supersededEvent])).toEqual({
+      born: true,
+      disposition: 'APPLIED',
+      held: false,
+      modelAffecting: true,
+      birthKind: 'model-change',
+      superseded: true,
+      supersededByLabel: 'order placed',
+    })
+  })
+})

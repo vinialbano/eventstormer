@@ -44,5 +44,7 @@ export const evolve = (writeModel: ProposalWriteModel, event: ProposalEvent): Pr
       return { ...writeModel, disposition: 'APPLY_FAILED' }
     case 'Proposal Lapsed':
       return { ...writeModel, disposition: 'LAPSED' }
+    case 'Model Change Superseded':
+      return { ...writeModel, superseded: true, supersededByLabel: event.supersededByLabel }
   }
 }
