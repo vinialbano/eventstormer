@@ -1,0 +1,11 @@
+{
+  "id": "deeper-format",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "contribution": {
+    "speaker": "Sam",
+    "body": "Whenever there's an allergy on the ticket, expo has to check every plate against it before anything leaves the pass."
+  },
+  "expect": {
+    "attributesToFormat": "policy"
+  }
+}

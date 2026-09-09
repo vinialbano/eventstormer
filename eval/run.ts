@@ -22,7 +22,19 @@ import { formatEvalTable, spliceEvalResults } from './report.ts'
 
 const RUNS = 5
 const DATA_DIRECTORY = 'eval-runs'
-const FIXTURE_FILES = ['kind.json', 'past-tense.json', 'near-miss.json', 'kept-phrasing.json'] as const
+const FIXTURE_FILES = [
+  'kind.json',
+  'past-tense.json',
+  'near-miss.json',
+  'kept-phrasing.json',
+  'phase-flagged.json',
+  'deeper-format.json',
+  'relation.json',
+  'pivotal.json',
+  'reword.json',
+  'integration-relation.json',
+  'integration-pivotal.json',
+] as const
 
 const BLOCK_KINDS = new Set(['domain-event', 'actor', 'system'])
 const RELATION_KINDS = new Set<string>(InterpretedRelationKind.options)

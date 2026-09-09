@@ -1,0 +1,12 @@
+{
+  "id": "reword",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "priorBlocks": ["Order goes in", "Kitchen started cooking", "Food delivered to the table"],
+  "contribution": {
+    "speaker": "Sam",
+    "body": "And that step I called \"order goes in\" — actually, call it \"order placed.\" That's clearer."
+  },
+  "expect": {
+    "reword": { "from": "order goes in", "to": "order placed" }
+  }
+}

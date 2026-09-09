@@ -1,0 +1,13 @@
+{
+  "id": "integration-pivotal",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "priorBlocks": ["Order placed", "Food delivered to the table", "Table cleared"],
+  "contribution": {
+    "speaker": "Sam",
+    "body": "Then the guest got their check — and, honestly, \"check dropped\" is the real end of this, not \"table cleared.\""
+  },
+  "expect": {
+    "kind": "domain-event",
+    "reword": { "from": "table cleared", "to": "check dropped" }
+  }
+}

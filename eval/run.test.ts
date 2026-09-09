@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { FacilitationTrack } from '~/session-facilitation/infrastructure/facilitator/turn-schema.ts'
 import {
   F11_ASSERTIONS,
+  loadFixtures,
   parseFixtureFile,
   priorBuildingBlocks,
   scoreFixture,
@@ -186,13 +187,17 @@ describe('priorBuildingBlocks', () => {
   })
 
   it('is empty when the fixture declares no priorBlocks', () => {
-    expect(priorBuildingBlocks({ priorBlocks: undefined } as EvalFixture)).toEqual([])
+    expect(priorBuildingBlocks(fixture())).toEqual([])
   })
 })
 
 describe('uncoveredF11Assertions', () => {
   it('reports every F11 assertion missing from an empty fixture set', () => {
     expect(uncoveredF11Assertions([])).toEqual([...F11_ASSERTIONS])
+  })
+
+  it('is empty for the committed fixture set — every F11 assertion has at least one fixture', () => {
+    expect(uncoveredF11Assertions(loadFixtures())).toEqual([])
   })
 
   it('is empty when the fixture set declares every F11 assertion', () => {
