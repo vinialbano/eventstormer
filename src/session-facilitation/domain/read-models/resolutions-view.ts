@@ -17,6 +17,10 @@ interface ResolutionCard {
   disposition: ResolutionDisposition
   /** The bounce reason when the resolution `LAPSED` on an apply rejection. */
   lapsedReason?: string
+  /** A later resolution's reference is what the board carries; this one applied
+   * against text that never landed. Disposition stays `APPLIED`. */
+  superseded?: boolean
+  supersededByReference?: string
 }
 
 const birthOf = (
@@ -41,6 +45,14 @@ export const resolutionCard = (events: ResolutionEvent[]): ResolutionCard | unde
     reference: writeModel.reference ?? birth.reference,
     disposition: writeModel.disposition,
     ...(bounced?.type === 'Hot Spot Resolution Rejected' ? { lapsedReason: bounced.reason } : {}),
+    ...(writeModel.superseded === true
+      ? {
+          superseded: true,
+          ...(writeModel.supersededByReference === undefined
+            ? {}
+            : { supersededByReference: writeModel.supersededByReference }),
+        }
+      : {}),
   }
 }
 

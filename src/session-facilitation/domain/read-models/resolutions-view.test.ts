@@ -79,6 +79,28 @@ describe('resolutionCard', () => {
       lapsedReason: 'already-resolved',
     })
   })
+
+  it('carries superseded + the winning reference for a stream ending Resolution Superseded', () => {
+    const superseded: ResolutionEvent = {
+      v: 1,
+      at,
+      type: 'Resolution Superseded',
+      resolutionId,
+      hotSpotId,
+      supersededByReference: 'the front-of-house lead owns this',
+    }
+    expect(cardOf([proposed, accepted, superseded])).toMatchObject({
+      disposition: 'APPLIED',
+      superseded: true,
+      supersededByReference: 'the front-of-house lead owns this',
+    })
+  })
+
+  it('omits superseded on a plainly-applied resolution', () => {
+    const card = cardOf([proposed, accepted, resolved])
+    expect(card).not.toHaveProperty('superseded')
+    expect(card).not.toHaveProperty('supersededByReference')
+  })
 })
 
 describe('sessionResolutionIds', () => {
