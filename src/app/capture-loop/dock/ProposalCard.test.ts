@@ -118,6 +118,87 @@ describe('ProposalCard', () => {
     expect(wrapper.text()).toContain('This name is not in what you said — check it before you add it.')
   })
 
+  const intentBase = { kindLabel: 'RELATION', accepter: 'Maria' } as const
+
+  it('renders a relation proposal as summary + pill + Accept / Not this', () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        disposition: 'PROPOSED',
+        intent: { kind: 'relation', summary: 'sequence: Order placed → Order cooked' },
+      },
+    })
+    expect(wrapper.get('.pc__pill').text()).toBe('RELATION')
+    expect(wrapper.get('.pc__label').text()).toBe('sequence: Order placed → Order cooked')
+    expect(wrapper.findAll('button').map((button) => button.text())).toEqual(['Accept', 'Not this'])
+  })
+
+  it('renders a pivotal proposal', () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        kindLabel: 'PIVOTAL',
+        disposition: 'PROPOSED',
+        intent: { kind: 'pivotal', summary: 'mark-pivotal: Food delivered' },
+      },
+    })
+    expect(wrapper.get('.pc__pill').text()).toBe('PIVOTAL')
+    expect(wrapper.get('.pc__label').text()).toBe('mark-pivotal: Food delivered')
+    expect(wrapper.get('.btn--primary').text()).toBe('Accept')
+  })
+
+  it('renders a reword proposal', () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        kindLabel: 'REWORD',
+        disposition: 'PROPOSED',
+        intent: { kind: 'reword', summary: 'reword: Order goes in → Order placed', newLabel: 'Order placed' },
+      },
+    })
+    expect(wrapper.get('.pc__pill').text()).toBe('REWORD')
+    expect(wrapper.get('.pc__label').text()).toBe('reword: Order goes in → Order placed')
+  })
+
+  it('renders every disposition of a model-change card without error', () => {
+    for (const disposition of [
+      'PROPOSED',
+      'EDITED',
+      'ACCEPTED',
+      'APPLIED',
+      'APPLY_FAILED',
+      'REJECTED',
+      'LAPSED',
+    ] as const) {
+      const wrapper = mount(ProposalCard, {
+        props: {
+          ...intentBase,
+          disposition,
+          held: disposition === 'PROPOSED',
+          intent: { kind: 'relation', summary: 'sequence: A → B' },
+        },
+      })
+      expect(wrapper.html()).not.toBe('')
+    }
+  })
+
+  it('renders nothing for a card with neither a label nor an intent', () => {
+    const wrapper = mount(ProposalCard, { props: { kindLabel: '', disposition: 'PROPOSED' } })
+    expect(wrapper.find('.pc').exists()).toBe(false)
+    expect(wrapper.findAll('button')).toHaveLength(0)
+  })
+
+  it('collapses a model-change card to a receipt showing its summary once APPLIED', () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        disposition: 'APPLIED',
+        intent: { kind: 'relation', summary: 'sequence: Order placed → Order cooked' },
+      },
+    })
+    expect(wrapper.get('[role="status"]').text()).toContain('sequence: Order placed → Order cooked')
+  })
+
   it('edits inline and emits the trimmed new label', async () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'PROPOSED' } })
     const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
