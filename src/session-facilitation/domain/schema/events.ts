@@ -357,6 +357,21 @@ const ProposalLapsed = z.object({
   cause: z.enum(['undisposed', 'apply-failed']),
 })
 
+/**
+ * A `reword` model-change proposal that applied, then a later `reword` on the
+ * same target applied a different label. Recorded on the earlier (losing)
+ * proposal's stream by the reconciliation sweep. `supersededByLabel` is the
+ * winning label as a recorded value, not a live pointer. Disposition stays
+ * `APPLIED` — this is an outcome fact, not a transition.
+ */
+const ModelChangeSuperseded = z.object({
+  ...base,
+  type: z.literal('Model Change Superseded'),
+  proposalId: ProposalId,
+  target: BuildingBlockId,
+  supersededByLabel: z.string().min(1),
+})
+
 export const ProposalEvent = z.discriminatedUnion('type', [
   BuildingBlockProposed,
   ModelChangeProposed,
@@ -370,6 +385,7 @@ export const ProposalEvent = z.discriminatedUnion('type', [
   OperationApplied,
   OperationRejected,
   ProposalLapsed,
+  ModelChangeSuperseded,
 ])
 export type ProposalEvent = z.infer<typeof ProposalEvent>
 
@@ -426,6 +442,21 @@ const HotSpotResolutionRejected = z.object({
   reason: z.string().min(1),
 })
 
+/**
+ * A second `Resolution` accepted onto a hot spot the first already resolved with
+ * a different reference. Recorded inline by the losing (second) handler on its
+ * own stream, in place of `Hot Spot Resolved`. `supersededByReference` is the
+ * winning reference as a recorded value, not a live pointer. Disposition stays
+ * `APPLIED` — an outcome fact, not a transition.
+ */
+const ResolutionSuperseded = z.object({
+  ...base,
+  type: z.literal('Resolution Superseded'),
+  resolutionId: ResolutionId,
+  hotSpotId: BuildingBlockId,
+  supersededByReference: ResolutionReference,
+})
+
 export const ResolutionEvent = z.discriminatedUnion('type', [
   ResolutionProposed,
   ResolutionEdited,
@@ -434,5 +465,6 @@ export const ResolutionEvent = z.discriminatedUnion('type', [
   ResolutionLapsed,
   HotSpotResolved,
   HotSpotResolutionRejected,
+  ResolutionSuperseded,
 ])
 export type ResolutionEvent = z.infer<typeof ResolutionEvent>
