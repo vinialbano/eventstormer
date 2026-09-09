@@ -5,7 +5,8 @@ GitHub issue: [#92](https://github.com/vinialbano/eventstormer/issues/92) · Blo
 Version target **0.7.0** (`minor` changeset; the version PR is the only writer of
 `package.json` `version` — [ADR-009](../../../docs/adr/009-versioning-and-release.md)).
 
-**Status**: Specify — awaiting confirmation.
+**Status**: Execute complete (21 tasks, branch `slice-5b-facilitator-eval-demo-seed`) —
+Verifier pending. PCARD-04 endpoint edit descoped to 5c (#94).
 
 **Scope note.** Issue #92 was split out of #42 (PR #91) as the tracks that depend on a
 maintainer-owned deliverable — the restaurant / kitchen-order narration
@@ -344,7 +345,9 @@ the eval now covers, so that the inventory is not stale.
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
-**Coverage:** 26 total, 0 mapped to tasks (Tasks phase pending). (Audit F4–F9 → slice 5c.)
+**Coverage:** 26 total. All implemented across T1–T21 (branch
+`slice-5b-facilitator-eval-demo-seed`); PCARD-04's endpoint-swap half → slice 5c. Per-AC
+`file:line` evidence is the Verifier's job (`validation.md`). (Audit F4–F9 → slice 5c.)
 
 ---
 

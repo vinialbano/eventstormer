@@ -57,7 +57,23 @@ capture.
 
 ## Handoff
 
-### IN FLIGHT — Slice 5b / 5c Specify (2026-09-08)
+### IN FLIGHT — Slice 5b Execute complete, Verifier pending (2026-09-09)
+
+- **Slice 5b (#92)** — branch `slice-5b-facilitator-eval-demo-seed` off `main` (`3224598`).
+  All 21 tasks committed (`fe2210b` planning … `fd19d10`). Batches A–D + T18 done; `pnpm check`
+  ~1231 tests + `pnpm build` + `pnpm test:e2e` 6/6 green at each phase boundary. `minor` changeset
+  present. **Verifier not yet run** — dispatch a fresh sub-agent over `spec.md` + commit range
+  `3224598..HEAD` + `validate.md`; write `validation.md`.
+- **AD-039** (seed = committed interpretation fixture, offline replay) and **AD-040**
+  (`ApplyResult.outcome` discriminant) are in the Decisions table.
+- **PCARD-04 endpoint-swap edit → slice 5c** (#94, HREC-15–17). 5b shipped the reword `newLabel`
+  edit only. Committed `k/N` eval table in the README: all 5/5 except
+  `integration-relation.relation` (run-to-run variance).
+- Known Batch deviations (all reasoned, in `tasks.md` Execution Log): `already-satisfied` on
+  `duplicate-id` scoped to the retry path; `isPastTenseLabel` now whole-label; `src/host/seed.ts`
+  raw `DELETE` for `--force`; `vite.config.ts` `domain` project glob now covers `scripts/**`.
+
+### (superseded) IN FLIGHT — Slice 5b / 5c Specify (2026-09-08)
 
 - **Slice 5b** (`.specs/features/slice-5b-facilitator-eval-demo-seed/`, GitHub **#92**) — spec
   **confirmed then revised**; Design not yet started. Four tracks: F11 eval suite completion

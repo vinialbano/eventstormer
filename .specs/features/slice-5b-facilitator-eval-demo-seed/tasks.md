@@ -13,7 +13,7 @@ discrimination sensor).
 ---
 
 **Design**: `.specs/features/slice-5b-facilitator-eval-demo-seed/design.md`
-**Status**: Draft
+**Status**: In Progress — all 21 tasks committed; Verifier pending.
 
 **Open questions resolved (agent's discretion, per user "proceed" 2026-09-09):**
 - Seed marker → `data/seed.json` file (no migration).
@@ -818,7 +818,14 @@ Approved — In Progress. Branch `slice-5b-facilitator-eval-demo-seed` (planning
   `domain-event` blocks. Malformed-fixture errors get the file name via `parseFixtureFile`.
   README "Not built" bullets (Slice 5 eval suite / remaining eval cases) are now stale — left for
   the slice wrap / T18, outside T17's stated scope.
-- **Batch C T18** — pending (HITL live eval run).
+- **T18 ✅ 2026-09-09** (HITL, orchestrator) — `pnpm eval --report` run live 3× (~$3). Run 1
+  surfaced fixture-calibration bugs (not facilitator regressions); `fd19d10` extended
+  `EvalFixture` with `priorPivotal` / `priorFollows`, recalibrated `pivotal` / `reword` /
+  `integration-*` fixtures, and fixed `isPastTenseLabel` (was last-word-only). Final committed
+  `k/N`: every assertion 5/5 except `integration-relation.relation` (3–5/5 run-to-run variance,
+  noted in the README). Stale README "Not built" bullets cleared in the same commit.
+- **PCARD-04** — resolved 2026-09-09: endpoint-swap edit descoped to slice 5c (#94, HREC-15–17);
+  5b keeps the reword `newLabel` edit (`6953ead`). Spec amended (`27a7471`).
 - **Batch D (T19–T21) ✅ 2026-09-09** — `c1f3b4a` T19 · `77bc177` T20 · `1bfa04e` T21. `pnpm
   check` 1228 tests (+8) + `pnpm build` + `pnpm test:e2e` 6/6 green. AD-039 added to STATE.md
   (T19). `.changeset/slice-5b-facilitator-eval-demo-seed.md` (`minor`). Notes: T19's
