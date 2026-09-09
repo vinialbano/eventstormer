@@ -24,6 +24,7 @@ import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
 import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
+import { supersededRewordSweep } from './superseded-sweep.ts'
 import { hasModelStructure } from '../../domain/model-readiness.ts'
 import { type BoardState, mapTurn } from '../../infrastructure/facilitator/map.ts'
 import { buildInstructions, buildTurnInput } from '../../infrastructure/facilitator/prompt.ts'
@@ -590,6 +591,7 @@ export const reconcilePendingDerivations = (deps: InterpretContributionDeps): vo
     reconcileHotSpots(deps, sessionId)
     if (events.some((event) => event.type === 'Session Closed')) finishClose(deps, sessionId)
   }
+  supersededRewordSweep(deps)
 }
 
 /**
