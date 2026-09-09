@@ -65,9 +65,9 @@ shell/parent value beats both). Keep real secrets in `.env.local` — the test r
 - Facilitator judgment quality (eval only, non-deterministic — reported `k/N`); real Anthropic
   HTTP calls (mocked in unit tests); graph-layout visuals (`playwright-cli` manual); concurrency
   beyond the one-open-session constraint (F14); voice (F17); performance / load.
-- The real model's decision to propose a relation / pivotal / reword — the schema, seam, gates,
-  apply chain and lifecycle are unit/integration-tested with a hand-authored model response and
-  one scripted-facilitator e2e; no test in v1 exercises the real model producing these strands.
+
+The real model's decision to propose a relation / pivotal / reword is exercised by the `pnpm eval`
+fixture set (`eval/fixtures/`), scored by deterministic oracles — see the table below.
 
 <!-- eval:results -->
 Results are produced by `pnpm eval --report`.
