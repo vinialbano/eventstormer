@@ -57,13 +57,16 @@ capture.
 
 ## Handoff
 
-### IN FLIGHT — Slice 5b Execute complete, Verifier pending (2026-09-09)
+### DONE — Slice 5b Execute + Verifier PASS (2026-09-09) — ready for PR
 
 - **Slice 5b (#92)** — branch `slice-5b-facilitator-eval-demo-seed` off `main` (`3224598`).
-  All 21 tasks committed (`fe2210b` planning … `fd19d10`). Batches A–D + T18 done; `pnpm check`
-  ~1231 tests + `pnpm build` + `pnpm test:e2e` 6/6 green at each phase boundary. `minor` changeset
-  present. **Verifier not yet run** — dispatch a fresh sub-agent over `spec.md` + commit range
-  `3224598..HEAD` + `validate.md`; write `validation.md`.
+  All 21 tasks committed. **Verifier PASS** (`validation.md`): 26/26 in-scope ACs matched, 0
+  spec-precision gaps, sensor 7/7 killed, `pnpm check` 1231 tests + `pnpm build` + `pnpm test:e2e`
+  6/6. `minor` changeset present. Non-blocking findings addressed (`eval-oracles.ts` docstring
+  refreshed). Lesson L-019 (eval fixtures must set up the AD-036 gate precondition + one live run
+  before trusting `k/N`).
+- **Next step (maintainer)**: open the PR for `slice-5b-facilitator-eval-demo-seed` → `main`;
+  the changeset-version PR handles the version bump.
 - **AD-039** (seed = committed interpretation fixture, offline replay) and **AD-040**
   (`ApplyResult.outcome` discriminant) are in the Decisions table.
 - **PCARD-04 endpoint-swap edit → slice 5c** (#94, HREC-15–17). 5b shipped the reword `newLabel`

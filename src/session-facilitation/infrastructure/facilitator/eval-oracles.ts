@@ -1,7 +1,9 @@
 /**
  * Deterministic F11 graders. Pure functions over canned or live turns — no
- * network, no schema library. `isPastTenseLabel` is a v1 heuristic: the last
- * whitespace-separated word ends in `ed` (irregulars such as "built" fail).
+ * network, no schema library. `isPastTenseLabel` is a heuristic: any word in the
+ * label is an `-ed` form or a known irregular past (an EventStorming label puts
+ * the verb mid-phrase — "Ticket sent to the line" — so the last word alone is
+ * not enough). Irregulars outside its set (e.g. "rebuilt") still fail.
  *
  * The relation / pivotal / reword / format graders read the facilitator's
  * returned `FacilitationTrack[]` (the model-output shape). Endpoint and target
