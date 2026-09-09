@@ -39,6 +39,28 @@ describe('ResolutionCard', () => {
     expect(wrapper.findAll('button')).toHaveLength(0)
   })
 
+  it('renders a superseded receipt naming the kept reference when a later resolution won', () => {
+    const wrapper = mount(ResolutionCard, {
+      props: {
+        ...base,
+        disposition: 'APPLIED',
+        superseded: true,
+        supersededByReference: 'we route refunds through billing now',
+      },
+    })
+    expect(wrapper.get('[role="status"]').text()).toContain('Superseded')
+    expect(wrapper.get('[role="status"]').text()).toContain(
+      '“we route refunds through billing now” was kept instead',
+    )
+    expect(wrapper.get('[role="status"]').text()).not.toContain('we added a retry step')
+  })
+
+  it('keeps the plain resolved receipt when superseded is absent', () => {
+    const wrapper = mount(ResolutionCard, { props: { ...base, disposition: 'APPLIED' } })
+    expect(wrapper.get('[role="status"]').text()).not.toContain('Superseded')
+    expect(wrapper.get('[role="status"]').text()).toContain('Resolved — we added a retry step')
+  })
+
   it('collapses a lapsed resolution to an already-resolved line', () => {
     const wrapper = mount(ResolutionCard, {
       props: { ...base, disposition: 'LAPSED', lapsedReason: 'already-resolved' },

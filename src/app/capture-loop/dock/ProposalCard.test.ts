@@ -53,6 +53,22 @@ describe('ProposalCard', () => {
     expect(wrapper.findAll('button')).toHaveLength(0)
   })
 
+  it('renders a superseded receipt naming the kept label when a later reword won', () => {
+    const wrapper = mount(ProposalCard, {
+      props: { ...base, disposition: 'APPLIED', superseded: true, supersededByLabel: 'Order placed' },
+    })
+    expect(wrapper.text()).toContain('Superseded')
+    expect(wrapper.text()).toContain('“Order placed” was kept instead')
+    expect(wrapper.text()).not.toContain('added by Maria')
+    expect(wrapper.findAll('button')).toHaveLength(0)
+  })
+
+  it('keeps the plain applied receipt when superseded is absent', () => {
+    const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'APPLIED' } })
+    expect(wrapper.text()).not.toContain('Superseded')
+    expect(wrapper.text()).toContain('Order placed — added by Maria')
+  })
+
   it('collapses to “Dismissed” on reject', () => {
     const wrapper = mount(ProposalCard, { props: { ...base, disposition: 'REJECTED' } })
     expect(wrapper.text()).toContain('Dismissed')

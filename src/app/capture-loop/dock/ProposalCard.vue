@@ -22,6 +22,10 @@ const props = defineProps<{
   noHold?: boolean | undefined
   /** The contribution this card was proposed from — quoted so Accept is not a reflex. */
   sourceText?: string | undefined
+  /** A later reword on the same target won — the board carries `supersededByLabel`,
+   * not this card's label. Disposition is still `APPLIED`. */
+  superseded?: boolean | undefined
+  supersededByLabel?: string | undefined
 }>()
 
 const pillClass = computed(() =>
@@ -77,7 +81,10 @@ const nameInSource = computed(() => {
 </script>
 
 <template>
-  <p v-if="state === 'receipt'" class="pc pc--receipt" role="status">
+  <p v-if="state === 'receipt' && superseded" class="pc pc--superseded" role="status">
+    <span aria-hidden="true">↺</span> Superseded<template v-if="supersededByLabel"> — “{{ supersededByLabel }}” was kept instead</template><template v-else> — another contribution’s text was kept</template>
+  </p>
+  <p v-else-if="state === 'receipt'" class="pc pc--receipt" role="status">
     <span aria-hidden="true">✓</span> {{ label }}<template v-if="accepter"> — added by {{ accepter }}</template>
   </p>
   <p v-else-if="state === 'dismissed'" class="pc pc--dismissed" role="status">
@@ -173,6 +180,10 @@ const nameInSource = computed(() => {
 }
 .pc--dismissed {
   color: var(--color-text-soft);
+}
+.pc--superseded {
+  color: var(--color-text-soft);
+  font-weight: 600;
 }
 
 .pc--active {

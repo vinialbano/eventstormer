@@ -68,6 +68,11 @@ export interface ProposalCard {
   overflow: boolean
   applyFailedReason?: string
   buildingBlockId?: string
+  /** A later contribution on the same target carries the label the board kept;
+   * this proposal applied against text that did not stick. Disposition stays
+   * `APPLIED`. */
+  superseded?: boolean
+  supersededByLabel?: string
 }
 
 export type ResolutionDisposition =
@@ -86,6 +91,10 @@ export interface ResolutionCard {
   disposition: ResolutionDisposition
   /** The apply-bounce reason when the resolution `LAPSED`. */
   lapsedReason?: string
+  /** A later resolution's reference is what the board kept; this one applied
+   * against text that never landed. Disposition stays `APPLIED`. */
+  superseded?: boolean
+  supersededByReference?: string
 }
 
 interface BoardBlock {
