@@ -163,6 +163,59 @@ describe('Resolution.decide — apply bounce is terminal, no retry', () => {
   })
 })
 
+describe('Resolution.decide — a superseding contribution is recorded without leaving APPLIED', () => {
+  const winningReference = 'the front-of-house lead owns this'
+  const recordSuperseded = {
+    type: 'Record Resolution Superseded',
+    resolutionId,
+    hotSpotId,
+    supersededByReference: winningReference,
+    at,
+  } as const
+  const superseded: ResolutionEvent = {
+    v: 1,
+    at,
+    type: 'Resolution Superseded',
+    resolutionId,
+    hotSpotId,
+    supersededByReference: winningReference,
+  }
+
+  it('Given(Proposed, Accepted) When(Record Resolution Superseded) Then(Resolution Superseded)', () => {
+    const result = decide(replay([proposed, accepted]), recordSuperseded)
+    expect(events(result)).toEqual([superseded])
+  })
+
+  it('a second Record Resolution Superseded after the marker landed is an idempotent no-op', () => {
+    const result = decide(replay([proposed, accepted, superseded]), recordSuperseded)
+    expect(events(result)).toEqual([])
+  })
+
+  it('replay of a stream ending Resolution Superseded is APPLIED and superseded', () => {
+    expect(replay([proposed, accepted, superseded])).toEqual({
+      born: true,
+      disposition: 'APPLIED',
+      hotSpotId,
+      reference: 'added a retry with backoff',
+      superseded: true,
+      supersededByReference: winningReference,
+    })
+  })
+
+  it('Record Resolution Superseded from PROPOSED is bad-transition', () => {
+    const result = decide(replay([proposed]), recordSuperseded)
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toMatchObject({ kind: 'bad-transition', from: 'PROPOSED' })
+  })
+
+  it('Record Resolution Superseded from a terminal LAPSED is bad-transition', () => {
+    const lapsed: ResolutionEvent = { v: 1, at, type: 'Resolution Lapsed', resolutionId }
+    const result = decide(replay([proposed, lapsed]), recordSuperseded)
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error).toMatchObject({ kind: 'bad-transition', from: 'LAPSED' })
+  })
+})
+
 describe('Resolution.decide — edit loop and lapse', () => {
   it('Edit is legal from PROPOSED and from EDITED', () => {
     const first = decide(replay([proposed]), { type: 'Edit Resolution', resolutionId, reference: 'v2', at })

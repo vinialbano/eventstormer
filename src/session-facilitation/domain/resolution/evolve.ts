@@ -24,6 +24,13 @@ export const evolve = (
       return { ...writeModel, disposition: 'LAPSED' }
     case 'Hot Spot Resolved':
       return { ...writeModel, disposition: 'APPLIED' }
+    case 'Resolution Superseded':
+      return {
+        ...writeModel,
+        disposition: 'APPLIED',
+        superseded: true,
+        supersededByReference: event.supersededByReference,
+      }
     case 'Hot Spot Resolution Rejected':
       return { ...writeModel, disposition: 'LAPSED' }
   }

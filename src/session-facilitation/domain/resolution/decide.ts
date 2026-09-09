@@ -96,6 +96,26 @@ const decideRecordResolved = (
   ])
 }
 
+const decideRecordSuperseded = (
+  writeModel: ResolutionWriteModel,
+  command: CommandOf<'Record Resolution Superseded'>,
+): Decision => {
+  // Already applied (plain or superseded) — the resolution has landed; nothing
+  // more to record.
+  if (writeModel.disposition === 'APPLIED') return ok([])
+  if (writeModel.disposition !== 'ACCEPTED') return badTransition(writeModel, command.type)
+  return ok([
+    {
+      v: 1,
+      type: 'Resolution Superseded',
+      resolutionId: command.resolutionId,
+      hotSpotId: command.hotSpotId,
+      supersededByReference: command.supersededByReference,
+      at: command.at,
+    },
+  ])
+}
+
 const decideRecordRejected = (
   writeModel: ResolutionWriteModel,
   command: CommandOf<'Record Resolution Rejected'>,
@@ -146,6 +166,8 @@ export const decide = (
       return decideReject(writeModel, command)
     case 'Record Hot Spot Resolved':
       return decideRecordResolved(writeModel, command)
+    case 'Record Resolution Superseded':
+      return decideRecordSuperseded(writeModel, command)
     case 'Record Resolution Rejected':
       return decideRecordRejected(writeModel, command)
     case 'Lapse Resolution':
