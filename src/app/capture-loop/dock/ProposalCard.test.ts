@@ -188,6 +188,37 @@ describe('ProposalCard', () => {
     expect(wrapper.findAll('button')).toHaveLength(0)
   })
 
+  it('edits a reword card inline and emits edit-intent carrying only the new label', async () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        kindLabel: 'REWORD',
+        disposition: 'PROPOSED',
+        intent: { kind: 'reword', summary: 'reword: Order goes in → Order placed', newLabel: 'Order placed' },
+      },
+    })
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Edit')?.trigger('click')
+    const input = wrapper.get('input')
+    await input.setValue('  Order submitted  ')
+    await input.trigger('keydown.enter')
+    expect(wrapper.emitted('edit-intent')).toEqual([[{ newLabel: 'Order submitted' }]])
+    expect(wrapper.emitted('edit')).toBeUndefined()
+  })
+
+  it('offers no inline Edit on a relation card — an endpoint swap needs a block picker', async () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        disposition: 'PROPOSED',
+        intent: { kind: 'relation', summary: 'sequence: Order placed → Order cooked' },
+      },
+    })
+    await wrapper.findAll('button').find((button) => button.text() === 'Not this')?.trigger('click')
+    expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('Edit')
+  })
+
   it('collapses a model-change card to a receipt showing its summary once APPLIED', () => {
     const wrapper = mount(ProposalCard, {
       props: {

@@ -51,6 +51,8 @@ const emit = defineEmits<{
   hold: []
   unhold: []
   edit: [label: string]
+  /** A model-change edit — `newLabel` for a reword; the kind is never sent. */
+  'edit-intent': [changed: { newLabel: string }]
 }>()
 
 const editing = ref(false)
@@ -58,8 +60,16 @@ const moreOpen = ref(false)
 const draft = ref('')
 const inputElement = ref<HTMLInputElement | null>(null)
 
+/** Only a reword's label is editable inline; a relation / pivotal endpoint swap
+ * needs a board block picker, which the card does not carry. */
+const editableIntent = computed(() => props.intent?.kind === 'reword')
+const canEdit = computed(() => props.intent === undefined || editableIntent.value)
+const editSeed = computed(() =>
+  editableIntent.value ? (props.intent?.newLabel ?? '') : (props.label ?? ''),
+)
+
 const startEdit = async (): Promise<void> => {
-  draft.value = props.label ?? ''
+  draft.value = editSeed.value
   editing.value = true
   await nextTick()
   inputElement.value?.focus()
@@ -68,7 +78,9 @@ const startEdit = async (): Promise<void> => {
 const saveEdit = (): void => {
   const next = draft.value.trim()
   editing.value = false
-  if (next.length > 0 && next !== (props.label ?? '')) emit('edit', next)
+  if (next.length === 0 || next === editSeed.value) return
+  if (editableIntent.value) emit('edit-intent', { newLabel: next })
+  else emit('edit', next)
 }
 const cancelEdit = (): void => {
   editing.value = false
@@ -169,7 +181,7 @@ const nameInSource = computed(() => {
         Not this
       </button>
       <template v-if="moreOpen">
-        <button type="button" class="btn btn--outline" @click="startEdit">Edit</button>
+        <button v-if="canEdit" type="button" class="btn btn--outline" @click="startEdit">Edit</button>
         <button type="button" class="btn btn--outline btn--danger" @click="emit('reject')">Reject</button>
         <button
           v-if="!held && !noHold"

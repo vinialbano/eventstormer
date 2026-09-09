@@ -84,6 +84,17 @@ describe('useReviewProposal', () => {
     expect(emit.mutated).toHaveBeenCalledTimes(1)
   })
 
+  it('onEditIntent posts the changed shape to the model-change edit endpoint and emits mutated only', async () => {
+    vi.spyOn(proposalsTransport, 'editModelChangeProposal').mockResolvedValue({})
+    const { emit, hooks } = review()
+
+    await hooks.onEditIntent('p1', { newLabel: 'Order placed' })
+
+    expect(proposalsTransport.editModelChangeProposal).toHaveBeenCalledWith('p1', { newLabel: 'Order placed' })
+    expect(emit.boardDirty).not.toHaveBeenCalled()
+    expect(emit.mutated).toHaveBeenCalledTimes(1)
+  })
+
   it('onAcceptAllCluster accepts only acceptable cards and emits board-dirty once', async () => {
     const accept = vi.spyOn(proposalsTransport, 'acceptProposal').mockResolvedValue({})
     const { emit, hooks } = review()
