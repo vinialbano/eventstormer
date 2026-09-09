@@ -173,6 +173,33 @@ the asymmetry does not read as a bug.
 
 ---
 
+### P2: Edit a relation / pivotal endpoint from the dock
+
+**User Story**: As a participant reviewing a facilitator-proposed relation or pivotal, I want to
+correct a wrong endpoint from the card, so that I do not have to reject it and wait for a
+re-propose.
+
+**Why P2 / here**: Descoped from slice 5b PCARD-04 (2026-09-09) — the reword `newLabel` edit
+shipped in 5b (`6953ead`); the endpoint swap needs an endpoint selector + `RELATION_FIELDS`
+mapping + `unknown-label` handling, which is real UI beyond 5b. The server contract already
+exists (`POST /proposals/:id/edit { field, label }`).
+
+**Acceptance Criteria**:
+
+1. WHEN a `relation` model-change card is edited THEN the dock SHALL let the person choose an
+   endpoint (mapped to its `field` via `RELATION_FIELDS[relationKind]`) and enter the
+   replacement block's current board label, and `POST /proposals/:id/edit { field, label }`.
+2. WHEN the entered label matches no current board block THEN the card SHALL surface the server's
+   `unknown-label` 422 without losing the person's other input.
+3. WHEN a `pivotal` card's `target` is edited THEN it SHALL `POST … { field: 'target', label }`.
+4. WHEN the app `ProposalIntent` type is extended THEN it SHALL mirror the server `IntentCard`
+   exactly (a store test fails on drift).
+
+**Independent Test**: Component-test the endpoint selector + label input for a `sequence` card;
+assert the POST body; assert the 422 path keeps the form open.
+
+---
+
 ## Edge Cases
 
 - WHEN a `Resolution` stream has a `Superseded` event but no `Record Hot Spot Resolved` (5b's
@@ -205,8 +232,12 @@ the asymmetry does not read as a bug.
 | HREC-12 | P1: sweep logging levels | Design | Pending |
 | HREC-13 | P2: `decide.ts` convergence-scope comment | Tasks | Pending |
 | HREC-14 | P2: comment carries no `.specs/` id | Tasks | Pending |
+| HREC-15 | P2: dock relation-endpoint edit (`field` + `label` POST) | Design | Pending |
+| HREC-16 | P2: `unknown-label` 422 keeps the form open | Design | Pending |
+| HREC-17 | P2: pivotal `target` edit; app `ProposalIntent` mirrors server | Design | Pending |
 
-**Coverage:** 14 total, 0 mapped to tasks (Tasks phase pending).
+**Coverage:** 17 total, 0 mapped to tasks (Tasks phase pending). (HREC-15–17 descoped from 5b
+PCARD-04.)
 
 ---
 

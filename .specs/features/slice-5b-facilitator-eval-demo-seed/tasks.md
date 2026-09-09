@@ -799,7 +799,15 @@ Approved — In Progress. Branch `slice-5b-facilitator-eval-demo-seed` (planning
   so T5 folds from the write model; T6's "withdrawn hot spot" edge lands `LAPSED` via the
   existing path (the guard defensively covers `null`/`undefined`); `supersededRewordSweep` is one
   tail call in `reconcilePendingDerivations`.
-- **Batch B (T8–T13)** — dispatched.
+- **Batch B (T8–T13) ⚠️ 2026-09-09** — `b7a1c30` T8 · `a1f00b3` T9 · `bfc84a7` T10 · `6953ead`
+  T11 · `7c20c63` T12 · `35625fd` T13 · `eecf1ea` (phase-final test fixup). `pnpm check` 1208
+  tests (+20) + build + e2e 6/6 green. `impeccable` not used — fallback: `pc--superseded` /
+  `rc--superseded` + `pc__pill--intent` on existing tokens. **T11 partial — PCARD-04 relation /
+  pivotal endpoint edit NOT built** (only reword `newLabel` edit is wired end-to-end). Also
+  touched (justified pass-throughs, outside task file lists): `FacilitatorDock.vue`,
+  `transport/proposals.ts`; store-drift test went to `stores/stores.test.ts` (the file that
+  exists). Pre-existing app `ProposalCard` `modelAffecting` drift left alone.
+  → **PCARD-04 decision pending (see below).**
 - **Batch C (T14–T18)** — pending (T18 HITL).
 - **Batch D (T19–T21)** — pending.
 - **Verifier** — after Batch D.

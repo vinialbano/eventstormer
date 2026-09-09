@@ -252,12 +252,15 @@ same way I review a building-block proposal.
    `newLabel?`) and a store test SHALL fail on drift.
 2. WHEN the dock renders a model-change proposal THEN it SHALL show the `intent.summary`, a pill
    naming the kind (`relation` / `pivotal` / `reword`), and the source contribution quote, with
-   Accept / Edit / Reject / Hold actions.
+   Accept / Reject / Hold actions (and Edit for a `reword` — see AC-4).
 3. WHEN the person clicks Accept on a model-change card THEN the dock SHALL `POST
    /proposals/:id/accept` and refetch — no optimistic board mutation (unchanged dock contract).
-4. WHEN the person edits a model-change card THEN the dock SHALL `POST /proposals/:id/edit` with
-   the changed field, matching what `Model Change Edited` accepts (an endpoint / target swap for
-   relation / pivotal; `newLabel` for reword).
+4. WHEN the person edits a **`reword`** model-change card THEN the dock SHALL `POST
+   /proposals/:id/edit` with `{ newLabel }`.
+   *(Descoped 2026-09-09 — endpoint-swap edit for `relation` / `pivotal` (`POST … { field,
+   label }`) moves to slice 5c (#94): it needs an endpoint selector + `RELATION_FIELDS` mapping
+   + `unknown-label` 422 handling — real UI beyond this slice. In 5b a wrong-endpoint relation
+   proposal is rejected and re-proposed, or accepted and fixed on the board via F06.)*
 5. WHEN a model-change proposal is `APPLIED` / `APPLY_FAILED` / `REJECTED` / `LAPSED` / held /
    in overflow THEN the dock and the pending drawer SHALL render each state without error.
 6. WHEN `e2e/artifacts-and-relations.spec.ts` runs THEN it SHALL accept the scripted relation
@@ -333,7 +336,7 @@ the eval now covers, so that the inventory is not stale.
 | PCARD-01 | P1: dock model-change card (type mirror) | Design | Pending |
 | PCARD-02 | P1: dock model-change card (render) | Design | Pending |
 | PCARD-03 | P1: dock model-change card (accept) | Design | Pending |
-| PCARD-04 | P1: dock model-change card (edit) | Design | Pending |
+| PCARD-04 | P1: dock model-change card — `reword` `newLabel` edit (endpoint-swap → 5c) | Implementing | Done (`6953ead`) |
 | PCARD-05 | P1: dock model-change card (all dispositions + drawer) | Design | Pending |
 | PCARD-06 | P1: dock model-change card (e2e SPEC_DEVIATION removed) | Design | Pending |
 | DOC-01 | P2: ADR-008 / README inventory | Tasks | Pending |
