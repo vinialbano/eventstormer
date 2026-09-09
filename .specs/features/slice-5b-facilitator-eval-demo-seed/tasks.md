@@ -786,5 +786,20 @@ Per-task tool notes are in each task's **Tools** field. Default: no MCP, no skil
 
 ## Status
 
-Draft — awaiting confirmation. On approval: Execute via the skill, offer the 4 batch sub-agents
-(A: T1–T7, B: T8–T13, C: T14–T18, D: T19–T21), then a fresh Verifier.
+Approved — In Progress. Branch `slice-5b-facilitator-eval-demo-seed` (planning: `fe2210b`).
+
+### Execution Log
+
+- **Batch A (T1–T7) ✅ 2026-09-09** — `a82ea40` T1 · `948dde4` T2 · `24535c4` T3 · `f061aa3` T4
+  · `e700608` T5 · `72b76e4` T6 · `9cd9577` T7. `pnpm check` 1188 tests (+28) + `pnpm build` +
+  `pnpm test:e2e` 6/6 green. AD-040 in STATE.md (T1). Notes: commit subjects backtick the leading
+  identifier (commitlint `subject-case`); `already-satisfied` on `duplicate-id` only after a
+  stale-position retry (first-attempt `duplicate-id` stays a `Rejection` — existing behaviour);
+  `ResolutionWriteModel`/`ProposalWriteModel` gained `supersededBy{Reference,Label}?` companions
+  so T5 folds from the write model; T6's "withdrawn hot spot" edge lands `LAPSED` via the
+  existing path (the guard defensively covers `null`/`undefined`); `supersededRewordSweep` is one
+  tail call in `reconcilePendingDerivations`.
+- **Batch B (T8–T13)** — dispatched.
+- **Batch C (T14–T18)** — pending (T18 HITL).
+- **Batch D (T19–T21)** — pending.
+- **Verifier** — after Batch D.
