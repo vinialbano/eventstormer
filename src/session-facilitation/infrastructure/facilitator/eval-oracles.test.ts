@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest'
+import type { InterpretedRelationKind } from '../../domain/schema/interpreted-track.ts'
+import type { FacilitationTrack } from './turn-schema.ts'
 import {
+  attributesToFormat,
   contentWords,
+  flagsPhase,
   hasFlagPhase,
   isPastTenseLabel,
   proposedKinds,
+  proposesPivotal,
+  proposesRelation,
+  proposesReword,
   sharesContentWord,
 } from './eval-oracles.ts'
 
@@ -73,5 +80,109 @@ describe('proposedKinds', () => {
         { track: 'propose-building-block', blockKind: 'actor' },
       ]),
     ).toEqual(['domain-event', 'actor'])
+  })
+})
+
+const relation = (
+  relationKind: InterpretedRelationKind,
+  endpoints: string[],
+): FacilitationTrack => ({ track: 'propose-relation', relationKind, endpoints, rationale: 'because' })
+
+const pivotal = (
+  pivotalKind: 'mark-pivotal' | 'unmark-pivotal',
+  eventLabel: string,
+): FacilitationTrack => ({ track: 'propose-pivotal', pivotalKind, eventLabel })
+
+const reword = (targetLabel: string, newLabel: string): FacilitationTrack => ({
+  track: 'propose-reword',
+  targetLabel,
+  newLabel,
+})
+
+describe('flagsPhase', () => {
+  it('is true when a flag-phase track is present', () => {
+    expect(flagsPhase([{ track: 'answer-question' }, { track: 'flag-phase' }])).toBe(true)
+  })
+
+  it('is false when no flag-phase track is present', () => {
+    expect(flagsPhase([{ track: 'propose-building-block' }])).toBe(false)
+  })
+})
+
+describe('attributesToFormat', () => {
+  it('is true when a track attributes the content to the named format (case-insensitive substring)', () => {
+    const tracks: FacilitationTrack[] = [
+      { track: 'attribute-to-other-format', format: 'Policy', note: 'this is a policy' },
+    ]
+    expect(attributesToFormat(tracks, 'policy')).toBe(true)
+  })
+
+  it('is false when no attribute-to-other-format track names that format', () => {
+    const tracks: FacilitationTrack[] = [
+      { track: 'attribute-to-other-format', format: 'command', note: 'a command' },
+    ]
+    expect(attributesToFormat(tracks, 'policy')).toBe(false)
+  })
+})
+
+describe('proposesRelation', () => {
+  it('is true for a matching kind whose endpoints resolve to the expected labels in order', () => {
+    const tracks = [relation('sequence', ['Order placed', 'Kitchen started cooking'])]
+    expect(proposesRelation(tracks, { kind: 'sequence', labels: ['order placed', 'kitchen'] })).toBe(true)
+  })
+
+  it('is false when the relationKind differs', () => {
+    const tracks = [relation('link-cause', ['Order placed', 'Kitchen started cooking'])]
+    expect(proposesRelation(tracks, { kind: 'sequence', labels: ['order placed', 'kitchen'] })).toBe(false)
+  })
+
+  it('is false when the endpoints are in the wrong order', () => {
+    const tracks = [relation('sequence', ['Kitchen started cooking', 'Order placed'])]
+    expect(proposesRelation(tracks, { kind: 'sequence', labels: ['order placed', 'kitchen'] })).toBe(false)
+  })
+
+  it('is false when the endpoint count does not match the kind arity', () => {
+    const tracks = [relation('sequence', ['Order placed'])]
+    expect(proposesRelation(tracks, { kind: 'sequence', labels: ['order placed', 'kitchen'] })).toBe(false)
+  })
+})
+
+describe('proposesPivotal', () => {
+  it('is true for a matching pivotalKind on the named event', () => {
+    expect(
+      proposesPivotal([pivotal('mark-pivotal', 'Food delivered to the table')], {
+        kind: 'mark-pivotal',
+        label: 'food delivered',
+      }),
+    ).toBe(true)
+  })
+
+  it('is false when the pivotalKind differs', () => {
+    expect(
+      proposesPivotal([pivotal('unmark-pivotal', 'Food delivered to the table')], {
+        kind: 'mark-pivotal',
+        label: 'food delivered',
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('proposesReword', () => {
+  it('is true when a reword track goes from a from-matching label to a to-matching one', () => {
+    expect(
+      proposesReword([reword('Order goes in', 'Order placed')], {
+        from: 'order goes in',
+        to: 'order placed',
+      }),
+    ).toBe(true)
+  })
+
+  it('is false when the new label does not match', () => {
+    expect(
+      proposesReword([reword('Order goes in', 'Ticket fired')], {
+        from: 'order goes in',
+        to: 'order placed',
+      }),
+    ).toBe(false)
   })
 })
