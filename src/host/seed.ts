@@ -22,17 +22,12 @@ import { createRoutes } from './routes.ts'
  * those streams before re-seeding.
  */
 
-export interface SeedTurn {
-  speaker: string
-  body: string
-}
-
 export interface SeedDeps {
   config: HostConfig
   /** The scripted interpretation source — never the Anthropic adapter. */
   facilitator: Facilitator
   /** The narration, in order. Each body is posted as one contribution. */
-  turns: readonly SeedTurn[]
+  turns: readonly { speaker: string; body: string }[]
   scopeStatement: string
   creatorName: string
   /** Where the seed marker lives (`data/seed.json`). */
