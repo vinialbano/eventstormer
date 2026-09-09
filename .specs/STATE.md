@@ -55,13 +55,43 @@ capture.
 
 ## Handoff
 
+### IN FLIGHT — Slice 5b / 5c Specify (2026-09-08)
+
+- **Slice 5b** (`.specs/features/slice-5b-facilitator-eval-demo-seed/`, GitHub **#92**) — spec
+  **confirmed then revised**; Design not yet started. Four tracks: F11 eval suite completion
+  (extends existing `eval/`), `pnpm seed` (offline, from a committed interpretation fixture — the
+  recorded *video* is **dropped**, transcript authored directly, `transcript.md` in the feature
+  dir), the superseded marker + card (`Resolution Superseded` / `Model Change Superseded`;
+  `ApplyResult` gains an explicit `appended` / `already-satisfied` outcome — AD-040), and the
+  in-dock model-change proposal card. 26 requirements. Pending AD-039 (seed fixture) + AD-040
+  (`ApplyResult` outcome) — to be appended to the Decisions table at Design.
+- **Model audit** (`.specs/features/slice-5b-facilitator-eval-demo-seed/model-audit.md`, 2026-09-08)
+  — scanned the whole converging/racing/idempotent-operation surface against domain-modeling /
+  distributed-systems / software-design doctrine. **Board decider convergence layer + all read
+  models are doctrine-clean.** Found F1–F3 (the `ApplyResult` no-op hidden in a success shape →
+  `APPLIED` overloaded — 5b's target) and F4–F9 (wider honest-record surface).
+- **Slice 5c** (`.specs/features/slice-5c-honest-record-hardening/`, GitHub **#94**, blocks #43,
+  blocked-by #92) — audit F4 (F19 transcript resolution lane), F5 (`blocksAdded` excludes
+  converged no-ops), F6/F7 (`review-resolution` records every rejection + stuck-`ACCEPTED` sweep
+  in `reconcilePendingDerivations`), F9 (`decide.ts` convergence-scope comment). 14 requirements.
+  Split from 5b to keep 5b to the marker + card.
+- **Superseded mechanism (per-kind, doctrine-checked)**: `resolve` race = first-write-wins,
+  loser = the *second* contribution, its own handler records `Resolution Superseded` inline on
+  `already-satisfied`. `reword` race = last-write-wins (`decideReword` re-applies), loser = the
+  *earlier* proposal, marked by the `reconcilePendingDerivations` sweep on its stream. Marker is
+  a folded outcome fact (disposition stays `APPLIED`), **never** a read-time board-state diff.
+- **Audit F8** (dead `already-related` / `already-resolved` board error variants) stays on #43.
+
+### Slice 5 (merged context)
+
 - **Feature**: `slice-5-artifacts-facilitator-tracks` (`.specs/features/slice-5-artifacts-facilitator-tracks/`) — GitHub **#42** (re-scoped: artifacts + facilitator tracks; eval/seed/demo re-filed) · parent effort map #9 · version target **0.6.0**
 - **Phase / Task**: **Execute complete + Verifier PASS ✅ — PR [#91](https://github.com/vinialbano/eventstormer/pull/91) open against `main`; round-3 automated review verdict READY.** All 27 tasks + Verifier + fix iteration 1 (`a15144b` SUM-09 equal-rank fixture; `8e6b0ab` FREW-03 pinned; `8de1dad` FREL-04 live smoke PASS) + PR #91 review fix (`aca9775` — B1 `insert-between` / `unlink-cause` retry convergence; W1 order-independent same-turn reword). `validation.md`: **44/44 ACs clean**, sensor **6/6 killed**.
 - **Branch**: `slice-5-artifacts-facilitator-tracks` off `main` (`0c8a6b4`), pushed. Commit range `2ffe038`…HEAD. `pnpm check` **1160 tests** (+174) + `pnpm build` + `pnpm test:e2e` (6, incl. the new `artifacts-and-relations.spec.ts`) all green.
 - **FREL-04 live smoke: DONE (2026-09-07)** — `pnpm smoke:facilitation-schema` run `8de1dad` (`claude-sonnet-5`): **PASS**, the assembled 11-member schema round-trips and the model produced all three new strands. `research/research-aisdk.md` "SLICE 5" records the LIVE RESULT. (Script now loads `.env.local`.)
 - **Issue re-scope: DONE (2026-09-07)** — #42 retitled "Slice 5 — artifacts + facilitator tracks"; **#92** "Slice 5b — facilitator eval + demo seed" filed (parent #9, blocked-by #42, blocking #43); #43 now blocked-by #92 + #42.
 - **Next step (maintainer)**: merge #91 → the changeset-version PR handles 0.6.0.
-- **Slice 5b = #92 owns**: F11 eval suite + `pnpm seed` + the recorded walkthrough (recording dependency); the in-dock proposal card for relation/pivotal/reword proposals (server path complete + tested; the Vue `ProposalCard` renders building-block proposals only); the losing-racer "your contribution didn't take" signal for a same-target `resolve` (W2) and `reword` (W5) — both converge `APPLIED` but silently discard the loser's text, no marker on the card.
+- **Slice 5b / 5c** — see the "IN FLIGHT" block at the top of this Handoff (2026-09-08). W2 / W5
+  losing-racer signal → 5b's superseded marker; the recorded *video* was dropped.
 - **Slice 6 cleanup**: remove the dead `already-related` / `already-resolved` variants from the `domain-model-capture` board error union + consumers (AD-038 made them unreachable). Also: widen `BoardWriteModel` with placement / labels so `decidePlace` / `decideUnplace` / `decideReword` can short-circuit an already-satisfied effect to `ok([])` — closes the crash-window edge where a concurrent withdraw flips an applied proposal to `APPLY_FAILED`.
 - **Slice-5 decisions**: AD-035 (`Proposal` generalised — `Model Change Proposed` birth event), AD-036 (named `session-facilitation/domain/model-readiness.ts` predicates for the F04/F07 gates), AD-037 (JSON = snapshot + `ArtifactSource`, composite `{boardPosition, sessionRecordPosition, renderedAt}` stamp, pure round-trip), AD-038 (relation/pivotal/`resolve` idempotent in `decide`).
 - **Verifier verdicts on the flagged items** (`validation.md` has the full report): (1) AD-038 slice-4 resolve-convergence change → **acceptable** (AD-038 explicitly scopes `resolve`; the modified slice-4 test still asserts strong outcomes; no other slice-4 test touched). (2) same-turn-reword drop → **WARN, now pinned** by `map.test.ts` (`8e6b0ab`) as intended v1 behaviour. (3) no dock proposal-card UI → **WARN, acceptable-as-scoped** (F04/F07 P1 = server-verified / UI-pending in Slice 5b). (4) `summary` string phrasing → NOTE. (5) live smoke → **ran 2026-09-07 (`8de1dad`), PASS**. Lessons L-012…L-015; PR #91 review added L-016 (enumerate a decider family against a hand-written convergence rule) + L-017 (vary the discriminant across sensor convergence fixtures).
