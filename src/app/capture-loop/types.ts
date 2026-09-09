@@ -57,17 +57,33 @@ export type Disposition =
   | 'REJECTED'
   | 'LAPSED'
 
+/**
+ * A resolved relation / pivotal / reword the facilitator proposed — mirrors
+ * `proposalsView`'s `IntentCard`. `endpoints` / `target` labels are already
+ * resolved against the board (an unknown endpoint falls back to its id).
+ */
+export interface ProposalIntent {
+  kind: 'relation' | 'pivotal' | 'reword'
+  summary: string
+  endpoints?: { id: string; label: string }[]
+  target?: { id: string; label: string }
+  newLabel?: string
+}
+
 export interface ProposalCard {
   proposalId: string
   contributionId: string
-  blockKind: BlockKind
-  label: string
-  bar: InterpretationBar
+  /** Present on a building-block proposal; absent on a model-change proposal. */
+  blockKind?: BlockKind
+  label?: string
+  bar?: InterpretationBar
   disposition: Disposition
   held: boolean
   overflow: boolean
   applyFailedReason?: string
   buildingBlockId?: string
+  /** Present on a model-change proposal — the resolved relation / pivotal / reword. */
+  intent?: ProposalIntent
   /** A later contribution on the same target carries the label the board kept;
    * this proposal applied against text that did not stick. Disposition stays
    * `APPLIED`. */
