@@ -41,22 +41,26 @@ describe('PendingDrawer', () => {
   })
 
   it('renders a model-change card in a group with its intent kind pill and summary', () => {
+    const modelChange = (over: Partial<ProposalCard>): ProposalCard => ({
+      proposalId: 'p',
+      contributionId: 'c1',
+      disposition: 'PROPOSED',
+      held: false,
+      overflow: false,
+      ...over,
+    })
     const wrapper = mount(PendingDrawer, {
       props: {
         parked: [
-          card({
+          modelChange({
             proposalId: 'p1',
-            blockKind: undefined,
-            label: undefined,
             held: true,
             intent: { kind: 'relation', summary: 'sequence: Order placed → Order cooked' },
           }),
         ],
         awaiting: [
-          card({
+          modelChange({
             proposalId: 'p2',
-            blockKind: undefined,
-            label: undefined,
             overflow: true,
             intent: { kind: 'reword', summary: 'reword: Order goes in → Order placed' },
           }),
