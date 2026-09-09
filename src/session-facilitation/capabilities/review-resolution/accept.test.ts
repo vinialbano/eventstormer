@@ -70,6 +70,7 @@ const resolutionDisposition = (id: string): string | undefined => {
     'Resolution Proposed': 'PROPOSED',
     'Resolution Accepted': 'ACCEPTED',
     'Hot Spot Resolved': 'APPLIED',
+    'Resolution Superseded': 'APPLIED',
     'Hot Spot Resolution Rejected': 'LAPSED',
   }
   return last === undefined ? undefined : map[last.type]
@@ -117,7 +118,7 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
     ).toBeGreaterThanOrEqual(2)
   })
 
-  it('a second resolution for an already-resolved hot spot converges to APPLIED with no board change', async () => {
+  it('a losing second resolution with a different reference records that it was superseded', async () => {
     raiseHotSpot('h_1')
     seedResolution('r_1', 'h_1', 'first fix')
     seedResolution('r_2', 'h_1', 'second fix')
@@ -127,24 +128,69 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
     expect(second.status).toBe(200)
 
     // The hot spot is already resolved — the board decider makes the re-apply an
-    // idempotent no-op, so the second resolution converges to APPLIED rather than
-    // a spurious apply-failure.
+    // idempotent no-op. The second resolution lost the race, so its stream ends
+    // Accept Resolution, Resolution Superseded (not Record Hot Spot Resolved) and
+    // it converges to APPLIED rather than a spurious apply-failure.
     expect(resolutionDisposition('r_1')).toBe('APPLIED')
     expect(resolutionDisposition('r_2')).toBe('APPLIED')
 
     const r2Events = store
       .read(resolutionStream('r_2' as ResolutionId))
       .map((row) => ResolutionEvent.parse(row.operation))
+    expect(r2Events.map((event) => event.type).slice(-2)).toEqual([
+      'Resolution Accepted',
+      'Resolution Superseded',
+    ])
+    const superseded = r2Events.find((event) => event.type === 'Resolution Superseded')
+    expect(superseded).toMatchObject({ hotSpotId: 'h_1', supersededByReference: 'first fix' })
     expect(r2Events.some((event) => event.type === 'Hot Spot Resolution Rejected')).toBe(false)
+
+    // the card reads superseded, disposition still APPLIED
+    const card = ((await second.json()) as { resolution: Record<string, unknown> }).resolution
+    expect(card).toMatchObject({ disposition: 'APPLIED', superseded: true, supersededByReference: 'first fix' })
 
     // the hot spot carries exactly one recorded reference — the first; the no-op
     // apply wrote nothing
     expect(hotSpotBlock('h_1')?.reference).toBe('first fix')
 
-    // idempotent — a third accept of r_2 stays APPLIED, appends nothing new
+    // idempotent — a second tick / third accept of r_2 stays APPLIED, appends nothing new
     const before = store.read(resolutionStream('r_2' as ResolutionId)).length
     await accept('r_2')
     expect(store.read(resolutionStream('r_2' as ResolutionId)).length).toBe(before)
+  })
+
+  it('a losing second resolution with the SAME reference records a plain Hot Spot Resolved', async () => {
+    raiseHotSpot('h_1')
+    seedResolution('r_1', 'h_1', 'the agreed fix')
+    seedResolution('r_2', 'h_1', 'the agreed fix')
+
+    await accept('r_1')
+    await accept('r_2')
+
+    const r2Events = store
+      .read(resolutionStream('r_2' as ResolutionId))
+      .map((row) => ResolutionEvent.parse(row.operation))
+    expect(r2Events.map((event) => event.type).slice(-1)).toEqual(['Hot Spot Resolved'])
+    expect(r2Events.some((event) => event.type === 'Resolution Superseded')).toBe(false)
+    expect(resolutionDisposition('r_2')).toBe('APPLIED')
+  })
+
+  it('a hot spot withdrawn mid-race lapses the loser — never a false superseded claim', async () => {
+    raiseHotSpot('h_1')
+    seedResolution('r_1', 'h_1', 'first fix')
+    seedResolution('r_2', 'h_1', 'second fix')
+
+    await accept('r_1')
+    applyOperation(deps(), workshopId, Operation.parse({ author, kind: 'withdraw', target: 'h_1' }))
+    const second = await accept('r_2')
+    expect(second.status).toBe(200)
+
+    const r2Events = store
+      .read(resolutionStream('r_2' as ResolutionId))
+      .map((row) => ResolutionEvent.parse(row.operation))
+    // no supersede claim without board evidence
+    expect(r2Events.some((event) => event.type === 'Resolution Superseded')).toBe(false)
+    expect(r2Events.some((event) => event.type === 'Hot Spot Resolution Rejected')).toBe(true)
   })
 
   it('a re-accept of an APPLIED resolution is idempotent — no second board write', async () => {
@@ -156,6 +202,26 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
     const again = await accept('r_1')
     expect(again.status).toBe(200)
     expect(store.read({ context: 'domain-model-capture', aggregate: 'board', id: workshopId }).length).toBe(boardLength)
+  })
+
+  it('resolving two different hot spots never cross-records a supersede', async () => {
+    raiseHotSpot('h_1')
+    raiseHotSpot('h_2')
+    seedResolution('r_1', 'h_1', 'fix one')
+    seedResolution('r_2', 'h_2', 'fix two')
+
+    await accept('r_1')
+    await accept('r_2')
+
+    expect(resolutionDisposition('r_1')).toBe('APPLIED')
+    expect(resolutionDisposition('r_2')).toBe('APPLIED')
+    for (const id of ['r_1', 'r_2']) {
+      const events = store
+        .read(resolutionStream(id as ResolutionId))
+        .map((row) => ResolutionEvent.parse(row.operation))
+      expect(events.some((event) => event.type === 'Resolution Superseded')).toBe(false)
+      expect(events.some((event) => event.type === 'Hot Spot Resolved')).toBe(true)
+    }
   })
 
   it('404s for an unknown resolution id', async () => {
