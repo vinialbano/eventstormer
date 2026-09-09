@@ -1,7 +1,6 @@
 {
   "id": "integration-relation",
   "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
-  "priorBlocks": ["Order placed", "Kitchen started cooking"],
   "contribution": {
     "speaker": "Sam",
     "body": "So the server put the order in and the kitchen started right away — one straight after the other."

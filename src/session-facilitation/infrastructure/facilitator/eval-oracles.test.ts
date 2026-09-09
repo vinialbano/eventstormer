@@ -42,12 +42,24 @@ describe('sharesContentWord', () => {
 })
 
 describe('isPastTenseLabel', () => {
-  it('is true when the last word ends in ed — ticket fired', () => {
+  it('is true when a word ends in ed — ticket fired', () => {
     expect(isPastTenseLabel('ticket fired')).toBe(true)
   })
 
-  it('is false for an irregular past that does not end in ed — built', () => {
-    expect(isPastTenseLabel('built')).toBe(false)
+  it('is true when the past-tense verb is not the last word — Ticket sent to the kitchen line', () => {
+    expect(isPastTenseLabel('Ticket sent to the kitchen line')).toBe(true)
+  })
+
+  it('is true for a known irregular past — Order taken', () => {
+    expect(isPastTenseLabel('Order taken')).toBe(true)
+  })
+
+  it('is false when no word is a past-tense verb — order in progress', () => {
+    expect(isPastTenseLabel('order in progress')).toBe(false)
+  })
+
+  it('is false for an irregular past outside the known set — Model rebuilt', () => {
+    expect(isPastTenseLabel('Model rebuilt')).toBe(false)
   })
 
   it('is false for empty or whitespace-only labels', () => {

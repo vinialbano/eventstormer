@@ -181,9 +181,40 @@ describe('priorBuildingBlocks', () => {
       }),
     )
     expect(priorBuildingBlocks(parsed)).toEqual([
-      { kind: 'domain-event', label: 'Order placed' },
-      { kind: 'domain-event', label: 'Kitchen started cooking' },
+      { kind: 'domain-event', label: 'Order placed', placement: 'timeline' },
+      { kind: 'domain-event', label: 'Kitchen started cooking', placement: 'timeline' },
     ])
+  })
+
+  it('carries priorPivotal marks and priorFollows edges into the building blocks', () => {
+    const parsed = parseFixtureFile(
+      'reword.json',
+      JSON.stringify({
+        id: 'reword',
+        scopeStatement: 'A restaurant kitchen.',
+        contribution: { speaker: 'Sam', body: 'call it order placed' },
+        priorBlocks: ['Order goes in', 'Kitchen started cooking', 'Food delivered'],
+        priorPivotal: ['Food delivered'],
+        priorFollows: [['Order goes in', 'Kitchen started cooking']],
+        expect: { reword: { from: 'order goes in', to: 'order placed' } },
+      }),
+    )
+    expect(priorBuildingBlocks(parsed)).toEqual([
+      { kind: 'domain-event', label: 'Order goes in', placement: 'timeline', followedBy: ['Kitchen started cooking'] },
+      { kind: 'domain-event', label: 'Kitchen started cooking', placement: 'timeline' },
+      { kind: 'domain-event', label: 'Food delivered', placement: 'timeline', pivotal: true },
+    ])
+  })
+
+  it('throws with the file name when priorFollows is not a pair', () => {
+    const bad = JSON.stringify({
+      id: 'x',
+      scopeStatement: 'A restaurant kitchen.',
+      contribution: { speaker: 'Sam', body: 'x' },
+      priorFollows: [['only-one']],
+      expect: {},
+    })
+    expect(() => parseFixtureFile('bad.json', bad)).toThrow(/^bad\.json:/)
   })
 
   it('is empty when the fixture declares no priorBlocks', () => {

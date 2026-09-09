@@ -23,10 +23,25 @@ export const sharesContentWord = (label: string, segment: string): boolean => {
   return contentWords(label).some((word) => segmentWords.has(word))
 }
 
-export const isPastTenseLabel = (label: string): boolean => {
-  const last = label.trim().split(/\s+/).at(-1)
-  return last?.toLowerCase().endsWith('ed') === true
-}
+/** Common irregular past-tense / past-participle forms an `-ed` check misses — the ones
+ * that actually turn up in EventStorming domain-event labels. */
+const IRREGULAR_PAST = new Set([
+  'sent', 'made', 'put', 'took', 'taken', 'got', 'gotten', 'ran', 'run', 'came', 'went', 'gone',
+  'left', 'built', 'held', 'told', 'gave', 'given', 'drew', 'drawn', 'set', 'began', 'begun',
+  'brought', 'bought', 'caught', 'found', 'kept', 'led', 'lost', 'met', 'paid', 'read', 'said',
+  'sold', 'spent', 'stood', 'won', 'cut', 'hit', 'let', 'shut', 'done', 'seen', 'written',
+  'broken', 'spoken', 'chosen', 'driven', 'thrown', 'known', 'grown', 'shown',
+])
+
+/** A domain-event label is past tense if any word in it is a past-tense verb — an `-ed`
+ * form or a known irregular. Checks every word, not just the last, so
+ * "Ticket sent to the kitchen line" passes. */
+export const isPastTenseLabel = (label: string): boolean =>
+  label
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .some((word) => word.endsWith('ed') || IRREGULAR_PAST.has(word))
 
 export const hasFlagPhase = (tracks: { track: string }[]): boolean =>
   tracks.some((track) => track.track === 'flag-phase')

@@ -3,7 +3,10 @@ import { join } from 'node:path'
 import { systemClock } from '~/plumbing/clock.ts'
 import { isOk } from '~/plumbing/result.ts'
 import { createAnthropicFacilitator } from '~/session-facilitation/api.ts'
-import { facilitationContext } from '~/session-facilitation/domain/read-models/facilitation.ts'
+import {
+  type FacilitationBlock,
+  facilitationContext,
+} from '~/session-facilitation/domain/read-models/facilitation.ts'
 import { InterpretedRelationKind } from '~/session-facilitation/domain/schema/interpreted-track.ts'
 import {
   attributesToFormat,
@@ -56,8 +59,12 @@ export interface EvalFixture {
   id: string
   scopeStatement: string
   contribution: { speaker: string; body: string }
-  /** Board labels folded into `facilitationContext.buildingBlocks` as domain events, so the readiness gates let the model propose relations / pivotal marks / rewords. */
+  /** Board labels folded into `facilitationContext.buildingBlocks` as placed domain events, so the readiness gates let the model propose relations / pivotal marks / rewords. */
   priorBlocks?: string[]
+  /** `priorBlocks` labels to mark pivotal — establishes model structure for the AD-036 reword gate, and satisfies `pivotalProposable` alongside a `priorBlocks` count ≥ 5. */
+  priorPivotal?: string[]
+  /** `[predecessor, successor]` label pairs among `priorBlocks` — establishes a `follows` edge so the AD-036 reword gate opens. */
+  priorFollows?: [string, string][]
   expect: EvalExpect
 }
 
@@ -72,9 +79,26 @@ export interface RunEvalOptions {
   report: boolean
 }
 
-/** The fixture's `priorBlocks` as `facilitationContext` building blocks — folded as domain events. */
-export const priorBuildingBlocks = (fixture: EvalFixture): { kind: string; label: string }[] =>
-  (fixture.priorBlocks ?? []).map((label) => ({ kind: 'domain-event', label }))
+/** The fixture's `priorBlocks` as `facilitationContext` building blocks — folded as placed
+ * domain events, carrying any `priorPivotal` mark and `priorFollows` edge so the readiness
+ * gates (AD-036) let the model propose a relation / pivotal mark / reword. */
+export const priorBuildingBlocks = (fixture: EvalFixture): FacilitationBlock[] => {
+  const pivotal = new Set(fixture.priorPivotal ?? [])
+  const followedBy = new Map<string, string[]>()
+  for (const [predecessor, successor] of fixture.priorFollows ?? []) {
+    followedBy.set(predecessor, [...(followedBy.get(predecessor) ?? []), successor])
+  }
+  return (fixture.priorBlocks ?? []).map((label): FacilitationBlock => {
+    const successors = followedBy.get(label)
+    return {
+      kind: 'domain-event',
+      label,
+      placement: 'timeline',
+      ...(pivotal.has(label) ? { pivotal: true } : {}),
+      ...(successors === undefined ? {} : { followedBy: successors }),
+    }
+  })
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -98,6 +122,21 @@ const parseLabelArray = (value: unknown, field: string): string[] => {
     throw new Error(`eval fixture ${field} must be a non-empty array of labels`)
   }
   return value.map((entry, index) => nonEmptyString(entry, `${field}[${String(index)}]`))
+}
+
+const parseFollowsArray = (value: unknown): [string, string][] => {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error('eval fixture priorFollows must be a non-empty array of [predecessor, successor] pairs')
+  }
+  return value.map((entry, index): [string, string] => {
+    if (!Array.isArray(entry) || entry.length !== 2) {
+      throw new Error(`eval fixture priorFollows[${String(index)}] must be a [predecessor, successor] pair`)
+    }
+    return [
+      nonEmptyString(entry[0], `priorFollows[${String(index)}][0]`),
+      nonEmptyString(entry[1], `priorFollows[${String(index)}][1]`),
+    ]
+  })
 }
 
 const parseRelation = (value: unknown): NonNullable<EvalExpect['relation']> => {
@@ -155,6 +194,12 @@ const parseFixture = (value: unknown): EvalFixture => {
     ...(value.priorBlocks === undefined
       ? {}
       : { priorBlocks: parseLabelArray(value.priorBlocks, 'priorBlocks') }),
+    ...(value.priorPivotal === undefined
+      ? {}
+      : { priorPivotal: parseLabelArray(value.priorPivotal, 'priorPivotal') }),
+    ...(value.priorFollows === undefined
+      ? {}
+      : { priorFollows: parseFollowsArray(value.priorFollows) }),
     expect: parseExpect(value.expect),
   }
 }
@@ -333,7 +378,7 @@ export const runEval = async (options: RunEvalOptions): Promise<EvalRow[]> => {
     const context = facilitationContext({
       scopeStatement: fixture.scopeStatement,
       buildingBlocks: priorBuildingBlocks(fixture),
-      timelineEventCount: 0,
+      timelineEventCount: fixture.priorBlocks?.length ?? 0,
       priorSummaries: [],
       openQuestions: [],
       recentTranscript: [],
