@@ -21,6 +21,11 @@ const emit = defineEmits<{
   'jump-resolution': [resolutionId: string]
   'accept-all': []
 }>()
+
+/** A building-block row shows its label; a model-change row shows the intent summary. */
+const rowLabel = (card: ProposalCard): string => card.label ?? card.intent?.summary ?? ''
+/** The kind pill — the intent kind for a model-change row, else the block kind. */
+const rowKind = (card: ProposalCard): string => card.intent?.kind ?? card.blockKind ?? ''
 </script>
 
 <template>
@@ -34,8 +39,8 @@ const emit = defineEmits<{
         class="drawer__row"
         @click="emit('jump', card.proposalId)"
       >
-        <span class="drawer__pill" :class="`drawer__pill--${card.blockKind}`">{{ kindLabel(card.blockKind) }}</span>
-        <span class="drawer__label">{{ card.label }}</span>
+        <span class="drawer__pill" :class="`drawer__pill--${rowKind(card)}`">{{ kindLabel(rowKind(card)) }}</span>
+        <span class="drawer__label">{{ rowLabel(card) }}</span>
         <span class="drawer__chev" aria-hidden="true">›</span>
       </button>
     </section>
@@ -49,8 +54,8 @@ const emit = defineEmits<{
         class="drawer__row"
         @click="emit('jump', card.proposalId)"
       >
-        <span class="drawer__pill" :class="`drawer__pill--${card.blockKind}`">{{ kindLabel(card.blockKind) }}</span>
-        <span class="drawer__label">{{ card.label }}</span>
+        <span class="drawer__pill" :class="`drawer__pill--${rowKind(card)}`">{{ kindLabel(rowKind(card)) }}</span>
+        <span class="drawer__label">{{ rowLabel(card) }}</span>
         <span class="drawer__chev" aria-hidden="true">›</span>
       </button>
     </section>

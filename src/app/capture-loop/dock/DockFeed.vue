@@ -26,13 +26,20 @@ const emit = defineEmits<{
   hold: [proposalId: string]
   unhold: [proposalId: string]
   edit: [proposalId: string, label: string]
+  'edit-intent': [proposalId: string, changed: { newLabel: string }]
   'accept-all-cluster': [cards: ProposalCardData[]]
 }>()
 
-const liveLabel = (card: ProposalCardData): string => {
+/** The live building-block label — the board's current label once accepted,
+ * else the proposed one. A model-change card has no `label` (it carries `intent`). */
+const liveLabel = (card: ProposalCardData): string | undefined => {
+  if (card.label === undefined) return undefined
   if (card.buildingBlockId === undefined) return card.label
   return props.blockLabels[card.buildingBlockId] ?? card.label
 }
+
+const pillLabel = (card: ProposalCardData): string =>
+  card.intent !== undefined ? kindLabel(card.intent.kind) : kindLabel(card.blockKind ?? '')
 </script>
 
 <template>
@@ -88,13 +95,16 @@ const liveLabel = (card: ProposalCardData): string => {
           :class="{ 'dock__cardslot--pulse': pulsingId === card.proposalId }"
         >
           <ProposalCard
-            :kind-label="kindLabel(card.blockKind)"
+            :kind-label="pillLabel(card)"
             :pill-kind="card.blockKind"
             :label="liveLabel(card)"
+            :intent="card.intent"
             :disposition="card.disposition"
             :held="card.held"
             :bar="card.bar"
             :apply-failed-reason="card.applyFailedReason"
+            :superseded="card.superseded"
+            :superseded-by-label="card.supersededByLabel"
             :accepter="accepter"
             :source-text="item.sourceText"
             @accept="emit('accept', card.proposalId)"
@@ -102,6 +112,7 @@ const liveLabel = (card: ProposalCardData): string => {
             @hold="emit('hold', card.proposalId)"
             @unhold="emit('unhold', card.proposalId)"
             @edit="(label) => emit('edit', card.proposalId, label)"
+            @edit-intent="(changed) => emit('edit-intent', card.proposalId, changed)"
           />
         </div>
         <button

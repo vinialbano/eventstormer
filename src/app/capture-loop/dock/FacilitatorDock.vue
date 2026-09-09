@@ -165,6 +165,7 @@ const onJumpResolution = async (resolutionId: string): Promise<void> => {
             @hold="review.onHold"
             @unhold="review.onUnhold"
             @edit="review.onEdit"
+            @edit-intent="review.onEditIntent"
             @accept-all-cluster="onAcceptAllCluster"
           />
 
