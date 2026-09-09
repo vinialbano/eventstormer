@@ -808,6 +808,16 @@ Approved — In Progress. Branch `slice-5b-facilitator-eval-demo-seed` (planning
   `transport/proposals.ts`; store-drift test went to `stores/stores.test.ts` (the file that
   exists). Pre-existing app `ProposalCard` `modelAffecting` drift left alone.
   → **PCARD-04 decision pending (see below).**
-- **Batch C (T14–T18)** — pending (T18 HITL).
+- **Batch C (T14–T17) ✅ 2026-09-09** — `dcd9ed0` T14 · `6569b2e` T15 · `985f3e1` T16 · `426c53f`
+  T17. `pnpm check` 1220 tests (+12, all in the `domain` project — `eval-oracles.test.ts`) +
+  `pnpm build` green; `pnpm vitest run --project eval` 22 tests. Notes: T15's fixture-set
+  completeness lives in `uncoveredF11Assertions` + `F11_ASSERTIONS` (run.ts); T15 asserts the
+  scorer emits a row for every F11 assertion, T16 adds the disk assertion
+  `uncoveredF11Assertions(loadFixtures())` once the 7 fixtures exist (sequencing: the disk check
+  can only be green after T16). `priorBlocks` folds via `priorBuildingBlocks` as flat
+  `domain-event` blocks. Malformed-fixture errors get the file name via `parseFixtureFile`.
+  README "Not built" bullets (Slice 5 eval suite / remaining eval cases) are now stale — left for
+  the slice wrap / T18, outside T17's stated scope.
+- **Batch C T18** — pending (HITL live eval run).
 - **Batch D (T19–T21)** — pending.
 - **Verifier** — after Batch D.
