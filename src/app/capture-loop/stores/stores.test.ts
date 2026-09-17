@@ -90,6 +90,33 @@ describe('proposals store', () => {
     expect(store.cards).toEqual(cards)
   })
 
+  it('exposes a model-change intent card unchanged — the type mirrors proposalsView', async () => {
+    const cards: ProposalCard[] = [
+      {
+        proposalId: 'p2',
+        contributionId: 'c2',
+        disposition: 'PROPOSED',
+        held: false,
+        overflow: false,
+        intent: {
+          kind: 'relation',
+          summary: 'sequence: Order placed → Order cooked',
+          endpoints: [
+            { id: 'bb_1', label: 'Order placed' },
+            { id: 'bb_2', label: 'Order cooked' },
+          ],
+        },
+      },
+    ]
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ proposals: cards })))
+
+    const store = useProposalsStore()
+    await store.load('s1')
+
+    expect(store.cards).toEqual(cards)
+    expect(store.cards[0]?.intent?.kind).toBe('relation')
+  })
+
   it('records an error on a failed load and clears cards', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: 'boom' }, 500)))
 

@@ -14,6 +14,13 @@ export type ApplyOperationDeps = BoardIo
 export interface ApplyResult {
   resultingBuildingBlockId: BuildingBlockId
   nextPosition: number
+  /**
+   * Whether this call appended an operation or found the effect already held.
+   * A converging single-writer apply reports the outcome explicitly so a caller
+   * that must record an honest result branches on it rather than inspecting
+   * board state.
+   */
+  outcome: 'appended' | 'already-satisfied'
 }
 
 const resultingBuildingBlockId = (operation: Operation): BuildingBlockId => {
@@ -67,13 +74,29 @@ export const applyOperation = (
     const position = rows.length - 1
 
     const decided = decide(replayWriteModel(log), operation)
-    if (!decided.ok) return decided
+    if (!decided.ok) {
+      // A `duplicate-id` seen after a stale-position retry means a concurrent
+      // writer landed this same operation — the effect holds, so converge to
+      // `already-satisfied` rather than surfacing a merits rejection.
+      if (attempt > 0 && decided.error.kind === 'duplicate-id') {
+        return ok({
+          resultingBuildingBlockId: resultingBuildingBlockId(operation),
+          nextPosition: position,
+          outcome: 'already-satisfied',
+        })
+      }
+      return decided
+    }
 
     // An empty decision means the effect already holds (an already-satisfied
     // relation / pivotal / resolve). Nothing to append — return the current
     // position so an accept-chain retry converges to APPLIED.
     if (decided.value.length === 0) {
-      return ok({ resultingBuildingBlockId: resultingBuildingBlockId(operation), nextPosition: position })
+      return ok({
+        resultingBuildingBlockId: resultingBuildingBlockId(operation),
+        nextPosition: position,
+        outcome: 'already-satisfied',
+      })
     }
 
     const appended = deps.store.append(
@@ -90,6 +113,7 @@ export const applyOperation = (
       return ok({
         resultingBuildingBlockId: resultingBuildingBlockId(operation),
         nextPosition: appended.value.nextPosition,
+        outcome: 'appended',
       })
     }
   }

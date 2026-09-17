@@ -16,6 +16,10 @@ const props = defineProps<{
   /** The apply-bounce reason when `disposition === 'LAPSED'`. */
   lapsedReason?: string | undefined
   busy?: boolean | undefined
+  /** A later resolution won the hot spot — the board carries
+   * `supersededByReference`, not this card's reference. Disposition stays `APPLIED`. */
+  superseded?: boolean | undefined
+  supersededByReference?: string | undefined
 }>()
 
 const emit = defineEmits<{
@@ -59,7 +63,10 @@ const lapsedLine = computed(() =>
 </script>
 
 <template>
-  <p v-if="state === 'resolved'" class="rc rc--receipt" role="status">
+  <p v-if="state === 'resolved' && superseded" class="rc rc--superseded" role="status">
+    <span aria-hidden="true">↺</span> Superseded<template v-if="supersededByReference"> — “{{ supersededByReference }}” was kept instead</template><template v-else> — another contribution’s fix was kept</template>
+  </p>
+  <p v-else-if="state === 'resolved'" class="rc rc--receipt" role="status">
     <span aria-hidden="true">✓</span> Resolved<template v-if="reference"> — {{ reference }}</template>
   </p>
   <p v-else-if="state === 'dismissed'" class="rc rc--dismissed" role="status">
@@ -110,6 +117,10 @@ const lapsedLine = computed(() =>
 }
 .rc--dismissed {
   color: var(--color-text-soft);
+}
+.rc--superseded {
+  color: var(--color-text-soft);
+  font-weight: 600;
 }
 .rc--active {
   border: 1px solid var(--color-line);

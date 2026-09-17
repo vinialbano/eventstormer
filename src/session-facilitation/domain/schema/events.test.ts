@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { Intent, ProposalEvent, SessionEvent, WorkshopEvent } from './events.ts'
+import { Intent, ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from './events.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 
@@ -432,5 +432,56 @@ describe('ProposalEvent SSOT', () => {
     const parsed = ProposalEvent.parse({ ...edited, changed: { newLabel: 'Loan booked', kind: 'reword' } })
     expect(parsed.type === 'Model Change Edited' && parsed.changed).not.toHaveProperty('kind')
     expect(() => ProposalEvent.parse({ ...edited, at: 'not-a-date' })).toThrow()
+  })
+
+  it('parses a Model Change Superseded and rejects a bad payload', () => {
+    const superseded = {
+      v: 1,
+      at,
+      type: 'Model Change Superseded',
+      proposalId: 'p_1',
+      target: 'bb_a',
+      supersededByLabel: 'Order placed',
+    }
+    expect(ProposalEvent.parse(superseded)).toEqual(superseded)
+    expect(() => ProposalEvent.parse({ ...superseded, supersededByLabel: '' })).toThrow()
+    expect(() => ProposalEvent.parse({ ...superseded, v: 2 })).toThrow()
+    const { target, ...noTarget } = superseded
+    expect(target).toBe('bb_a')
+    expect(() => ProposalEvent.parse(noTarget)).toThrow()
+  })
+})
+
+describe('ResolutionEvent SSOT', () => {
+  it('parses a well-formed Resolution Proposed', () => {
+    expect(
+      ResolutionEvent.parse({
+        v: 1,
+        at,
+        type: 'Resolution Proposed',
+        resolutionId: 'r_1',
+        sessionId: 's_1',
+        contributionId: 'c_1',
+        hotSpotId: 'b_1',
+        reference: 'the returns desk owns this',
+      }).type,
+    ).toBe('Resolution Proposed')
+  })
+
+  it('parses a Resolution Superseded and rejects a bad payload', () => {
+    const superseded = {
+      v: 1,
+      at,
+      type: 'Resolution Superseded',
+      resolutionId: 'r_1',
+      hotSpotId: 'b_1',
+      supersededByReference: 'the front-of-house lead owns this',
+    }
+    expect(ResolutionEvent.parse(superseded)).toEqual(superseded)
+    expect(() => ResolutionEvent.parse({ ...superseded, supersededByReference: '' })).toThrow()
+    expect(() => ResolutionEvent.parse({ ...superseded, v: 2 })).toThrow()
+    const { hotSpotId, ...noHotSpot } = superseded
+    expect(hotSpotId).toBe('b_1')
+    expect(() => ResolutionEvent.parse(noHotSpot)).toThrow()
   })
 })

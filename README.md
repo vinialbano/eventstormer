@@ -57,21 +57,38 @@ shell/parent value beats both). Keep real secrets in `.env.local` — the test r
 
 **Not built:**
 
-- The Slice 5 eval suite, `pnpm seed`, and the recorded walkthrough (re-filed as a follow-on).
-- The remaining eval cases (phase flagged, deeper-format, integration).
+- Process Modelling and Design-Level support (F12/F13); the deeper eval cases beyond the F11 set.
 
 **Deliberately untested (ADR-008):**
 
 - Facilitator judgment quality (eval only, non-deterministic — reported `k/N`); real Anthropic
   HTTP calls (mocked in unit tests); graph-layout visuals (`playwright-cli` manual); concurrency
   beyond the one-open-session constraint (F14); voice (F17); performance / load.
-- The real model's decision to propose a relation / pivotal / reword — the schema, seam, gates,
-  apply chain and lifecycle are unit/integration-tested with a hand-authored model response and
-  one scripted-facilitator e2e; no test in v1 exercises the real model producing these strands.
+
+The real model's decision to propose a relation / pivotal / reword is exercised by the `pnpm eval`
+fixture set (`eval/fixtures/`), scored by deterministic oracles — see the table below.
 
 <!-- eval:results -->
-Results are produced by `pnpm eval --report`.
+| Case | Assertion | Passed |
+| --- | --- | --- |
+| kind | kind | 5/5 |
+| past-tense | pastTense | 5/5 |
+| near-miss | notFlagPhase | 5/5 |
+| kept-phrasing | sharesContentWord | 5/5 |
+| phase-flagged | phaseFlagged | 5/5 |
+| deeper-format | attributesToFormat | 5/5 |
+| relation | relation | 5/5 |
+| pivotal | pivotal | 5/5 |
+| reword | reword | 5/5 |
+| integration-relation | kind | 5/5 |
+| integration-relation | relation | 3/5 |
+| integration-pivotal | kind | 5/5 |
+| integration-pivotal | pivotal | 5/5 |
 <!-- /eval:results -->
+
+`integration-relation`'s `relation` row is the one that varies run to run (3–5 / 5 across runs):
+the facilitator reliably proposes the two events but names the `sequence` endpoints against them
+only most of the time. Every other assertion has held at 5/5.
 
 ## Architecture
 

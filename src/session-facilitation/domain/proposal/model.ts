@@ -45,6 +45,11 @@ export interface ProposalWriteModel {
    * event, not the fold, so the full `Intent` is deliberately not held here. */
   birthKind?: 'block' | 'model-change'
   buildingBlockId?: BuildingBlockId
+  /** A `reword` proposal that applied, then a later `reword` on the same target
+   * applied a different label — this one is recorded as superseded. Disposition
+   * stays `APPLIED`. */
+  superseded?: boolean
+  supersededByLabel?: string
 }
 
 export const emptyProposal = (): ProposalWriteModel => ({
@@ -103,6 +108,13 @@ export type ProposalCommand =
       at: string
     }
   | { type: 'Record Operation Rejected'; proposalId: ProposalId; reason: string; at: string }
+  | {
+      type: 'Record Model Change Superseded'
+      proposalId: ProposalId
+      target: BuildingBlockId
+      supersededByLabel: string
+      at: string
+    }
   | {
       type: 'Lapse Proposal'
       proposalId: ProposalId

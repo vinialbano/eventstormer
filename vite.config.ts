@@ -62,7 +62,7 @@ export default defineConfig({
           // have. This glob is deliberately broad so that a test file added
           // outside the expected folders still runs somewhere.
           environment: 'node',
-          include: ['src/**/*.test.ts'],
+          include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
           exclude: ['src/app/**'],
         },
       },

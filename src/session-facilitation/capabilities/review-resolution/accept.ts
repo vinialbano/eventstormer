@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { applyOperation, Operation } from '../../../domain-model-capture/api.ts'
+import { applyOperation, Operation, readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import type { ResolutionId, SessionId } from '~/plumbing/ids.ts'
 import { resolutionCard } from '../../domain/read-models/resolutions-view.ts'
 import { decide } from '../../domain/resolution/decide.ts'
@@ -98,11 +98,30 @@ export const acceptResolutionRoutes = (deps: ReviewResolutionDeps) =>
     let boardPosition: number | null = null
     if (applied.ok) {
       boardPosition = applied.value.nextPosition
-      appendResolution(
-        deps,
-        id,
-        decideOrEmpty(after, { type: 'Record Hot Spot Resolved', resolutionId: id, at: deps.clock() }),
-      )
+      // The board decider made this an idempotent no-op — the hot spot was
+      // already resolved. If the board carries a different reference, this
+      // resolution lost the race: record that it was superseded rather than
+      // claim a resolution that never landed.
+      const boardReference =
+        applied.value.outcome === 'already-satisfied'
+          ? readBoardSnapshot(deps, workshopId).blocks.find((block) => block.id === birth.hotSpotId)
+              ?.reference
+          : undefined
+      const marker =
+        typeof boardReference === 'string' && boardReference !== reference
+          ? decideOrEmpty(after, {
+              type: 'Record Resolution Superseded',
+              resolutionId: id,
+              hotSpotId: birth.hotSpotId,
+              supersededByReference: boardReference,
+              at: deps.clock(),
+            })
+          : decideOrEmpty(after, {
+              type: 'Record Hot Spot Resolved',
+              resolutionId: id,
+              at: deps.clock(),
+            })
+      appendResolution(deps, id, marker)
     } else if (LAPSE_REASONS.has(applied.error.kind)) {
       appendResolution(
         deps,

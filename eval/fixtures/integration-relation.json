@@ -1,0 +1,12 @@
+{
+  "id": "integration-relation",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "contribution": {
+    "speaker": "Sam",
+    "body": "So the server put the order in and the kitchen started right away — one straight after the other."
+  },
+  "expect": {
+    "kind": "domain-event",
+    "relation": { "kind": "sequence", "labels": ["order", "kitchen"] }
+  }
+}

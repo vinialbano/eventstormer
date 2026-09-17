@@ -36,6 +36,10 @@ export interface ResolutionWriteModel {
   disposition: ResolutionDisposition
   hotSpotId?: BuildingBlockId
   reference?: string
+  /** A later resolution's reference is what the board carries — this one is
+   * recorded as superseded. Disposition stays `APPLIED`. */
+  superseded?: boolean
+  supersededByReference?: string
 }
 
 export const emptyResolution = (): ResolutionWriteModel => ({
@@ -66,5 +70,12 @@ export type ResolutionCommand =
   | { type: 'Accept Resolution'; resolutionId: ResolutionId; accepter: string; at: string }
   | { type: 'Reject Resolution'; resolutionId: ResolutionId; at: string }
   | { type: 'Record Hot Spot Resolved'; resolutionId: ResolutionId; at: string }
+  | {
+      type: 'Record Resolution Superseded'
+      resolutionId: ResolutionId
+      hotSpotId: BuildingBlockId
+      supersededByReference: string
+      at: string
+    }
   | { type: 'Record Resolution Rejected'; resolutionId: ResolutionId; reason: string; at: string }
   | { type: 'Lapse Resolution'; resolutionId: ResolutionId; at: string }

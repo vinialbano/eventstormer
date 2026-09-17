@@ -1,0 +1,183 @@
+{
+  "A guest placed their order with the server.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Order goes in",
+        "bar": "lenient",
+        "evidenceSpan": "placed their order with the server"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "Then, uh, it goes into the kitchen — the ticket prints down at the line.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Ticket printed",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "And then, like, the fire thing happens and the line cooks get on it. Basically they start cooking the dishes.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Cooking started",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "Once everything's up, the expo fires the table.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Table fired",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "After the food's down, we're into service — running plates, checking back, refills, all of that.": {
+    "interpretation": [
+      {
+        "track": "flag-phase",
+        "questionText": "Can you break \"service\" into concrete events — what happens first once the food is down?"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "Whenever there's an allergy on the ticket, expo has to check every plate against it before anything leaves the pass.": {
+    "interpretation": [
+      {
+        "track": "attribute-to-other-format",
+        "format": "policy",
+        "note": "\"whenever there's an allergy on the ticket, expo checks every plate\" is a policy — it reacts to an event, not a Big-Picture building block."
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "The order has to be in before the kitchen starts cooking, and the kitchen only plates once every dish on that ticket is ready.": {
+    "interpretation": [
+      {
+        "track": "propose-relation",
+        "relationKind": "sequence",
+        "endpoints": ["Order goes in", "Cooking started"],
+        "rationale": "The order has to be in before the kitchen starts cooking."
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "The moment that actually matters is when the food's delivered to the table. Everything before that is, honestly, just prep.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Food delivered",
+        "bar": "strict"
+      },
+      {
+        "track": "propose-pivotal",
+        "pivotalKind": "mark-pivotal",
+        "eventLabel": "Food delivered"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "And that step I called \"order goes in\" — actually, call it \"order placed.\" That's clearer.": {
+    "interpretation": [
+      {
+        "track": "propose-reword",
+        "targetLabel": "Order goes in",
+        "newLabel": "Order placed"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "So the server put the order in and the kitchen started right away — one straight after the other.": {
+    "interpretation": [
+      {
+        "track": "propose-relation",
+        "relationKind": "sequence",
+        "endpoints": ["Cooking started", "Table fired"],
+        "rationale": "One step runs straight into the next — cooking into the expo firing the table."
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "Then the guest got their check — and, honestly, \"check dropped\" is the real end of this, not \"table cleared.\"": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Check dropped",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "Sometimes the kitchen's 86'd a dish, meaning we're out of it, so the server went back to the table and the guest picked something else.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Dish 86'd",
+        "bar": "lenient",
+        "evidenceSpan": "the kitchen's 86'd a dish"
+      },
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Replacement dish chosen",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "We had a plate come back once, wrong temp, and the kitchen re-fired it.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Plate returned",
+        "bar": "strict"
+      },
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Dish re-fired",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "The problem is ticket times blow right out when four tables land at once — nobody's really cracked that expo bottleneck yet.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "hot-spot",
+        "label": "Expo bottleneck when several tables land at once",
+        "bar": "lenient",
+        "evidenceSpan": "ticket times blow right out when four tables land at once"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  },
+  "And that's it — food delivered, check paid, table turns.": {
+    "interpretation": [
+      {
+        "track": "propose-building-block",
+        "blockKind": "domain-event",
+        "label": "Table turned",
+        "bar": "strict"
+      }
+    ],
+    "nextMove": { "move": "acknowledge" }
+  }
+}

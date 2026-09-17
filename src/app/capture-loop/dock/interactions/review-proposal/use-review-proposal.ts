@@ -1,6 +1,7 @@
 import type { ProposalCard } from '../../../types.ts'
 import {
   acceptProposal,
+  editModelChangeProposal,
   editProposal,
   holdProposal,
   rejectProposal,
@@ -30,6 +31,10 @@ export const useReviewProposal = (
   const onHold = (id: string): Promise<void> => run(holdProposal(id))
   const onUnhold = (id: string): Promise<void> => run(unholdProposal(id))
   const onEdit = (id: string, label: string): Promise<void> => run(editProposal(id, label))
+  const onEditIntent = (
+    id: string,
+    changed: { newLabel?: string; field?: string; label?: string },
+  ): Promise<void> => run(editModelChangeProposal(id, changed))
 
   const acceptEvery = async (cards: ProposalCard[]): Promise<void> => {
     for (const card of cards) await acceptProposal(card.proposalId)
@@ -54,6 +59,7 @@ export const useReviewProposal = (
     onHold,
     onUnhold,
     onEdit,
+    onEditIntent,
     onAcceptAllCluster,
     onAcceptAllRemaining,
     onScopeAccept,

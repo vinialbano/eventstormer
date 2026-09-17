@@ -165,6 +165,7 @@ const onJumpResolution = async (resolutionId: string): Promise<void> => {
             @hold="review.onHold"
             @unhold="review.onUnhold"
             @edit="review.onEdit"
+            @edit-intent="review.onEditIntent"
             @accept-all-cluster="onAcceptAllCluster"
           />
 
@@ -182,6 +183,8 @@ const onJumpResolution = async (resolutionId: string): Promise<void> => {
               :reference="card.reference"
               :disposition="card.disposition"
               :lapsed-reason="card.lapsedReason"
+              :superseded="card.superseded"
+              :superseded-by-reference="card.supersededByReference"
               @accept="resolutionReview.onAccept(card.resolutionId)"
               @reject="resolutionReview.onReject(card.resolutionId)"
               @edit="resolutionReview.onEdit(card.resolutionId, $event)"

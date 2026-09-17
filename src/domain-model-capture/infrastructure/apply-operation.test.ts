@@ -28,7 +28,11 @@ describe('applyOperation — capture kinds return the operation id', () => {
 
     expect(isOk(result)).toBe(true)
     if (isOk(result)) {
-      expect(result.value).toEqual({ resultingBuildingBlockId: 'b_1', nextPosition: 0 })
+      expect(result.value).toEqual({
+        resultingBuildingBlockId: 'b_1',
+        nextPosition: 0,
+        outcome: 'appended',
+      })
     }
     expect(snapshotOf(store).blocks.get('b_1' as BuildingBlockId)).toMatchObject({
       kind: 'domain-event',
@@ -70,7 +74,11 @@ describe('applyOperation — an already-satisfied effect is an idempotent no-op'
 
     expect(isOk(second)).toBe(true)
     if (isOk(second)) {
-      expect(second.value).toEqual({ resultingBuildingBlockId: 'b_2', nextPosition: positionAfterFirst })
+      expect(second.value).toEqual({
+        resultingBuildingBlockId: 'b_2',
+        nextPosition: positionAfterFirst,
+        outcome: 'already-satisfied',
+      })
     }
     // no new event was appended
     expect(store.read(boardStream(workshopId)).length - 1).toBe(positionAfterFirst)
@@ -89,7 +97,13 @@ describe('applyOperation — an already-satisfied effect is an idempotent no-op'
     const again = applyOperation(depsFor(store), workshopId, mark)
 
     expect(isOk(again)).toBe(true)
-    if (isOk(again)) expect(again.value).toEqual({ resultingBuildingBlockId: 'b_1', nextPosition: position })
+    if (isOk(again)) {
+      expect(again.value).toEqual({
+        resultingBuildingBlockId: 'b_1',
+        nextPosition: position,
+        outcome: 'already-satisfied',
+      })
+    }
     expect(store.read(boardStream(workshopId)).length - 1).toBe(position)
   })
 })
@@ -371,6 +385,67 @@ describe('applyOperation — relation kinds map an id and do not throw', () => {
         expect.objectContaining({ id: 'eB', placement: 'timeline' }),
       ]),
     )
+  })
+})
+
+describe('applyOperation — the outcome discriminant', () => {
+  it('a fresh append reports outcome "appended"', () => {
+    const store = createMemoryEventStore()
+    const result = applyOperation(depsFor(store), workshopId, captureOp('b_1', 'Loan recorded'))
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) expect(result.value.outcome).toBe('appended')
+  })
+
+  it('a relation whose effect already holds reports outcome "already-satisfied"', () => {
+    const store = createMemoryEventStore()
+    applyOperation(depsFor(store), workshopId, captureOp('b_1', 'a'))
+    applyOperation(depsFor(store), workshopId, captureOp('b_2', 'b'))
+    const seq = Operation.parse({ author, kind: 'sequence', predecessor: 'b_1', successor: 'b_2' })
+    applyOperation(depsFor(store), workshopId, seq)
+
+    const second = applyOperation(depsFor(store), workshopId, seq)
+
+    expect(isOk(second)).toBe(true)
+    if (isOk(second)) expect(second.value.outcome).toBe('already-satisfied')
+  })
+
+  it('a duplicate-id reconverge after a stale-position retry reports "already-satisfied"', () => {
+    const base = createMemoryEventStore()
+    const op = captureOp('b_1', 'Loan recorded')
+    let appends = 0
+    const racy: EventStore = {
+      read: (stream) => base.read(stream),
+      append: (stream, position, ops) => {
+        appends += 1
+        if (appends === 1) {
+          // a concurrent writer lands the same operation first, then we go stale
+          base.append(stream, position, ops)
+          return err<AppendConflict>({ kind: 'stale-position', actual: 0, classification: 'transient' })
+        }
+        return base.append(stream, position, ops)
+      },
+    }
+
+    const result = applyOperation(depsFor(racy), workshopId, op)
+
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value).toEqual({
+        resultingBuildingBlockId: 'b_1',
+        nextPosition: 0,
+        outcome: 'already-satisfied',
+      })
+    }
+    // only the concurrent writer's operation is on the stream
+    expect(base.read(boardStream(workshopId))).toHaveLength(1)
+  })
+
+  it('a first-attempt duplicate-id stays a Rejection, never an outcome', () => {
+    const store = createMemoryEventStore()
+    applyOperation(depsFor(store), workshopId, captureOp('b_1', 'first'))
+    const result = applyOperation(depsFor(store), workshopId, captureOp('b_1', 'again'))
+    expect(isErr(result)).toBe(true)
+    if (isErr(result)) expect(result.error.kind).toBe('duplicate-id')
   })
 })
 

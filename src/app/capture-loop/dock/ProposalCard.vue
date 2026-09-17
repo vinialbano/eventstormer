@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import type { Disposition } from '../types.ts'
+import type { Disposition, ProposalIntent } from '../types.ts'
 
 /**
- * One proposed building block, welded to the facilitator turn that produced it.
- * Purely presentational — it emits intent and the dock does the POST + refetch,
- * so the card never mutates model state optimistically. The same component
- * renders the scope card: a `kindLabel` of `SCOPE`, no bar.
+ * One proposed building block or model-change, welded to the facilitator turn
+ * that produced it. Purely presentational — it emits intent and the dock does the
+ * POST + refetch, so the card never mutates model state optimistically. The same
+ * component renders the scope card (a `kindLabel` of `SCOPE`, no bar) and a
+ * model-change proposal (an `intent` in place of a building-block `label`).
  */
 const props = defineProps<{
   kindLabel: string
-  /** Raw building-block kind — drives the pill colour. Absent on the scope card. */
+  /** Raw building-block kind — drives the pill colour. Absent on the scope / model-change card. */
   pillKind?: 'domain-event' | 'actor' | 'system' | undefined
-  label: string
+  /** The building-block label — absent on a model-change card, which carries `intent`. */
+  label?: string | undefined
+  /** The resolved relation / pivotal / reword — present on a model-change card. */
+  intent?: ProposalIntent | undefined
   disposition: Disposition
   held?: boolean | undefined
   bar?: 'lenient' | 'strict' | undefined
@@ -22,11 +26,24 @@ const props = defineProps<{
   noHold?: boolean | undefined
   /** The contribution this card was proposed from — quoted so Accept is not a reflex. */
   sourceText?: string | undefined
+  /** A later reword on the same target won — the board carries `supersededByLabel`,
+   * not this card's label. Disposition is still `APPLIED`. */
+  superseded?: boolean | undefined
+  supersededByLabel?: string | undefined
 }>()
 
-const pillClass = computed(() =>
-  props.pillKind === undefined ? undefined : `pc__pill--${props.pillKind}`,
+const pillClass = computed(() => {
+  if (props.intent !== undefined) return 'pc__pill--intent'
+  return props.pillKind === undefined ? undefined : `pc__pill--${props.pillKind}`
+})
+
+/** A model-change card has an `intent`; a building-block / scope card has a `label`.
+ * A card with neither renders nothing (forward-compat guard). */
+const hasContent = computed(
+  () => props.intent !== undefined || (props.label !== undefined && props.label !== ''),
 )
+/** The one-line body — the intent summary, or the building-block label. */
+const body = computed(() => props.intent?.summary ?? props.label ?? '')
 
 const emit = defineEmits<{
   accept: []
@@ -34,6 +51,8 @@ const emit = defineEmits<{
   hold: []
   unhold: []
   edit: [label: string]
+  /** A model-change edit — `newLabel` for a reword; the kind is never sent. */
+  'edit-intent': [changed: { newLabel: string }]
 }>()
 
 const editing = ref(false)
@@ -41,8 +60,16 @@ const moreOpen = ref(false)
 const draft = ref('')
 const inputElement = ref<HTMLInputElement | null>(null)
 
+/** Only a reword's label is editable inline; a relation / pivotal endpoint swap
+ * needs a board block picker, which the card does not carry. */
+const editableIntent = computed(() => props.intent?.kind === 'reword')
+const canEdit = computed(() => props.intent === undefined || editableIntent.value)
+const editSeed = computed(() =>
+  editableIntent.value ? (props.intent?.newLabel ?? '') : (props.label ?? ''),
+)
+
 const startEdit = async (): Promise<void> => {
-  draft.value = props.label
+  draft.value = editSeed.value
   editing.value = true
   await nextTick()
   inputElement.value?.focus()
@@ -51,7 +78,9 @@ const startEdit = async (): Promise<void> => {
 const saveEdit = (): void => {
   const next = draft.value.trim()
   editing.value = false
-  if (next.length > 0 && next !== props.label) emit('edit', next)
+  if (next.length === 0 || next === editSeed.value) return
+  if (editableIntent.value) emit('edit-intent', { newLabel: next })
+  else emit('edit', next)
 }
 const cancelEdit = (): void => {
   editing.value = false
@@ -71,25 +100,30 @@ const sourceQuote = computed(() => {
   return source === undefined || source.length === 0 ? null : source
 })
 const nameInSource = computed(() => {
-  if (sourceQuote.value === null) return true
-  return sourceQuote.value.toLocaleLowerCase().includes(props.label.trim().toLocaleLowerCase())
+  if (sourceQuote.value === null || props.intent !== undefined) return true
+  return sourceQuote.value
+    .toLocaleLowerCase()
+    .includes((props.label ?? '').trim().toLocaleLowerCase())
 })
 </script>
 
 <template>
-  <p v-if="state === 'receipt'" class="pc pc--receipt" role="status">
-    <span aria-hidden="true">✓</span> {{ label }}<template v-if="accepter"> — added by {{ accepter }}</template>
+  <p v-if="hasContent && state === 'receipt' && superseded" class="pc pc--superseded" role="status">
+    <span aria-hidden="true">↺</span> Superseded<template v-if="supersededByLabel"> — “{{ supersededByLabel }}” was kept instead</template><template v-else> — another contribution’s text was kept</template>
   </p>
-  <p v-else-if="state === 'dismissed'" class="pc pc--dismissed" role="status">
+  <p v-else-if="hasContent && state === 'receipt'" class="pc pc--receipt" role="status">
+    <span aria-hidden="true">✓</span> {{ body }}<template v-if="accepter"> — added by {{ accepter }}</template>
+  </p>
+  <p v-else-if="hasContent && state === 'dismissed'" class="pc pc--dismissed" role="status">
     <span aria-hidden="true">✕</span> Dismissed
   </p>
-  <p v-else-if="state === 'lapsed'" class="pc pc--dismissed" role="status">Set aside</p>
+  <p v-else-if="hasContent && state === 'lapsed'" class="pc pc--dismissed" role="status">Set aside</p>
 
   <div
-    v-else
+    v-else-if="hasContent"
     class="pc pc--active"
     role="group"
-    :aria-label="`Proposal: ${label}`"
+    :aria-label="`Proposal: ${body}`"
     :class="{ 'pc--held': held }"
     :data-disposition="disposition"
   >
@@ -111,7 +145,7 @@ const nameInSource = computed(() => {
         @keydown.esc.prevent="cancelEdit"
       >
     </label>
-    <p v-else class="pc__label">{{ label }}</p>
+    <p v-else class="pc__label">{{ body }}</p>
     <p v-if="sourceQuote !== null" class="pc__said">You said: {{ sourceQuote }}</p>
     <p v-if="sourceQuote !== null && !nameInSource" class="pc__mismatch">
       This name is not in what you said — check it before you add it.
@@ -147,7 +181,7 @@ const nameInSource = computed(() => {
         Not this
       </button>
       <template v-if="moreOpen">
-        <button type="button" class="btn btn--outline" @click="startEdit">Edit</button>
+        <button v-if="canEdit" type="button" class="btn btn--outline" @click="startEdit">Edit</button>
         <button type="button" class="btn btn--outline btn--danger" @click="emit('reject')">Reject</button>
         <button
           v-if="!held && !noHold"
@@ -173,6 +207,10 @@ const nameInSource = computed(() => {
 }
 .pc--dismissed {
   color: var(--color-text-soft);
+}
+.pc--superseded {
+  color: var(--color-text-soft);
+  font-weight: 600;
 }
 
 .pc--active {
@@ -217,6 +255,11 @@ const nameInSource = computed(() => {
 .pc__pill--system {
   background-color: var(--color-system);
   color: var(--color-system-ink);
+}
+.pc__pill--intent {
+  background-color: var(--color-surface-sunk);
+  color: var(--color-text-soft);
+  border: 1px solid var(--color-line);
 }
 .pc__bar {
   font-size: 0.6875rem;

@@ -1,0 +1,12 @@
+{
+  "id": "relation",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "priorBlocks": ["Order placed", "Kitchen started cooking", "Dishes plated"],
+  "contribution": {
+    "speaker": "Sam",
+    "body": "The order has to be in before the kitchen starts cooking, and the kitchen only plates once every dish on that ticket is ready."
+  },
+  "expect": {
+    "relation": { "kind": "sequence", "labels": ["order", "kitchen"] }
+  }
+}

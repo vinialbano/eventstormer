@@ -122,6 +122,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: accept.test.ts crash-window convergence tests (aca9775) (src/session-facilitation/capabilities/review-proposal)
 - last seen: 2026-09-08T02:00:58Z
 
+### L-019 — An eval fixture that exercises a gated facilitator strand (relation/pivotal/reword) must set up the board precondition the gate reads (AD-036: >=5 placed events for pivotal; a follows edge or pivotal mark for reword) — a flat priorBlocks list of bare labels is not enough; validate every new fixture against one live run before trusting its k/N.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `eval/fixtures` · harmful: 0
+- features: slice-5b-facilitator-eval-demo-seed
+- evidence: design.md EVAL priorBlocks / AD-036 (eval/fixtures)
+- last seen: 2026-09-09T13:37:23Z
+
 ## Quarantined (failed when applied — ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

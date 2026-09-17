@@ -1,0 +1,11 @@
+{
+  "id": "phase-flagged",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "contribution": {
+    "speaker": "Sam",
+    "body": "After the food's down, we're into service — running plates, checking back, refills, all of that."
+  },
+  "expect": {
+    "phaseFlagged": true
+  }
+}

@@ -40,6 +40,41 @@ describe('PendingDrawer', () => {
     expect(wrapper.emitted('jump')).toEqual([['p2']])
   })
 
+  it('renders a model-change card in a group with its intent kind pill and summary', () => {
+    const modelChange = (over: Partial<ProposalCard>): ProposalCard => ({
+      proposalId: 'p',
+      contributionId: 'c1',
+      disposition: 'PROPOSED',
+      held: false,
+      overflow: false,
+      ...over,
+    })
+    const wrapper = mount(PendingDrawer, {
+      props: {
+        parked: [
+          modelChange({
+            proposalId: 'p1',
+            held: true,
+            intent: { kind: 'relation', summary: 'sequence: Order placed → Order cooked' },
+          }),
+        ],
+        awaiting: [
+          modelChange({
+            proposalId: 'p2',
+            overflow: true,
+            intent: { kind: 'reword', summary: 'reword: Order goes in → Order placed' },
+          }),
+        ],
+      },
+    })
+
+    const rows = wrapper.findAll('.drawer__row')
+    expect(rows[0]?.get('.drawer__pill').text()).toBe('RELATION')
+    expect(rows[0]?.get('.drawer__label').text()).toBe('sequence: Order placed → Order cooked')
+    expect(rows[1]?.get('.drawer__pill').text()).toBe('REWORD')
+    expect(rows[1]?.get('.drawer__label').text()).toBe('reword: Order goes in → Order placed')
+  })
+
   it('lists a Resolutions group and emits jump-resolution on a row click', async () => {
     const wrapper = mount(PendingDrawer, {
       props: {

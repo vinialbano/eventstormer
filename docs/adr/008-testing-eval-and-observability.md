@@ -48,9 +48,11 @@ N-runs-passed reporting — you write the bespoke reducer regardless.
   session. Chosen for: fast to narrate cold, natural branches (86'd item, sent back), hot spots
   (ticket times, expo bottleneck), a real phase ("service"), a near-miss ("server fired the order
   to the kitchen").
-- ~8 fixture cases: one per F11 assertion (correct kind · past tense on facilitator-supplied
-  names · phase flagged · near-miss *not* flagged · deeper-format named · awkward phrasing kept)
-  plus two integration cases. **Disjoint from the ADR-005 few-shot examples.**
+- One fixture case per F11 assertion (correct kind · past tense on facilitator-supplied names ·
+  phase flagged · near-miss *not* flagged · deeper-format named · awkward phrasing kept · a
+  proposed relation · a proposed pivotal mark · a proposed reword) plus two integration cases —
+  `eval/fixtures/`, scored by the deterministic oracles in `eval-oracles.ts`. **Disjoint from the
+  ADR-005 few-shot examples.**
 - **N = 5** runs per case (~40 calls per full run). Per-assertion result is `k/5`.
 - **No headline aggregate** — a Markdown table, one row per case × assertion, `Passed` always
   `k/N`, flaky assertions get their run-level spread named. Spliced into the README between
@@ -74,6 +76,9 @@ N-runs-passed reporting — you write the bespoke reducer regardless.
 Facilitator judgment quality (eval only, and non-deterministic — reported `k/N`); real Anthropic
 HTTP calls (mocked in unit tests); graph-layout visuals (`playwright-cli` manual);
 concurrency beyond the one-open-session constraint (F14); voice (F17); performance / load.
+
+The real model's decision to propose a relation / pivotal / reword is covered — the `pnpm eval`
+fixture set has a case for each, scored by deterministic oracles over the returned tracks.
 
 ## Links
 

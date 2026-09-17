@@ -1,0 +1,19 @@
+{
+  "id": "pivotal",
+  "scopeStatement": "How a dinner order gets from the table to the guest — the kitchen side of it.",
+  "priorBlocks": [
+    "Order placed",
+    "Kitchen started cooking",
+    "Ticket fired to the line",
+    "Plates checked at expo",
+    "Food delivered to the table",
+    "Table cleared"
+  ],
+  "contribution": {
+    "speaker": "Sam",
+    "body": "The moment that actually matters is when the food's delivered to the table. Everything before that is, honestly, just prep."
+  },
+  "expect": {
+    "pivotal": { "kind": "mark-pivotal", "label": "food delivered" }
+  }
+}

@@ -49,6 +49,11 @@ interface ProposalCard {
   buildingBlockId?: BuildingBlockId
   /** Present on a model-change proposal — the resolved relation / pivotal / reword. */
   intent?: IntentCard
+  /** Present on a `reword` model-change proposal a later reword overtook — the
+   * board carries the winning label, this one applied against text that did not
+   * stick. Disposition stays `APPLIED`. */
+  superseded?: boolean
+  supersededByLabel?: string
 }
 
 type ResolveLabel = (id: BuildingBlockId) => string | undefined
@@ -150,7 +155,18 @@ export const proposalCard = (
     }
   }
   if (modelChangeBirth === undefined) return undefined
-  return { ...common, intent: intentCard(editedIntent(modelChangeBirth.intent, events), resolveLabel) }
+  return {
+    ...common,
+    intent: intentCard(editedIntent(modelChangeBirth.intent, events), resolveLabel),
+    ...(writeModel.superseded === true
+      ? {
+          superseded: true,
+          ...(writeModel.supersededByLabel === undefined
+            ? {}
+            : { supersededByLabel: writeModel.supersededByLabel }),
+        }
+      : {}),
+  }
 }
 
 const birthContributionId = (events: ProposalEvent[]): ContributionId | '' =>

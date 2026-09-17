@@ -321,4 +321,59 @@ describe('proposalsView — model-change intent card', () => {
       { id: 'bb_b', label: 'Loan approved' },
     ])
   })
+
+  it('carries superseded + the winning label for a reword a later reword overtook', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-reword',
+        proposalId: pid('p_1'),
+        target: bb('bb_a'),
+        newLabel: 'Order goes in',
+        heldBack: false,
+        targetLabel: 'Loan requested',
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [
+            modelChangeBirth(pid('p_1'), { kind: 'reword', target: bb('bb_a'), newLabel: 'Order goes in' }),
+            { v: 1, at, type: 'Proposal Accepted', proposalId: pid('p_1'), accepter: 'Dana' },
+            { v: 1, at, type: 'Operation Applied', proposalId: pid('p_1'), resultingBuildingBlockId: bb('bb_a') },
+            {
+              v: 1,
+              at,
+              type: 'Model Change Superseded',
+              proposalId: pid('p_1'),
+              target: bb('bb_a'),
+              supersededByLabel: 'Order placed',
+            },
+          ],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card).toMatchObject({ disposition: 'APPLIED', superseded: true, supersededByLabel: 'Order placed' })
+  })
+
+  it('omits superseded on a model-change proposal without the marker', () => {
+    const [card] = proposalsView(
+      interpretedWithTrack({
+        track: 'propose-reword',
+        proposalId: pid('p_1'),
+        target: bb('bb_a'),
+        newLabel: 'Order placed',
+        heldBack: false,
+        targetLabel: 'Loan requested',
+      }),
+      [
+        {
+          proposalId: pid('p_1'),
+          events: [modelChangeBirth(pid('p_1'), { kind: 'reword', target: bb('bb_a'), newLabel: 'Order placed' })],
+        },
+      ],
+      resolveLabel,
+    )
+    expect(card).not.toHaveProperty('superseded')
+    expect(card).not.toHaveProperty('supersededByLabel')
+  })
 })
