@@ -111,12 +111,12 @@ pass it through in `decideRecordApplied`.
 - Skill: NONE
 
 **Done when**:
-- [ ] `outcome` is optional on both the command and the event (schema + type)
-- [ ] `decideRecordApplied` forwards `command.outcome` onto the emitted event unchanged
-- [ ] A pre-existing event with no `outcome` still parses (`OperationApplied.parse` on a fixture
+- [x] `outcome` is optional on both the command and the event (schema + type)
+- [x] `decideRecordApplied` forwards `command.outcome` onto the emitted event unchanged
+- [x] A pre-existing event with no `outcome` still parses (`OperationApplied.parse` on a fixture
       missing the field succeeds)
-- [ ] `decide.test.ts` (proposal) asserts the event carries `outcome` when the command supplies it
-- [ ] Gate check passes: `pnpm typecheck && pnpm test`
+- [x] `decide.test.ts` (proposal) asserts the event carries `outcome` when the command supplies it
+- [x] Gate check passes: `pnpm typecheck && pnpm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -139,13 +139,13 @@ so it stays implicitly `'appended'`-equivalent per the fallback rule).
 - Skill: NONE
 
 **Done when**:
-- [ ] A relation/pivotal/resolve proposal whose apply converges to `'already-satisfied'` records
+- [x] A relation/pivotal/resolve proposal whose apply converges to `'already-satisfied'` records
       an `Operation Applied` event with `outcome: 'already-satisfied'`
-- [ ] A real append records `outcome: 'appended'`
-- [ ] `accept.test.ts` (review-proposal) covers both branches with the real event asserted, not
+- [x] A real append records `outcome: 'appended'`
+- [x] `accept.test.ts` (review-proposal) covers both branches with the real event asserted, not
       just the HTTP response
-- [ ] Existing accept-chain tests stay green (no behavior change to the HTTP response shape)
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Existing accept-chain tests stay green (no behavior change to the HTTP response shape)
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: integration
 **Gate**: full
@@ -169,14 +169,14 @@ the proposal if its write model is `superseded`; otherwise count 1 only if it ha
 - Skill: NONE
 
 **Done when**:
-- [ ] Two proposals racing one relation (one `appended`, one `already-satisfied`) count as 1
-- [ ] A superseded reword is not counted
-- [ ] Every-proposal-applied-normally happy path count is unchanged from today's value (no
+- [x] Two proposals racing one relation (one `appended`, one `already-satisfied`) count as 1
+- [x] A superseded reword is not counted
+- [x] Every-proposal-applied-normally happy path count is unchanged from today's value (no
       regression)
-- [ ] A historical proposal stream with an `Operation Applied` event carrying no `outcome` field
+- [x] A historical proposal stream with an `Operation Applied` event carrying no `outcome` field
       still counts (fallback — no crash, no under-count)
-- [ ] `interpret.test.ts` covers all four cases above
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] `interpret.test.ts` covers all four cases above
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: unit
 **Gate**: full
@@ -198,11 +198,11 @@ the proposal if its write model is `superseded`; otherwise count 1 only if it ha
 - Skill: NONE
 
 **Done when**:
-- [ ] `SessionTranscript.parse` accepts a fixture with a non-empty `resolutions` array and with an
+- [x] `SessionTranscript.parse` accepts a fixture with a non-empty `resolutions` array and with an
       empty one
-- [ ] `disposition` enum includes `'superseded'` alongside the six proposal-lane values
-- [ ] No test needed beyond the type-checking build gate (schema-only layer)
-- [ ] Gate check passes: `pnpm typecheck`
+- [x] `disposition` enum includes `'superseded'` alongside the six proposal-lane values
+- [x] No test needed beyond the type-checking build gate (schema-only layer)
+- [x] Gate check passes: `pnpm typecheck`
 
 **Tests**: none
 **Gate**: quick
@@ -226,12 +226,12 @@ true, in which case `disposition` is the literal `'superseded'`.
 - Skill: NONE
 
 **Done when**:
-- [ ] A session with one applied, one lapsed, and one superseded resolution produces three
+- [x] A session with one applied, one lapsed, and one superseded resolution produces three
       `resolutions` entries with the right dispositions (the spec's own Independent Test)
-- [ ] The superseded entry reads `disposition: 'superseded'`, not `'applied'`
-- [ ] A session that proposed no resolutions produces `resolutions: []`
-- [ ] `session-transcript.test.ts` covers all three cases
-- [ ] Gate check passes: `pnpm typecheck && pnpm test`
+- [x] The superseded entry reads `disposition: 'superseded'`, not `'applied'`
+- [x] A session that proposed no resolutions produces `resolutions: []`
+- [x] `session-transcript.test.ts` covers all three cases
+- [x] Gate check passes: `pnpm typecheck && pnpm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -252,10 +252,10 @@ resulting `resolutionStreams` into `sessionTranscript`.
 - Skill: NONE
 
 **Done when**:
-- [ ] `readSessionTranscript` on a session with resolutions returns a contract whose
+- [x] `readSessionTranscript` on a session with resolutions returns a contract whose
       `resolutions` array matches T5's fixture shape end to end
-- [ ] Existing `read-session-transcript` behavior (workshop/session-not-found errors) unchanged
-- [ ] Gate check passes: `pnpm typecheck && pnpm test`
+- [x] Existing `read-session-transcript` behavior (workshop/session-not-found errors) unchanged
+- [x] Gate check passes: `pnpm typecheck && pnpm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -277,11 +277,11 @@ only when `transcript.resolutions.length > 0`. Stays a pure function of the cont
 - Skill: NONE
 
 **Done when**:
-- [ ] Same contract in → byte-identical Markdown out across two renders (purity, ADR-008)
-- [ ] An empty `resolutions` array renders no `## Resolutions` heading at all (not an empty one)
-- [ ] A non-empty array renders one line per entry, superseded entries visibly distinct
-- [ ] `render-transcript.test.ts` (new or extended) covers all three
-- [ ] Gate check passes: `pnpm typecheck && pnpm test`
+- [x] Same contract in → byte-identical Markdown out across two renders (purity, ADR-008)
+- [x] An empty `resolutions` array renders no `## Resolutions` heading at all (not an empty one)
+- [x] A non-empty array renders one line per entry, superseded entries visibly distinct
+- [x] `render-transcript.test.ts` (new or extended) covers all three
+- [x] Gate check passes: `pnpm typecheck && pnpm test`
 
 **Tests**: unit
 **Gate**: quick
@@ -304,12 +304,12 @@ rendered Markdown contains the resolution section with the right dispositions.
 - Skill: NONE
 
 **Done when**:
-- [ ] A full request/response cycle shows a resolved hot spot's disposition in the exported
+- [x] A full request/response cycle shows a resolved hot spot's disposition in the exported
       transcript (this is also the spec's `Success Criteria` line: "`pnpm test:e2e` (or an
       integration test) shows a resolved hot spot in the exported F19 transcript")
-- [ ] Byte-identical-response regression test (already in this file) still passes with the wider
+- [x] Byte-identical-response regression test (already in this file) still passes with the wider
       contract
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: integration
 **Gate**: full
@@ -334,13 +334,13 @@ needed — `reason: z.string().min(1)` already accepts any string)
 - Skill: NONE
 
 **Done when**:
-- [ ] Any board rejection appends `Hot Spot Resolution Rejected { reason }` before the response is
+- [x] Any board rejection appends `Hot Spot Resolution Rejected { reason }` before the response is
       returned, for every possible `applied.error.kind`
-- [ ] A `LAPSE_REASONS` member still returns 200 with the resolution card
-- [ ] A non-`LAPSE_REASONS` reason still returns 422, but the `Resolution` stream now ends
+- [x] A `LAPSE_REASONS` member still returns 200 with the resolution card
+- [x] A non-`LAPSE_REASONS` reason still returns 422, but the `Resolution` stream now ends
       `Hot Spot Resolution Rejected`, not stuck `ACCEPTED`
-- [ ] `accept.test.ts` (review-resolution) covers both the lapse and the non-lapse recording paths
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] `accept.test.ts` (review-resolution) covers both the lapse and the non-lapse recording paths
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: integration
 **Gate**: full
