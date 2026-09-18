@@ -182,10 +182,7 @@ describe('useReviewProposal', () => {
   })
 
   it('does not emit when a relation endpoint edit is rejected (simulating an unknown-label 422)', async () => {
-    const { HttpError } = await import('../../../client.ts')
-    vi.spyOn(proposalsTransport, 'editModelChangeProposal').mockRejectedValue(
-      new HttpError(422, { error: 'unknown-label' }),
-    )
+    vi.spyOn(proposalsTransport, 'editModelChangeProposal').mockRejectedValue(new Error('HTTP 422'))
     const { emit, hooks } = review()
 
     await expect(hooks.onEditIntent('p1', { field: 'predecessor', label: 'Unknown block' })).rejects.toThrow(
