@@ -13,7 +13,8 @@ discrimination sensor).
 ---
 
 **Design**: `.specs/features/slice-5c-honest-record-hardening/design.md`
-**Status**: Approved (2026-09-18)
+**Status**: Done (2026-09-18) — all 17 tasks committed, Verifier PASS
+(`.specs/features/slice-5c-honest-record-hardening/validation.md`)
 
 ---
 

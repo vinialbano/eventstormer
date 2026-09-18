@@ -58,51 +58,41 @@ capture.
 
 ## Handoff
 
-### DONE — Slice 5b Execute + Verifier PASS (2026-09-09) — ready for PR
+### DONE — Slice 5c Execute + Verifier PASS (2026-09-18) — ready for PR
 
-- **Slice 5b (#92)** — branch `slice-5b-facilitator-eval-demo-seed` off `main` (`3224598`).
-  All 21 tasks committed. **Verifier PASS** (`validation.md`): 26/26 in-scope ACs matched, 0
-  spec-precision gaps, sensor 7/7 killed, `pnpm check` 1231 tests + `pnpm build` + `pnpm test:e2e`
-  6/6. `minor` changeset present. Non-blocking findings addressed (`eval-oracles.ts` docstring
-  refreshed). Lesson L-019 (eval fixtures must set up the AD-036 gate precondition + one live run
-  before trusting `k/N`).
-- **Next step (maintainer)**: open the PR for `slice-5b-facilitator-eval-demo-seed` → `main`;
-  the changeset-version PR handles the version bump.
-- **AD-039** (seed = committed interpretation fixture, offline replay) and **AD-040**
-  (`ApplyResult.outcome` discriminant) are in the Decisions table.
-- **PCARD-04 endpoint-swap edit → slice 5c** (#94, HREC-15–17). 5b shipped the reword `newLabel`
-  edit only. Committed `k/N` eval table in the README: all 5/5 except
-  `integration-relation.relation` (run-to-run variance).
-- Known Batch deviations (all reasoned, in `tasks.md` Execution Log): `already-satisfied` on
-  `duplicate-id` scoped to the retry path; `isPastTenseLabel` now whole-label; `src/host/seed.ts`
-  raw `DELETE` for `--force`; `vite.config.ts` `domain` project glob now covers `scripts/**`.
-
-### (superseded) IN FLIGHT — Slice 5b / 5c Specify (2026-09-08)
-
-- **Slice 5b** (`.specs/features/slice-5b-facilitator-eval-demo-seed/`, GitHub **#92**) — spec
-  **confirmed then revised**; Design not yet started. Four tracks: F11 eval suite completion
-  (extends existing `eval/`), `pnpm seed` (offline, from a committed interpretation fixture — the
-  recorded *video* is **dropped**, transcript authored directly, `transcript.md` in the feature
-  dir), the superseded marker + card (`Resolution Superseded` / `Model Change Superseded`;
-  `ApplyResult` gains an explicit `appended` / `already-satisfied` outcome — AD-040), and the
-  in-dock model-change proposal card. 26 requirements. Pending AD-039 (seed fixture) + AD-040
-  (`ApplyResult` outcome) — to be appended to the Decisions table at Design.
-- **Model audit** (`.specs/features/slice-5b-facilitator-eval-demo-seed/model-audit.md`, 2026-09-08)
-  — scanned the whole converging/racing/idempotent-operation surface against domain-modeling /
-  distributed-systems / software-design doctrine. **Board decider convergence layer + all read
-  models are doctrine-clean.** Found F1–F3 (the `ApplyResult` no-op hidden in a success shape →
-  `APPLIED` overloaded — 5b's target) and F4–F9 (wider honest-record surface).
-- **Slice 5c** (`.specs/features/slice-5c-honest-record-hardening/`, GitHub **#94**, blocks #43,
-  blocked-by #92) — audit F4 (F19 transcript resolution lane), F5 (`blocksAdded` excludes
-  converged no-ops), F6/F7 (`review-resolution` records every rejection + stuck-`ACCEPTED` sweep
-  in `reconcilePendingDerivations`), F9 (`decide.ts` convergence-scope comment). 14 requirements.
-  Split from 5b to keep 5b to the marker + card.
-- **Superseded mechanism (per-kind, doctrine-checked)**: `resolve` race = first-write-wins,
-  loser = the *second* contribution, its own handler records `Resolution Superseded` inline on
-  `already-satisfied`. `reword` race = last-write-wins (`decideReword` re-applies), loser = the
-  *earlier* proposal, marked by the `reconcilePendingDerivations` sweep on its stream. Marker is
-  a folded outcome fact (disposition stays `APPLIED`), **never** a read-time board-state diff.
-- **Audit F8** (dead `already-related` / `already-resolved` board error variants) stays on #43.
+- **Slice 5c (#94)** — branch `slice-5c-honest-record-hardening` off `main` (`ff64689`, which
+  already carries merged Slice 5b `3224598`). All 17 tasks (T1–T17) committed across 3 batch
+  workers. **Verifier PASS** (`validation.md`): 17/17 ACs matched spec outcome (1 spec-precision
+  note on the Edge Cases wording, since fixed in `spec.md`), sensor 5/5 mutations killed 0
+  survived, `pnpm check` **1257 tests** (+26 over the `main` baseline of 1231, 0 deletions).
+- **Scope delivered**: F4 (F19 transcript gains a resolution lane, folded from `Resolution`
+  streams, `renderTranscript` stays pure), F5 (`sessionSummary`'s `blocksAdded` excludes
+  superseded + converged-no-op applies — needed **AD-041**, a new optional `outcome` field on
+  `Operation Applied`), F6 (`review-resolution` records `Record Resolution Rejected` for *any*
+  board rejection, not just the curated allow-list), F7 (a new `stuck-accepted-sweep.ts`
+  re-drives any `Proposal`/`Resolution` left `ACCEPTED` with no apply outcome, wired into
+  `reconcilePendingDerivations`, open-sessions-only per AD-021's existing bound), F9 (`decide.ts`
+  states the AD-038 convergence-scope decision in prose — **no `AD-NNN` id in the comment**,
+  `scripts/check-process-ids.sh` bans bare `AD-[0-9]+` anywhere under `src/**`/`e2e/**` with no
+  exception for a decision-log id), and the descoped-from-5b P2 dock UI (relation/pivotal
+  endpoint edit — required an authorized additive widen of `IntentCard.endpoints` to carry
+  `field` per entry, since the app had no other way to learn the `RELATION_FIELDS` mapping).
+- **AD-041** (`Operation Applied.outcome`, optional/backward-compatible) is in the Decisions
+  table, recorded at Design.
+- **Next step (maintainer)**: open the PR for `slice-5c-honest-record-hardening` → `main`; the
+  changeset-version PR handles the 0.8.0 bump. Add the `.changeset/*.md` (`minor`) before opening
+  the PR — not yet added as of this handoff.
+- **Known deviations (all Verifier-confirmed, not defects)**: T9's non-`LAPSE_REASONS` recording
+  path is only reachable in the real system via a `vi.spyOn`-injected rejection kind (the real
+  `resolve` decider can currently only emit reasons already in the old allow-list) — legitimate,
+  not fabricated (the injected kind is a real `Rejection` variant used elsewhere). T16 found and
+  fixed a pre-existing bug: `ProposalCard.vue`'s edit form closed synchronously on save
+  regardless of outcome for the reword path too (Vue `emit()` can't return a listener's result) —
+  fixed by watching for the submitted value to land via a prop update before closing.
+- **Slice 6 still holds**: audit F8 (dead `already-related`/`already-resolved` board error
+  variants) and widening `BoardWriteModel` with placement/labels so `decidePlace`/`decideUnplace`/
+  `decideReword` can short-circuit to `ok([])` — both unchanged by this slice, per the spec's Out
+  of Scope table.
 
 ### Slice 5 (merged context)
 

@@ -203,8 +203,8 @@ assert the POST body; assert the 422 path keeps the form open.
 ## Edge Cases
 
 - WHEN a `Resolution` stream has a `Superseded` event but no `Record Hot Spot Resolved` (5b's
-  in-place substitution) THEN the transcript lane disposition SHALL be `APPLIED` with
-  `supersededByReference` set.
+  in-place substitution) THEN the transcript lane disposition SHALL read `superseded` (per AC2 —
+  not a plain `applied`) with `supersededByReference` set.
 - WHEN `reconcilePendingDerivations` re-drives an `ACCEPTED` proposal whose session closed
   between the tick's read and its write THEN the apply SHALL be rejected `session-closed` and
   the proposal left for the next open-session pass (there is none — accepted gap, documented).
@@ -218,26 +218,29 @@ assert the POST body; assert the 422 path keeps the form open.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| HREC-01 | P1: transcript resolution lane (contract) | Design | Pending |
-| HREC-02 | P1: transcript superseded rendering | Design | Pending |
-| HREC-03 | P1: `renderTranscript` stays pure | Design | Pending |
-| HREC-04 | P1: no empty lane heading | Design | Pending |
-| HREC-05 | P1: `blocksAdded` excludes superseded | Design | Pending |
-| HREC-06 | P1: `blocksAdded` excludes `already-satisfied` | Design | Pending |
-| HREC-07 | P1: `blocksAdded` happy-path unchanged | Design | Pending |
-| HREC-08 | P1: `review-resolution` records every rejection | Design | Pending |
-| HREC-09 | P1: sweep re-drives stuck `ACCEPTED` | Design | Pending |
-| HREC-10 | P1: sweep re-drive idempotent | Design | Pending |
-| HREC-11 | P1: closed-session bound documented | Design | Pending |
-| HREC-12 | P1: sweep logging levels | Design | Pending |
-| HREC-13 | P2: `decide.ts` convergence-scope comment | Tasks | Pending |
-| HREC-14 | P2: comment carries no `.specs/` id | Tasks | Pending |
-| HREC-15 | P2: dock relation-endpoint edit (`field` + `label` POST) | Design | Pending |
-| HREC-16 | P2: `unknown-label` 422 keeps the form open | Design | Pending |
-| HREC-17 | P2: pivotal `target` edit; app `ProposalIntent` mirrors server | Design | Pending |
+| HREC-01 | P1: transcript resolution lane (contract) | Verify | ✅ Verified |
+| HREC-02 | P1: transcript superseded rendering | Verify | ✅ Verified |
+| HREC-03 | P1: `renderTranscript` stays pure | Verify | ✅ Verified |
+| HREC-04 | P1: no empty lane heading | Verify | ✅ Verified |
+| HREC-05 | P1: `blocksAdded` excludes superseded | Verify | ✅ Verified |
+| HREC-06 | P1: `blocksAdded` excludes `already-satisfied` | Verify | ✅ Verified |
+| HREC-07 | P1: `blocksAdded` happy-path unchanged | Verify | ✅ Verified |
+| HREC-08 | P1: `review-resolution` records every rejection | Verify | ✅ Verified |
+| HREC-09 | P1: sweep re-drives stuck `ACCEPTED` | Verify | ✅ Verified |
+| HREC-10 | P1: sweep re-drive idempotent | Verify | ✅ Verified |
+| HREC-11 | P1: closed-session bound documented | Verify | ✅ Verified |
+| HREC-12 | P1: sweep logging levels | Verify | ✅ Verified |
+| HREC-13 | P2: `decide.ts` convergence-scope comment | Verify | ✅ Verified |
+| HREC-14 | P2: comment carries no `.specs/` id | Verify | ✅ Verified |
+| HREC-15 | P2: dock relation-endpoint edit (`field` + `label` POST) | Verify | ✅ Verified |
+| HREC-16 | P2: `unknown-label` 422 keeps the form open | Verify | ✅ Verified |
+| HREC-17 | P2: pivotal `target` edit; app `ProposalIntent` mirrors server | Verify | ✅ Verified |
 
-**Coverage:** 17 total, 0 mapped to tasks (Tasks phase pending). (HREC-15–17 descoped from 5b
-PCARD-04.)
+**Coverage:** 17 total, 17 verified. See
+`.specs/features/slice-5c-honest-record-hardening/validation.md` for the full evidence report
+(spec-anchored AC table, discrimination sensor, gate results). HREC-17 carries one
+spec-precision note (the drift guard is a typecheck-time fixture, not a runtime assertion — not a
+gap). (HREC-15–17 descoped from 5b PCARD-04.)
 
 ---
 
