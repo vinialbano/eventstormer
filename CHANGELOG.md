@@ -1,5 +1,90 @@
 # eventstormer
 
+## 0.6.0
+
+### Minor Changes
+
+- [#91](https://github.com/vinialbano/eventstormer/pull/91) [`3224598`](https://github.com/vinialbano/eventstormer/commit/32245986e7e967c7ce7178aaf7cfd13f5392d5b5) Thanks [@vinialbano](https://github.com/vinialbano)! - Derived artifacts and facilitator relation / pivotal / reword tracks (F10 rest, F19; F04/F07).
+
+  - **F10 — structured JSON export.** `GET /workshops/:id/artifacts/model` serialises the Board
+    snapshot plus the `ArtifactSource` workshop record to a deterministic `ModelJson` document —
+    fixed key and array order, no language-model call, no quoted evidence. It round-trips:
+    `deserialise(serialise(x))` reproduces `{ snapshot, source }` (fast-check property). Every
+    artifact carries the composite version stamp `{ boardPosition, sessionRecordPosition,
+renderedAt }` (AD-037), and none declares external-toolchain compatibility.
+  - **F10 — deterministic summary.** `GET /workshops/:id/artifacts/summary` renders a Markdown
+    outline — spine (pivotal events in `follows` order), per-kind counts, disconnected tracks and
+    named branch points, open problems, coverage gaps — from the model alone, every section with
+    an explicit empty / "not run" line, every ordered section a total order `(rank, id)`.
+  - **F19 — verbatim session transcript.** `GET /workshops/:id/sessions/:sessionId/artifacts/transcript`
+    reproduces every turn of one session in order, each proposal annotated with its final
+    disposition and resulting building block, plus a per-contributor accepted/edited/rejected
+    count table. `readSessionTranscript` is a versioned `session-facilitation` read contract; the
+    renderer does zero derivation over it.
+  - **F04 / F07 — facilitator tracks.** The turn schema gains `propose-relation` /
+    `propose-pivotal` / `propose-reword` strands; the anticorruption seam resolves endpoint labels
+    to building-block ids, drops self-edges and unresolved labels, and gates pivotal marks and
+    rewords on model readiness (AD-036). Accepted tracks flow through the generalised `Proposal`
+    aggregate (`Model Change Proposed` birth event, AD-035) and the existing apply chain.
+    Relation, pivotal, and `resolve` operations are idempotent in the board decider — an
+    already-satisfied effect converges to `APPLIED` rather than failing (AD-038).
+  - **App.** A live artifacts panel beside the readable account: a segmented picker for the three
+    artifacts, re-rendering on every applied operation, with a stamped download.
+
+  Closes the rest of #42 (artifacts + facilitator tracks). The eval suite, `pnpm seed`, and the
+  recorded walkthrough are re-filed as a follow-on.
+
+- [#95](https://github.com/vinialbano/eventstormer/pull/95) [`ff64689`](https://github.com/vinialbano/eventstormer/commit/ff6468933799f17c14ec7de0bfa1ee3b36667590) Thanks [@vinialbano](https://github.com/vinialbano)! - Facilitator eval suite, offline demo seed, superseded marker, and the in-dock model-change card
+  (#92).
+
+  - **F11 — facilitator eval suite.** Deterministic oracles over the facilitator's returned
+    `FacilitationTrack[]` (`proposesRelation` / `proposesPivotal` / `proposesReword` /
+    `flagsPhase` / `attributesToFormat`), an extended `EvalFixture` schema (`phaseFlagged`,
+    `attributesToFormat`, `relation`, `pivotal`, `reword`, `priorBlocks`), and one fixture per F11
+    assertion drawn from the seed narration. `pnpm eval --report` splices a per-case × per-assertion
+    `k/N` table into the README.
+  - **`pnpm seed`.** One command loads a populated demo workshop with no network call and no API
+    key: a committed interpretation of the narration (`scripts/seed/interpretation.json`) is
+    replayed by a scripted facilitator through the real capability handlers via `app.request()`.
+    A `data/seed.json` marker makes a re-run refuse unless `--force`, which wipes only the marked
+    workshop's streams.
+  - **A superseded contribution says so.** `ApplyResult` carries an explicit `appended` /
+    `already-satisfied` outcome; a losing same-target `resolve` records `Resolution Superseded` on
+    its own stream, a losing `reword` is marked `Model Change Superseded` by the reconciliation
+    sweep. `replay` keeps the disposition `APPLIED`; the resolution / proposal card folds a
+    `superseded` state, and the dock renders it as a distinct receipt.
+  - **In-dock model-change proposal.** `ProposalCard` renders a relation / pivotal / reword intent
+    card with Accept / Reject / Hold (and Edit for a `reword` `newLabel`), in the live feed and the
+    pending drawer; `e2e/artifacts-and-relations.spec.ts` accepts the scripted relation proposal
+    by a dock click with no `SPEC_DEVIATION`.
+
+- [#96](https://github.com/vinialbano/eventstormer/pull/96) [`8af82e1`](https://github.com/vinialbano/eventstormer/commit/8af82e14e02f418e8dacea5805804ddc38a3a419) Thanks [@vinialbano](https://github.com/vinialbano)! - Honest-record hardening: closes the wider converging/racing surface the slice-5b model audit
+  found beyond the superseded-marker card (F4, F5, F6, F7, F9).
+
+  - **F19 — transcript resolution lane.** `SessionTranscript` gains a `resolutions` field — one
+    entry per `propose-resolution` track, folded from the `Resolution` streams — so the F19
+    verbatim transcript accounts for every hot-spot resolution attempt (applied, lapsed, bounced,
+    or superseded), not just proposals. `renderTranscript` stays a pure function of the contract.
+  - **F10 — honest `blocksAdded`.** `Operation Applied` gains an optional `outcome: 'appended' |
+'already-satisfied'` field, threaded from `ApplyResult.outcome`. The session summary's
+    `blocksAdded` count now excludes a superseded stream and a converged no-op apply, so a race or
+    a duplicate accept no longer inflates the count past what the board actually holds.
+  - **`review-resolution` records every domain-legitimate rejection.** A board rejection whose
+    reason is `kind-permission`, `withdrawn-target`, or `unknown-target` still appends a
+    `Hot Spot Resolution Rejected { reason }` event before the 200 response — no `Resolution` is
+    left stuck `ACCEPTED` with an unrecorded lapse. A systemic rejection (outside that set) is
+    never recorded as a terminal lapse — `Resolution` has no reopen path once there — so it stays
+    `ACCEPTED` and the reconciliation sweep below keeps re-driving and warning on it.
+  - **No stream stuck `ACCEPTED`.** A new reconciliation sweep re-drives any `Proposal` /
+    `Resolution` left `ACCEPTED` with no later apply-outcome event (the AD-016 crash window)
+    through the existing idempotent accept chain, every tick, for open sessions.
+  - **`decide.ts`** now states in prose why the relation/pivotal/`resolve`/`insert-between`/
+    `unlink-cause` family converges to `ok([])` on an already-satisfied effect while
+    `withdraw`/`reinstate`/`reopen`/`unsequence`/`unannotate` stay genuine failures.
+  - **Dock: edit a relation/pivotal endpoint.** A participant can now correct a wrong relation
+    endpoint or pivotal target directly from the proposal card, instead of rejecting and waiting
+    for a re-propose.
+
 ## 0.5.0
 
 ### Minor Changes
