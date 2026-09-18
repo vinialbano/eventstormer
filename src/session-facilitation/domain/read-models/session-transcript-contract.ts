@@ -38,6 +38,22 @@ const ContributorCount = z.object({
   rejected: z.number().int().nonnegative(),
 })
 
+const TranscriptResolution = z.object({
+  resolutionId: z.string(),
+  hotSpotId: z.string(),
+  reference: z.string(),
+  disposition: z.enum([
+    'proposed',
+    'edited',
+    'accepted',
+    'applied',
+    'superseded',
+    'rejected',
+    'lapsed',
+  ]),
+  supersededByReference: z.string().optional(),
+})
+
 export const SessionTranscript = z.object({
   format: z.literal('big-picture'),
   scope: z.string().nullable(),
@@ -46,5 +62,7 @@ export const SessionTranscript = z.object({
   turns: z.array(TranscriptTurn),
   /** One row per contributor, `speaker` ascending. */
   contributorCounts: z.array(ContributorCount),
+  /** One entry per `propose-resolution` track, stream order. */
+  resolutions: z.array(TranscriptResolution),
 })
 export type SessionTranscript = z.infer<typeof SessionTranscript>

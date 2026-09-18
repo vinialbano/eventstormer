@@ -133,5 +133,6 @@ export const sessionTranscript = (
     position: sessionEvents.length,
     turns,
     contributorCounts: contributorCounts(sessionEvents, streams, speakerByContribution),
+    resolutions: [],
   }
 }
