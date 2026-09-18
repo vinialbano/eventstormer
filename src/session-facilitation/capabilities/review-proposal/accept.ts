@@ -303,6 +303,7 @@ const recordApplyOutcome = (
         type: 'Record Operation Applied',
         proposalId: id,
         resultingBuildingBlockId: applied.value.resultingBuildingBlockId,
+        outcome: applied.value.outcome,
         at: deps.clock(),
       }),
     )
