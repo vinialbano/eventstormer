@@ -6,7 +6,7 @@ changeset — it adds a `Resolution` event surface and a transcript contract fie
 PR is the only writer of `package.json` `version`
 ([ADR-009](../../../docs/adr/009-versioning-and-release.md)).
 
-**Status**: Specify — awaiting confirmation.
+**Status**: Design — spec confirmed (2026-09-18).
 
 ## Problem Statement
 
@@ -58,11 +58,11 @@ lean "harden the record" rather than "the racing user's card":
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| `blocksAdded` honesty mechanism | Once 5b's `ApplyResult` outcome + `Superseded` marker exist, `sessionSummary` counts an `Operation Applied` only when it is not on a superseded stream and its proposal's recorded apply outcome was `appended` (not `already-satisfied`) | The recorded facts already distinguish the cases after 5b; no board read needed | n |
-| Stuck-`ACCEPTED` sweep scope | Extend `reconcilePendingDerivations` (open sessions only, per AD-021's accepted bound) to re-drive any `Proposal` / `Resolution` that is `ACCEPTED` with no subsequent apply-outcome event, through the existing idempotent accept→apply path | Reuses AD-021's pattern and its documented open-sessions-only limitation; the apply chain is already idempotent (AD-038, `duplicate-id`) | n |
-| `review-resolution` rejection recording | Record `Record Resolution Rejected { reason }` for **any** board rejection, dropping the `LAPSE_REASONS` allow-list; keep the 422 status for genuinely systemic rejections but write the outcome first | The allow-list was a curated guess; audit F6 shows the `resolve` decider can only emit reasons already in the list plus `schema`, so widening is low-risk and removes the stuck state | n |
-| Transcript resolution lane shape | One entry per `propose-resolution` track in `SessionTranscriptContract`: `{ resolutionId, hotSpotId, reference, disposition, supersededByReference? }`, ordered by `sessionResolutionIds` (stream order); `renderTranscript` gains a formatting branch, stays pure | Mirrors the existing proposal lane; `resolutionsView` already computes all of it | n |
-| Version bump | `minor` (0.8.0) | Adds a `Resolution` event and a transcript contract field — additive but a schema change | n |
+| `blocksAdded` honesty mechanism | Once 5b's `ApplyResult` outcome + `Superseded` marker exist, `sessionSummary` counts an `Operation Applied` only when it is not on a superseded stream and its proposal's recorded apply outcome was `appended` (not `already-satisfied`) | The recorded facts already distinguish the cases after 5b; no board read needed | y |
+| Stuck-`ACCEPTED` sweep scope | Extend `reconcilePendingDerivations` (open sessions only, per AD-021's accepted bound) to re-drive any `Proposal` / `Resolution` that is `ACCEPTED` with no subsequent apply-outcome event, through the existing idempotent accept→apply path | Reuses AD-021's pattern and its documented open-sessions-only limitation; the apply chain is already idempotent (AD-038, `duplicate-id`) | y |
+| `review-resolution` rejection recording | Record `Record Resolution Rejected { reason }` for **any** board rejection, dropping the `LAPSE_REASONS` allow-list; keep the 422 status for genuinely systemic rejections but write the outcome first | The allow-list was a curated guess; audit F6 shows the `resolve` decider can only emit reasons already in the list plus `schema`, so widening is low-risk and removes the stuck state | y |
+| Transcript resolution lane shape | One entry per `propose-resolution` track in `SessionTranscriptContract`: `{ resolutionId, hotSpotId, reference, disposition, supersededByReference? }`, ordered by `sessionResolutionIds` (stream order); `renderTranscript` gains a formatting branch, stays pure | Mirrors the existing proposal lane; `resolutionsView` already computes all of it | y |
+| Version bump | `minor` (0.8.0) | Adds a `Resolution` event and a transcript contract field — additive but a schema change | y |
 
 **Open questions:** none — all resolved or logged above.
 
