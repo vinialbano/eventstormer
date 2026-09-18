@@ -366,10 +366,10 @@ mechanical).
 - Skill: NONE
 
 **Done when**:
-- [ ] `acceptProposal` is exported and callable with just `(deps, id)`
-- [ ] The full existing `accept.test.ts` (review-proposal) suite passes unchanged — same status
+- [x] `acceptProposal` is exported and callable with just `(deps, id)`
+- [x] The full existing `accept.test.ts` (review-proposal) suite passes unchanged — same status
       codes, same JSON bodies, zero test edits (this is the regression gate for the extraction)
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: integration
 **Gate**: full
@@ -390,10 +390,10 @@ mechanical).
 - Skill: NONE
 
 **Done when**:
-- [ ] `acceptResolution` is exported and callable with just `(deps, id)`
-- [ ] The full existing `accept.test.ts` (review-resolution) suite, including T9's new tests,
+- [x] `acceptResolution` is exported and callable with just `(deps, id)`
+- [x] The full existing `accept.test.ts` (review-resolution) suite, including T9's new tests,
       passes unchanged
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: integration
 **Gate**: full
@@ -419,17 +419,17 @@ closed-session race during re-drive is a documented accepted gap (no `.specs/` i
 - Skill: NONE
 
 **Done when**:
-- [ ] Fault-inject a crash between the board append and the outcome append (append the board
+- [x] Fault-inject a crash between the board append and the outcome append (append the board
       operation directly, skip the outcome-record append, leaving the `Proposal` `ACCEPTED`);
       calling `sweepStuckAccepted` reaches `APPLIED`
-- [ ] Calling `sweepStuckAccepted` twice on the same now-resolved stream is a no-op the second time
+- [x] Calling `sweepStuckAccepted` twice on the same now-resolved stream is a no-op the second time
       (idempotent — HREC-10)
-- [ ] A stream `ACCEPTED` for a session that closes between read and re-drive is left `ACCEPTED`
+- [x] A stream `ACCEPTED` for a session that closes between read and re-drive is left `ACCEPTED`
       (the extracted function's own `session-closed` guard fires) and a `warn` is logged
-- [ ] An `info` line is logged for every re-drive attempt
-- [ ] `stuck-accepted-sweep.test.ts` covers all four cases (the spec's own Independent Test:
+- [x] An `info` line is logged for every re-drive attempt
+- [x] `stuck-accepted-sweep.test.ts` covers all four cases (the spec's own Independent Test:
       "Fault-inject a crash... run the tick; assert the proposal reaches APPLIED")
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: unit/integration
 **Gate**: full
@@ -454,11 +454,11 @@ one-line pointer).
 - Skill: NONE
 
 **Done when**:
-- [ ] `reconcile.test.ts` (interpret-contribution) has a scenario driving the fault-injected
+- [x] `reconcile.test.ts` (interpret-contribution) has a scenario driving the fault-injected
       stuck-`ACCEPTED` case through `reconcilePendingDerivations` end to end (not just the unit
       module from T12) and asserts the proposal/resolution resolves within one tick
-- [ ] Existing `reconcile.test.ts` / `interpret.test.ts` suites stay green
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Existing `reconcile.test.ts` / `interpret.test.ts` suites stay green
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: integration
 **Gate**: full
@@ -469,9 +469,13 @@ one-line pointer).
 
 **What**: Add a comment directly above the `export const decide` docstring stating that `ok([])`
 convergence is deliberately scoped to the facilitator-reachable kinds (relation / pivotal /
-`resolve` / `insert-between` / `unlink-cause` — AD-038) and that `withdraw` / `reinstate` /
-`reopen` / `unsequence` / `unannotate` stay genuine failures for single-user v1. Cites `AD-038`
-only, no `.specs/` task id.
+`resolve` / `insert-between` / `unlink-cause`) and that `withdraw` / `reinstate` / `reopen` /
+`unsequence` / `unannotate` stay genuine failures for single-user v1. **Do NOT cite `AD-038`
+(or any `AD-NNN`) in the comment** — `scripts/check-process-ids.sh` bans the bare `AD-[0-9]+`
+pattern anywhere under `src/**`/`e2e/**` with no exception for a decision-log id (only
+`docs/adr/NNN`-style ADR references and PRD `F01`-style ids are exempt, and neither applies
+here since this decision has no standalone ADR doc). State the reasoning in prose instead —
+drop the tag, keep the reasoning, per `AGENTS.md`'s own example.
 **Where**: `src/domain-model-capture/domain/board/decide.ts` (~line 515, directly above
 `export const decide`)
 **Depends on**: None
@@ -483,11 +487,11 @@ only, no `.specs/` task id.
 - Skill: NONE
 
 **Done when**:
-- [ ] The comment states the deliberate scope and names both kind lists
-- [ ] `grep` finds it adjacent to `export const decide`
-- [ ] `pnpm check:process-ids` passes (no `AD-`-prefixed-but-otherwise-forbidden id, no `.specs/`
-      task id — `AD-038` itself is an explicitly permitted durable reference per `AGENTS.md`)
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint`
+- [x] The comment states the deliberate scope and names both kind lists
+- [x] `grep` finds it adjacent to `export const decide`
+- [x] `pnpm check:process-ids` passes — the comment contains no `AD-NNN` id and no `.specs/`
+      task id
+- [x] Gate check passes: `pnpm typecheck && pnpm lint`
 
 **Tests**: none
 **Gate**: quick

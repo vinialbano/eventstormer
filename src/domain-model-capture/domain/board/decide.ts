@@ -520,6 +520,16 @@ const decideReopen = (writeModel: BoardWriteModel, operation: OpOf<'reopen'>): D
  * On success it returns the parsed operation plus any cascade operations
  * (unplace severs incident follows first). The `switch` is exhaustive over
  * the frozen union — remaining kinds are rejected explicitly.
+ *
+ * Converging to `ok([])` on an already-satisfied effect (relation, pivotal,
+ * `resolve`, `insert-between`, `unlink-cause`) is deliberate and scoped to the
+ * kinds a facilitator can actually re-propose without human input: a second
+ * relation/pivotal/resolve/insert-between/unlink-cause command racing an
+ * already-applied one is harmless to treat as a no-op success. `withdraw`,
+ * `reinstate`, `reopen`, `unsequence`, and `unannotate` stay genuine failures
+ * on purpose — for single-user v1 there is exactly one human issuing those
+ * commands, so a repeat is a real mistake worth surfacing, not a race to
+ * absorb.
  */
 export const decide = (writeModel: BoardWriteModel, op: Operation): Decision => {
   // Belt-and-suspenders re-parse: the append path parses before `decide`, but a
