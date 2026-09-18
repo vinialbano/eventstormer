@@ -131,10 +131,13 @@ const assembleFacilitationContext = (
   const { closed } = sessionIdsFor(deps.db, workshopId)
   const priors = closed.map((id) => {
     const closedEvents = readSession(deps, id)
-    const blocksAdded = sessionProposalIds(closedEvents).reduce(
-      (count, pid) => count + readProposal(deps, pid).filter((event) => event.type === 'Operation Applied').length,
-      0,
-    )
+    const blocksAdded = sessionProposalIds(closedEvents).reduce((count, pid) => {
+      const proposalEvents = readProposal(deps, pid)
+      if (replayProposal(proposalEvents).superseded) return count
+      const applied = proposalEvents.find((event) => event.type === 'Operation Applied')
+      if (applied === undefined || applied.outcome === 'already-satisfied') return count
+      return count + 1
+    }, 0)
     return { events: closedEvents, blocksAdded }
   })
 

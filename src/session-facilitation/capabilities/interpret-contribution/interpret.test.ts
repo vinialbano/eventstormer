@@ -777,6 +777,124 @@ describe('interpretContribution — a later session sees prior summaries', () =>
     expect(captured).toContain('Session 1: 0 blocks added, 1 contributions, 0 questions left open.')
     expect(captured).toContain('Session 2: 0 blocks added, 1 contributions, 0 questions left open.')
   })
+
+  const seedProposalStream = (id: string, events: Record<string, unknown>[]): void => {
+    store.append(
+      { context: 'session-facilitation', aggregate: 'proposal', id },
+      -1,
+      events.map((operation) => ({ at, opVersion: 1, operation })),
+    )
+  }
+
+  const birthAndAccept = (proposalId: string) => [
+    {
+      v: 1,
+      at,
+      type: 'Building Block Proposed',
+      proposalId,
+      sessionId: 's_a',
+      contributionId: `${proposalId}_c`,
+      blockKind: 'domain-event',
+      label: proposalId,
+      bar: 'strict',
+    },
+    { v: 1, at, type: 'Proposal Accepted', proposalId, accepter: 'Dana', buildingBlockId: `bb_${proposalId}` },
+  ]
+
+  it('excludes a converged no-op and a superseded apply from blocksAdded, counts a historical event with no outcome', async () => {
+    const sid = 's_a' as SessionId
+
+    seedProposalStream('p_appended', [
+      ...birthAndAccept('p_appended'),
+      {
+        v: 1,
+        at,
+        type: 'Operation Applied',
+        proposalId: 'p_appended',
+        resultingBuildingBlockId: 'bb_p_appended',
+        outcome: 'appended',
+      },
+    ])
+    seedProposalStream('p_noop', [
+      ...birthAndAccept('p_noop'),
+      {
+        v: 1,
+        at,
+        type: 'Operation Applied',
+        proposalId: 'p_noop',
+        resultingBuildingBlockId: 'bb_p_noop',
+        outcome: 'already-satisfied',
+      },
+    ])
+    seedProposalStream('p_superseded', [
+      ...birthAndAccept('p_superseded'),
+      {
+        v: 1,
+        at,
+        type: 'Operation Applied',
+        proposalId: 'p_superseded',
+        resultingBuildingBlockId: 'bb_p_superseded',
+        outcome: 'appended',
+      },
+      {
+        v: 1,
+        at,
+        type: 'Model Change Superseded',
+        proposalId: 'p_superseded',
+        target: 'bb_p_superseded',
+        supersededByLabel: 'Loan booked',
+      },
+    ])
+    seedProposalStream('p_historical', [
+      ...birthAndAccept('p_historical'),
+      {
+        v: 1,
+        at,
+        type: 'Operation Applied',
+        proposalId: 'p_historical',
+        resultingBuildingBlockId: 'bb_p_historical',
+      },
+    ])
+
+    store.append(sessionStream(sid), -1, [
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Started', sessionId: sid, workshopId, at } },
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId: sid,
+          contributionId: 'c_a',
+          tracks: [
+            { track: 'propose-building-block', proposalId: 'p_appended', blockKind: 'domain-event', label: 'p_appended', bar: 'strict' },
+            { track: 'propose-building-block', proposalId: 'p_noop', blockKind: 'domain-event', label: 'p_noop', bar: 'strict' },
+            { track: 'propose-building-block', proposalId: 'p_superseded', blockKind: 'domain-event', label: 'p_superseded', bar: 'strict' },
+            { track: 'propose-building-block', proposalId: 'p_historical', blockKind: 'domain-event', label: 'p_historical', bar: 'strict' },
+          ],
+          at,
+        },
+      },
+      { at, opVersion: 1, operation: { v: 1, type: 'Session Closed', sessionId: sid, workshopId, unresolvedQuestionIds: [], at } },
+    ])
+    reserve(db, workshopId, sid, at)
+    closeIndexRow(db, sid, at)
+
+    seedSession()
+    contribute('a member borrowed a book', 'c_1')
+
+    let captured = ''
+    const dependencies = deps([turn([])])
+    dependencies.facilitator.interpret = (input) => {
+      captured = input.prompt
+      interpretCalls += 1
+      return Promise.resolve(ok(turn([])))
+    }
+
+    await interpretContribution(dependencies)
+
+    expect(captured).toContain('Session 1: 2 blocks added, 0 contributions, 0 questions left open.')
+  })
 })
 
 describe('interpretContribution — failure classes', () => {
