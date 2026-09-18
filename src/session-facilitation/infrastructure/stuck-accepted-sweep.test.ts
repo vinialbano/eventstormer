@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { ContributionId, ProposalId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import * as domainModelCaptureApi from '../../domain-model-capture/api.ts'
 import { applyOperation, Operation } from '../../domain-model-capture/api.ts'
 import { ProposalEvent, ResolutionEvent } from '../domain/schema/events.ts'
 import { proposalStream, resolutionStream, sessionStream, workshopStream } from './streams.ts'
@@ -205,6 +206,42 @@ describe('sweepStuckAccepted', () => {
     expect(store.read(proposalStream('p_1' as ProposalId)).length).toBe(lengthAfterFirst)
     expect(proposalDisposition('p_1')).toBe('APPLIED')
     vi.restoreAllMocks()
+  })
+
+  it('isolates a re-drive that throws — the other stuck candidate in the same session still gets swept', () => {
+    seedStuckAcceptedProposal('p_1', 'bb_1', 'Book borrowed')
+    const raised = applyOperation(
+      deps(),
+      workshopId,
+      Operation.parse({ kind: 'raise-hot-spot', id: 'h_1', label: 'Hot spot', author }),
+    )
+    expect(raised.ok).toBe(true)
+    seedStuckAcceptedResolution('r_1', 'h_1', 'fixed it')
+    applyOperation(
+      deps(),
+      workshopId,
+      Operation.parse({ kind: 'resolve', target: 'h_1', reference: 'fixed it', author }),
+    )
+
+    // fault injection: re-driving p_1 throws (mirrors applyOperation's
+    // exceeded-retry-budget throw) — r_1 must still be swept in the same pass.
+    const spy = vi.spyOn(domainModelCaptureApi, 'applyOperation').mockImplementationOnce(() => {
+      throw new Error('applyOperation: exceeded stale-position retry budget')
+    })
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined)
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    sweepStuckAccepted(deps(), sessionId)
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'stuck-accepted-sweep: proposal p_1 re-drive threw',
+      expect.any(Error),
+    )
+    expect(proposalDisposition('p_1')).toBe('ACCEPTED')
+    expect(resolutionDisposition('r_1')).toBe('APPLIED')
+    spy.mockRestore()
+    infoSpy.mockRestore()
+    errorSpy.mockRestore()
   })
 
   it('leaves a stream ACCEPTED for a closed session and logs a warning', () => {

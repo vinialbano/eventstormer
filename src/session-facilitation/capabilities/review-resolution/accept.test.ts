@@ -247,7 +247,7 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
     expect(r2Events.at(-1)).toMatchObject({ type: 'Hot Spot Resolution Rejected', reason: 'withdrawn-target' })
   })
 
-  it('records any board rejection reason before responding, even outside the lapse allow-list', async () => {
+  it('leaves the resolution ACCEPTED and re-surfaces the same 422 on retry for a systemic rejection outside the lapse allow-list', async () => {
     raiseHotSpot('h_1')
     seedResolution('r_1', 'h_1', 'first fix')
 
@@ -255,18 +255,23 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
       .spyOn(domainModelCaptureApi, 'applyOperation')
       .mockReturnValue(err({ kind: 'not-implemented-in-slice', classification: 'systemic', operation: 'resolve' }))
     try {
-      const response = await accept('r_1')
-      expect(response.status).toBe(422)
-      const body = (await response.json()) as { error: string }
-      expect(body.error).toBe('not-implemented-in-slice')
+      const first = await accept('r_1')
+      expect(first.status).toBe(422)
+      const firstBody = (await first.json()) as { error: string; classification: string }
+      expect(firstBody).toMatchObject({ error: 'not-implemented-in-slice', classification: 'systemic' })
 
       const r1Events = store
         .read(resolutionStream('r_1' as ResolutionId))
         .map((row) => ResolutionEvent.parse(row.operation))
-      expect(r1Events.at(-1)).toMatchObject({
-        type: 'Hot Spot Resolution Rejected',
-        reason: 'not-implemented-in-slice',
-      })
+      expect(r1Events.at(-1)).toMatchObject({ type: 'Resolution Accepted' })
+
+      // A retry must not have been silently converted into a false "resolved"
+      // 200 by an intervening LAPSED disposition — it re-surfaces the same
+      // systemic 422 every time, exactly like the pre-fix behavior did.
+      const second = await accept('r_1')
+      expect(second.status).toBe(422)
+      const secondBody = (await second.json()) as { error: string; classification: string }
+      expect(secondBody).toMatchObject({ error: 'not-implemented-in-slice', classification: 'systemic' })
     } finally {
       spy.mockRestore()
     }

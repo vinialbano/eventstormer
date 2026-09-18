@@ -1,8 +1,8 @@
 import type { Clock } from '~/plumbing/clock.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { SessionId } from '~/plumbing/ids.ts'
-import { acceptProposal } from '../capabilities/review-proposal/accept.ts'
-import { acceptResolution } from '../capabilities/review-resolution/accept.ts'
+import { acceptProposal } from './accept-proposal.ts'
+import { acceptResolution } from './accept-resolution.ts'
 import { sessionProposalIds } from '../domain/read-models/session-summary.ts'
 import { sessionResolutionIds } from '../domain/read-models/resolutions-view.ts'
 import { replay as replayProposal } from '../domain/proposal/replay.ts'
@@ -43,7 +43,12 @@ export const sweepStuckAccepted = (deps: StuckAcceptedSweepDeps, sessionId: Sess
     if (replayProposal(events).disposition !== 'ACCEPTED') continue
 
     console.info(`stuck-accepted-sweep: re-driving proposal ${proposalId}`)
-    acceptProposal(deps, proposalId)
+    try {
+      acceptProposal(deps, proposalId)
+    } catch (error) {
+      console.error(`stuck-accepted-sweep: proposal ${proposalId} re-drive threw`, error)
+      continue
+    }
 
     const after = deps.store
       .read(proposalStream(proposalId))
@@ -60,7 +65,12 @@ export const sweepStuckAccepted = (deps: StuckAcceptedSweepDeps, sessionId: Sess
     if (replayResolution(events).disposition !== 'ACCEPTED') continue
 
     console.info(`stuck-accepted-sweep: re-driving resolution ${resolutionId}`)
-    acceptResolution(deps, resolutionId)
+    try {
+      acceptResolution(deps, resolutionId)
+    } catch (error) {
+      console.error(`stuck-accepted-sweep: resolution ${resolutionId} re-drive threw`, error)
+      continue
+    }
 
     const after = deps.store
       .read(resolutionStream(resolutionId))

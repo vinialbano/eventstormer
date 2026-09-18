@@ -25,8 +25,9 @@ graph TD
         G --> H[assembleFacilitationContext blocksAdded count]
     end
     subgraph "F6/F7 — no stream stuck ACCEPTED"
-        I[review-resolution accept] -->|any rejection reason| J[Record Resolution Rejected]
-        K[reconcilePendingDerivations tick] -->|re-drive| L[acceptProposal / acceptResolution]
+        I[review-resolution accept] -->|lapse-allow-listed reason| J[Record Resolution Rejected]
+        I -->|systemic reason| I2[stays ACCEPTED, 422]
+        K[reconcilePendingDerivations tick] -->|re-drive| L[infrastructure/accept-proposal.ts / accept-resolution.ts]
         L -->|idempotent, AD-038| M[applyOperation retry]
     end
     subgraph "F9 — decide.ts comment"
@@ -52,8 +53,8 @@ files).
 | `sessionResolutionIds` | same file | Same fold pattern as `sessionProposalIds` — orders the lane by stream position. |
 | `superseded-sweep.ts`'s `supersededRewordSweep` | `src/session-facilitation/capabilities/interpret-contribution/superseded-sweep.ts` | The exact shape for the new stuck-`ACCEPTED` sweep: iterate `openSessions`, read a stream, guard on write-model state, `decideOrEmpty` + append. Copy the shape, not the sweep. |
 | `reconcilePendingDerivations` | `src/session-facilitation/capabilities/interpret-contribution/interpret.ts:585` | Gains one more call in its per-open-session loop, same place `reconcileHotSpots` / `finishClose` already sit. |
-| `ApplyResult.outcome` (AD-040) | `src/domain-model-capture/infrastructure/apply-operation.ts` | Already threads `'appended' \| 'already-satisfied'` out of `applyOperation` — `recordApplyOutcome` in `review-proposal/accept.ts` currently discards it; F5 makes it flow onto the `Operation Applied` event. |
-| `LAPSE_REASONS` set | `src/session-facilitation/capabilities/review-resolution/accept.ts:29` | Kept as the 200-vs-422 status split; F6 only removes it as the *recording* gate. |
+| `ApplyResult.outcome` (AD-040) | `src/domain-model-capture/infrastructure/apply-operation.ts` | Already threads `'appended' \| 'already-satisfied'` out of `applyOperation` — `recordApplyOutcome` in `infrastructure/accept-proposal.ts` currently discards it; F5 makes it flow onto the `Operation Applied` event. |
+| `LAPSE_REASONS` set | `src/session-facilitation/infrastructure/accept-resolution.ts` | Kept as both the 200-vs-422 status split AND the recording gate (AD-042) — a systemic reason outside it must not reach the terminal `LAPSED` disposition. |
 | `console.warn` observability style | `hot-spot-sweep.ts:216`, `superseded-sweep.ts` (implicit — no warn today) | The sweep logs the same way the codebase already logs a retry-next-tick condition — no new logging abstraction. |
 
 ### Integration Points
@@ -104,7 +105,7 @@ files).
   counting all `Operation Applied`)
 - **Dependencies**: `ApplyResult.outcome` (AD-040), already surfaced by `applyOperation`
 - **Reuses**: the AD-040 discriminant end to end — `recordApplyOutcome` in
-  `review-proposal/accept.ts` now passes `outcome: applied.value.outcome` into the
+  `infrastructure/accept-proposal.ts` now passes `outcome: applied.value.outcome` into the
   `Record Operation Applied` command instead of dropping it
 
 The one call site that computes a `blocksAdded` count —
@@ -113,19 +114,23 @@ The one call site that computes a `blocksAdded` count —
 stream, that the write model is not `superseded` and the `Operation Applied` event's `outcome` is
 not `'already-satisfied'`.
 
-### 4. `review-resolution` — record every rejection (F6 / HREC-08)
+### 4. `review-resolution` — record every domain-legitimate rejection, never a systemic one (F6 / HREC-08, corrected by AD-042)
 
-- **Purpose**: Never leave a `Resolution` stuck `ACCEPTED` with an unrecorded board rejection.
-- **Location**: `src/session-facilitation/capabilities/review-resolution/accept.ts`
-- **Interfaces**: unchanged route shape. The `else` branch (currently: return 422, write nothing)
-  becomes: append `Record Resolution Rejected { reason: applied.error.kind }` **and then** return
-  422 (or, if the reason is a genuine lapse reason, 200 with the resolution card — unchanged
-  behavior via the existing `LAPSE_REASONS` split, now used only to pick the response, never to
-  gate the recording)
+- **Purpose**: Never leave a `Resolution` stuck `ACCEPTED` with an unrecorded, domain-legitimate
+  board rejection — while never letting a systemic (bug-class) rejection reach the terminal
+  `LAPSED` disposition, since `Resolution` has no `APPLY_FAILED` state to recover from once there.
+- **Location**: `src/session-facilitation/infrastructure/accept-resolution.ts` (the HTTP route in
+  `capabilities/review-resolution/accept.ts` is a thin wrapper that only maps `Handled` to
+  `context.json`)
+- **Interfaces**: unchanged route shape. The `else` branch appends `Record Resolution Rejected
+  { reason: applied.error.kind }` (→ `Hot Spot Resolution Rejected`, terminal `LAPSED`) and
+  returns 200 **only** when `applied.error.kind` is in `LAPSE_REASONS`; for any other
+  (`classification: 'systemic'`) reason it appends nothing and returns 422, leaving the
+  `Resolution` `ACCEPTED` so `stuck-accepted-sweep.ts` keeps re-driving and warning on it
 - **Dependencies**: none new — `decide.ts`'s `decideRecordRejected` already accepts any
-  `reason: string` (`z.string().min(1)`, no allow-list on the schema side)
-- **Reuses**: `decideOrEmpty` (`review-resolution/accept.ts:143`), the same helper the lapse branch
-  already calls
+  `reason: string` (`z.string().min(1)`, no allow-list on the schema side); the allow-list lives
+  entirely in the capability-adjacent code, not the schema
+- **Reuses**: `decideOrEmpty`, the same helper the lapse branch already calls
 
 ### 5. Stuck-`ACCEPTED` sweep (F7 / HREC-09…12)
 
@@ -138,16 +143,17 @@ not `'already-satisfied'`.
 - **Interfaces**:
   - `sweepStuckAccepted(deps, sessionId): void` — for each `sessionProposalIds` /
     `sessionResolutionIds` stream whose write-model `disposition === 'ACCEPTED'`, calls the
-    extracted re-drivable accept function
-  - `acceptProposal(deps, id): Handled` — **extracted** from
-    `review-proposal/accept.ts`'s `acceptRoutes` handler body (the id→birth→session→workshop→
-    dispatch logic, lines 213-246 today), so both the HTTP route and the sweep call the same
-    function instead of duplicating it
-  - `acceptResolution(deps, id): Handled` — same extraction from
-    `review-resolution/accept.ts`'s `acceptResolutionRoutes` handler body
-- **Dependencies**: `ReviewProposalDeps` / `ReviewResolutionDeps` (`{ store, clock }`) — a subset
-  of `InterpretContributionDeps`, so the sweep can call both extracted functions with the deps it
-  already has (structural typing, no new deps wiring)
+    re-drivable accept function, each call wrapped in its own try/catch — one candidate throwing
+    (e.g. `applyOperation`'s exceeded-retry-budget throw) is logged and skipped, never aborts the
+    rest of the sweep or the caller's per-open-session loop (HREC-12)
+  - `acceptProposal(deps, id): Handled` — lives in the sibling
+    `infrastructure/accept-proposal.ts` (not a capability slice — capability slices may not
+    import each other, and both the HTTP route and this sweep need it; AD-042), so
+    `stuck-accepted-sweep.ts` imports it as one `infrastructure/` file importing another
+  - `acceptResolution(deps, id): Handled` — same shape, `infrastructure/accept-resolution.ts`
+- **Dependencies**: `AcceptProposalDeps` / `AcceptResolutionDeps` (`{ store, clock }`) — a subset
+  of `InterpretContributionDeps`, so the sweep can call both functions with the deps it already
+  has (structural typing, no new deps wiring)
 - **Reuses**: the entire accept chain unchanged in behavior — a re-drive on an `ACCEPTED` stream
   skips the `Accept …` append (already past it) and goes straight to
   apply → `recordApplyOutcome`, exactly like a human re-clicking "accept" today. AD-038's
@@ -241,8 +247,8 @@ interface OperationApplied {
 ```
 
 **Relationships**: Set from `ApplyResult.outcome` at the one write site
-(`review-proposal/accept.ts`'s `recordApplyOutcome`). Absent on every event written before this
-slice — every reader treats `undefined` as `'appended'` (HREC-06 edge case).
+(`infrastructure/accept-proposal.ts`'s `recordApplyOutcome`). Absent on every event written before
+this slice — every reader treats `undefined` as `'appended'` (HREC-06 edge case).
 
 ---
 
@@ -250,9 +256,11 @@ slice — every reader treats `undefined` as `'appended'` (HREC-06 edge case).
 
 | Error Scenario | Handling | User Impact |
 | --- | --- | --- |
-| `review-resolution` gets an unclassified board rejection | `Record Resolution Rejected { reason }` is appended before the 422 is returned | Same 422 the caller sees today, but the `Resolution` stream is no longer stuck — a later transcript / summary read is honest |
-| Sweep re-drives an `ACCEPTED` proposal whose session closed mid-tick | `applyOperation` proceeds fine (board doesn't know about session state), but the extracted `acceptProposal`'s session-closed guard returns 409 before it gets there, so nothing is recorded | Left `ACCEPTED` for a session that will never reopen — documented accepted gap (edge case, spec line ~208), consistent with AD-021's existing open-sessions-only bound |
-| Sweep re-drives twice (two ticks) on the same now-resolved stream | Second call is a pure no-op — `disposition` is already terminal, the extracted accept function's own top-of-function short-circuit (`APPLIED`/`APPLIED-or-LAPSED` early return) fires | No duplicate events, no duplicate log line beyond the first tick's `info` |
+| `review-resolution` gets a lapse-allow-listed board rejection | `Record Resolution Rejected { reason }` is appended before the 200 is returned | The `Resolution` reaches terminal `LAPSED` honestly — a later transcript / summary read is accurate |
+| `review-resolution` gets a systemic board rejection (outside the allow-list) | Nothing is appended; 422 returned, `Resolution` stays `ACCEPTED` | Same 422 the caller sees today; the sweep re-drives and warns on it every tick instead of the record silently going terminal on a bug |
+| Sweep re-drives an `ACCEPTED` proposal whose session closed mid-tick | `applyOperation` proceeds fine (board doesn't know about session state), but `acceptProposal`'s session-closed guard returns 409 before it gets there, so nothing is recorded | Left `ACCEPTED` for a session that will never reopen — documented accepted gap (edge case, spec line ~208), consistent with AD-021's existing open-sessions-only bound |
+| Sweep re-drives twice (two ticks) on the same now-resolved stream | Second call is a pure no-op — `disposition` is already terminal, the accept function's own top-of-function short-circuit (`APPLIED`/`APPLIED-or-LAPSED` early return) fires | No duplicate events, no duplicate log line beyond the first tick's `info` |
+| A candidate's re-drive throws mid-sweep | Caught per candidate, logged at `error`, the loop continues to the next candidate | One broken stream never starves reconciliation for every other open session that tick |
 | Historical `Operation Applied` event with no `outcome` | Treated as `'appended'` everywhere it's read | No crash, no regression on pre-slice data |
 
 ---
@@ -261,7 +269,7 @@ slice — every reader treats `undefined` as `'appended'` (HREC-06 edge case).
 
 | Concern | Location | Impact | Mitigation |
 | --- | --- | --- | --- |
-| Extracting `acceptProposal` / `acceptResolution` out of the Hono route handlers touches code covered by the existing accept-chain test suite (`accept.test.ts`) | `review-proposal/accept.ts`, `review-resolution/accept.ts` | A careless extraction could change status-code mapping or the `Handled` shape the route returns | Extraction is mechanical (move the function body, keep the same `Handled` return type, route becomes `return context.json(acceptProposal(deps, id).json, acceptProposal(deps, id).status)`); the full existing test suite is the regression gate — no test is weakened to make this pass |
+| Extracting `acceptProposal` / `acceptResolution` out of the Hono route handlers into `infrastructure/` touches code covered by the existing accept-chain test suite (`accept.test.ts`) | `infrastructure/accept-proposal.ts`, `infrastructure/accept-resolution.ts`, `capabilities/review-proposal/accept.ts`, `capabilities/review-resolution/accept.ts` | A careless extraction could change status-code mapping or the `Handled` shape the route returns | Extraction is mechanical (move the function body, keep the same `Handled` return type, route becomes `return context.json(acceptProposal(deps, id).json, acceptProposal(deps, id).status)`); the full existing test suite is the regression gate — no test is weakened to make this pass |
 | The stuck-`ACCEPTED` sweep runs on every tick for every open session's every proposal/resolution, even when nothing is stuck | `stuck-accepted-sweep.ts` | A no-op read-and-check per stream per tick — bounded by open-session count, same complexity class as `supersededRewordSweep` (AD-021: "stays O(pending)") | Acceptable at v1 single-user scale; matches the existing sweep's cost profile exactly |
 | `console.warn` on every tick a stream stays stuck could be noisy if the closed-session race were common | `stuck-accepted-sweep.ts` | Log spam, not a correctness bug | Documented as rare (crash window is sub-millisecond, per AD-021); revisit if it proves noisy in practice — not a blocker for this slice |
 

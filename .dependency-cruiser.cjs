@@ -258,6 +258,18 @@ module.exports = {
     },
 
     {
+      name: 'no-infrastructure-importing-capabilities',
+      severity: 'error',
+      comment:
+        'infrastructure/ is a shared layer capabilities import from, never the reverse. The rule ' +
+        'above only anchors on a capabilities/ importer, so it cannot see an infrastructure/ file ' +
+        'reaching sideways into one or more capability slices — exactly the back door this rule ' +
+        'closes.',
+      from: { path: '^src/([^/]+)/infrastructure/' },
+      to: { path: '^src/$1/capabilities/' },
+    },
+
+    {
       name: 'no-orphans',
       severity: 'warn',
       comment: 'A file nothing imports is usually a leftover from a refactor.',

@@ -13,9 +13,12 @@ found beyond the superseded-marker card (F4, F5, F6, F7, F9).
   'already-satisfied'` field, threaded from `ApplyResult.outcome`. The session summary's
   `blocksAdded` count now excludes a superseded stream and a converged no-op apply, so a race or
   a duplicate accept no longer inflates the count past what the board actually holds.
-- **`review-resolution` records every rejection.** A board rejection outside the old curated
-  allow-list now still appends `Record Resolution Rejected { reason }` before the 422 response —
-  no `Resolution` is left stuck `ACCEPTED` with an unrecorded outcome.
+- **`review-resolution` records every domain-legitimate rejection.** A board rejection whose
+  reason is `kind-permission`, `withdrawn-target`, or `unknown-target` still appends a
+  `Hot Spot Resolution Rejected { reason }` event before the 200 response — no `Resolution` is
+  left stuck `ACCEPTED` with an unrecorded lapse. A systemic rejection (outside that set) is
+  never recorded as a terminal lapse — `Resolution` has no reopen path once there — so it stays
+  `ACCEPTED` and the reconciliation sweep below keeps re-driving and warning on it.
 - **No stream stuck `ACCEPTED`.** A new reconciliation sweep re-drives any `Proposal` /
   `Resolution` left `ACCEPTED` with no later apply-outcome event (the AD-016 crash window)
   through the existing idempotent accept chain, every tick, for open sessions.
