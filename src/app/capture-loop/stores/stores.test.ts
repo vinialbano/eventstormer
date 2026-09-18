@@ -102,8 +102,8 @@ describe('proposals store', () => {
           kind: 'relation',
           summary: 'sequence: Order placed → Order cooked',
           endpoints: [
-            { id: 'bb_1', label: 'Order placed' },
-            { id: 'bb_2', label: 'Order cooked' },
+            { id: 'bb_1', label: 'Order placed', field: 'predecessor' },
+            { id: 'bb_2', label: 'Order cooked', field: 'successor' },
           ],
         },
       },
@@ -115,6 +115,30 @@ describe('proposals store', () => {
 
     expect(store.cards).toEqual(cards)
     expect(store.cards[0]?.intent?.kind).toBe('relation')
+  })
+
+  it('exposes a pivotal intent card unchanged, target field included', async () => {
+    const cards: ProposalCard[] = [
+      {
+        proposalId: 'p3',
+        contributionId: 'c3',
+        disposition: 'PROPOSED',
+        held: false,
+        overflow: false,
+        intent: {
+          kind: 'pivotal',
+          summary: 'mark-pivotal: Order cooked',
+          target: { id: 'bb_2', label: 'Order cooked' },
+        },
+      },
+    ]
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ proposals: cards })))
+
+    const store = useProposalsStore()
+    await store.load('s1')
+
+    expect(store.cards).toEqual(cards)
+    expect(store.cards[0]?.intent?.target).toEqual({ id: 'bb_2', label: 'Order cooked' })
   })
 
   it('records an error on a failed load and clears cards', async () => {

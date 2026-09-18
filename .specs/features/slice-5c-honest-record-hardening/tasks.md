@@ -598,11 +598,11 @@ against
 - Skill: NONE
 
 **Done when**:
-- [ ] `ProposalIntent` carries whatever field the endpoint editor (T15) needs to build its
+- [x] `ProposalIntent` carries whatever field the endpoint editor (T15) needs to build its
       `{ field, label }` POST body for both `relation` and `pivotal`
-- [ ] A new/extended test fails if a future server response shape for `endpoints`/`target` drops a
+- [x] A new/extended test fails if a future server response shape for `endpoints`/`target` drops a
       field the app type declares required
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: unit
 **Gate**: full
