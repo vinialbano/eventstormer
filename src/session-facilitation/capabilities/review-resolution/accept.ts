@@ -122,7 +122,7 @@ export const acceptResolutionRoutes = (deps: ReviewResolutionDeps) =>
               at: deps.clock(),
             })
       appendResolution(deps, id, marker)
-    } else if (LAPSE_REASONS.has(applied.error.kind)) {
+    } else {
       appendResolution(
         deps,
         id,
@@ -133,8 +133,9 @@ export const acceptResolutionRoutes = (deps: ReviewResolutionDeps) =>
           at: deps.clock(),
         }),
       )
-    } else {
-      return context.json({ error: applied.error.kind, classification: 'systemic' as const }, 422)
+      if (!LAPSE_REASONS.has(applied.error.kind)) {
+        return context.json({ error: applied.error.kind, classification: 'systemic' as const }, 422)
+      }
     }
 
     return context.json({ boardPosition, resolution: cardOf() }, 200)

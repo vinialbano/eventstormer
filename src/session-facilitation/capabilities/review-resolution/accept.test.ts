@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore, StreamKey } from '~/plumbing/event-store/port.ts'
 import type { BuildingBlockId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import { err } from '~/plumbing/result.ts'
+import * as domainModelCaptureApi from '../../../domain-model-capture/api.ts'
 import { applyOperation, Operation, readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import { ResolutionEvent } from '../../domain/schema/events.ts'
 import { resolutionStream, sessionStream, workshopStream } from '../../infrastructure/streams.ts'
@@ -227,5 +229,46 @@ describe('POST /resolutions/:id/accept — the synchronous resolve chain', () =>
   it('404s for an unknown resolution id', async () => {
     const response = await accept('nope')
     expect(response.status).toBe(404)
+  })
+
+  it('records a lapse reason and returns 200 with the resolution card', async () => {
+    raiseHotSpot('h_1')
+    seedResolution('r_1', 'h_1', 'first fix')
+    seedResolution('r_2', 'h_1', 'second fix')
+
+    await accept('r_1')
+    applyOperation(deps(), workshopId, Operation.parse({ author, kind: 'withdraw', target: 'h_1' }))
+    const response = await accept('r_2')
+
+    expect(response.status).toBe(200)
+    const r2Events = store
+      .read(resolutionStream('r_2' as ResolutionId))
+      .map((row) => ResolutionEvent.parse(row.operation))
+    expect(r2Events.at(-1)).toMatchObject({ type: 'Hot Spot Resolution Rejected', reason: 'withdrawn-target' })
+  })
+
+  it('records any board rejection reason before responding, even outside the lapse allow-list', async () => {
+    raiseHotSpot('h_1')
+    seedResolution('r_1', 'h_1', 'first fix')
+
+    const spy = vi
+      .spyOn(domainModelCaptureApi, 'applyOperation')
+      .mockReturnValue(err({ kind: 'not-implemented-in-slice', classification: 'systemic', operation: 'resolve' }))
+    try {
+      const response = await accept('r_1')
+      expect(response.status).toBe(422)
+      const body = (await response.json()) as { error: string }
+      expect(body.error).toBe('not-implemented-in-slice')
+
+      const r1Events = store
+        .read(resolutionStream('r_1' as ResolutionId))
+        .map((row) => ResolutionEvent.parse(row.operation))
+      expect(r1Events.at(-1)).toMatchObject({
+        type: 'Hot Spot Resolution Rejected',
+        reason: 'not-implemented-in-slice',
+      })
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
