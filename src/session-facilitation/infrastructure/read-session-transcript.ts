@@ -1,13 +1,14 @@
 import { readBoardSnapshot } from '../../domain-model-capture/api.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import type { ProposalId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type { ProposalId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
+import { sessionResolutionIds } from '../domain/read-models/resolutions-view.ts'
 import { sessionProposalIds } from '../domain/read-models/session-summary.ts'
 import { sessionTranscript } from '../domain/read-models/session-transcript.ts'
 import type { SessionTranscript } from '../domain/read-models/session-transcript-contract.ts'
-import { ProposalEvent, SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
+import { ProposalEvent, ResolutionEvent, SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
 import { sessionIdsFor, type SessionIndexDb } from './session-index.ts'
-import { proposalStream, sessionStream, workshopStream } from './streams.ts'
+import { proposalStream, resolutionStream, sessionStream, workshopStream } from './streams.ts'
 
 interface ReadSessionTranscriptDeps {
   store: EventStore
@@ -45,6 +46,10 @@ export const readSessionTranscript = (
     proposalId,
     events: deps.store.read(proposalStream(proposalId)).map((row) => ProposalEvent.parse(row.operation)),
   }))
+  const resolutionStreams = sessionResolutionIds(sessionEvents).map((resolutionId: ResolutionId) => ({
+    resolutionId,
+    events: deps.store.read(resolutionStream(resolutionId)).map((row) => ResolutionEvent.parse(row.operation)),
+  }))
 
   const lastScope = workshopEvents.findLast(
     (event): event is Extract<WorkshopEvent, { type: 'Scope Set' }> => event.type === 'Scope Set',
@@ -53,7 +58,7 @@ export const readSessionTranscript = (
   const labels = new Map(readBoardSnapshot(deps, workshopId).blocks.map((block) => [block.id, block.label]))
 
   return ok(
-    sessionTranscript(sessionEvents, streams, [], {
+    sessionTranscript(sessionEvents, streams, resolutionStreams, {
       scope,
       resolveLabel: (id) => labels.get(id),
     }),
