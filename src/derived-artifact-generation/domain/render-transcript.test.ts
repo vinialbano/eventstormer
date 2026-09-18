@@ -49,6 +49,7 @@ const fixture = (): Input => ({
     { speaker: 'Amy', accepted: 1, edited: 0, rejected: 0 },
     { speaker: 'Bo', accepted: 1, edited: 1, rejected: 1 },
   ],
+  resolutions: [],
 })
 
 const GOLDEN = `# Session transcript
@@ -135,5 +136,48 @@ describe('renderTranscript', () => {
     const { markdown } = renderTranscript(tampered, at)
     expect(markdown).toContain('- Proposal: s — applied\n')
     expect(markdown).toContain('| Amy | 99 | 7 | 42 |')
+  })
+
+  it('renders no Resolutions heading at all when the lane is empty', () => {
+    const { markdown } = renderTranscript(fixture(), at)
+    expect(markdown).not.toContain('## Resolutions')
+  })
+
+  it('renders one line per resolution, a superseded entry visibly distinct', () => {
+    const withResolutions: Input = {
+      ...fixture(),
+      resolutions: [
+        { resolutionId: 'r_1', hotSpotId: 'h_1', reference: 'added a retry with backoff', disposition: 'applied' },
+        { resolutionId: 'r_2', hotSpotId: 'h_2', reference: 'switched to a queue', disposition: 'lapsed' },
+        {
+          resolutionId: 'r_3',
+          hotSpotId: 'h_3',
+          reference: 'capped batch size',
+          disposition: 'superseded',
+          supersededByReference: 'rate-limited the producer',
+        },
+      ],
+    }
+    const { markdown } = renderTranscript(withResolutions, at)
+    expect(markdown).toContain('## Resolutions')
+    expect(markdown).toContain('- Resolution: added a retry with backoff — applied\n')
+    expect(markdown).toContain('- Resolution: switched to a queue — lapsed\n')
+    expect(markdown).toContain(
+      '- Resolution: capped batch size — superseded — superseded by: rate-limited the producer',
+    )
+  })
+
+  it('renders byte-identical markdown for two renders of the same non-empty resolutions lane', () => {
+    const withResolutions: Input = {
+      ...fixture(),
+      resolutions: [
+        { resolutionId: 'r_1', hotSpotId: 'h_1', reference: 'added a retry with backoff', disposition: 'applied' },
+      ],
+    }
+    const strip = (markdown: string): string =>
+      markdown.replace(/^Rendered at: .*$/m, 'Rendered at: <stamp>')
+    const first = renderTranscript(withResolutions, '2026-01-01T00:00:00.000Z')
+    const second = renderTranscript(withResolutions, '2030-12-31T23:59:59.000Z')
+    expect(strip(first.markdown)).toBe(strip(second.markdown))
   })
 })

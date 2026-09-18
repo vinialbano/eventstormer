@@ -36,12 +36,21 @@ interface ContributorCount {
   rejected: number
 }
 
+interface TranscriptResolution {
+  resolutionId: string
+  hotSpotId: string
+  reference: string
+  disposition: 'proposed' | 'edited' | 'accepted' | 'applied' | 'superseded' | 'rejected' | 'lapsed'
+  supersededByReference?: string | undefined
+}
+
 interface Transcript {
   format: 'big-picture'
   scope: string | null
   position: number
   turns: TranscriptTurn[]
   contributorCounts: ContributorCount[]
+  resolutions: TranscriptResolution[]
 }
 
 const proposalLine = (proposal: TranscriptProposal): string => {
@@ -77,6 +86,15 @@ const contributionsTable = (counts: ContributorCount[]): string => {
   return [...header, ...rows].join('\n')
 }
 
+const resolutionLine = (resolution: TranscriptResolution): string => {
+  const supersededBy =
+    resolution.supersededByReference === undefined ? '' : ` — superseded by: ${resolution.supersededByReference}`
+  return `- Resolution: ${resolution.reference} — ${resolution.disposition}${supersededBy}`
+}
+
+const resolutionsSection = (resolutions: TranscriptResolution[]): string =>
+  ['## Resolutions', '', ...resolutions.map(resolutionLine)].join('\n')
+
 export const renderTranscript = (
   transcript: Transcript,
   renderedAt: string,
@@ -97,6 +115,6 @@ Rendered at: ${renderedAt}
 ${turns}
 
 ${contributionsTable(transcript.contributorCounts)}
-`
+${transcript.resolutions.length === 0 ? '' : `\n${resolutionsSection(transcript.resolutions)}\n`}`
   return { markdown, position: transcript.position }
 }
