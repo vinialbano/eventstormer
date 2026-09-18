@@ -506,25 +506,44 @@ for a relation, or the single `props.intent.target` for a pivotal) + a label tex
 confirm emit `'edit-intent', { field, label }` where `field` is the chosen endpoint's
 `RELATION_FIELDS[relationKind]` member (relation) or the literal `'target'` (pivotal) — mirroring
 the existing reword `newLabel` emit path in shape.
-**Where**: `src/app/capture-loop/dock/ProposalCard.vue`
+**Where**: `src/app/capture-loop/dock/ProposalCard.vue`,
+`src/session-facilitation/domain/read-models/proposals-view.ts` (server-side prerequisite, see
+correction below), `src/app/capture-loop/types.ts` (mirror the widened shape)
 **Depends on**: None
-**Reuses**: the existing `editing` / `draft` / emit pattern (lines ~58-86 today); `RELATION_FIELDS`
-equivalent already resolved server-side — the app only needs the endpoint's `field` name, which
-travels with `props.intent.endpoints` per `types.ts`'s `ProposalIntent` shape (extend it if the
-`field` name isn't already present per-endpoint — see Done When)
+**Reuses**: the existing `editing` / `draft` / emit pattern (lines ~58-86 today)
 **Requirement**: HREC-15, HREC-17
+
+**CORRECTION (found during Execute, 2026-09-18):** the original text of this task assumed
+`IntentCard.endpoints` already carried a per-endpoint `field` name. It does not —
+`intentCard()`'s relation branch (`proposals-view.ts:96-106`) builds `endpoints` as
+`{ id, label }[]` only, discarding the `RELATION_FIELDS[intent.relationKind]` field name it maps
+over locally. The client has no other way to learn which `RELATION_FIELDS` member each endpoint
+is (it never receives `relationKind` either — only the free-text `summary`). This is a genuine
+design gap, not scope creep: HREC-15's own AC1 requires the field mapping, so closing it is part
+of this task, not a separate one. **Authorized minimal additive fix**: widen `intentCard`'s
+relation-branch `endpoints` map to `{ id, label, field }[]` (the `field` value comes from the
+`RELATION_FIELDS[intent.relationKind]` entry already being iterated — one line, `.flatMap`
+instead of `.map().filter()`, or an equivalent no-behavior-change-otherwise restructure). Update
+`proposals-view.test.ts` and `http.test.ts` (session-facilitation) fixtures/assertions to expect
+the added `field` — this widens an existing assertion's expected value, it does not weaken one.
+No `IntentCard.target` (pivotal) change needed — the pivotal `field` is always the literal
+`'target'`, already knowable client-side with no server data.
 
 **Tools**:
 - MCP: NONE
 - Skill: NONE
 
 **Done when**:
-- [ ] A `relation` card renders an endpoint selector (one option per `endpoints` entry) + label
-      input; confirming emits `edit-intent` with the correct `field`
-- [ ] A `pivotal` card renders a single target label input; confirming emits `edit-intent` with
+- [x] `IntentCard.endpoints` (relation) carries `field` per entry, sourced from
+      `RELATION_FIELDS[intent.relationKind]`; `proposals-view.test.ts` / `http.test.ts` updated to
+      assert it
+- [x] A `relation` card renders an endpoint selector (one option per `endpoints` entry) + label
+      input; confirming emits `edit-intent` with the correct `field` (read from the endpoint's own
+      `field`, not re-derived client-side)
+- [x] A `pivotal` card renders a single target label input; confirming emits `edit-intent` with
       `field: 'target'`
-- [ ] `ProposalCard.test.ts` covers both kinds' emit payloads
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] `ProposalCard.test.ts` covers both kinds' emit payloads
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: unit
 **Gate**: full

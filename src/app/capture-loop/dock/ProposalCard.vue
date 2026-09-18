@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { Disposition, ProposalIntent } from '../types.ts'
 
 /**
@@ -51,40 +51,106 @@ const emit = defineEmits<{
   hold: []
   unhold: []
   edit: [label: string]
-  /** A model-change edit — `newLabel` for a reword; the kind is never sent. */
-  'edit-intent': [changed: { newLabel: string }]
+  /** A model-change edit — `newLabel` for a reword, or `field` + the replacement
+   * block's current board label for a relation endpoint swap / pivotal target. */
+  'edit-intent': [changed: { newLabel: string } | { field: string; label: string }]
 }>()
 
 const editing = ref(false)
 const moreOpen = ref(false)
 const draft = ref('')
+const draftLabel = ref('')
+const selectedField = ref('')
 const inputElement = ref<HTMLInputElement | null>(null)
+/** The label most recently submitted for a relation/pivotal endpoint edit, or
+ * `null` when nothing is in flight. A plain `emit` carries no acknowledgement
+ * (Vue never returns a listener's result), so the card learns an edit landed
+ * by watching for this exact value to come back on the resolved endpoint —
+ * closing only then keeps the draft and selection intact through a 422. */
+const pendingEndpointLabel = ref<string | null>(null)
 
-/** Only a reword's label is editable inline; a relation / pivotal endpoint swap
- * needs a board block picker, which the card does not carry. */
-const editableIntent = computed(() => props.intent?.kind === 'reword')
+/** A reword's label, a relation's endpoint, or a pivotal's target are editable
+ * inline; anything else falls back to the plain building-block `edit` emit. */
+const editableIntent = computed(
+  () =>
+    props.intent?.kind === 'reword' ||
+    props.intent?.kind === 'relation' ||
+    props.intent?.kind === 'pivotal',
+)
 const canEdit = computed(() => props.intent === undefined || editableIntent.value)
 const editSeed = computed(() =>
-  editableIntent.value ? (props.intent?.newLabel ?? '') : (props.label ?? ''),
+  props.intent?.kind === 'reword' ? (props.intent.newLabel ?? '') : (props.label ?? ''),
 )
 
+const endpointOptions = computed(() => props.intent?.endpoints ?? [])
+/** The board's current label at whichever endpoint is selected (relation) or
+ * the pivotal's single target — recomputed live so it tracks a landed edit. */
+const resolvedEndpointLabel = computed(() => {
+  if (props.intent?.kind === 'pivotal') return props.intent.target?.label ?? ''
+  return endpointOptions.value.find((endpoint) => endpoint.field === selectedField.value)?.label ?? ''
+})
+
 const startEdit = async (): Promise<void> => {
-  draft.value = editSeed.value
+  pendingEndpointLabel.value = null
+  if (props.intent?.kind === 'relation') {
+    selectedField.value = endpointOptions.value[0]?.field ?? ''
+    draftLabel.value = resolvedEndpointLabel.value
+  } else if (props.intent?.kind === 'pivotal') {
+    draftLabel.value = resolvedEndpointLabel.value
+  } else {
+    draft.value = editSeed.value
+  }
   editing.value = true
   await nextTick()
   inputElement.value?.focus()
   inputElement.value?.select()
 }
+const onEndpointChange = (): void => {
+  draftLabel.value = resolvedEndpointLabel.value
+}
 const saveEdit = (): void => {
+  if (props.intent?.kind === 'relation' || props.intent?.kind === 'pivotal') {
+    const label = draftLabel.value.trim()
+    const field = props.intent.kind === 'pivotal' ? 'target' : selectedField.value
+    if (label.length === 0 || field === '') return
+    if (label === resolvedEndpointLabel.value) {
+      editing.value = false
+      return
+    }
+    pendingEndpointLabel.value = label
+    emit('edit-intent', { field, label })
+    return
+  }
   const next = draft.value.trim()
-  editing.value = false
-  if (next.length === 0 || next === editSeed.value) return
-  if (editableIntent.value) emit('edit-intent', { newLabel: next })
-  else emit('edit', next)
+  if (next.length === 0 || next === editSeed.value) {
+    editing.value = false
+    return
+  }
+  if (editableIntent.value) {
+    pendingEndpointLabel.value = next
+    emit('edit-intent', { newLabel: next })
+  } else {
+    editing.value = false
+    emit('edit', next)
+  }
 }
 const cancelEdit = (): void => {
   editing.value = false
+  pendingEndpointLabel.value = null
 }
+
+/** Closes the editor once the value we submitted is reflected back from the
+ * server — never on an unrelated refetch (the interpretation poll runs
+ * regardless), and never on a 422, since a rejected edit writes nothing. */
+watch(
+  () => (props.intent?.kind === 'reword' ? props.intent.newLabel : resolvedEndpointLabel.value),
+  (landed) => {
+    if (pendingEndpointLabel.value !== null && landed === pendingEndpointLabel.value) {
+      editing.value = false
+      pendingEndpointLabel.value = null
+    }
+  },
+)
 
 const state = computed<'receipt' | 'dismissed' | 'lapsed' | 'active'>(() => {
   if (props.disposition === 'APPLIED') return 'receipt'
@@ -134,7 +200,39 @@ const nameInSource = computed(() => {
       <span v-if="held" class="pc__parked">parked</span>
     </div>
 
-    <label v-if="editing" class="pc__editwrap">
+    <div v-if="editing && intent?.kind === 'relation'" class="pc__editwrap">
+      <label>
+        <span class="sr-only">Choose the endpoint to replace</span>
+        <select v-model="selectedField" class="pc__input" @change="onEndpointChange">
+          <option v-for="endpoint in endpointOptions" :key="endpoint.field" :value="endpoint.field">
+            {{ endpoint.label }}
+          </option>
+        </select>
+      </label>
+      <label>
+        <span class="sr-only">Replacement block's current board label</span>
+        <input
+          ref="inputElement"
+          v-model="draftLabel"
+          class="pc__input"
+          type="text"
+          @keydown.enter.prevent="saveEdit"
+          @keydown.esc.prevent="cancelEdit"
+        >
+      </label>
+    </div>
+    <label v-else-if="editing && intent?.kind === 'pivotal'" class="pc__editwrap">
+      <span class="sr-only">Replacement block's current board label</span>
+      <input
+        ref="inputElement"
+        v-model="draftLabel"
+        class="pc__input"
+        type="text"
+        @keydown.enter.prevent="saveEdit"
+        @keydown.esc.prevent="cancelEdit"
+      >
+    </label>
+    <label v-else-if="editing" class="pc__editwrap">
       <span class="sr-only">Edit label</span>
       <input
         ref="inputElement"

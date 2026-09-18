@@ -195,8 +195,8 @@ describe('proposalsView — model-change intent card', () => {
       kind: 'relation',
       summary: 'sequence: Loan requested → Loan approved',
       endpoints: [
-        { id: 'bb_a', label: 'Loan requested' },
-        { id: 'bb_b', label: 'Loan approved' },
+        { id: 'bb_a', label: 'Loan requested', field: 'predecessor' },
+        { id: 'bb_b', label: 'Loan approved', field: 'successor' },
       ],
     })
     expect(card?.blockKind).toBeUndefined()
@@ -286,8 +286,8 @@ describe('proposalsView — model-change intent card', () => {
       resolveLabel,
     )
     expect(card?.intent?.endpoints).toEqual([
-      { id: 'bb_a', label: 'Loan requested' },
-      { id: 'bb_gone', label: 'bb_gone' },
+      { id: 'bb_a', label: 'Loan requested', field: 'predecessor' },
+      { id: 'bb_gone', label: 'bb_gone', field: 'successor' },
     ])
   })
 
@@ -317,8 +317,8 @@ describe('proposalsView — model-change intent card', () => {
       resolveLabel,
     )
     expect(card?.intent?.endpoints).toEqual([
-      { id: 'bb_a', label: 'Loan requested' },
-      { id: 'bb_b', label: 'Loan approved' },
+      { id: 'bb_a', label: 'Loan requested', field: 'predecessor' },
+      { id: 'bb_b', label: 'Loan approved', field: 'successor' },
     ])
   })
 

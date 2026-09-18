@@ -5,6 +5,7 @@ import type { Intent, ProposalEvent, SessionEvent } from '../schema/events.ts'
 import {
   type InterpretationBar,
   type InterpretedBlockKind,
+  type RelationField,
   RELATION_FIELDS,
 } from '../schema/interpreted-track.ts'
 import { sessionProposalIds } from './session-summary.ts'
@@ -27,7 +28,7 @@ const DISPLAY_CAP = 7
 interface IntentCard {
   kind: Intent['kind']
   summary: string
-  endpoints?: { id: BuildingBlockId; label: string }[]
+  endpoints?: { id: BuildingBlockId; label: string; field: RelationField }[]
   target?: { id: BuildingBlockId; label: string }
   newLabel?: string
 }
@@ -96,9 +97,9 @@ const labelFor = (id: BuildingBlockId, resolve: ResolveLabel | undefined): strin
 const intentCard = (intent: Intent, resolve: ResolveLabel | undefined): IntentCard => {
   if (intent.kind === 'relation') {
     const endpoints = RELATION_FIELDS[intent.relationKind]
-      .map((field) => intent[field])
-      .filter((id): id is BuildingBlockId => id !== undefined)
-      .map((id) => ({ id, label: labelFor(id, resolve) }))
+      .map((field) => ({ field, id: intent[field] }))
+      .filter((endpoint): endpoint is { field: RelationField; id: BuildingBlockId } => endpoint.id !== undefined)
+      .map(({ field, id }) => ({ id, field, label: labelFor(id, resolve) }))
     return {
       kind: 'relation',
       summary: `${intent.relationKind}: ${endpoints.map((endpoint) => endpoint.label).join(' → ')}`,

@@ -339,14 +339,17 @@ describe('GET /sessions/:id/proposals', () => {
     const response = await routes().request(`/sessions/${sessionId}/proposals`)
     expect(response.status).toBe(200)
     const { proposals } = (await response.json()) as {
-      proposals: { proposalId: string; intent?: { kind: string; summary: string; endpoints?: { id: string; label: string }[] } }[]
+      proposals: {
+        proposalId: string
+        intent?: { kind: string; summary: string; endpoints?: { id: string; label: string; field: string }[] }
+      }[]
     }
     expect(proposals[0]?.intent).toEqual({
       kind: 'relation',
       summary: 'sequence: Loan requested → Loan approved',
       endpoints: [
-        { id: 'bb_a', label: 'Loan requested' },
-        { id: 'bb_b', label: 'Loan approved' },
+        { id: 'bb_a', label: 'Loan requested', field: 'predecessor' },
+        { id: 'bb_b', label: 'Loan approved', field: 'successor' },
       ],
     })
   })

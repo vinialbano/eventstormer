@@ -65,7 +65,9 @@ export type Disposition =
 export interface ProposalIntent {
   kind: 'relation' | 'pivotal' | 'reword'
   summary: string
-  endpoints?: { id: string; label: string }[]
+  /** `field` is the endpoint's `RELATION_FIELDS[relationKind]` member — what the
+   * dock's endpoint editor sends back as `POST /proposals/:id/edit { field, label }`. */
+  endpoints?: { id: string; label: string; field: string }[]
   target?: { id: string; label: string }
   newLabel?: string
 }

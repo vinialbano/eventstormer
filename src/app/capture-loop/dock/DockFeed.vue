@@ -26,7 +26,7 @@ const emit = defineEmits<{
   hold: [proposalId: string]
   unhold: [proposalId: string]
   edit: [proposalId: string, label: string]
-  'edit-intent': [proposalId: string, changed: { newLabel: string }]
+  'edit-intent': [proposalId: string, changed: { newLabel: string } | { field: string; label: string }]
   'accept-all-cluster': [cards: ProposalCardData[]]
 }>()
 
