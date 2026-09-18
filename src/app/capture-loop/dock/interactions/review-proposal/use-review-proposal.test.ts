@@ -180,4 +180,23 @@ describe('useReviewProposal', () => {
     expect(emit.boardDirty).not.toHaveBeenCalled()
     expect(emit.mutated).not.toHaveBeenCalled()
   })
+
+  it('does not emit when a relation endpoint edit is rejected (simulating an unknown-label 422)', async () => {
+    const { HttpError } = await import('../../../client.ts')
+    vi.spyOn(proposalsTransport, 'editModelChangeProposal').mockRejectedValue(
+      new HttpError(422, { error: 'unknown-label' }),
+    )
+    const { emit, hooks } = review()
+
+    await expect(hooks.onEditIntent('p1', { field: 'predecessor', label: 'Unknown block' })).rejects.toThrow(
+      'HTTP 422',
+    )
+
+    expect(proposalsTransport.editModelChangeProposal).toHaveBeenCalledWith('p1', {
+      field: 'predecessor',
+      label: 'Unknown block',
+    })
+    expect(emit.boardDirty).not.toHaveBeenCalled()
+    expect(emit.mutated).not.toHaveBeenCalled()
+  })
 })

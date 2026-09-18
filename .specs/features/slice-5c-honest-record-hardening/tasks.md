@@ -567,11 +567,11 @@ path already has.
 - Skill: NONE
 
 **Done when**:
-- [ ] A rejected `editModelChangeProposal` call (simulating a 422) leaves `editing` state intact
+- [x] A rejected `editModelChangeProposal` call (simulating a 422) leaves `editing` state intact
       in `ProposalCard.vue` — the draft input is not lost
-- [ ] `use-review-proposal.test.ts` and/or `ProposalCard.test.ts` covers the 422 path for the new
+- [x] `use-review-proposal.test.ts` and/or `ProposalCard.test.ts` covers the 422 path for the new
       endpoint editor
-- [ ] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
+- [x] Gate check passes: `pnpm typecheck && pnpm lint && pnpm test`
 
 **Tests**: unit
 **Gate**: full
