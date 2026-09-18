@@ -341,6 +341,9 @@ const OperationApplied = z.object({
   type: z.literal('Operation Applied'),
   proposalId: ProposalId,
   resultingBuildingBlockId: BuildingBlockId,
+  /** Absent on events written before this field existed — every reader
+   * treats `undefined` as `'appended'`. */
+  outcome: z.enum(['appended', 'already-satisfied']).optional(),
 })
 
 const OperationRejected = z.object({

@@ -214,6 +214,43 @@ describe('Proposal.decide — reject and apply outcomes', () => {
     if (isOk(second)) expect(second.value).toEqual([])
   })
 
+  it('Record Operation Applied forwards outcome onto Operation Applied unchanged', () => {
+    const appended = decide(replay([proposed, proposalAccepted]), {
+      type: 'Record Operation Applied',
+      proposalId,
+      resultingBuildingBlockId: bb,
+      outcome: 'appended',
+      at,
+    })
+    expect(isOk(appended)).toBe(true)
+    if (isOk(appended)) {
+      expect(appended.value).toEqual([
+        { v: 1, at, type: 'Operation Applied', proposalId, resultingBuildingBlockId: bb, outcome: 'appended' },
+      ])
+    }
+
+    const alreadySatisfied = decide(replay([proposed, proposalAccepted]), {
+      type: 'Record Operation Applied',
+      proposalId,
+      resultingBuildingBlockId: bb,
+      outcome: 'already-satisfied',
+      at,
+    })
+    expect(isOk(alreadySatisfied)).toBe(true)
+    if (isOk(alreadySatisfied)) {
+      expect(alreadySatisfied.value).toEqual([
+        {
+          v: 1,
+          at,
+          type: 'Operation Applied',
+          proposalId,
+          resultingBuildingBlockId: bb,
+          outcome: 'already-satisfied',
+        },
+      ])
+    }
+  })
+
   it('Record Operation Rejected on ACCEPTED emits Operation Rejected, then ok([])', () => {
     const first = decide(replay([proposed, proposalAccepted]), {
       type: 'Record Operation Rejected',

@@ -105,6 +105,7 @@ export type ProposalCommand =
       type: 'Record Operation Applied'
       proposalId: ProposalId
       resultingBuildingBlockId: BuildingBlockId
+      outcome?: 'appended' | 'already-satisfied'
       at: string
     }
   | { type: 'Record Operation Rejected'; proposalId: ProposalId; reason: string; at: string }
