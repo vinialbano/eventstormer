@@ -1,7 +1,9 @@
-import type { BuildingBlockId, ProposalId } from '~/plumbing/ids.ts'
+import type { BuildingBlockId, ProposalId, ResolutionId } from '~/plumbing/ids.ts'
 import type { Disposition } from '../proposal/model.ts'
-import type { ProposalEvent, SessionEvent } from '../schema/events.ts'
+import type { ResolutionDisposition } from '../resolution/model.ts'
+import { resolutionCard, sessionResolutionIds } from './resolutions-view.ts'
 import { proposalCard } from './proposals-view.ts'
+import type { ProposalEvent, ResolutionEvent, SessionEvent } from '../schema/events.ts'
 import type { SessionTranscript } from './session-transcript-contract.ts'
 import { sessionView } from './session-view.ts'
 
@@ -20,6 +22,11 @@ interface ProposalStream {
   events: ProposalEvent[]
 }
 
+interface ResolutionStream {
+  resolutionId: ResolutionId
+  events: ResolutionEvent[]
+}
+
 interface TranscriptOptions {
   scope: string | null
   resolveLabel?: ResolveLabel
@@ -33,6 +40,42 @@ const DISPOSITION: Record<Disposition, SessionTranscript['turns'][number]['propo
   APPLY_FAILED: 'apply-failed',
   REJECTED: 'rejected',
   LAPSED: 'lapsed',
+}
+
+const RESOLUTION_DISPOSITION: Record<
+  ResolutionDisposition,
+  SessionTranscript['resolutions'][number]['disposition']
+> = {
+  PROPOSED: 'proposed',
+  EDITED: 'edited',
+  ACCEPTED: 'accepted',
+  APPLIED: 'applied',
+  REJECTED: 'rejected',
+  LAPSED: 'lapsed',
+}
+
+type TranscriptResolution = SessionTranscript['resolutions'][number]
+
+const transcriptResolutions = (
+  sessionEvents: SessionEvent[],
+  streams: ResolutionStream[],
+): TranscriptResolution[] => {
+  const byId = new Map(streams.map((stream) => [stream.resolutionId, stream.events]))
+  const resolutions: TranscriptResolution[] = []
+  for (const resolutionId of sessionResolutionIds(sessionEvents)) {
+    const card = resolutionCard(byId.get(resolutionId) ?? [])
+    if (card === undefined) continue
+    resolutions.push({
+      resolutionId: card.resolutionId,
+      hotSpotId: card.hotSpotId,
+      reference: card.reference,
+      disposition: card.superseded === true ? 'superseded' : RESOLUTION_DISPOSITION[card.disposition],
+      ...(card.supersededByReference === undefined
+        ? {}
+        : { supersededByReference: card.supersededByReference }),
+    })
+  }
+  return resolutions
 }
 
 const birthContributionId = (events: ProposalEvent[]): string | undefined => {
@@ -98,6 +141,7 @@ const contributorCounts = (
 export const sessionTranscript = (
   sessionEvents: SessionEvent[],
   streams: ProposalStream[],
+  resolutionStreams: ResolutionStream[],
   options: TranscriptOptions,
 ): SessionTranscript => {
   const speakerByContribution = new Map<string, string>()
@@ -133,6 +177,6 @@ export const sessionTranscript = (
     position: sessionEvents.length,
     turns,
     contributorCounts: contributorCounts(sessionEvents, streams, speakerByContribution),
-    resolutions: [],
+    resolutions: transcriptResolutions(sessionEvents, resolutionStreams),
   }
 }

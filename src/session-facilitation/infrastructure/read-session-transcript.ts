@@ -53,7 +53,7 @@ export const readSessionTranscript = (
   const labels = new Map(readBoardSnapshot(deps, workshopId).blocks.map((block) => [block.id, block.label]))
 
   return ok(
-    sessionTranscript(sessionEvents, streams, {
+    sessionTranscript(sessionEvents, streams, [], {
       scope,
       resolveLabel: (id) => labels.get(id),
     }),

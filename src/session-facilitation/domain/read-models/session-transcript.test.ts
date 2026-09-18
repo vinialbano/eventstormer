@@ -3,10 +3,11 @@ import type {
   BuildingBlockId,
   ContributionId,
   ProposalId,
+  ResolutionId,
   SessionId,
   WorkshopId,
 } from '~/plumbing/ids.ts'
-import type { ProposalEvent, SessionEvent } from '../schema/events.ts'
+import type { ProposalEvent, ResolutionEvent, SessionEvent } from '../schema/events.ts'
 import { SessionTranscript } from './session-transcript-contract.ts'
 import { sessionTranscript } from './session-transcript.ts'
 
@@ -16,6 +17,7 @@ const workshopId = 'w_1' as WorkshopId
 const cid = (value: string) => value as ContributionId
 const pid = (value: string) => value as ProposalId
 const bb = (value: string) => value as BuildingBlockId
+const rid = (value: string) => value as ResolutionId
 
 const contribution = (id: string, speaker: string, body: string): SessionEvent => ({
   v: 1,
@@ -102,8 +104,11 @@ const labels = new Map<string, string>([
   ['bb_1', 'Loan recorded'],
 ])
 
-const build = () =>
-  sessionTranscript(sessionEvents, streams, { scope: 'Library lending', resolveLabel: (id) => labels.get(id) })
+const build = (resolutionStreams: { resolutionId: ResolutionId; events: ResolutionEvent[] }[] = []) =>
+  sessionTranscript(sessionEvents, streams, resolutionStreams, {
+    scope: 'Library lending',
+    resolveLabel: (id) => labels.get(id),
+  })
 
 describe('sessionTranscript', () => {
   it('states format, scope, and the session-record position stamp', () => {
@@ -162,5 +167,66 @@ describe('sessionTranscript', () => {
 
   it('satisfies the SessionTranscript contract', () => {
     expect(() => SessionTranscript.parse(build())).not.toThrow()
+  })
+
+  it('produces an empty resolutions lane when the session proposed no resolutions', () => {
+    expect(build().resolutions).toEqual([])
+  })
+})
+
+describe('sessionTranscript — resolution lane', () => {
+  const resolutionSessionEvents: SessionEvent[] = [
+    { v: 1, at, type: 'Session Started', sessionId, workshopId },
+    {
+      v: 1,
+      at,
+      type: 'Contribution Interpreted',
+      sessionId,
+      contributionId: cid('c_r'),
+      tracks: [
+        { track: 'propose-resolution', resolutionId: rid('r_1'), hotSpotId: bb('h_1'), reference: 'added a retry with backoff' },
+        { track: 'propose-resolution', resolutionId: rid('r_2'), hotSpotId: bb('h_2'), reference: 'switched to a queue' },
+        { track: 'propose-resolution', resolutionId: rid('r_3'), hotSpotId: bb('h_3'), reference: 'capped batch size' },
+      ],
+    },
+  ]
+
+  const applied: ResolutionEvent[] = [
+    { v: 1, at, type: 'Resolution Proposed', resolutionId: rid('r_1'), sessionId, contributionId: cid('c_r'), hotSpotId: bb('h_1'), reference: 'added a retry with backoff' },
+    { v: 1, at, type: 'Resolution Accepted', resolutionId: rid('r_1'), accepter: 'Dana' },
+    { v: 1, at, type: 'Hot Spot Resolved', resolutionId: rid('r_1') },
+  ]
+  const lapsed: ResolutionEvent[] = [
+    { v: 1, at, type: 'Resolution Proposed', resolutionId: rid('r_2'), sessionId, contributionId: cid('c_r'), hotSpotId: bb('h_2'), reference: 'switched to a queue' },
+    { v: 1, at, type: 'Resolution Accepted', resolutionId: rid('r_2'), accepter: 'Dana' },
+    { v: 1, at, type: 'Hot Spot Resolution Rejected', resolutionId: rid('r_2'), reason: 'unknown-target' },
+  ]
+  const superseded: ResolutionEvent[] = [
+    { v: 1, at, type: 'Resolution Proposed', resolutionId: rid('r_3'), sessionId, contributionId: cid('c_r'), hotSpotId: bb('h_3'), reference: 'capped batch size' },
+    { v: 1, at, type: 'Resolution Accepted', resolutionId: rid('r_3'), accepter: 'Dana' },
+    { v: 1, at, type: 'Resolution Superseded', resolutionId: rid('r_3'), hotSpotId: bb('h_3'), supersededByReference: 'rate-limited the producer' },
+  ]
+
+  const resolutionStreams = [
+    { resolutionId: rid('r_1'), events: applied },
+    { resolutionId: rid('r_2'), events: lapsed },
+    { resolutionId: rid('r_3'), events: superseded },
+  ]
+
+  it('produces one entry per propose-resolution track with the right disposition', () => {
+    const transcript = sessionTranscript(resolutionSessionEvents, [], resolutionStreams, {
+      scope: 'Library lending',
+    })
+    expect(transcript.resolutions).toEqual([
+      { resolutionId: 'r_1', hotSpotId: 'h_1', reference: 'added a retry with backoff', disposition: 'applied' },
+      { resolutionId: 'r_2', hotSpotId: 'h_2', reference: 'switched to a queue', disposition: 'lapsed' },
+      {
+        resolutionId: 'r_3',
+        hotSpotId: 'h_3',
+        reference: 'capped batch size',
+        disposition: 'superseded',
+        supersededByReference: 'rate-limited the producer',
+      },
+    ])
   })
 })
