@@ -24,6 +24,7 @@ import { decide as decideWorkshop } from '../../domain/workshop/decide.ts'
 import { replay as replayWorkshop } from '../../domain/workshop/replay.ts'
 import { markDerivedTrack, readDerivedTrackKeys } from '../../infrastructure/derived-track.ts'
 import { reconcileHotSpots } from '../../infrastructure/hot-spot-sweep.ts'
+import { sweepStuckAccepted } from '../../infrastructure/stuck-accepted-sweep.ts'
 import { supersededRewordSweep } from './superseded-sweep.ts'
 import { hasModelStructure } from '../../domain/model-readiness.ts'
 import { type BoardState, mapTurn } from '../../infrastructure/facilitator/map.ts'
@@ -575,12 +576,14 @@ export const askOpeningQuestion = async (deps: InterpretContributionDeps): Promi
  * The reconciliation pass — every scheduler cycle, for each open
  * session: re-run `deriveTracks` over every `Contribution Interpreted` (a track
  * already marked in `derived_track` is skipped, so this is a no-op once whole),
- * and sweep the half-closed case (`Session Closed` in the stream but the
- * `session_index` row still `open`). No model call.
+ * re-drive any `Proposal` / `Resolution` left stuck `ACCEPTED`, and sweep the
+ * half-closed case (`Session Closed` in the stream but the `session_index` row
+ * still `open`). No model call.
  *
- * Known gap (accepted at v1 single-user scale): this sweeps open sessions only. If the process
- * crashes mid-`deriveTracks` — one track marked, the next not — and the session
- * is then closed, the unmarked track is never derived (a missing proposal card,
+ * Known gap (accepted at v1 single-user scale): every sweep here — including
+ * `sweepStuckAccepted` — covers open sessions only. If the process crashes
+ * mid-`deriveTracks` — one track marked, the next not — and the session is
+ * then closed, the unmarked track is never derived (a missing proposal card,
  * no corruption). The crash window is sub-millisecond (`deriveTracks` is
  * synchronous); widening the sweep to closed sessions is not worth the risk to
  * the crash-safety net at v1 single-user scale.
@@ -592,6 +595,7 @@ export const reconcilePendingDerivations = (deps: InterpretContributionDeps): vo
       if (event.type === 'Contribution Interpreted') deriveTracks(deps, event)
     }
     reconcileHotSpots(deps, sessionId)
+    sweepStuckAccepted(deps, sessionId)
     if (events.some((event) => event.type === 'Session Closed')) finishClose(deps, sessionId)
   }
   supersededRewordSweep(deps)

@@ -4,7 +4,7 @@ import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
 import type { ProposalId, QuestionId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { err, ok, type Result } from '~/plumbing/result.ts'
-import { readBoardSnapshot } from '../../../domain-model-capture/api.ts'
+import { applyOperation, Operation, readBoardSnapshot } from '../../../domain-model-capture/api.ts'
 import { applySessionFacilitationMigrations } from '../../infrastructure/migrations.ts'
 import type { DerivedTrackDb } from '../../infrastructure/derived-track.ts'
 import { close, reserve, sessionIdsFor, type SessionIndexDb } from '../../infrastructure/session-index.ts'
@@ -304,6 +304,63 @@ describe('reconcilePendingDerivations — crash-consistency', () => {
         .read(proposalStream('p_x' as ProposalId))
         .map((row) => (row.operation as { type: string }).type),
     ).toEqual(['Building Block Proposed', 'Proposal Lapsed'])
+  })
+
+  it('re-drives a proposal stuck ACCEPTED by a lost outcome append to APPLIED within one tick', () => {
+    const author = { proposer: { name: 'facilitator' }, accepter: { name: 'Dana' } }
+    store.append(sessionStream(sessionId), store.read(sessionStream(sessionId)).length - 1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Contribution Interpreted',
+          sessionId,
+          contributionId: 'c_1',
+          tracks: [
+            { track: 'propose-building-block', proposalId: 'p_stuck', blockKind: 'domain-event', label: 'Book borrowed', bar: 'strict' },
+          ],
+          at,
+        },
+      },
+    ])
+    store.append(proposalStream('p_stuck' as ProposalId), -1, [
+      {
+        at,
+        opVersion: 1,
+        operation: {
+          v: 1,
+          type: 'Building Block Proposed',
+          proposalId: 'p_stuck',
+          sessionId,
+          contributionId: 'c_1',
+          blockKind: 'domain-event',
+          label: 'Book borrowed',
+          bar: 'strict',
+          at,
+        },
+      },
+      {
+        at,
+        opVersion: 1,
+        operation: { v: 1, at, type: 'Proposal Accepted', proposalId: 'p_stuck', accepter: 'Dana', buildingBlockId: 'bb_stuck' },
+      },
+    ])
+    // fault injection: the board append landed, but the outcome append never ran
+    const captured = applyOperation(
+      { store, clock },
+      workshopId,
+      Operation.parse({ kind: 'capture-domain-event', id: 'bb_stuck', label: 'Book borrowed', author }),
+    )
+    expect(captured.ok).toBe(true)
+
+    reconcilePendingDerivations(deps())
+
+    expect(
+      store
+        .read(proposalStream('p_stuck' as ProposalId))
+        .map((row) => (row.operation as { type: string }).type),
+    ).toEqual(['Building Block Proposed', 'Proposal Accepted', 'Operation Applied'])
   })
 
   it('lapses a PROPOSED model-change proposal at close (sessionProposalIds covers relation tracks)', () => {
