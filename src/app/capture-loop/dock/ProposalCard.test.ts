@@ -207,16 +207,143 @@ describe('ProposalCard', () => {
     expect(wrapper.emitted('edit')).toBeUndefined()
   })
 
-  it('offers no inline Edit on a relation card — an endpoint swap needs a block picker', async () => {
+  it('offers inline Edit on a relation card — an endpoint picker + label input', async () => {
     const wrapper = mount(ProposalCard, {
       props: {
         ...intentBase,
         disposition: 'PROPOSED',
-        intent: { kind: 'relation', summary: 'sequence: Order placed → Order cooked' },
+        intent: {
+          kind: 'relation',
+          summary: 'sequence: Order placed → Order cooked',
+          endpoints: [
+            { id: 'bb_1', label: 'Order placed', field: 'predecessor' },
+            { id: 'bb_2', label: 'Order cooked', field: 'successor' },
+          ],
+        },
       },
     })
     await wrapper.findAll('button').find((button) => button.text() === 'Not this')?.trigger('click')
-    expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('Edit')
+    expect(wrapper.findAll('button').map((button) => button.text())).toContain('Edit')
+  })
+
+  it('edits a relation endpoint and emits edit-intent with the chosen field and label', async () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        disposition: 'PROPOSED',
+        intent: {
+          kind: 'relation',
+          summary: 'sequence: Order placed → Order cooked',
+          endpoints: [
+            { id: 'bb_1', label: 'Order placed', field: 'predecessor' },
+            { id: 'bb_2', label: 'Order cooked', field: 'successor' },
+          ],
+        },
+      },
+    })
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Edit')?.trigger('click')
+
+    const select = wrapper.get('select')
+    await select.setValue('successor')
+    const input = wrapper.get('input')
+    await input.setValue('Order ready')
+    await input.trigger('keydown.enter')
+
+    expect(wrapper.emitted('edit-intent')).toEqual([[{ field: 'successor', label: 'Order ready' }]])
+  })
+
+  it('edits a pivotal target and emits edit-intent with field: target', async () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        kindLabel: 'PIVOTAL',
+        disposition: 'PROPOSED',
+        intent: {
+          kind: 'pivotal',
+          summary: 'mark-pivotal: Order cooked',
+          target: { id: 'bb_2', label: 'Order cooked' },
+        },
+      },
+    })
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Edit')?.trigger('click')
+
+    const input = wrapper.get('input')
+    await input.setValue('Order delivered')
+    await input.trigger('keydown.enter')
+
+    expect(wrapper.emitted('edit-intent')).toEqual([[{ field: 'target', label: 'Order delivered' }]])
+  })
+
+  it('keeps the endpoint editor open with the draft intact when the edit is not acknowledged (simulating a 422)', async () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        disposition: 'PROPOSED',
+        intent: {
+          kind: 'relation',
+          summary: 'sequence: Order placed → Order cooked',
+          endpoints: [
+            { id: 'bb_1', label: 'Order placed', field: 'predecessor' },
+            { id: 'bb_2', label: 'Order cooked', field: 'successor' },
+          ],
+        },
+      },
+    })
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Edit')?.trigger('click')
+
+    const input = wrapper.get('input')
+    await input.setValue('Unknown block')
+    await input.trigger('keydown.enter')
+
+    expect(wrapper.emitted('edit-intent')).toEqual([[{ field: 'predecessor', label: 'Unknown block' }]])
+    // No refetch happened (the parent's proposal card props are unchanged since
+    // the server rejected the edit), so the editor stays open with the draft.
+    expect(wrapper.find('select').exists()).toBe(true)
+    expect(wrapper.get('input').element.value).toBe('Unknown block')
+  })
+
+  it('closes the endpoint editor once the submitted label lands in a later prop update', async () => {
+    const wrapper = mount(ProposalCard, {
+      props: {
+        ...intentBase,
+        disposition: 'PROPOSED',
+        intent: {
+          kind: 'relation',
+          summary: 'sequence: Order placed → Order cooked',
+          endpoints: [
+            { id: 'bb_1', label: 'Order placed', field: 'predecessor' },
+            { id: 'bb_2', label: 'Order cooked', field: 'successor' },
+          ],
+        },
+      },
+    })
+    const named = (name: string) => wrapper.findAll('button').find((button) => button.text() === name)
+    await named('Not this')?.trigger('click')
+    await named('Edit')?.trigger('click')
+
+    const input = wrapper.get('input')
+    await input.setValue('Order started')
+    await input.trigger('keydown.enter')
+    expect(wrapper.find('select').exists()).toBe(true)
+
+    await wrapper.setProps({
+      intent: {
+        kind: 'relation',
+        summary: 'sequence: Order started → Order cooked',
+        endpoints: [
+          { id: 'bb_3', label: 'Order started', field: 'predecessor' },
+          { id: 'bb_2', label: 'Order cooked', field: 'successor' },
+        ],
+      },
+    })
+
+    expect(wrapper.find('select').exists()).toBe(false)
   })
 
   it('collapses a model-change card to a receipt showing its summary once APPLIED', () => {

@@ -1,14 +1,23 @@
 import { testClient } from 'hono/testing'
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
+import { applyOperation, Operation } from '../../../domain-model-capture/api.ts'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
 import type { EventStore } from '~/plumbing/event-store/port.ts'
-import type { WorkshopId } from '~/plumbing/ids.ts'
+import type { ProposalId, QuestionId, ResolutionId, WorkshopId } from '~/plumbing/ids.ts'
+import { ok } from '~/plumbing/result.ts'
 import {
   applySessionFacilitationMigrations,
+  createInFlightGuard,
+  type Facilitator,
+  type FacilitationTurn,
+  interpretContribution,
+  makeContributionRoutes,
+  reviewResolutionRoutes,
   type SessionIndexDb,
   startSessionRoutes,
   startWorkshopRoutes,
+  type TrackIdMint,
 } from '~/session-facilitation/api.ts'
 import type { SessionTranscriptDeps } from './deps.ts'
 import { sessionTranscriptRoutes } from './http.ts'
@@ -106,6 +115,69 @@ describe('GET /workshops/:id/sessions/:sessionId/artifacts/transcript', () => {
     const first = await getTranscript(deps, workshopId, sessionId)
     const second = await getTranscript(deps, workshopId, sessionId)
     expect(JSON.stringify(await first.json())).toBe(JSON.stringify(await second.json()))
+  })
+
+  it('shows a resolved hot spot in the exported transcript, proposed and accepted through the real routes', async () => {
+    const { deps, workshopId, sessionId } = await seeded()
+
+    applyOperation(
+      { store: deps.store, clock: deps.clock },
+      workshopId,
+      Operation.parse({
+        author: { accepter: { name: 'Dana' } },
+        kind: 'raise-hot-spot',
+        id: 'h_1',
+        label: 'Retries silently drop messages',
+      }),
+    )
+
+    const contributionResponse = await makeContributionRoutes(deps).request(
+      `/sessions/${sessionId}/contributions`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'We fixed it by adding a retry with backoff.' }),
+      },
+    )
+    expect(contributionResponse.status).toBe(202)
+
+    const facilitator: Facilitator = {
+      interpret: () =>
+        Promise.resolve(
+          ok({
+            interpretation: [
+              { track: 'propose-resolution', hotSpotId: 'h_1', reference: 'added a retry with backoff' },
+            ],
+            nextMove: { move: 'acknowledge' },
+          } satisfies FacilitationTurn),
+        ),
+      askOpening: () =>
+        Promise.resolve(ok({ questionText: 'What happens first?', scopeStatement: 'Library lending' })),
+    }
+    const mint: TrackIdMint = {
+      proposalId: () => 'p_never' as ProposalId,
+      questionId: () => 'q_never' as QuestionId,
+      resolutionId: () => 'r_1' as ResolutionId,
+    }
+    await interpretContribution({
+      store: deps.store,
+      db: deps.db,
+      clock: deps.clock,
+      facilitator,
+      inFlight: createInFlightGuard(),
+      mint,
+    })
+
+    const acceptResponse = await reviewResolutionRoutes(deps).request('/resolutions/r_1/accept', {
+      method: 'POST',
+    })
+    expect(acceptResponse.status).toBe(200)
+
+    const response = await getTranscript(deps, workshopId, sessionId)
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as { markdown: string }
+    expect(body.markdown).toContain('## Resolutions')
+    expect(body.markdown).toContain('- Resolution: added a retry with backoff — applied')
   })
 
   it('produces no other artifact and materialises nothing between requests', async () => {

@@ -19,6 +19,7 @@ const valid = {
     { kind: 'notice', speaker: 'facilitator', text: 'held', at: '2026-08-30T12:00:00.000Z', proposals: [] },
   ],
   contributorCounts: [{ speaker: 'Dana', accepted: 1, edited: 0, rejected: 1 }],
+  resolutions: [],
 }
 
 describe('SessionTranscript contract', () => {
@@ -54,6 +55,42 @@ describe('SessionTranscript contract', () => {
     const bad = {
       ...valid,
       contributorCounts: [{ speaker: 'Dana', accepted: 1, edited: 1.5, rejected: 0 }],
+    }
+    expect(SessionTranscript.safeParse(bad).success).toBe(false)
+  })
+
+  it('accepts a non-empty resolutions array, including the superseded disposition', () => {
+    const withResolutions = {
+      ...valid,
+      resolutions: [
+        {
+          resolutionId: 'r_1',
+          hotSpotId: 'b_1',
+          reference: 'added a retry with backoff',
+          disposition: 'applied',
+        },
+        {
+          resolutionId: 'r_2',
+          hotSpotId: 'b_2',
+          reference: 'switched to exponential backoff',
+          disposition: 'superseded',
+          supersededByReference: 'switched to exponential backoff with jitter',
+        },
+      ],
+    }
+    expect(SessionTranscript.parse(withResolutions)).toEqual(withResolutions)
+  })
+
+  it('accepts an empty resolutions array', () => {
+    expect(SessionTranscript.parse({ ...valid, resolutions: [] }).resolutions).toEqual([])
+  })
+
+  it('rejects an unknown resolution disposition', () => {
+    const bad = {
+      ...valid,
+      resolutions: [
+        { resolutionId: 'r_1', hotSpotId: 'b_1', reference: 'x', disposition: 'withdrawn' },
+      ],
     }
     expect(SessionTranscript.safeParse(bad).success).toBe(false)
   })

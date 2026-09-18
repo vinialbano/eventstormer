@@ -1,14 +1,14 @@
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { createMemoryEventStore } from '~/plumbing/event-store/memory-store.ts'
-import type { ContributionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
+import type { BuildingBlockId, ContributionId, ResolutionId, SessionId, WorkshopId } from '~/plumbing/ids.ts'
 import { isErr, isOk } from '~/plumbing/result.ts'
-import type { SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
+import type { ResolutionEvent, SessionEvent, WorkshopEvent } from '../domain/schema/events.ts'
 import { SessionTranscript } from '../domain/read-models/session-transcript-contract.ts'
 import { applySessionFacilitationMigrations } from './migrations.ts'
 import { readSessionTranscript } from './read-session-transcript.ts'
 import { reserve, type SessionIndexDb } from './session-index.ts'
-import { sessionStream, storedOps, workshopStream } from './streams.ts'
+import { resolutionStream, sessionStream, storedOps, workshopStream } from './streams.ts'
 
 const at = '2026-08-30T12:00:00.000Z'
 const workshopId = 'w_1' as WorkshopId
@@ -76,6 +76,63 @@ describe('readSessionTranscript', () => {
       expect(() => SessionTranscript.parse(result.value)).not.toThrow()
       expect(result.value.position).toBe(sessionEvents.length)
       expect(result.value.turns.map((turn) => turn.kind)).toEqual(['contribution'])
+    }
+  })
+
+  it('loads the resolution streams a session spawned into the transcript resolution lane', () => {
+    const store = createMemoryEventStore()
+    const db = dbWithMigrations()
+    reserve(db, workshopId, sessionId, at)
+    store.append(workshopStream(workshopId), -1, storedOps([workshopStarted]))
+
+    const resolutionId = 'r_1' as ResolutionId
+    const withResolution: SessionEvent[] = [
+      ...sessionEvents,
+      {
+        v: 1,
+        at,
+        type: 'Contribution Interpreted',
+        sessionId,
+        contributionId: 'c_1' as ContributionId,
+        tracks: [
+          {
+            track: 'propose-resolution',
+            resolutionId,
+            hotSpotId: 'h_1' as BuildingBlockId,
+            reference: 'added a retry with backoff',
+          },
+        ],
+      },
+    ]
+    store.append(sessionStream(sessionId), -1, storedOps(withResolution))
+
+    const resolutionEvents: ResolutionEvent[] = [
+      {
+        v: 1,
+        at,
+        type: 'Resolution Proposed',
+        resolutionId,
+        sessionId,
+        contributionId: 'c_1' as ContributionId,
+        hotSpotId: 'h_1' as BuildingBlockId,
+        reference: 'added a retry with backoff',
+      },
+      { v: 1, at, type: 'Resolution Accepted', resolutionId, accepter: 'Dana' },
+      { v: 1, at, type: 'Hot Spot Resolved', resolutionId },
+    ]
+    store.append(resolutionStream(resolutionId), -1, storedOps(resolutionEvents))
+
+    const result = readSessionTranscript({ store, db }, workshopId, sessionId)
+    expect(isOk(result)).toBe(true)
+    if (isOk(result)) {
+      expect(result.value.resolutions).toEqual([
+        {
+          resolutionId: 'r_1',
+          hotSpotId: 'h_1',
+          reference: 'added a retry with backoff',
+          disposition: 'applied',
+        },
+      ])
     }
   })
 })

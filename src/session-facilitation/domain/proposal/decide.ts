@@ -151,6 +151,7 @@ const decideRecordApplied = (
       type: 'Operation Applied',
       proposalId: command.proposalId,
       resultingBuildingBlockId: command.resultingBuildingBlockId,
+      outcome: command.outcome,
       at: command.at,
     },
   ])

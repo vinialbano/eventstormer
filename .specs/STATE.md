@@ -52,56 +52,48 @@ capture.
 | AD-040 | **`ApplyResult` carries an explicit `outcome: 'appended' \| 'already-satisfied'`** — every converging single-writer apply reports whether it appended or the effect already held; callers that must record an honest outcome (superseded markers, `blocksAdded`) branch on it instead of inspecting board state. `applyOperation` sets `'already-satisfied'` on an empty decision and on a `duplicate-id` reconverge after a stale-position retry, `'appended'` on a real append. (AD-039 reserved for the seed decision — added by slice 5b Batch D.) | software-design: make the outcome explicit — don't hide a no-op inside a shape that reads as a real apply; two callers (SUPS-02's superseded marker, 5c's `blocksAdded`) must branch on it now, so it is earned not speculative. Consistent with AD-022 (idempotency in the single-writer `decide`) and AD-038. | 2026-09-09 | Slice 5b; the pattern for any converging single-writer apply |
 | AD-039 | **`pnpm seed` loads the demo workshop from a committed interpretation fixture (`scripts/seed/interpretation.json`) replayed through the real capability handlers via in-process `app.request()` — no model call, no API key, deterministic.** The fixture maps every `transcript.md` turn body to a `FacilitationTurn`; a scripted `Facilitator` (`scripts/seed/facilitator.ts`) returns them by suffix-matching the per-turn prompt; `src/host/seed.ts` `runSeed` drives `createRoutes(config)` (start workshop → set scope → start session → per turn: contribution, interpret tick, accept each proposal) and records the seeded workshop + its streams in `data/seed.json`. A re-run refuses without `--force`; `--force` wipes only the marked workshop's streams. | A live-model seed costs ~$1 and a key per run and is non-deterministic — hostile for a first-run / demo tool. Replaying through the handlers (not direct stream writes) keeps the seeded board identical to one a user's clicks would produce (SEED-04). | 2026-09-09 | Slice 5b |
 | AD-038 | **A relation / pivotal / `resolve` operation whose effect already holds is idempotent in `decide` — it returns `ok([])`, and `applyOperation` returns `ok` with the current board position for an empty decision.** `decide(sequence \| link-cause)` on an edge that already exists, `decide(mark-pivotal \| unmark-pivotal)` on a block already in that state, `decide(resolve)` on an already-resolved hot spot → `ok([])` rather than `err({ kind: 'already-related' \| 'already-resolved', classification: 'systemic' })`. The un-relation kinds converge the same way: `decide(insert-between)` when the insert already holds (`predecessor→inserted→successor` present, direct edge gone) and `decide(unlink-cause)` on an absent link both return `ok([])`. `insert-between` with no `predecessor→successor` edge and no insert structure, and `unsequence` / `unannotate` on a missing edge, stay a genuine `missing-edge` failure. `place` / `unplace` / `reword` are also facilitator-proposable but the slim `BoardWriteModel` carries no placement or labels, so their deciders cannot detect an already-satisfied effect — they converge instead by a benign redundant re-apply (idempotent fold), not `ok([])`. | The `review-proposal` accept chain (AD-016) has a crash window: apply commits, the outcome-record commit is lost, the person re-accepts. For id-minting kinds the board's `duplicate-id` reconverges the retry to `APPLIED`; target-bearing relation ops had no such path, so the retry converged to a **wrong `APPLY_FAILED` with the edge already on the board** — board/`Proposal`-stream divergence in a reachable state, and a determinism-of-record defect in the F19 transcript. AD-022 already puts idempotency in the single-writer `decide`; this extends it from `stale-position` to already-satisfied effects. | 2026-09-05 | Slice 5 (`domain-model-capture` board decider) |
+| AD-041 | **`Operation Applied` (the `session-facilitation` `Proposal` event) gains an optional `outcome: 'appended' \| 'already-satisfied'` field, threaded from `ApplyResult.outcome` (AD-040) at the one write site (`review-proposal/accept.ts`'s `recordApplyOutcome`).** Optional so a pre-slice event with no `outcome` still parses; every reader treats `undefined` as `'appended'`. The one `blocksAdded` call site (`interpret.ts`'s `assembleFacilitationContext`) excludes `'already-satisfied'` and superseded streams from the count. | AD-040 introduced the discriminant on `ApplyResult` but nothing yet carried it onto the recorded stream; slice-5c's `blocksAdded` honesty fix (audit F5) is the first caller that needs it recorded, not just returned. The pattern generalises to any future reader that must distinguish a real apply from a converged no-op from the record alone. | 2026-09-18 | Slice 5c; the pattern for any future `Operation Applied` reader needing the outcome |
+| AD-042 | **Two corrections to F6/F7 found on review, before merge: (1) `acceptProposal` / `acceptResolution` live in `src/session-facilitation/infrastructure/{accept-proposal,accept-resolution}.ts`, not in `capabilities/review-proposal\|review-resolution/accept.ts` — the capability files keep only the thin Hono route. (2) `review-resolution`'s rejection recording stays gated on `LAPSE_REASONS`: only `kind-permission` / `withdrawn-target` / `unknown-target` append `Record Resolution Rejected` (→ terminal `LAPSED`); a `classification: 'systemic'` reason (e.g. `kind: 'schema'`) is left unrecorded, `Resolution` stays `ACCEPTED`, and the sweep re-drives + warns on it every tick.** `.dependency-cruiser.cjs` gained a matching `no-infrastructure-importing-capabilities` rule (infra is a shared layer capabilities import from, never the reverse). | (1) `stuck-accepted-sweep.ts` sits in `infrastructure/`, not a capability slice, so importing `acceptProposal`/`acceptResolution` straight out of two sibling capabilities was a live "capability slices may not import each other" violation the existing `no-cross-slice-imports` depcruise rule couldn't see (it only anchors on a `capabilities/` importer) — `pnpm check` was green on a real boundary break. (2) `Resolution` has no `APPLY_FAILED` (`resolution/model.ts`: "no reopen path... a bounced resolution is done") — recording *any* rejection reason as originally shipped meant the board's own belt-and-suspenders schema-reparse guard (`board/decide.ts`, `kind: 'schema'`, live today for any operation kind, not a future hypothetical) could permanently `LAPSED` a `Resolution` on one occurrence, after which every retry silently returned `200` even though the board mutation never landed — the opposite of this slice's honest-record goal. Reverting the write gate for systemic reasons keeps F7's sweep as the visible, re-driving backstop instead. | 2026-09-18 | Slice 5c, pre-merge review correction |
 
 ---
 
 ## Handoff
 
-### DONE — Slice 5b Execute + Verifier PASS (2026-09-09) — ready for PR
+### DONE — Slice 5c Execute + Verifier PASS (2026-09-18) — ready for PR
 
-- **Slice 5b (#92)** — branch `slice-5b-facilitator-eval-demo-seed` off `main` (`3224598`).
-  All 21 tasks committed. **Verifier PASS** (`validation.md`): 26/26 in-scope ACs matched, 0
-  spec-precision gaps, sensor 7/7 killed, `pnpm check` 1231 tests + `pnpm build` + `pnpm test:e2e`
-  6/6. `minor` changeset present. Non-blocking findings addressed (`eval-oracles.ts` docstring
-  refreshed). Lesson L-019 (eval fixtures must set up the AD-036 gate precondition + one live run
-  before trusting `k/N`).
-- **Next step (maintainer)**: open the PR for `slice-5b-facilitator-eval-demo-seed` → `main`;
-  the changeset-version PR handles the version bump.
-- **AD-039** (seed = committed interpretation fixture, offline replay) and **AD-040**
-  (`ApplyResult.outcome` discriminant) are in the Decisions table.
-- **PCARD-04 endpoint-swap edit → slice 5c** (#94, HREC-15–17). 5b shipped the reword `newLabel`
-  edit only. Committed `k/N` eval table in the README: all 5/5 except
-  `integration-relation.relation` (run-to-run variance).
-- Known Batch deviations (all reasoned, in `tasks.md` Execution Log): `already-satisfied` on
-  `duplicate-id` scoped to the retry path; `isPastTenseLabel` now whole-label; `src/host/seed.ts`
-  raw `DELETE` for `--force`; `vite.config.ts` `domain` project glob now covers `scripts/**`.
-
-### (superseded) IN FLIGHT — Slice 5b / 5c Specify (2026-09-08)
-
-- **Slice 5b** (`.specs/features/slice-5b-facilitator-eval-demo-seed/`, GitHub **#92**) — spec
-  **confirmed then revised**; Design not yet started. Four tracks: F11 eval suite completion
-  (extends existing `eval/`), `pnpm seed` (offline, from a committed interpretation fixture — the
-  recorded *video* is **dropped**, transcript authored directly, `transcript.md` in the feature
-  dir), the superseded marker + card (`Resolution Superseded` / `Model Change Superseded`;
-  `ApplyResult` gains an explicit `appended` / `already-satisfied` outcome — AD-040), and the
-  in-dock model-change proposal card. 26 requirements. Pending AD-039 (seed fixture) + AD-040
-  (`ApplyResult` outcome) — to be appended to the Decisions table at Design.
-- **Model audit** (`.specs/features/slice-5b-facilitator-eval-demo-seed/model-audit.md`, 2026-09-08)
-  — scanned the whole converging/racing/idempotent-operation surface against domain-modeling /
-  distributed-systems / software-design doctrine. **Board decider convergence layer + all read
-  models are doctrine-clean.** Found F1–F3 (the `ApplyResult` no-op hidden in a success shape →
-  `APPLIED` overloaded — 5b's target) and F4–F9 (wider honest-record surface).
-- **Slice 5c** (`.specs/features/slice-5c-honest-record-hardening/`, GitHub **#94**, blocks #43,
-  blocked-by #92) — audit F4 (F19 transcript resolution lane), F5 (`blocksAdded` excludes
-  converged no-ops), F6/F7 (`review-resolution` records every rejection + stuck-`ACCEPTED` sweep
-  in `reconcilePendingDerivations`), F9 (`decide.ts` convergence-scope comment). 14 requirements.
-  Split from 5b to keep 5b to the marker + card.
-- **Superseded mechanism (per-kind, doctrine-checked)**: `resolve` race = first-write-wins,
-  loser = the *second* contribution, its own handler records `Resolution Superseded` inline on
-  `already-satisfied`. `reword` race = last-write-wins (`decideReword` re-applies), loser = the
-  *earlier* proposal, marked by the `reconcilePendingDerivations` sweep on its stream. Marker is
-  a folded outcome fact (disposition stays `APPLIED`), **never** a read-time board-state diff.
-- **Audit F8** (dead `already-related` / `already-resolved` board error variants) stays on #43.
+- **Slice 5c (#94)** — branch `slice-5c-honest-record-hardening` off `main` (`ff64689`, which
+  already carries merged Slice 5b `3224598`). All 17 tasks (T1–T17) committed across 3 batch
+  workers. **Verifier PASS** (`validation.md`): 17/17 ACs matched spec outcome (1 spec-precision
+  note on the Edge Cases wording, since fixed in `spec.md`), sensor 5/5 mutations killed 0
+  survived, `pnpm check` **1257 tests** (+26 over the `main` baseline of 1231, 0 deletions).
+- **Scope delivered**: F4 (F19 transcript gains a resolution lane, folded from `Resolution`
+  streams, `renderTranscript` stays pure), F5 (`sessionSummary`'s `blocksAdded` excludes
+  superseded + converged-no-op applies — needed **AD-041**, a new optional `outcome` field on
+  `Operation Applied`), F6 (`review-resolution` records `Record Resolution Rejected` for *any*
+  board rejection, not just the curated allow-list), F7 (a new `stuck-accepted-sweep.ts`
+  re-drives any `Proposal`/`Resolution` left `ACCEPTED` with no apply outcome, wired into
+  `reconcilePendingDerivations`, open-sessions-only per AD-021's existing bound), F9 (`decide.ts`
+  states the AD-038 convergence-scope decision in prose — **no `AD-NNN` id in the comment**,
+  `scripts/check-process-ids.sh` bans bare `AD-[0-9]+` anywhere under `src/**`/`e2e/**` with no
+  exception for a decision-log id), and the descoped-from-5b P2 dock UI (relation/pivotal
+  endpoint edit — required an authorized additive widen of `IntentCard.endpoints` to carry
+  `field` per entry, since the app had no other way to learn the `RELATION_FIELDS` mapping).
+- **AD-041** (`Operation Applied.outcome`, optional/backward-compatible) is in the Decisions
+  table, recorded at Design.
+- **Next step (maintainer)**: open the PR for `slice-5c-honest-record-hardening` → `main`; the
+  changeset-version PR handles the 0.8.0 bump. Add the `.changeset/*.md` (`minor`) before opening
+  the PR — not yet added as of this handoff.
+- **Known deviations (all Verifier-confirmed, not defects)**: T9's non-`LAPSE_REASONS` recording
+  path is only reachable in the real system via a `vi.spyOn`-injected rejection kind (the real
+  `resolve` decider can currently only emit reasons already in the old allow-list) — legitimate,
+  not fabricated (the injected kind is a real `Rejection` variant used elsewhere). T16 found and
+  fixed a pre-existing bug: `ProposalCard.vue`'s edit form closed synchronously on save
+  regardless of outcome for the reword path too (Vue `emit()` can't return a listener's result) —
+  fixed by watching for the submitted value to land via a prop update before closing.
+- **Slice 6 still holds**: audit F8 (dead `already-related`/`already-resolved` board error
+  variants) and widening `BoardWriteModel` with placement/labels so `decidePlace`/`decideUnplace`/
+  `decideReword` can short-circuit to `ok([])` — both unchanged by this slice, per the spec's Out
+  of Scope table.
 
 ### Slice 5 (merged context)
 

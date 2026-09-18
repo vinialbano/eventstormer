@@ -450,6 +450,22 @@ describe('ProposalEvent SSOT', () => {
     expect(target).toBe('bb_a')
     expect(() => ProposalEvent.parse(noTarget)).toThrow()
   })
+
+  it('Operation Applied carries an optional outcome, falling back for a historical event', () => {
+    const applied = {
+      v: 1,
+      at,
+      type: 'Operation Applied',
+      proposalId: 'p_1',
+      resultingBuildingBlockId: 'b_1',
+    }
+    expect(ProposalEvent.parse(applied)).not.toHaveProperty('outcome')
+    expect(ProposalEvent.parse({ ...applied, outcome: 'appended' })).toMatchObject({ outcome: 'appended' })
+    expect(ProposalEvent.parse({ ...applied, outcome: 'already-satisfied' })).toMatchObject({
+      outcome: 'already-satisfied',
+    })
+    expect(() => ProposalEvent.parse({ ...applied, outcome: 'something-else' })).toThrow()
+  })
 })
 
 describe('ResolutionEvent SSOT', () => {

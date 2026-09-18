@@ -6,7 +6,7 @@ changeset — it adds a `Resolution` event surface and a transcript contract fie
 PR is the only writer of `package.json` `version`
 ([ADR-009](../../../docs/adr/009-versioning-and-release.md)).
 
-**Status**: Specify — awaiting confirmation.
+**Status**: Design — spec confirmed (2026-09-18).
 
 ## Problem Statement
 
@@ -58,11 +58,11 @@ lean "harden the record" rather than "the racing user's card":
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| `blocksAdded` honesty mechanism | Once 5b's `ApplyResult` outcome + `Superseded` marker exist, `sessionSummary` counts an `Operation Applied` only when it is not on a superseded stream and its proposal's recorded apply outcome was `appended` (not `already-satisfied`) | The recorded facts already distinguish the cases after 5b; no board read needed | n |
-| Stuck-`ACCEPTED` sweep scope | Extend `reconcilePendingDerivations` (open sessions only, per AD-021's accepted bound) to re-drive any `Proposal` / `Resolution` that is `ACCEPTED` with no subsequent apply-outcome event, through the existing idempotent accept→apply path | Reuses AD-021's pattern and its documented open-sessions-only limitation; the apply chain is already idempotent (AD-038, `duplicate-id`) | n |
-| `review-resolution` rejection recording | Record `Record Resolution Rejected { reason }` for **any** board rejection, dropping the `LAPSE_REASONS` allow-list; keep the 422 status for genuinely systemic rejections but write the outcome first | The allow-list was a curated guess; audit F6 shows the `resolve` decider can only emit reasons already in the list plus `schema`, so widening is low-risk and removes the stuck state | n |
-| Transcript resolution lane shape | One entry per `propose-resolution` track in `SessionTranscriptContract`: `{ resolutionId, hotSpotId, reference, disposition, supersededByReference? }`, ordered by `sessionResolutionIds` (stream order); `renderTranscript` gains a formatting branch, stays pure | Mirrors the existing proposal lane; `resolutionsView` already computes all of it | n |
-| Version bump | `minor` (0.8.0) | Adds a `Resolution` event and a transcript contract field — additive but a schema change | n |
+| `blocksAdded` honesty mechanism | Once 5b's `ApplyResult` outcome + `Superseded` marker exist, `sessionSummary` counts an `Operation Applied` only when it is not on a superseded stream and its proposal's recorded apply outcome was `appended` (not `already-satisfied`) | The recorded facts already distinguish the cases after 5b; no board read needed | y |
+| Stuck-`ACCEPTED` sweep scope | Extend `reconcilePendingDerivations` (open sessions only, per AD-021's accepted bound) to re-drive any `Proposal` / `Resolution` that is `ACCEPTED` with no subsequent apply-outcome event, through the existing idempotent accept→apply path | Reuses AD-021's pattern and its documented open-sessions-only limitation; the apply chain is already idempotent (AD-038, `duplicate-id`) | y |
+| `review-resolution` rejection recording | Keep the `LAPSE_REASONS` allow-list gating the write: only `kind-permission` / `withdrawn-target` / `unknown-target` append `Record Resolution Rejected { reason }` (→ terminal `LAPSED`, per `resolution/model.ts`'s "no `APPLY_FAILED`" invariant). A `classification: 'systemic'` reason (e.g. `kind: 'schema'`) is left unrecorded — the `Resolution` stays `ACCEPTED`, the 422 keeps resurfacing on retry, and `stuck-accepted-sweep.ts` re-drives + warns on it every tick | The allow-list was a curated guess, but widening it to cover `schema` too would let a genuine bug convert into a silent, permanent false-success on the very next retry (`LAPSED` short-circuits to 200 with no reopen path) — the opposite of an honest record. Since F7's sweep now exists in this same slice, a systemic rejection staying visibly `ACCEPTED` (retried and logged every tick) is more honest than a false terminal success | y |
+| Transcript resolution lane shape | One entry per `propose-resolution` track in `SessionTranscriptContract`: `{ resolutionId, hotSpotId, reference, disposition, supersededByReference? }`, ordered by `sessionResolutionIds` (stream order); `renderTranscript` gains a formatting branch, stays pure | Mirrors the existing proposal lane; `resolutionsView` already computes all of it | y |
+| Version bump | `minor` (0.8.0) | Adds a `Resolution` event and a transcript contract field — additive but a schema change | y |
 
 **Open questions:** none — all resolved or logged above.
 
@@ -127,29 +127,42 @@ not counted.
 the reconciliation tick, so that a crash or an unclassified rejection never leaves a permanent
 in-flight record.
 
-**Why P1**: Audit F6/F7 — a reachable state (crash window AD-016; unclassified board rejection)
-with no backstop.
+**Why P1**: Audit F6/F7 — a reachable state (crash window AD-016; a domain-legitimate board
+rejection outside the curated set) with no backstop.
 
 **Acceptance Criteria**:
 
-1. WHEN `review-resolution` receives any board rejection THEN it SHALL append a
-   `Record Resolution Rejected { reason }` outcome to the `Resolution` stream before returning,
-   for every `reason` — not only those in a curated set.
-2. WHEN `reconcilePendingDerivations` runs and finds a `Proposal` or `Resolution` that is
+1. WHEN `review-resolution` receives a board rejection whose `reason` is `kind-permission`,
+   `withdrawn-target`, or `unknown-target` THEN it SHALL append a `Hot Spot Resolution Rejected
+   { reason }` event to the `Resolution` stream (via the `Record Resolution Rejected` command)
+   before returning 200 — this is the only path to a terminal `LAPSED` `Resolution`.
+2. WHEN `review-resolution` receives a board rejection whose `classification` is `'systemic'`
+   (a reason outside the set in (1), e.g. `kind: 'schema'`) THEN it SHALL append nothing, leave
+   the `Resolution` `ACCEPTED`, and return 422 with that reason and classification — a systemic
+   rejection SHALL NOT be able to reach the terminal `LAPSED` disposition, because `Resolution`
+   has no `APPLY_FAILED` state to recover from once there (see `resolution/model.ts`).
+3. WHEN `reconcilePendingDerivations` runs and finds a `Proposal` or `Resolution` that is
    `ACCEPTED` with no later apply-outcome event THEN it SHALL re-drive it through the existing
-   idempotent accept→apply path and record the outcome.
-3. WHEN the re-drive runs twice (two ticks) on the same stream THEN the second SHALL be a no-op
-   (idempotent — `duplicate-id` / `already-satisfied` / terminal disposition).
-4. WHEN the stuck stream belongs to a closed session THEN it SHALL be left as-is (consistent
+   idempotent accept→apply path and record the outcome (or, for a systemic rejection per (2),
+   leave it `ACCEPTED` and log a `warn` — the sweep is what keeps a systemic bounce visible).
+4. WHEN the re-drive runs twice (two ticks) on the same stream THEN the second SHALL be a no-op
+   (idempotent — `duplicate-id` / `already-satisfied` / terminal disposition), and for a
+   systemic rejection SHALL re-surface the identical 422 rather than silently succeeding.
+5. WHEN the stuck stream belongs to a closed session THEN it SHALL be left as-is (consistent
    with AD-021's accepted open-sessions-only sweep bound) and the limitation SHALL be noted in
    the sweep's doc comment.
-5. WHEN the sweep re-drives a stream THEN it SHALL log at `info`; a stream still stuck after a
-   bounded number of ticks SHALL log at `warn`.
+6. WHEN the sweep re-drives a stream THEN it SHALL log at `info`; a stream still stuck after a
+   bounded number of ticks SHALL log at `warn`. A re-drive that throws SHALL be caught and
+   logged per candidate, never abort the sweep for any other stuck candidate in the same tick.
 
 **Independent Test**: Fault-inject a crash between the board append and the outcome append;
-run the tick; assert the proposal reaches `APPLIED`. Return an unclassified board rejection from
-`review-resolution`; assert the `Resolution` stream ends `Record Resolution Rejected`, not
-`ACCEPTED`.
+run the tick; assert the proposal reaches `APPLIED`. Return a `kind-permission`/`withdrawn-target`/
+`unknown-target` board rejection from `review-resolution`; assert the `Resolution` stream ends
+`Hot Spot Resolution Rejected` (disposition `LAPSED`), not `ACCEPTED`. Return a `classification:
+'systemic'` rejection (e.g. `kind: 'schema'`); assert the `Resolution` stream is unchanged (stays
+`ACCEPTED`) and a second call returns the same 422, not a `200`. Make one of two stuck-`ACCEPTED`
+candidates in the same session throw during re-drive; assert the other candidate still converges
+in that same sweep pass.
 
 ---
 
@@ -203,8 +216,8 @@ assert the POST body; assert the 422 path keeps the form open.
 ## Edge Cases
 
 - WHEN a `Resolution` stream has a `Superseded` event but no `Record Hot Spot Resolved` (5b's
-  in-place substitution) THEN the transcript lane disposition SHALL be `APPLIED` with
-  `supersededByReference` set.
+  in-place substitution) THEN the transcript lane disposition SHALL read `superseded` (per AC2 —
+  not a plain `applied`) with `supersededByReference` set.
 - WHEN `reconcilePendingDerivations` re-drives an `ACCEPTED` proposal whose session closed
   between the tick's read and its write THEN the apply SHALL be rejected `session-closed` and
   the proposal left for the next open-session pass (there is none — accepted gap, documented).
@@ -218,26 +231,29 @@ assert the POST body; assert the 422 path keeps the form open.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| HREC-01 | P1: transcript resolution lane (contract) | Design | Pending |
-| HREC-02 | P1: transcript superseded rendering | Design | Pending |
-| HREC-03 | P1: `renderTranscript` stays pure | Design | Pending |
-| HREC-04 | P1: no empty lane heading | Design | Pending |
-| HREC-05 | P1: `blocksAdded` excludes superseded | Design | Pending |
-| HREC-06 | P1: `blocksAdded` excludes `already-satisfied` | Design | Pending |
-| HREC-07 | P1: `blocksAdded` happy-path unchanged | Design | Pending |
-| HREC-08 | P1: `review-resolution` records every rejection | Design | Pending |
-| HREC-09 | P1: sweep re-drives stuck `ACCEPTED` | Design | Pending |
-| HREC-10 | P1: sweep re-drive idempotent | Design | Pending |
-| HREC-11 | P1: closed-session bound documented | Design | Pending |
-| HREC-12 | P1: sweep logging levels | Design | Pending |
-| HREC-13 | P2: `decide.ts` convergence-scope comment | Tasks | Pending |
-| HREC-14 | P2: comment carries no `.specs/` id | Tasks | Pending |
-| HREC-15 | P2: dock relation-endpoint edit (`field` + `label` POST) | Design | Pending |
-| HREC-16 | P2: `unknown-label` 422 keeps the form open | Design | Pending |
-| HREC-17 | P2: pivotal `target` edit; app `ProposalIntent` mirrors server | Design | Pending |
+| HREC-01 | P1: transcript resolution lane (contract) | Verify | ✅ Verified |
+| HREC-02 | P1: transcript superseded rendering | Verify | ✅ Verified |
+| HREC-03 | P1: `renderTranscript` stays pure | Verify | ✅ Verified |
+| HREC-04 | P1: no empty lane heading | Verify | ✅ Verified |
+| HREC-05 | P1: `blocksAdded` excludes superseded | Verify | ✅ Verified |
+| HREC-06 | P1: `blocksAdded` excludes `already-satisfied` | Verify | ✅ Verified |
+| HREC-07 | P1: `blocksAdded` happy-path unchanged | Verify | ✅ Verified |
+| HREC-08 | P1: `review-resolution` records every rejection | Verify | ✅ Verified |
+| HREC-09 | P1: sweep re-drives stuck `ACCEPTED` | Verify | ✅ Verified |
+| HREC-10 | P1: sweep re-drive idempotent | Verify | ✅ Verified |
+| HREC-11 | P1: closed-session bound documented | Verify | ✅ Verified |
+| HREC-12 | P1: sweep logging levels | Verify | ✅ Verified |
+| HREC-13 | P2: `decide.ts` convergence-scope comment | Verify | ✅ Verified |
+| HREC-14 | P2: comment carries no `.specs/` id | Verify | ✅ Verified |
+| HREC-15 | P2: dock relation-endpoint edit (`field` + `label` POST) | Verify | ✅ Verified |
+| HREC-16 | P2: `unknown-label` 422 keeps the form open | Verify | ✅ Verified |
+| HREC-17 | P2: pivotal `target` edit; app `ProposalIntent` mirrors server | Verify | ✅ Verified |
 
-**Coverage:** 17 total, 0 mapped to tasks (Tasks phase pending). (HREC-15–17 descoped from 5b
-PCARD-04.)
+**Coverage:** 17 total, 17 verified. See
+`.specs/features/slice-5c-honest-record-hardening/validation.md` for the full evidence report
+(spec-anchored AC table, discrimination sensor, gate results). HREC-17 carries one
+spec-precision note (the drift guard is a typecheck-time fixture, not a runtime assertion — not a
+gap). (HREC-15–17 descoped from 5b PCARD-04.)
 
 ---
 

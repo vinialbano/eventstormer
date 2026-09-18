@@ -152,6 +152,14 @@ const blockById = (id: string) =>
 const proposalTypes = (id: string): string[] =>
   store.read(proposalStream(id as ProposalId)).map((row) => (row.operation as { type: string }).type)
 
+const operationAppliedOutcome = (id: string): string | undefined => {
+  const applied = store
+    .read(proposalStream(id as ProposalId))
+    .map((row) => row.operation as { type: string; outcome?: string })
+    .find((op) => op.type === 'Operation Applied')
+  return applied?.outcome
+}
+
 const accept = async (id: string): Promise<Response> =>
   routes().request(`/proposals/${id}/accept`, { method: 'POST' })
 
@@ -199,6 +207,7 @@ describe('POST /proposals/:id/accept — the synchronous apply chain', () => {
       { id: expect.any(String) as string, kind: 'domain-event', label: 'Book borrowed' },
     ])
     expect(proposalTypes('p_1')).toEqual(['Building Block Proposed', 'Proposal Accepted', 'Operation Applied'])
+    expect(operationAppliedOutcome('p_1')).toBe('appended')
   })
 
   it('records the facilitator as proposer and the workshop creator as accepter', async () => {
@@ -488,6 +497,8 @@ describe('POST /proposals/:id/accept — model-change proposals', () => {
     expect(body.proposal.disposition).toBe('APPLIED')
     expect(follows()).toHaveLength(1)
     expect(proposalTypes('p_2')).toEqual(['Model Change Proposed', 'Proposal Accepted', 'Operation Applied'])
+    expect(operationAppliedOutcome('p_1')).toBe('appended')
+    expect(operationAppliedOutcome('p_2')).toBe('already-satisfied')
   })
 
   // Crash-window convergence. For every operation kind the facilitator can
