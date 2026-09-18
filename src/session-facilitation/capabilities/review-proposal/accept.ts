@@ -34,7 +34,7 @@ type BuildingBlockProposed = Extract<ProposalEvent, { type: 'Building Block Prop
 type ModelChangeProposed = Extract<ProposalEvent, { type: 'Model Change Proposed' }>
 interface Handled {
   json: unknown
-  status: 200 | 409 | 422 | 500
+  status: 200 | 404 | 409 | 422 | 500
 }
 
 const INTENT_ID_FIELDS = [
@@ -204,45 +204,50 @@ const acceptBuildingBlock = (
 }
 
 /**
- * `POST /proposals/:id/accept` — the synchronous cross-context apply chain. Each
- * context commits its own stream in its own `EventStore.append` — the two are
- * NEVER one SQLite transaction. A closed session rejects a late accept (409
- * `session-closed`, the Proposal left re-lapsable); an already-`APPLIED`
- * proposal is an idempotent 200.
+ * The synchronous cross-context apply chain. Each context commits its own
+ * stream in its own `EventStore.append` — the two are NEVER one SQLite
+ * transaction. A closed session rejects a late accept (409 `session-closed`,
+ * the Proposal left re-lapsable); an already-`APPLIED` proposal is an
+ * idempotent 200. Called by `POST /proposals/:id/accept` and by the
+ * stuck-`ACCEPTED` reconciliation sweep, so both re-drive through the same
+ * path instead of two implementations that could drift.
  */
+export const acceptProposal = (deps: ReviewProposalDeps, id: ProposalId): Handled => {
+  const events = readProposal(deps, id)
+  if (events.length === 0) return { json: { error: 'unknown-proposal' as const }, status: 404 }
+
+  const birth = events.find(
+    (event) => event.type === 'Building Block Proposed' || event.type === 'Model Change Proposed',
+  )
+  if (birth === undefined) return { json: { error: 'unknown-proposal' as const }, status: 404 }
+
+  const sessionEvents = readSession(deps, birth.sessionId)
+  const workshopId = sessionEvents.find((event) => event.type === 'Session Started')?.workshopId
+  if (workshopId === undefined) return { json: { error: 'unknown-session' as const }, status: 404 }
+  const creatorName =
+    replayWorkshop(
+      deps.store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation)),
+    ).creatorName ?? 'unknown'
+  const author: Author = { proposer: { name: 'facilitator' }, accepter: { name: creatorName } }
+
+  if (replay(events).disposition === 'APPLIED') {
+    const proposal =
+      birth.type === 'Model Change Proposed' ? modelChangeCard(events) : proposalCard(events)
+    return { json: { boardPosition: null, proposal }, status: 200 }
+  }
+  if (replaySession(sessionEvents).closed) {
+    return { json: { error: 'session-closed' as const }, status: 409 }
+  }
+
+  return birth.type === 'Model Change Proposed'
+    ? acceptModelChange(deps, id, birth, events, workshopId, author)
+    : acceptBuildingBlock(deps, id, birth, events, workshopId, author)
+}
+
 export const acceptRoutes = (deps: ReviewProposalDeps) =>
   new Hono().post('/proposals/:id/accept', (context) => {
     const id = context.req.param('id') as ProposalId
-    const events = readProposal(deps, id)
-    if (events.length === 0) return context.json({ error: 'unknown-proposal' as const }, 404)
-
-    const birth = events.find(
-      (event) => event.type === 'Building Block Proposed' || event.type === 'Model Change Proposed',
-    )
-    if (birth === undefined) return context.json({ error: 'unknown-proposal' as const }, 404)
-
-    const sessionEvents = readSession(deps, birth.sessionId)
-    const workshopId = sessionEvents.find((event) => event.type === 'Session Started')?.workshopId
-    if (workshopId === undefined) return context.json({ error: 'unknown-session' as const }, 404)
-    const creatorName =
-      replayWorkshop(
-        deps.store.read(workshopStream(workshopId)).map((row) => WorkshopEvent.parse(row.operation)),
-      ).creatorName ?? 'unknown'
-    const author: Author = { proposer: { name: 'facilitator' }, accepter: { name: creatorName } }
-
-    if (replay(events).disposition === 'APPLIED') {
-      const proposal =
-        birth.type === 'Model Change Proposed' ? modelChangeCard(events) : proposalCard(events)
-      return context.json({ boardPosition: null, proposal }, 200)
-    }
-    if (replaySession(sessionEvents).closed) {
-      return context.json({ error: 'session-closed' as const }, 409)
-    }
-
-    const handled =
-      birth.type === 'Model Change Proposed'
-        ? acceptModelChange(deps, id, birth, events, workshopId, author)
-        : acceptBuildingBlock(deps, id, birth, events, workshopId, author)
+    const handled = acceptProposal(deps, id)
     return context.json(handled.json, handled.status)
   })
 
